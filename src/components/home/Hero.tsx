@@ -1,16 +1,20 @@
 
 import React from 'react';
 import { Search, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import Button from '../common/Button';
 import Container from '../common/Container';
 import FadeIn from '../animations/FadeIn';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface HeroProps {
   className?: string;
 }
 
 export function Hero({ className }: HeroProps) {
+  const { user } = useAuth();
+  
   return (
     <section
       className={cn(
@@ -52,9 +56,27 @@ export function Hero({ className }: HeroProps) {
                   placeholder="What service are you looking for?"
                 />
               </div>
-              <Button className="w-full sm:w-auto" icon={<ArrowRight className="h-4 w-4" />} iconPosition="right">
-                Find Services
-              </Button>
+              {user ? (
+                <Button 
+                  as={Link} 
+                  to="/dashboard" 
+                  className="w-full sm:w-auto" 
+                  icon={<ArrowRight className="h-4 w-4" />} 
+                  iconPosition="right"
+                >
+                  Find Services
+                </Button>
+              ) : (
+                <Button 
+                  as={Link} 
+                  to="/auth/sign-up" 
+                  className="w-full sm:w-auto" 
+                  icon={<ArrowRight className="h-4 w-4" />} 
+                  iconPosition="right"
+                >
+                  Get Started
+                </Button>
+              )}
             </div>
           </FadeIn>
 

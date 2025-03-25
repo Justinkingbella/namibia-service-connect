@@ -1,16 +1,20 @@
 
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import Button from '../common/Button';
 import Container from '../common/Container';
 import FadeIn from '../animations/FadeIn';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CTASectionProps {
   className?: string;
 }
 
 export function CTASection({ className }: CTASectionProps) {
+  const { user } = useAuth();
+  
   return (
     <section
       className={cn(
@@ -40,12 +44,37 @@ export function CTASection({ className }: CTASectionProps) {
             
             <FadeIn delay={400} className="mt-10">
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" icon={<ArrowRight className="h-5 w-5" />} iconPosition="right">
-                  Find a Service
-                </Button>
-                <Button variant="outline" size="lg">
-                  Become a Provider
-                </Button>
+                {user ? (
+                  <Button 
+                    as={Link} 
+                    to="/dashboard" 
+                    size="lg" 
+                    icon={<ArrowRight className="h-5 w-5" />} 
+                    iconPosition="right"
+                  >
+                    Go to Dashboard
+                  </Button>
+                ) : (
+                  <>
+                    <Button 
+                      as={Link} 
+                      to="/auth/sign-up?role=customer" 
+                      size="lg" 
+                      icon={<ArrowRight className="h-5 w-5" />} 
+                      iconPosition="right"
+                    >
+                      Find a Service
+                    </Button>
+                    <Button 
+                      as={Link}
+                      to="/auth/sign-up?role=provider" 
+                      variant="outline" 
+                      size="lg"
+                    >
+                      Become a Provider
+                    </Button>
+                  </>
+                )}
               </div>
             </FadeIn>
           </div>
