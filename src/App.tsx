@@ -16,6 +16,10 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import CustomerDashboard from "./pages/dashboard/CustomerDashboard";
 import ProviderDashboard from "./pages/dashboard/ProviderDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
+import ServicesPage from "./pages/dashboard/services/ServicesPage";
+import ServiceDetail from "./pages/dashboard/services/ServiceDetail";
+import BookingsPage from "./pages/dashboard/bookings/BookingsPage";
+import BookingDetail from "./pages/dashboard/bookings/BookingDetail";
 import NotFound from "./pages/NotFound";
 
 // Create QueryClient outside of the component
@@ -53,6 +57,44 @@ function App() {
                   } 
                 />
                 
+                {/* Service Routes */}
+                <Route 
+                  path="/dashboard/services" 
+                  element={
+                    <ProtectedRoute>
+                      <ServicesPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/services/:id" 
+                  element={
+                    <ProtectedRoute>
+                      <ServiceDetail />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Booking Routes */}
+                <Route 
+                  path="/dashboard/bookings" 
+                  element={
+                    <ProtectedRoute>
+                      <BookingsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/bookings/:id" 
+                  element={
+                    <ProtectedRoute>
+                      <BookingDetail />
+                    </ProtectedRoute>
+                  } 
+                />
+                
                 {/* Admin Routes */}
                 <Route 
                   path="/dashboard/admin" 
@@ -82,30 +124,12 @@ function App() {
                   } 
                 />
                 
-                <Route 
-                  path="/dashboard/bookings" 
-                  element={
-                    <ProtectedRoute allowedRoles={['provider', 'customer']}>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                
                 {/* Customer Routes */}
                 <Route 
                   path="/dashboard/customer" 
                   element={
                     <ProtectedRoute allowedRoles={['customer']}>
                       <CustomerDashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/services" 
-                  element={
-                    <ProtectedRoute allowedRoles={['customer', 'admin']}>
-                      <Dashboard />
                     </ProtectedRoute>
                   } 
                 />

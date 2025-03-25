@@ -1,39 +1,14 @@
 
 export type ServiceCategory = 
-  | 'errand' 
+  | 'all' 
   | 'home' 
+  | 'errand' 
   | 'professional' 
   | 'freelance' 
   | 'transport' 
   | 'health';
 
-export type ServiceStatus = 'active' | 'pending' | 'suspended';
-
 export type PricingModel = 'hourly' | 'fixed';
-
-export interface ServiceLocation {
-  name: string;
-  lat?: number;
-  lng?: number;
-}
-
-export interface Service {
-  id: string;
-  title: string;
-  description: string;
-  category: ServiceCategory;
-  providerId: string;
-  status: ServiceStatus;
-  pricingModel: PricingModel;
-  price: number; // In N$
-  locations: ServiceLocation[];
-  tags: string[];
-  images: string[];
-  rating: number;
-  reviewCount: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 export interface ServiceListItem {
   id: string;
@@ -47,4 +22,21 @@ export interface ServiceListItem {
   reviewCount: number;
   image: string;
   location: string;
+  description?: string;
+}
+
+export interface Service extends ServiceListItem {
+  description: string;
+  availability?: {
+    days: string[];
+    hours: {
+      start: string;
+      end: string;
+    }
+  };
+  features?: string[];
+  faqs?: {
+    question: string;
+    answer: string;
+  }[];
 }
