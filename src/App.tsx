@@ -12,6 +12,9 @@ import Index from "./pages/Index";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import Dashboard from "./pages/dashboard/Dashboard";
+import CustomerDashboard from "./pages/dashboard/CustomerDashboard";
+import ProviderDashboard from "./pages/dashboard/ProviderDashboard";
+import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,7 +32,7 @@ const App = () => (
             <Route path="/auth/sign-in" element={<SignIn />} />
             <Route path="/auth/sign-up" element={<SignUp />} />
             
-            {/* Protected Routes */}
+            {/* Protected Routes - Dashboard */}
             <Route 
               path="/dashboard" 
               element={
@@ -41,6 +44,15 @@ const App = () => (
             
             {/* Admin Routes */}
             <Route 
+              path="/dashboard/admin" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
               path="/dashboard/users" 
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
@@ -51,6 +63,15 @@ const App = () => (
             
             {/* Provider Routes */}
             <Route 
+              path="/dashboard/provider" 
+              element={
+                <ProtectedRoute allowedRoles={['provider']}>
+                  <ProviderDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
               path="/dashboard/bookings" 
               element={
                 <ProtectedRoute allowedRoles={['provider', 'customer']}>
@@ -60,6 +81,15 @@ const App = () => (
             />
             
             {/* Customer Routes */}
+            <Route 
+              path="/dashboard/customer" 
+              element={
+                <ProtectedRoute allowedRoles={['customer']}>
+                  <CustomerDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
             <Route 
               path="/dashboard/services" 
               element={
