@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { ElementType, ComponentPropsWithoutRef } from 'react';
 import { cn } from '@/lib/utils';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'link';
 type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+// This type allows for the 'as' prop
+type ButtonProps<T extends ElementType = 'button'> = {
   children: React.ReactNode;
   variant?: ButtonVariant;
   size?: ButtonSize;
@@ -13,9 +14,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
-}
+  as?: T;
+} & ComponentPropsWithoutRef<T>;
 
-export function Button({
+export function Button<T extends ElementType = 'button'>({
   children,
   className,
   variant = 'primary',
@@ -25,8 +27,11 @@ export function Button({
   loading = false,
   icon,
   iconPosition = 'left',
+  as,
   ...props
-}: ButtonProps) {
+}: ButtonProps<T>) {
+  const Component = as || 'button';
+
   const variantClasses = {
     primary: 'bg-primary text-white hover:opacity-90 shadow-sm',
     secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
@@ -46,7 +51,7 @@ export function Button({
   const circleClasses = circle ? 'flex items-center justify-center p-0 rounded-full' : 'rounded-lg';
 
   return (
-    <button
+    <Component
       className={cn(
         'relative inline-flex items-center justify-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none',
         variantClasses[variant],
@@ -74,8 +79,50 @@ export function Button({
         {children}
         {icon && iconPosition === 'right' && icon}
       </span>
-    </button>
+    </Component>
   );
 }
 
-export default Button;
+// Now let's update the NotFound.tsx file to properly use the updated Button component
+<lov-write file_path="src/pages/NotFound.tsx">
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+import Button from '@/components/common/Button';
+import Container from '@/components/common/Container';
+import Logo from '@/components/common/Logo';
+
+const NotFound = () => {
+  return (
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <header className="bg-white border-b py-4">
+        <Container>
+          <Logo />
+        </Container>
+      </header>
+      
+      <Container className="flex-1 flex items-center justify-center py-16">
+        <div className="text-center max-w-md">
+          <h1 className="text-6xl font-bold text-primary mb-4">404</h1>
+          <h2 className="text-2xl font-semibold mb-2">Page Not Found</h2>
+          <p className="text-muted-foreground mb-8">
+            The page you are looking for doesn't exist or has been moved.
+          </p>
+          <div className="flex justify-center">
+            <Button 
+              as={Link} 
+              to="/" 
+              variant="primary" 
+              icon={<ArrowLeft className="h-4 w-4" />} 
+              iconPosition="left"
+            >
+              Go Back Home
+            </Button>
+          </div>
+        </div>
+      </Container>
+    </div>
+  );
+};
+
+export default NotFound;
