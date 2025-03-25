@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import Button from '@/components/common/Button';
+import { Button } from '@/components/common/Button';
 import Container from '@/components/common/Container';
 import Logo from '@/components/common/Logo';
 
@@ -23,7 +23,13 @@ const NotFound = () => {
             The page you are looking for doesn't exist or has been moved.
           </p>
           <div className="flex justify-center">
-            <Button as={Link} to="/" variant="primary" icon={<ArrowLeft className="h-4 w-4" />} iconPosition="left">
+            <Button 
+              as={Link} 
+              to="/" 
+              variant="primary" 
+              icon={<ArrowLeft className="h-4 w-4" />} 
+              iconPosition="left"
+            >
               Go Back Home
             </Button>
           </div>
