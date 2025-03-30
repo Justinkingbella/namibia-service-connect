@@ -30,6 +30,13 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
+interface NavItem {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  badgeCount?: number; // Make badgeCount optional
+}
+
 interface SidebarLinkProps {
   to: string;
   icon: React.ReactNode;
@@ -93,8 +100,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   };
 
   // Determine navigation items based on user role
-  const getNavItems = () => {
-    const commonItems = [
+  const getNavItems = (): NavItem[] => { // Add return type
+    const commonItems: NavItem[] = [
       { to: '/dashboard', icon: <Home size={20} />, label: 'Dashboard' },
     ];
 
