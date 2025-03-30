@@ -20,6 +20,7 @@ import ServicesPage from "./pages/dashboard/services/ServicesPage";
 import ServiceDetail from "./pages/dashboard/services/ServiceDetail";
 import BookingsPage from "./pages/dashboard/bookings/BookingsPage";
 import BookingDetail from "./pages/dashboard/bookings/BookingDetail";
+import MessagesPage from "./pages/dashboard/messages/MessagesPage";
 import NotFound from "./pages/NotFound";
 
 // Create QueryClient outside of the component
@@ -91,6 +92,16 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <BookingDetail />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Messages Route */}
+                <Route 
+                  path="/dashboard/messages" 
+                  element={
+                    <ProtectedRoute>
+                      <MessagesPage />
                     </ProtectedRoute>
                   } 
                 />

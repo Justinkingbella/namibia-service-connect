@@ -2,13 +2,13 @@
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { MessageSquare, Search, Send, User } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import ConversationList from '@/components/messages/ConversationList';
 import MessageThread from '@/components/messages/MessageThread';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Conversation, Message } from '@/types/message';
 
 // Mock data
@@ -123,7 +123,6 @@ const mockMessages: Record<string, Message[]> = {
 };
 
 const MessagesPage: React.FC = () => {
-  const { toast } = useToast();
   const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
@@ -184,7 +183,7 @@ const MessagesPage: React.FC = () => {
     // Show toast confirmation
     toast({
       title: "Message sent",
-      description: "Your message has been delivered.",
+      description: "Your message has been delivered."
     });
   };
 
@@ -224,7 +223,9 @@ const MessagesPage: React.FC = () => {
             <>
               <CardHeader className="py-3 px-4 border-b flex flex-row items-center">
                 <Avatar className="h-9 w-9 mr-3">
-                  <User className="h-5 w-5" />
+                  <AvatarFallback>
+                    <User className="h-5 w-5" />
+                  </AvatarFallback>
                 </Avatar>
                 <CardTitle className="text-base font-medium">
                   {conversations.find(c => c.id === selectedConversation)?.recipientName}
