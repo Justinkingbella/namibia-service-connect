@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { CalendarClock, DollarSign, Users, Star, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CalendarClock, DollarSign, Users, Star, Clock, CheckCircle, Settings, BarChart2 } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCard from '@/components/dashboard/StatsCard';
+import SettingsCard from '@/components/dashboard/SettingsCard';
 import BookingCard from '@/components/dashboard/BookingCard';
 import { Button } from '@/components/common/Button';
 import ServiceManagement from '@/components/provider/ServiceManagement';
@@ -80,6 +82,7 @@ const mockTopServices = [
 ];
 
 const ProviderDashboard = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   
   return (
@@ -221,29 +224,25 @@ const ProviderDashboard = () => {
               <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-6 rounded-xl border shadow-sm">
-                  <h3 className="font-medium">Create New Service</h3>
-                  <p className="text-sm text-muted-foreground mt-1 mb-4">Add a new service to your profile</p>
-                  <Button as="a" href="/dashboard/services/create" size="sm">
-                    Add Service
-                  </Button>
-                </div>
+                <SettingsCard
+                  title="Create New Service"
+                  description="Add a new service to your profile"
+                  onClick={() => navigate('/dashboard/services/create')}
+                />
                 
-                <div className="bg-white p-6 rounded-xl border shadow-sm">
-                  <h3 className="font-medium">Update Availability</h3>
-                  <p className="text-sm text-muted-foreground mt-1 mb-4">Set your working hours and availability</p>
-                  <Button as="a" href="/dashboard/availability" variant="outline" size="sm">
-                    Manage Schedule
-                  </Button>
-                </div>
+                <SettingsCard
+                  title="Revenue Reports"
+                  description="View detailed revenue analytics"
+                  icon={<BarChart2 className="h-5 w-5" />}
+                  onClick={() => navigate('/dashboard/provider/reports')}
+                />
                 
-                <div className="bg-white p-6 rounded-xl border shadow-sm">
-                  <h3 className="font-medium">Request Payout</h3>
-                  <p className="text-sm text-muted-foreground mt-1 mb-4">Current balance: N$1,850</p>
-                  <Button as="a" href="/dashboard/payouts" variant="outline" size="sm">
-                    Request Payout
-                  </Button>
-                </div>
+                <SettingsCard
+                  title="Account Settings"
+                  description="Manage your account preferences"
+                  icon={<Settings className="h-5 w-5" />}
+                  onClick={() => navigate('/dashboard/settings')}
+                />
               </div>
             </div>
           </TabsContent>

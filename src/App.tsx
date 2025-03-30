@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -22,6 +23,10 @@ import BookingsPage from "./pages/dashboard/bookings/BookingsPage";
 import BookingDetail from "./pages/dashboard/bookings/BookingDetail";
 import MessagesPage from "./pages/dashboard/messages/MessagesPage";
 import ProviderVerificationPage from "./pages/dashboard/admin/ProviderVerificationPage";
+import PlatformAnalyticsPage from "./pages/dashboard/admin/PlatformAnalyticsPage";
+import RevenueReportsPage from "./pages/dashboard/provider/RevenueReportsPage";
+import ProfilePage from "./pages/dashboard/customer/ProfilePage";
+import SettingsPage from "./pages/dashboard/settings/SettingsPage";
 import NotFound from "./pages/NotFound";
 
 // Create QueryClient outside of the component
@@ -107,6 +112,16 @@ function App() {
                   } 
                 />
                 
+                {/* Settings Route */}
+                <Route 
+                  path="/dashboard/settings" 
+                  element={
+                    <ProtectedRoute>
+                      <SettingsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
                 {/* Admin Routes */}
                 <Route 
                   path="/dashboard/admin" 
@@ -122,6 +137,15 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={['admin']}>
                       <ProviderVerificationPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/admin/analytics" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <PlatformAnalyticsPage />
                     </ProtectedRoute>
                   } 
                 />
@@ -145,12 +169,30 @@ function App() {
                   } 
                 />
                 
+                <Route 
+                  path="/dashboard/provider/reports" 
+                  element={
+                    <ProtectedRoute allowedRoles={['provider']}>
+                      <RevenueReportsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
                 {/* Customer Routes */}
                 <Route 
                   path="/dashboard/customer" 
                   element={
                     <ProtectedRoute allowedRoles={['customer']}>
                       <CustomerDashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/customer/profile" 
+                  element={
+                    <ProtectedRoute allowedRoles={['customer']}>
+                      <ProfilePage />
                     </ProtectedRoute>
                   } 
                 />

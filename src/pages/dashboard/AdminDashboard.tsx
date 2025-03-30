@@ -1,8 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, DollarSign, Check, AlertTriangle, BarChart } from 'lucide-react';
+import { Users, DollarSign, Check, AlertTriangle, BarChart, Settings } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCard from '@/components/dashboard/StatsCard';
+import SettingsCard from '@/components/dashboard/SettingsCard';
 import { Button } from '@/components/common/Button';
 import UserManagement from '@/components/admin/UserManagement';
 import ProviderVerification from '@/components/admin/ProviderVerification';
@@ -246,40 +247,32 @@ const AdminDashboard = () => {
           <h2 className="text-xl font-semibold mb-4">Admin Actions</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white p-6 rounded-xl border shadow-sm">
-              <h3 className="font-medium">Manage Users</h3>
-              <p className="text-sm text-muted-foreground mt-1 mb-4">View and manage all users</p>
-              <Button as="a" href="/dashboard/users" size="sm">
-                Manage Users
-              </Button>
-            </div>
+            <SettingsCard
+              title="Manage Users"
+              description="View and manage all users"
+              icon={<Users className="h-5 w-5" />}
+              onClick={() => navigate('/dashboard/users')}
+            />
             
-            <div className="bg-white p-6 rounded-xl border shadow-sm">
-              <h3 className="font-medium">Provider Verification</h3>
-              <p className="text-sm text-muted-foreground mt-1 mb-4">Review provider applications</p>
-              <Button 
-                size="sm" 
-                onClick={() => navigate('/dashboard/admin/providers/verification')}
-              >
-                Verify Providers
-              </Button>
-            </div>
+            <SettingsCard
+              title="Provider Verification"
+              description="Review provider applications"
+              onClick={() => navigate('/dashboard/admin/providers/verification')}
+            />
             
-            <div className="bg-white p-6 rounded-xl border shadow-sm">
-              <h3 className="font-medium">Payout Requests</h3>
-              <p className="text-sm text-muted-foreground mt-1 mb-4">3 pending requests</p>
-              <Button as="a" href="/dashboard/payouts" variant="outline" size="sm">
-                Process Payouts
-              </Button>
-            </div>
+            <SettingsCard
+              title="Platform Analytics"
+              description="View detailed platform metrics"
+              icon={<BarChart className="h-5 w-5" />}
+              onClick={() => navigate('/dashboard/admin/analytics')}
+            />
             
-            <div className="bg-white p-6 rounded-xl border shadow-sm">
-              <h3 className="font-medium">Platform Settings</h3>
-              <p className="text-sm text-muted-foreground mt-1 mb-4">Configure global settings</p>
-              <Button as="a" href="/dashboard/settings" variant="outline" size="sm">
-                Settings
-              </Button>
-            </div>
+            <SettingsCard
+              title="Platform Settings"
+              description="Configure global settings"
+              icon={<Settings className="h-5 w-5" />}
+              onClick={() => navigate('/dashboard/settings')}
+            />
           </div>
         </div>
       </div>

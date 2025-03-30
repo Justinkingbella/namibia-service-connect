@@ -1,7 +1,10 @@
+
 import React, { useState } from 'react';
-import { CalendarClock, CreditCard, Heart, Search, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CalendarClock, CreditCard, Heart, Search, Clock, CheckCircle, User, Settings } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCard from '@/components/dashboard/StatsCard';
+import SettingsCard from '@/components/dashboard/SettingsCard';
 import ServiceCategoryCard from '@/components/dashboard/ServiceCategoryCard';
 import BookingCard from '@/components/dashboard/BookingCard';
 import ServiceCard from '@/components/dashboard/ServiceCard';
@@ -100,6 +103,7 @@ const mockRecommendedServices = [
 ];
 
 const CustomerDashboard = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   
   return (
@@ -250,6 +254,33 @@ const CustomerDashboard = () => {
             </div>
           </TabsContent>
         </Tabs>
+        
+        {/* Quick Actions */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <SettingsCard
+              title="Browse Services"
+              description="Discover available services near you"
+              onClick={() => navigate('/dashboard/services')}
+            />
+            
+            <SettingsCard
+              title="Edit Profile"
+              description="Update your personal information"
+              icon={<User className="h-5 w-5" />}
+              onClick={() => navigate('/dashboard/customer/profile')}
+            />
+            
+            <SettingsCard
+              title="Account Settings"
+              description="Manage your account preferences"
+              icon={<Settings className="h-5 w-5" />}
+              onClick={() => navigate('/dashboard/settings')}
+            />
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );
