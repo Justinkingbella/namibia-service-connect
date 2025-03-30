@@ -457,8 +457,8 @@ const BookingDetail = () => {
               <div className="space-y-3">
                 {canCancel && (
                   <Button 
-                    variant="destructive" 
-                    className="w-full"
+                    variant="primary" 
+                    className="w-full bg-red-500 hover:bg-red-600 text-white"
                     onClick={() => handleUpdateStatus('cancelled')}
                   >
                     <XCircle className="h-4 w-4 mr-2" />
