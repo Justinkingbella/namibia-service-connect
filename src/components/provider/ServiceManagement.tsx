@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Plus, Star, Toggle, MoreHorizontal, Eye } from 'lucide-react';
+import { Edit, Trash2, Plus, Star, ToggleLeft, MoreHorizontal, Eye } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -195,7 +195,7 @@ const ServiceManagement: React.FC = () => {
                           <Edit className="h-4 w-4 mr-2" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleStatusToggle(service.id)}>
-                          <Toggle className="h-4 w-4 mr-2" />
+                          <ToggleLeft className="h-4 w-4 mr-2" />
                           {service.status === 'active' ? 'Deactivate' : 'Activate'}
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-red-600">
