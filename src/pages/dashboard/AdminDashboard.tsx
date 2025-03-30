@@ -1,12 +1,16 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, DollarSign, Check, AlertTriangle, BarChart } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCard from '@/components/dashboard/StatsCard';
 import { Button } from '@/components/common/Button';
 import UserManagement from '@/components/admin/UserManagement';
+import ProviderVerification from '@/components/admin/ProviderVerification';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+  
   // Mock data for pending approvals
   const pendingProviders = [
     {
@@ -134,57 +138,19 @@ const AdminDashboard = () => {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Pending Provider Approvals</h2>
-                <Button as="a" href="/dashboard/providers/pending" variant="outline" size="sm">
+                <Button 
+                  as="a"
+                  onClick={() => navigate('/dashboard/admin/providers/verification')}
+                  variant="outline" 
+                  size="sm"
+                >
                   View All
                 </Button>
               </div>
               
-              <div className="bg-white shadow-sm rounded-xl border overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Business Name
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Category
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date Applied
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Documents
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {pendingProviders.map((provider) => (
-                      <tr key={provider.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-gray-900">{provider.name}</div>
-                          <div className="text-sm text-gray-500">{provider.email}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-gray-500">{provider.category}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-gray-500">{provider.date}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-gray-500">{provider.documents} files</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                          <Button size="xs" as="a" href={`/dashboard/providers/${provider.id}`}>
-                            Review
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {/* Provider verification table preview */}
+              <div className="max-h-[400px] overflow-hidden">
+                <ProviderVerification />
               </div>
             </div>
             
@@ -260,10 +226,8 @@ const AdminDashboard = () => {
           
           {/* Providers Tab */}
           <TabsContent value="providers">
-            <div className="bg-white rounded-xl border shadow-sm p-6">
-              <h2 className="text-lg font-medium mb-4">Provider Management</h2>
-              <p className="text-muted-foreground">Manage service providers and verify their details.</p>
-              <p className="text-sm text-muted-foreground mt-4">This feature is under development.</p>
+            <div className="space-y-6">
+              <ProviderVerification />
             </div>
           </TabsContent>
           
@@ -291,10 +255,13 @@ const AdminDashboard = () => {
             </div>
             
             <div className="bg-white p-6 rounded-xl border shadow-sm">
-              <h3 className="font-medium">Services Categories</h3>
-              <p className="text-sm text-muted-foreground mt-1 mb-4">Add or edit service categories</p>
-              <Button as="a" href="/dashboard/categories" variant="outline" size="sm">
-                Manage Categories
+              <h3 className="font-medium">Provider Verification</h3>
+              <p className="text-sm text-muted-foreground mt-1 mb-4">Review provider applications</p>
+              <Button 
+                size="sm" 
+                onClick={() => navigate('/dashboard/admin/providers/verification')}
+              >
+                Verify Providers
               </Button>
             </div>
             

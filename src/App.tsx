@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -18,9 +17,11 @@ import ProviderDashboard from "./pages/dashboard/ProviderDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import ServicesPage from "./pages/dashboard/services/ServicesPage";
 import ServiceDetail from "./pages/dashboard/services/ServiceDetail";
+import CreateServicePage from "./pages/dashboard/services/CreateServicePage";
 import BookingsPage from "./pages/dashboard/bookings/BookingsPage";
 import BookingDetail from "./pages/dashboard/bookings/BookingDetail";
 import MessagesPage from "./pages/dashboard/messages/MessagesPage";
+import ProviderVerificationPage from "./pages/dashboard/admin/ProviderVerificationPage";
 import NotFound from "./pages/NotFound";
 
 // Create QueryClient outside of the component
@@ -69,10 +70,10 @@ function App() {
                 />
                 
                 <Route 
-                  path="/dashboard/services/:id" 
+                  path="/dashboard/services/create" 
                   element={
-                    <ProtectedRoute>
-                      <ServiceDetail />
+                    <ProtectedRoute allowedRoles={['provider', 'admin']}>
+                      <CreateServicePage />
                     </ProtectedRoute>
                   } 
                 />
@@ -112,6 +113,15 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={['admin']}>
                       <AdminDashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/admin/providers/verification" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <ProviderVerificationPage />
                     </ProtectedRoute>
                   } 
                 />
