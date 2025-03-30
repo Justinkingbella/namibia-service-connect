@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import Button from '@/components/common/Button';
 import Container from '@/components/common/Container';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const SignUp = () => {
   const [name, setName] = useState('');
@@ -19,6 +20,7 @@ const SignUp = () => {
   
   const { signUp, isLoading } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const validatePassword = () => {
     if (password !== confirmPassword) {
@@ -47,44 +49,46 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-6 px-4 sm:py-12">
       <Container size="sm">
         <div className="mx-auto w-full max-w-md">
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-6 sm:mb-8">
             <Logo size="lg" />
           </div>
           
-          <div className="bg-white shadow-md rounded-xl p-8">
-            <h2 className="text-2xl font-bold text-center mb-6">Create Account</h2>
+          <div className="bg-white shadow-md rounded-xl p-5 sm:p-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">Create Account</h2>
             
-            <Tabs defaultValue="customer" className="mb-6">
+            <Tabs defaultValue="customer" className="mb-5 sm:mb-6">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger 
                   value="customer" 
                   onClick={() => setRole('customer')}
+                  className="text-xs sm:text-sm"
                 >
                   I need services
                 </TabsTrigger>
                 <TabsTrigger 
                   value="provider" 
                   onClick={() => setRole('provider')}
+                  className="text-xs sm:text-sm"
                 >
                   I provide services
                 </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="customer" className="mt-4 text-sm text-muted-foreground">
+              <TabsContent value="customer" className="mt-3 text-xs sm:text-sm text-muted-foreground">
                 Create an account to find and book services in Namibia.
               </TabsContent>
               
-              <TabsContent value="provider" className="mt-4 text-sm text-muted-foreground">
+              <TabsContent value="provider" className="mt-3 text-xs sm:text-sm text-muted-foreground">
                 Create an account to offer your services on our platform.
               </TabsContent>
             </Tabs>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Full Name
                 </label>
                 <Input
@@ -94,11 +98,12 @@ const SignUp = () => {
                   onChange={(e) => setName(e.target.value)}
                   required
                   placeholder="John Doe"
+                  className="text-sm"
                 />
               </div>
               
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Email
                 </label>
                 <Input
@@ -108,11 +113,12 @@ const SignUp = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="you@example.com"
+                  className="text-sm"
                 />
               </div>
               
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Password
                 </label>
                 <Input
@@ -122,12 +128,12 @@ const SignUp = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className={passwordError ? 'border-red-500' : ''}
+                  className={`text-sm ${passwordError ? 'border-red-500' : ''}`}
                 />
               </div>
               
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="confirmPassword" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                   Confirm Password
                 </label>
                 <Input
@@ -137,7 +143,7 @@ const SignUp = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className={passwordError ? 'border-red-500' : ''}
+                  className={`text-sm ${passwordError ? 'border-red-500' : ''}`}
                 />
                 {passwordError && (
                   <p className="mt-1 text-xs text-red-500">{passwordError}</p>
@@ -148,12 +154,12 @@ const SignUp = () => {
                 By creating an account, you agree to our <a href="#" className="text-primary hover:underline">Terms of Service</a> and <a href="#" className="text-primary hover:underline">Privacy Policy</a>.
               </div>
               
-              <Button type="submit" className="w-full" loading={isLoading}>
+              <Button type="submit" className="w-full mt-4" loading={isLoading}>
                 Create Account
               </Button>
             </form>
             
-            <div className="mt-6 text-center text-sm">
+            <div className="mt-5 sm:mt-6 text-center text-xs sm:text-sm">
               <span className="text-gray-600">Already have an account?</span>{' '}
               <Link to="/auth/sign-in" className="text-primary font-medium hover:underline">
                 Sign In

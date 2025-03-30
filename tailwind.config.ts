@@ -13,7 +13,7 @@ export default {
 	theme: {
 		container: {
 			center: true,
-			padding: '2rem',
+			padding: '1rem',
 			screens: {
 				'sm': '640px',
 				'md': '768px',
@@ -178,7 +178,7 @@ export default {
 				'pulse-soft': 'pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
 			},
 			fontFamily: {
-				sans: ['Inter var', 'sans-serif'],
+				sans: ['Poppins', 'sans-serif'],
 			},
 			backdropBlur: {
 				xs: '2px',
