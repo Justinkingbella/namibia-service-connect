@@ -14,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
 
-    --primary: 221 83% 53%;
+    --primary: 222.2 47.4% 48.2%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -33,9 +33,9 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --radius: 0.8rem;
+    --radius: 1rem;
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 240 20% 97%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
@@ -123,6 +123,22 @@
   .subtle-shadow {
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
   }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-md hover:-translate-y-1;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white rounded-full px-6 py-2.5 font-medium shadow-sm transition-all hover:shadow-md hover:opacity-90 active:opacity-100;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-primary rounded-full px-6 py-2.5 font-medium transition-all hover:bg-secondary/80;
+  }
+  
+  .input-modern {
+    @apply rounded-lg border border-input bg-background px-4 py-2 text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring;
+  }
 }
 
 .animate-delay-100 {
@@ -204,3 +220,18 @@
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgba(0, 0, 0, 0.2);
 }
+
+/* Modern Card Styles */
+.modern-card {
+  @apply bg-white rounded-2xl border border-border p-6 shadow-sm transition-all duration-300 hover:shadow-md;
+}
+
+.modern-card-hover {
+  @apply bg-white rounded-2xl border border-border p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1;
+}
+
+/* Modern button styles */
+.modern-button {
+  @apply rounded-full px-6 py-2.5 font-medium transition-all duration-300;
+}
+

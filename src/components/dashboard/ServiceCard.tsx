@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Star, MapPin, Clock } from 'lucide-react';
 import { ServiceListItem, PricingModel } from '@/types';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 interface ServiceCardProps {
   service: ServiceListItem;
@@ -19,7 +20,7 @@ export function ServiceCard({ service, className }: ServiceCardProps) {
     <Link
       to={`/dashboard/services/${service.id}`}
       className={cn(
-        "block bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all",
+        "block bg-white border rounded-2xl overflow-hidden shadow-soft-sm hover:shadow-soft-md transition-all duration-300 hover:-translate-y-1",
         className
       )}
     >
@@ -29,20 +30,23 @@ export function ServiceCard({ service, className }: ServiceCardProps) {
           alt={service.title}
           className="w-full h-full object-cover"
         />
-        <div className="absolute top-3 right-3 bg-white px-2 py-1 rounded-md text-sm font-medium">
-          {formatPrice(service.price, service.pricingModel)}
+        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent text-white">
+          <Badge className="bg-white/90 text-primary hover:bg-white/100">
+            {formatPrice(service.price, service.pricingModel)}
+          </Badge>
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
+          <h3 className="font-medium text-lg text-white">{service.title}</h3>
         </div>
       </div>
       
       <div className="p-4">
-        <h3 className="font-medium text-lg line-clamp-1">{service.title}</h3>
-        
-        <div className="flex items-center mt-2 text-sm text-muted-foreground">
+        <div className="flex items-center mt-1 text-sm text-muted-foreground">
           <MapPin className="h-4 w-4 mr-1" />
           <span className="line-clamp-1">{service.location}</span>
         </div>
         
-        <div className="flex items-center justify-between mt-3">
+        <div className="flex items-center justify-between mt-4">
           <div className="flex items-center">
             <div className="flex items-center text-amber-500">
               <Star className="h-4 w-4 fill-current" />
@@ -56,9 +60,11 @@ export function ServiceCard({ service, className }: ServiceCardProps) {
             </span>
           </div>
           
-          <div className="flex items-center text-sm text-primary">
-            {service.pricingModel === 'hourly' && <Clock className="h-4 w-4 mr-1" />}
-            <span>{service.pricingModel === 'hourly' ? 'Hourly' : 'Fixed'}</span>
+          <div className="flex items-center text-sm">
+            <Badge variant="outline" className="flex items-center gap-1">
+              {service.pricingModel === 'hourly' && <Clock className="h-3 w-3" />}
+              <span>{service.pricingModel === 'hourly' ? 'Hourly' : 'Fixed'}</span>
+            </Badge>
           </div>
         </div>
       </div>

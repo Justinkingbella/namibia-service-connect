@@ -24,15 +24,15 @@ export function FeatureCard({
       direction="up"
       className={cn(
         'p-6 flex flex-col h-full',
-        'rounded-2xl border border-border hover:border-primary/30 transition-all duration-300',
-        'bg-white hover:bg-gray-50/50 subtle-shadow',
+        'rounded-2xl border border-gray-100 hover:border-primary/30 transition-all duration-300',
+        'bg-white hover:bg-gray-50/50 shadow-soft-sm hover:shadow-soft-md transform hover:-translate-y-1',
         className
       )}
     >
-      <div className="rounded-full w-12 h-12 flex items-center justify-center bg-primary/10 text-primary mb-5">
+      <div className="rounded-xl w-14 h-14 flex items-center justify-center bg-primary/10 text-primary mb-6">
         {icon}
       </div>
-      <h3 className="text-lg font-medium mb-2">{title}</h3>
+      <h3 className="text-xl font-medium mb-3">{title}</h3>
       <p className="text-muted-foreground text-sm flex-1">{description}</p>
     </FadeIn>
   );
