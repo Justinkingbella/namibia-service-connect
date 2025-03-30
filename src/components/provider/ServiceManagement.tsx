@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Plus, Star, ToggleLeft, MoreHorizontal, Eye } from 'lucide-react';
 import { 
@@ -149,21 +149,21 @@ const ServiceManagement: React.FC = () => {
       <div className="flex flex-wrap gap-2 mb-4">
         <Button 
           size="sm" 
-          variant={filter === 'all' ? 'primary' : 'outline'} 
+          variant={filter === 'all' ? 'default' : 'outline'} 
           onClick={() => setFilter('all')}
         >
           All Services
         </Button>
         <Button 
           size="sm" 
-          variant={filter === 'active' ? 'primary' : 'outline'} 
+          variant={filter === 'active' ? 'default' : 'outline'} 
           onClick={() => setFilter('active')}
         >
           Active
         </Button>
         <Button 
           size="sm" 
-          variant={filter === 'inactive' ? 'primary' : 'outline'} 
+          variant={filter === 'inactive' ? 'default' : 'outline'} 
           onClick={() => setFilter('inactive')}
         >
           Inactive

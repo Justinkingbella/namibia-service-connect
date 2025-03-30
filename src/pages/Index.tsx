@@ -13,7 +13,7 @@ import Container from '@/components/common/Container';
 import FadeIn from '@/components/animations/FadeIn';
 
 const HowItWorks = () => (
-  <section className="py-20 bg-gray-50">
+  <section className="py-20 bg-gray-50" id="how-it-works">
     <Container>
       <div className="text-center mb-16">
         <FadeIn>
