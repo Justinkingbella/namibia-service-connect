@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { CalendarClock, CreditCard, Heart, Search, Clock, CheckCircle, XCircle } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCard from '@/components/dashboard/StatsCard';
@@ -7,9 +6,10 @@ import ServiceCategoryCard from '@/components/dashboard/ServiceCategoryCard';
 import BookingCard from '@/components/dashboard/BookingCard';
 import ServiceCard from '@/components/dashboard/ServiceCard';
 import { Button } from '@/components/common/Button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import BookingHistory from '@/components/customer/BookingHistory';
 import { ServiceCategory } from '@/types';
 
-// Mock data
 const mockRecentBookings = [
   {
     id: '1',
@@ -100,6 +100,8 @@ const mockRecommendedServices = [
 ];
 
 const CustomerDashboard = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -148,70 +150,106 @@ const CustomerDashboard = () => {
           />
         </div>
         
-        {/* Upcoming Bookings */}
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Upcoming Bookings</h2>
-            <Button as="a" href="/dashboard/bookings" variant="outline" size="sm">
-              View All
-            </Button>
-          </div>
+        {/* Main Content Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="bookings">My Bookings</TabsTrigger>
+            <TabsTrigger value="favorites">Favorites</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+          </TabsList>
           
-          {mockRecentBookings.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {mockRecentBookings.map(booking => (
-                <BookingCard 
-                  key={booking.id} 
-                  booking={booking} 
-                  viewAs="customer" 
-                />
-              ))}
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* Upcoming Bookings */}
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Upcoming Bookings</h2>
+                <Button as="a" href="/dashboard/bookings" variant="outline" size="sm">
+                  View All
+                </Button>
+              </div>
+              
+              {mockRecentBookings.length > 0 ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {mockRecentBookings.map(booking => (
+                    <BookingCard 
+                      key={booking.id} 
+                      booking={booking} 
+                      viewAs="customer" 
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-lg p-8 text-center">
+                  <CalendarClock className="h-10 w-10 mx-auto text-gray-400" />
+                  <h3 className="mt-4 text-lg font-medium">No upcoming bookings</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    You don't have any upcoming bookings. Browse services to book your first service.
+                  </p>
+                  <Button as="a" href="/dashboard/services" className="mt-4">
+                    Browse Services
+                  </Button>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="bg-gray-50 rounded-lg p-8 text-center">
-              <CalendarClock className="h-10 w-10 mx-auto text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium">No upcoming bookings</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                You don't have any upcoming bookings. Browse services to book your first service.
-              </p>
-              <Button as="a" href="/dashboard/services" className="mt-4">
-                Browse Services
-              </Button>
+            
+            {/* Service Categories */}
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Categories</h2>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <ServiceCategoryCard category="home" />
+                <ServiceCategoryCard category="errand" />
+                <ServiceCategoryCard category="professional" />
+                <ServiceCategoryCard category="freelance" />
+                <ServiceCategoryCard category="transport" />
+                <ServiceCategoryCard category="health" />
+              </div>
             </div>
-          )}
-        </div>
-        
-        {/* Service Categories */}
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Categories</h2>
-          </div>
+            
+            {/* Recommended Services */}
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Recommended For You</h2>
+                <Button as="a" href="/dashboard/services" variant="outline" size="sm">
+                  View All
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {mockRecommendedServices.map(service => (
+                  <ServiceCard key={service.id} service={service} />
+                ))}
+              </div>
+            </div>
+          </TabsContent>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <ServiceCategoryCard category="home" />
-            <ServiceCategoryCard category="errand" />
-            <ServiceCategoryCard category="professional" />
-            <ServiceCategoryCard category="freelance" />
-            <ServiceCategoryCard category="transport" />
-            <ServiceCategoryCard category="health" />
-          </div>
-        </div>
-        
-        {/* Recommended Services */}
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Recommended For You</h2>
-            <Button as="a" href="/dashboard/services" variant="outline" size="sm">
-              View All
-            </Button>
-          </div>
+          {/* Bookings Tab */}
+          <TabsContent value="bookings">
+            <BookingHistory />
+          </TabsContent>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockRecommendedServices.map(service => (
-              <ServiceCard key={service.id} service={service} />
-            ))}
-          </div>
-        </div>
+          {/* Favorites Tab */}
+          <TabsContent value="favorites">
+            <div className="bg-white rounded-xl border shadow-sm p-6">
+              <h2 className="text-lg font-medium mb-4">Your Favorite Providers</h2>
+              <p className="text-muted-foreground">View and manage your saved service providers.</p>
+              <p className="text-sm text-muted-foreground mt-4">This feature is under development.</p>
+            </div>
+          </TabsContent>
+          
+          {/* Profile Tab */}
+          <TabsContent value="profile">
+            <div className="bg-white rounded-xl border shadow-sm p-6">
+              <h2 className="text-lg font-medium mb-4">Your Profile</h2>
+              <p className="text-muted-foreground">View and edit your personal information.</p>
+              <p className="text-sm text-muted-foreground mt-4">This feature is under development.</p>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

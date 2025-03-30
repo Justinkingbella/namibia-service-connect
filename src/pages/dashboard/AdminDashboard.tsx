@@ -1,9 +1,10 @@
-
 import React from 'react';
 import { Users, DollarSign, Check, AlertTriangle, BarChart } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCard from '@/components/dashboard/StatsCard';
 import { Button } from '@/components/common/Button';
+import UserManagement from '@/components/admin/UserManagement';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const AdminDashboard = () => {
   // Mock data for pending approvals
@@ -95,150 +96,186 @@ const AdminDashboard = () => {
           />
         </div>
         
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl border shadow-sm p-6">
-            <h2 className="text-lg font-medium mb-6">Revenue Overview</h2>
-            <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-              <div className="text-center">
-                <BarChart className="h-10 w-10 mx-auto text-gray-400" />
-                <p className="mt-2 text-sm text-muted-foreground">Revenue chart will be displayed here</p>
+        {/* Main Content Tabs */}
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="providers">Providers</TabsTrigger>
+            <TabsTrigger value="disputes">Disputes</TabsTrigger>
+          </TabsList>
+          
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white rounded-xl border shadow-sm p-6">
+                <h2 className="text-lg font-medium mb-6">Revenue Overview</h2>
+                <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                  <div className="text-center">
+                    <BarChart className="h-10 w-10 mx-auto text-gray-400" />
+                    <p className="mt-2 text-sm text-muted-foreground">Revenue chart will be displayed here</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl border shadow-sm p-6">
+                <h2 className="text-lg font-medium mb-6">Booking Analytics</h2>
+                <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                  <div className="text-center">
+                    <BarChart className="h-10 w-10 mx-auto text-gray-400" />
+                    <p className="mt-2 text-sm text-muted-foreground">Booking analytics chart will be displayed here</p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="bg-white rounded-xl border shadow-sm p-6">
-            <h2 className="text-lg font-medium mb-6">Booking Analytics</h2>
-            <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-              <div className="text-center">
-                <BarChart className="h-10 w-10 mx-auto text-gray-400" />
-                <p className="mt-2 text-sm text-muted-foreground">Booking analytics chart will be displayed here</p>
+            
+            {/* Pending Provider Approvals */}
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Pending Provider Approvals</h2>
+                <Button as="a" href="/dashboard/providers/pending" variant="outline" size="sm">
+                  View All
+                </Button>
+              </div>
+              
+              <div className="bg-white shadow-sm rounded-xl border overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Business Name
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Category
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date Applied
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Documents
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {pendingProviders.map((provider) => (
+                      <tr key={provider.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="font-medium text-gray-900">{provider.name}</div>
+                          <div className="text-sm text-gray-500">{provider.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-gray-500">{provider.category}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-gray-500">{provider.date}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-gray-500">{provider.documents} files</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                          <Button size="xs" as="a" href={`/dashboard/providers/${provider.id}`}>
+                            Review
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
-          </div>
-        </div>
-        
-        {/* Pending Provider Approvals */}
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Pending Provider Approvals</h2>
-            <Button as="a" href="/dashboard/providers/pending" variant="outline" size="sm">
-              View All
-            </Button>
-          </div>
+            
+            {/* Recent Disputes */}
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Recent Disputes</h2>
+                <Button as="a" href="/dashboard/disputes" variant="outline" size="sm">
+                  View All
+                </Button>
+              </div>
+              
+              <div className="bg-white shadow-sm rounded-xl border overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Parties
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Service
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Amount
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Reason
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {recentDisputes.map((dispute) => (
+                      <tr key={dispute.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="font-medium text-gray-900">{dispute.customer}</div>
+                          <div className="text-sm text-gray-500">vs. {dispute.provider}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-gray-500">{dispute.service}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-gray-500">N${dispute.amount}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-gray-500">{dispute.reason}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-gray-500">{dispute.date}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                          <Button size="xs" as="a" href={`/dashboard/disputes/${dispute.id}`}>
+                            Resolve
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </TabsContent>
           
-          <div className="bg-white shadow-sm rounded-xl border overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Business Name
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date Applied
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Documents
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {pendingProviders.map((provider) => (
-                  <tr key={provider.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{provider.name}</div>
-                      <div className="text-sm text-gray-500">{provider.email}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-gray-500">{provider.category}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-gray-500">{provider.date}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-gray-500">{provider.documents} files</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                      <Button size="xs" as="a" href={`/dashboard/providers/${provider.id}`}>
-                        Review
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        
-        {/* Recent Disputes */}
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Recent Disputes</h2>
-            <Button as="a" href="/dashboard/disputes" variant="outline" size="sm">
-              View All
-            </Button>
-          </div>
+          {/* Users Tab */}
+          <TabsContent value="users">
+            <UserManagement />
+          </TabsContent>
           
-          <div className="bg-white shadow-sm rounded-xl border overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Parties
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Service
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Reason
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {recentDisputes.map((dispute) => (
-                  <tr key={dispute.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{dispute.customer}</div>
-                      <div className="text-sm text-gray-500">vs. {dispute.provider}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-gray-500">{dispute.service}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-gray-500">N${dispute.amount}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-gray-500">{dispute.reason}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-gray-500">{dispute.date}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                      <Button size="xs" as="a" href={`/dashboard/disputes/${dispute.id}`}>
-                        Resolve
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+          {/* Providers Tab */}
+          <TabsContent value="providers">
+            <div className="bg-white rounded-xl border shadow-sm p-6">
+              <h2 className="text-lg font-medium mb-4">Provider Management</h2>
+              <p className="text-muted-foreground">Manage service providers and verify their details.</p>
+              <p className="text-sm text-muted-foreground mt-4">This feature is under development.</p>
+            </div>
+          </TabsContent>
+          
+          {/* Disputes Tab */}
+          <TabsContent value="disputes">
+            <div className="bg-white rounded-xl border shadow-sm p-6">
+              <h2 className="text-lg font-medium mb-4">Dispute Resolution</h2>
+              <p className="text-muted-foreground">Handle disputes between customers and service providers.</p>
+              <p className="text-sm text-muted-foreground mt-4">This feature is under development.</p>
+            </div>
+          </TabsContent>
+        </Tabs>
         
         {/* Quick Actions */}
         <div>
