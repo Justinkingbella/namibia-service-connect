@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/common/Button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Calendar, Clock, DollarSign, MapPin, Award, Users, Bell, MessageSquare, Mail, Star } from 'lucide-react';
+import { Calendar, Clock, DollarSign, MapPin, Award, Users, Bell, MessageSquare, Mail, Star, TrendingUp, User } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ProviderControlsProps {

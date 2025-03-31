@@ -172,21 +172,21 @@ const RegionalDemandMap: React.FC = () => {
       <CardContent>
         <div className="mb-4 flex flex-wrap gap-2">
           <Button 
-            variant={sortBy === 'bookings' ? 'default' : 'outline'} 
+            variant={sortBy === 'bookings' ? 'primary' : 'outline'} 
             size="sm"
             onClick={() => setSortBy('bookings')}
           >
             <Calendar className="h-4 w-4 mr-2" /> Sort by Bookings
           </Button>
           <Button 
-            variant={sortBy === 'growth' ? 'default' : 'outline'} 
+            variant={sortBy === 'growth' ? 'primary' : 'outline'} 
             size="sm"
             onClick={() => setSortBy('growth')}
           >
             <TrendingUp className="h-4 w-4 mr-2" /> Sort by Growth
           </Button>
           <Button 
-            variant={sortBy === 'ratio' ? 'default' : 'outline'} 
+            variant={sortBy === 'ratio' ? 'primary' : 'outline'} 
             size="sm"
             onClick={() => setSortBy('ratio')}
           >

@@ -126,7 +126,7 @@ const PaymentMethodsControl: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="sm" circle>
                   <Edit className="h-4 w-4" />
                 </Button>
                 <div className="flex items-center">

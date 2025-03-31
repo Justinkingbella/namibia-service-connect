@@ -5,7 +5,8 @@ import { Button } from '@/components/common/Button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
-import { MapPin, Mail, Phone, User, Edit, Save, Star, Clock, Calendar, CreditCard, Shield } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { MapPin, Mail, Phone, User, Edit, Save, Star, Clock, Calendar, CreditCard, Shield, Smartphone, TrendingUp } from 'lucide-react';
 
 interface Address {
   street: string;
@@ -331,7 +332,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                         )}
                       </div>
                       <div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="sm" circle>
                           <Edit className="h-4 w-4" />
                         </Button>
                       </div>
@@ -386,7 +387,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                         </div>
                       </div>
                       <div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button variant="ghost" size="sm" circle>
                           <Edit className="h-4 w-4" />
                         </Button>
                       </div>
