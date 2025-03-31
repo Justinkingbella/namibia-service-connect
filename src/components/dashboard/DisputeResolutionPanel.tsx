@@ -19,7 +19,7 @@ const mockDisputes = [
     providerId: '1',
     status: 'open',
     reason: 'Service not completed as described',
-    description: 'The cleaning service didn't include the bathroom as was promised in the service description.',
+    description: "The cleaning service didn't include the bathroom as was promised in the service description.",
     evidenceUrls: [],
     createdAt: new Date(Date.now() - 86400000 * 2), // 2 days ago
     updatedAt: new Date(Date.now() - 86400000 * 1) // 1 day ago
