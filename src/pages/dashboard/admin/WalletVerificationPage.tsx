@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import WalletVerificationManagement from '@/components/admin/WalletVerificationManagement';
@@ -15,7 +15,7 @@ const mockVerifications: WalletVerification[] = [
     paymentMethod: 'easy_wallet',
     amount: 350.00,
     referenceNumber: 'EW123456789',
-    customerPhone: '0812345678',
+    customerPhone: '081234567',
     providerPhone: '0876543210',
     dateSubmitted: new Date('2023-05-15T10:30:00'),
     verificationStatus: 'submitted',
@@ -23,7 +23,8 @@ const mockVerifications: WalletVerification[] = [
     providerConfirmed: true,
     adminVerified: false,
     proofType: 'receipt',
-    receiptImage: '/placeholder.svg'
+    receiptImage: '/placeholder.svg',
+    mobileOperator: 'MTC'
   },
   {
     id: 'ver2',
@@ -41,7 +42,8 @@ const mockVerifications: WalletVerification[] = [
     customerConfirmed: true,
     providerConfirmed: true,
     adminVerified: true,
-    proofType: 'screenshot'
+    proofType: 'screenshot',
+    mobileOperator: 'TN Mobile'
   },
   {
     id: 'ver3',
@@ -58,7 +60,9 @@ const mockVerifications: WalletVerification[] = [
     customerConfirmed: true,
     providerConfirmed: false,
     adminVerified: false,
-    proofType: 'reference'
+    proofType: 'reference',
+    mobileOperator: 'MTC',
+    bankUsed: 'FNB'
   },
   {
     id: 'ver4',
@@ -74,7 +78,8 @@ const mockVerifications: WalletVerification[] = [
     customerConfirmed: true,
     providerConfirmed: false,
     adminVerified: false,
-    proofType: 'receipt'
+    proofType: 'receipt',
+    bankUsed: 'Bank Windhoek'
   },
   {
     id: 'ver5',
@@ -93,7 +98,9 @@ const mockVerifications: WalletVerification[] = [
     providerConfirmed: true,
     adminVerified: true,
     proofType: 'screenshot',
-    receiptImage: '/placeholder.svg'
+    receiptImage: '/placeholder.svg',
+    mobileOperator: 'TN Mobile',
+    bankUsed: 'Standard Bank'
   }
 ];
 
@@ -111,7 +118,7 @@ const WalletVerificationPage = () => {
   });
   
   // Update state from initialData
-  React.useEffect(() => {
+  useEffect(() => {
     setVerifications(mockVerifications);
   }, []);
   

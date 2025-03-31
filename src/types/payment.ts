@@ -8,6 +8,16 @@ export type WalletVerificationStatus =
   | 'rejected'
   | 'expired';
 
+export type NamibianBank =
+  | 'NED BANK'
+  | 'FNB'
+  | 'Bank Windhoek'
+  | 'Standard Bank';
+
+export type NamibianMobileOperator =
+  | 'MTC'
+  | 'TN Mobile';
+
 export interface WalletVerification {
   id: string;
   transactionId: string;
@@ -27,6 +37,8 @@ export interface WalletVerification {
   adminVerified: boolean;
   receiptImage?: string;
   proofType: 'receipt' | 'screenshot' | 'reference';
+  mobileOperator?: NamibianMobileOperator;
+  bankUsed?: NamibianBank;
 }
 
 export interface WalletTransaction {
@@ -39,6 +51,8 @@ export interface WalletTransaction {
   status: 'pending' | 'completed' | 'failed' | 'disputed';
   transactionDate: Date;
   description?: string;
+  mobileOperator?: NamibianMobileOperator;
+  bankUsed?: NamibianBank;
 }
 
 // Export PaymentMethod directly

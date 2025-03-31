@@ -91,7 +91,7 @@ export function Navbar({ className }: NavbarProps) {
               </button>
               
               {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-10 border">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border">
                   <div className="px-4 py-2 border-b">
                     <p className="text-sm font-medium">{user.name}</p>
                     <p className="text-xs text-gray-500">{user.email}</p>
@@ -147,7 +147,7 @@ export function Navbar({ className }: NavbarProps) {
 
       {/* Mobile Menu Content */}
       {isMenuOpen && (
-        <div className="fixed inset-0 top-[60px] z-40 bg-white/90 backdrop-blur-md md:hidden flex flex-col animate-fade-in">
+        <div className="fixed inset-0 top-[60px] z-40 bg-white/95 backdrop-blur-md md:hidden flex flex-col animate-fade-in">
           <Container className="py-8">
             <ul className="flex flex-col space-y-5">
               {menuItems.map((item) => (

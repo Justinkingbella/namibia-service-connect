@@ -52,10 +52,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen bg-gray-50 flex flex-col w-full">
-        {/* Header */}
+        {/* Fixed Header */}
         <header className={cn(
-          "bg-white border-b sticky top-0 z-10 transition-shadow duration-300",
-          isScrolled && "shadow-sm"
+          "bg-white border-b sticky top-0 z-30 transition-all duration-300",
+          isScrolled ? "shadow-sm" : ""
         )}>
           <Container className="py-3">
             <div className="flex items-center justify-between">
@@ -98,7 +98,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                   </button>
                   
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg py-1 z-10 border animate-fade-in">
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg py-1 z-50 border animate-fade-in">
                       <div className="px-4 py-3 border-b">
                         <p className="text-sm font-medium">{user?.name}</p>
                         <p className="text-xs text-gray-500">{user?.email}</p>
@@ -153,7 +153,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         </header>
 
         <div className="flex flex-1">
-          {/* Sidebar */}
+          {/* Sidebar with Collapsible Feature */}
           <AppSidebar />
           
           {/* Main content */}
