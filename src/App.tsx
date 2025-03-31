@@ -26,7 +26,9 @@ import ProviderVerificationPage from "./pages/dashboard/admin/ProviderVerificati
 import PlatformAnalyticsPage from "./pages/dashboard/admin/PlatformAnalyticsPage";
 import PlatformControlsPage from "./pages/dashboard/admin/PlatformControlsPage";
 import RevenueReportsPage from "./pages/dashboard/provider/RevenueReportsPage";
+import PaymentDetailsPage from "./pages/dashboard/provider/PaymentDetailsPage";
 import ProfilePage from "./pages/dashboard/customer/ProfilePage";
+import FavoritesPage from "./pages/dashboard/customer/FavoritesPage";
 import SettingsPage from "./pages/dashboard/settings/SettingsPage";
 import NotFound from "./pages/NotFound";
 
@@ -71,6 +73,15 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <ServicesPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/services/:id" 
+                  element={
+                    <ProtectedRoute>
+                      <ServiceDetail />
                     </ProtectedRoute>
                   } 
                 />
@@ -188,6 +199,15 @@ function App() {
                   } 
                 />
                 
+                <Route 
+                  path="/dashboard/provider/payments" 
+                  element={
+                    <ProtectedRoute allowedRoles={['provider']}>
+                      <PaymentDetailsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
                 {/* Customer Routes */}
                 <Route 
                   path="/dashboard/customer" 
@@ -203,6 +223,15 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={['customer']}>
                       <ProfilePage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/customer/favorites" 
+                  element={
+                    <ProtectedRoute allowedRoles={['customer']}>
+                      <FavoritesPage />
                     </ProtectedRoute>
                   } 
                 />
