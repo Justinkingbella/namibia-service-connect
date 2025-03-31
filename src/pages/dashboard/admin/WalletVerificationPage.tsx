@@ -103,11 +103,17 @@ const WalletVerificationPage = () => {
   // In a real app, we would fetch data from an API
   const { isLoading } = useQuery({
     queryKey: ['walletVerifications'],
-    queryFn: () => Promise.resolve(mockVerifications),
-    onSuccess: (data) => {
-      setVerifications(data);
-    }
+    queryFn: async () => {
+      // Simulate API call
+      return mockVerifications;
+    },
+    initialData: mockVerifications
   });
+  
+  // Update state from initialData
+  React.useEffect(() => {
+    setVerifications(mockVerifications);
+  }, []);
   
   const handleApproveVerification = (id: string) => {
     setVerifications(prev => 

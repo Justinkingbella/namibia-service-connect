@@ -1,3 +1,4 @@
+
 import { PaymentMethod } from './service';
 
 export type BookingStatus = 
@@ -101,3 +102,6 @@ export interface Dispute {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Re-export PaymentMethod from service.ts
+export { PaymentMethod } from './service';

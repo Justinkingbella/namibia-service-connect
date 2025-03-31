@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -97,16 +96,26 @@ const CustomerWalletVerificationsPage = () => {
   // In a real app, we would fetch data from an API
   const { isLoading: loadingVerifications } = useQuery({
     queryKey: ['customerWalletVerifications'],
-    queryFn: () => Promise.resolve(mockVerifications),
-    onSuccess: (data) => {
-      setVerifications(data);
-    }
+    queryFn: async () => {
+      // Simulate API call
+      return mockVerifications;
+    },
+    initialData: mockVerifications
   });
+  
+  // Update state from initialData
+  useEffect(() => {
+    setVerifications(mockVerifications);
+  }, []);
   
   // In a real app, we would fetch pending bookings from an API
   const { data: pendingBookings, isLoading: loadingBookings } = useQuery({
     queryKey: ['pendingBookings'],
-    queryFn: () => Promise.resolve(mockPendingBookings)
+    queryFn: async () => {
+      // Simulate API call
+      return mockPendingBookings;
+    },
+    initialData: mockPendingBookings
   });
   
   const handleVerificationSubmit = (verificationData: Partial<WalletVerification>) => {

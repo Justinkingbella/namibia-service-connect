@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { WalletVerification } from '@/types/payment';
+import { WalletVerification, WalletVerificationStatus } from '@/types/payment';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, Upload, RefreshCcw, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -197,7 +197,7 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
                 id="reference"
                 {...register('referenceNumber', { required: "Reference number is required" })}
                 disabled={!!existingVerification}
-                error={errors.referenceNumber?.message as string}
+                className={errors.referenceNumber ? "border-red-500" : ""}
               />
               {errors.referenceNumber && (
                 <p className="text-sm text-red-500">{errors.referenceNumber.message as string}</p>
@@ -216,7 +216,7 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
                   }
                 })}
                 disabled={!!existingVerification}
-                error={errors.customerPhone?.message as string}
+                className={errors.customerPhone ? "border-red-500" : ""}
               />
               {errors.customerPhone && (
                 <p className="text-sm text-red-500">{errors.customerPhone.message as string}</p>
