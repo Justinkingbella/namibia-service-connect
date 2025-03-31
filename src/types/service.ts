@@ -1,4 +1,3 @@
-
 export type ServiceCategory = 
   | 'all' 
   | 'home' 
@@ -17,8 +16,7 @@ export type PaymentMethod =
   | 'dop'
   | 'easy_wallet'
   | 'bank_transfer'
-  | 'cash'
-  | string; // Allow for custom payment methods
+  | 'cash';
 
 export interface ServiceListItem {
   id: string;

@@ -27,7 +27,12 @@ import {
   BarChart, 
   Shield, 
   Wallet, 
-  Heart
+  Heart,
+  AlertCircle,
+  CheckSquare,
+  DollarSign,
+  PieChart,
+  Smartphone
 } from 'lucide-react';
 
 export function AppSidebar() {
@@ -48,6 +53,7 @@ export function AppSidebar() {
         ...commonItems,
         { title: 'Users', path: '/dashboard/users', icon: Users },
         { title: 'Provider Verification', path: '/dashboard/admin/providers/verification', icon: Shield },
+        { title: 'Wallet Verification', path: '/dashboard/admin/wallet-verification', icon: Smartphone },
         { title: 'Platform Analytics', path: '/dashboard/admin/analytics', icon: BarChart },
         { title: 'Platform Controls', path: '/dashboard/admin/controls', icon: Settings },
       ];
@@ -58,7 +64,9 @@ export function AppSidebar() {
         ...commonItems,
         { title: 'Services', path: '/dashboard/services', icon: Package },
         { title: 'Bookings', path: '/dashboard/bookings', icon: Calendar },
-        { title: 'Earnings', path: '/dashboard/provider/reports', icon: Wallet },
+        { title: 'Earnings', path: '/dashboard/provider/reports', icon: DollarSign },
+        { title: 'Payment Details', path: '/dashboard/provider/payment-details', icon: CreditCard },
+        { title: 'Performance', path: '/dashboard/provider/performance', icon: PieChart },
         { title: 'Profile', path: '/dashboard/profile', icon: User },
       ];
     }
@@ -69,6 +77,7 @@ export function AppSidebar() {
       { title: 'Services', path: '/dashboard/services', icon: Package },
       { title: 'My Bookings', path: '/dashboard/bookings', icon: Calendar },
       { title: 'Favorites', path: '/dashboard/customer/favorites', icon: Heart },
+      { title: 'Payment Methods', path: '/dashboard/customer/payment-methods', icon: CreditCard },
       { title: 'Profile', path: '/dashboard/customer/profile', icon: User },
     ];
   };
@@ -104,6 +113,86 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        
+        {user?.role === 'provider' && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Financial</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === '/dashboard/provider/wallet-verification'}
+                    tooltip="Wallet Verifications"
+                  >
+                    <Link to="/dashboard/provider/wallet-verification">
+                      <CheckSquare />
+                      <span>Wallet Verifications</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === '/dashboard/provider/disputes'}
+                    tooltip="Payment Disputes"
+                  >
+                    <Link to="/dashboard/provider/disputes">
+                      <AlertCircle />
+                      <span>Payment Disputes</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === '/dashboard/provider/transactions'}
+                    tooltip="Transaction History"
+                  >
+                    <Link to="/dashboard/provider/transactions">
+                      <Wallet />
+                      <span>Transaction History</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+        
+        {user?.role === 'customer' && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Payments</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === '/dashboard/customer/wallet-verifications'}
+                    tooltip="My Verifications"
+                  >
+                    <Link to="/dashboard/customer/wallet-verifications">
+                      <CheckSquare />
+                      <span>My Verifications</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === '/dashboard/customer/payment-history'}
+                    tooltip="Payment History"
+                  >
+                    <Link to="/dashboard/customer/payment-history">
+                      <CreditCard />
+                      <span>Payment History</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <div className="p-4 text-xs text-center text-muted-foreground">
