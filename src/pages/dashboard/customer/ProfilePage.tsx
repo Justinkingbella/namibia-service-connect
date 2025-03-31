@@ -2,6 +2,8 @@
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import CustomerProfile from '@/components/customer/CustomerProfile';
+import UserProfile from '@/components/customer/UserProfile';
+import DisputeResolutionPanel from '@/components/dashboard/DisputeResolutionPanel';
 
 const ProfilePage = () => {
   return (
@@ -12,7 +14,12 @@ const ProfilePage = () => {
           <p className="text-muted-foreground mt-1">Manage your account information and preferences</p>
         </div>
         
-        <CustomerProfile />
+        <UserProfile />
+        
+        <div className="mt-8">
+          <h2 className="text-xl font-bold mb-4">Dispute Resolution</h2>
+          <DisputeResolutionPanel role="customer" />
+        </div>
       </div>
     </DashboardLayout>
   );

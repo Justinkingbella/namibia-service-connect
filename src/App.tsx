@@ -24,6 +24,7 @@ import BookingDetail from "./pages/dashboard/bookings/BookingDetail";
 import MessagesPage from "./pages/dashboard/messages/MessagesPage";
 import ProviderVerificationPage from "./pages/dashboard/admin/ProviderVerificationPage";
 import PlatformAnalyticsPage from "./pages/dashboard/admin/PlatformAnalyticsPage";
+import PlatformControlsPage from "./pages/dashboard/admin/PlatformControlsPage";
 import RevenueReportsPage from "./pages/dashboard/provider/RevenueReportsPage";
 import ProfilePage from "./pages/dashboard/customer/ProfilePage";
 import SettingsPage from "./pages/dashboard/settings/SettingsPage";
@@ -146,6 +147,15 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={['admin']}>
                       <PlatformAnalyticsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/admin/controls" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <PlatformControlsPage />
                     </ProtectedRoute>
                   } 
                 />
