@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import WalletVerificationPanel from '@/components/provider/WalletVerificationPanel';
@@ -67,11 +67,17 @@ const ProviderWalletVerificationPage = () => {
   // In a real app, we would fetch data from an API
   const { isLoading } = useQuery({
     queryKey: ['providerWalletVerifications'],
-    queryFn: () => Promise.resolve(mockVerifications),
-    onSuccess: (data) => {
-      setVerifications(data);
-    }
+    queryFn: async () => {
+      // Simulate API call
+      return mockVerifications;
+    },
+    initialData: mockVerifications
   });
+  
+  // Update state from initialData
+  useEffect(() => {
+    setVerifications(mockVerifications);
+  }, []);
   
   const handleConfirmPayment = (verification: WalletVerification) => {
     setVerifications(prev => 

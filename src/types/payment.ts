@@ -42,4 +42,4 @@ export interface WalletTransaction {
 }
 
 // Export PaymentMethod directly
-export { PaymentMethod } from './service';
+export type { PaymentMethod } from './service';

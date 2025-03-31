@@ -104,4 +104,4 @@ export interface Dispute {
 }
 
 // Re-export PaymentMethod from service.ts
-export { PaymentMethod } from './service';
+export type { PaymentMethod } from './service';
