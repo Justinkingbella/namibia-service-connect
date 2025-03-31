@@ -10,6 +10,16 @@ export type ServiceCategory =
 
 export type PricingModel = 'hourly' | 'fixed';
 
+export type PaymentMethod = 
+  | 'pay_today'
+  | 'pay_fast'
+  | 'e_wallet'
+  | 'dop'
+  | 'easy_wallet'
+  | 'bank_transfer'
+  | 'cash'
+  | string; // Allow for custom payment methods
+
 export interface ServiceListItem {
   id: string;
   title: string;

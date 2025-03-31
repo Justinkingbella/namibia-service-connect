@@ -6,6 +6,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { DollarSign, CreditCard, Smartphone, Building, Wallet, Edit, Trash, PlusCircle } from 'lucide-react';
 import { PaymentMethod } from '@/types';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 interface PaymentMethodOption {
   id: PaymentMethod;
@@ -84,12 +87,78 @@ const PaymentMethodsControl: React.FC = () => {
     },
   ]);
 
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newPaymentMethod, setNewPaymentMethod] = useState<Partial<PaymentMethodOption>>({
+    name: '',
+    description: '',
+    fee: 0,
+    processingTime: 'Instant',
+    enabled: true
+  });
+  
+  const [editingMethod, setEditingMethod] = useState<PaymentMethodOption | null>(null);
+
   const togglePaymentMethod = (id: PaymentMethod) => {
     setPaymentMethods(methods => 
       methods.map(method => 
         method.id === id ? { ...method, enabled: !method.enabled } : method
       )
     );
+    
+    toast.success(`Payment method ${paymentMethods.find(m => m.id === id)?.enabled ? 'disabled' : 'enabled'}`);
+  };
+  
+  const handleAddPaymentMethod = () => {
+    if (!newPaymentMethod.name || !newPaymentMethod.description) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
+    const id = newPaymentMethod.name.toLowerCase().replace(/\s+/g, '_') as PaymentMethod;
+    
+    const method: PaymentMethodOption = {
+      id,
+      name: newPaymentMethod.name,
+      description: newPaymentMethod.description,
+      fee: newPaymentMethod.fee || 0,
+      processingTime: newPaymentMethod.processingTime || 'Instant',
+      enabled: true,
+      icon: <CreditCard className="h-6 w-6" />
+    };
+    
+    setPaymentMethods([...paymentMethods, method]);
+    setNewPaymentMethod({
+      name: '',
+      description: '',
+      fee: 0,
+      processingTime: 'Instant',
+      enabled: true
+    });
+    
+    setIsAddModalOpen(false);
+    toast.success("Payment method added successfully");
+  };
+  
+  const handleEditMethod = (method: PaymentMethodOption) => {
+    setEditingMethod(method);
+  };
+  
+  const handleUpdateMethod = () => {
+    if (!editingMethod) return;
+    
+    setPaymentMethods(methods => 
+      methods.map(method => 
+        method.id === editingMethod.id ? editingMethod : method
+      )
+    );
+    
+    setEditingMethod(null);
+    toast.success("Payment method updated successfully");
+  };
+  
+  const handleDeleteMethod = (id: PaymentMethod) => {
+    setPaymentMethods(methods => methods.filter(method => method.id !== id));
+    toast.success("Payment method removed");
   };
 
   return (
@@ -102,10 +171,62 @@ const PaymentMethodsControl: React.FC = () => {
               Manage available payment options for users
             </CardDescription>
           </div>
-          <Button size="sm">
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Add Payment Method
-          </Button>
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add Payment Method
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Payment Method</DialogTitle>
+                <DialogDescription>
+                  Add a new payment method to the platform
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input 
+                    id="name" 
+                    value={newPaymentMethod.name}
+                    onChange={(e) => setNewPaymentMethod({...newPaymentMethod, name: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Input 
+                    id="description" 
+                    value={newPaymentMethod.description}
+                    onChange={(e) => setNewPaymentMethod({...newPaymentMethod, description: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fee">Fee (%)</Label>
+                  <Input 
+                    id="fee" 
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={newPaymentMethod.fee}
+                    onChange={(e) => setNewPaymentMethod({...newPaymentMethod, fee: parseFloat(e.target.value)})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="processingTime">Processing Time</Label>
+                  <Input 
+                    id="processingTime" 
+                    value={newPaymentMethod.processingTime}
+                    onChange={(e) => setNewPaymentMethod({...newPaymentMethod, processingTime: e.target.value})}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleAddPaymentMethod}>Add Payment Method</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </CardHeader>
       <CardContent>
@@ -126,9 +247,66 @@ const PaymentMethodsControl: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="sm" circle>
-                  <Edit className="h-4 w-4" />
-                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm" circle onClick={() => handleEditMethod(method)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  {editingMethod && editingMethod.id === method.id && (
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Edit Payment Method</DialogTitle>
+                        <DialogDescription>
+                          Update payment method details
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-name">Name</Label>
+                          <Input 
+                            id="edit-name" 
+                            value={editingMethod.name}
+                            onChange={(e) => setEditingMethod({...editingMethod, name: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-description">Description</Label>
+                          <Input 
+                            id="edit-description" 
+                            value={editingMethod.description}
+                            onChange={(e) => setEditingMethod({...editingMethod, description: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-fee">Fee (%)</Label>
+                          <Input 
+                            id="edit-fee" 
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={editingMethod.fee}
+                            onChange={(e) => setEditingMethod({...editingMethod, fee: parseFloat(e.target.value)})}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-processingTime">Processing Time</Label>
+                          <Input 
+                            id="edit-processingTime" 
+                            value={editingMethod.processingTime}
+                            onChange={(e) => setEditingMethod({...editingMethod, processingTime: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="destructive" onClick={() => handleDeleteMethod(method.id)} className="mr-auto">
+                          <Trash className="h-4 w-4 mr-2" /> Delete
+                        </Button>
+                        <Button onClick={handleUpdateMethod}>Update</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  )}
+                </Dialog>
                 <div className="flex items-center">
                   <Switch
                     id={`method-${method.id}`}

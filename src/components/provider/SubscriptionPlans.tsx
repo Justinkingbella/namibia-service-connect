@@ -1,9 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/ui/badge';
-import { Check, X } from 'lucide-react';
+import { Check, X, CreditCard } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { toast } from 'sonner';
+import { SubscriptionTier } from '@/types';
 
 const planFeatures = {
   free: [
@@ -41,7 +46,33 @@ const planFeatures = {
   ],
 };
 
-const SubscriptionPlans: React.FC = () => {
+interface SubscriptionPlansProps {
+  currentPlan?: SubscriptionTier;
+  onChangePlan?: (plan: SubscriptionTier) => void;
+}
+
+const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ 
+  currentPlan = 'free',
+  onChangePlan 
+}) => {
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionTier>(currentPlan);
+  const [paymentMethod, setPaymentMethod] = useState('pay_today');
+
+  const handleUpgrade = () => {
+    if (onChangePlan) {
+      onChangePlan(selectedPlan);
+    }
+    
+    toast.success(`Successfully upgraded to ${selectedPlan === 'pro' ? 'Pro' : 'Enterprise'} plan!`);
+    setIsUpgradeModalOpen(false);
+  };
+
+  const openUpgradeModal = (plan: SubscriptionTier) => {
+    setSelectedPlan(plan);
+    setIsUpgradeModalOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -51,7 +82,7 @@ const SubscriptionPlans: React.FC = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Free Plan */}
-        <Card className="border-gray-200">
+        <Card className={`border-gray-200 ${currentPlan === 'free' ? 'ring-2 ring-primary' : ''}`}>
           <CardHeader>
             <CardTitle>Free Plan</CardTitle>
             <CardDescription>For individuals just getting started</CardDescription>
@@ -77,14 +108,20 @@ const SubscriptionPlans: React.FC = () => {
             </ul>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full">
-              Current Plan
-            </Button>
+            {currentPlan === 'free' ? (
+              <Button variant="outline" className="w-full" disabled>
+                Current Plan
+              </Button>
+            ) : (
+              <Button variant="outline" className="w-full" onClick={() => openUpgradeModal('free')}>
+                Downgrade
+              </Button>
+            )}
           </CardFooter>
         </Card>
         
         {/* Pro Plan */}
-        <Card className="border-primary shadow-md relative">
+        <Card className={`${currentPlan === 'pro' ? 'ring-2 ring-primary' : 'border-primary'} shadow-md relative`}>
           <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
             <Badge className="bg-primary text-white">Popular</Badge>
           </div>
@@ -113,14 +150,23 @@ const SubscriptionPlans: React.FC = () => {
             </ul>
           </CardContent>
           <CardFooter>
-            <Button className="w-full">
-              Upgrade to Pro
-            </Button>
+            {currentPlan === 'pro' ? (
+              <Button variant="outline" className="w-full" disabled>
+                Current Plan
+              </Button>
+            ) : (
+              <Button 
+                className="w-full" 
+                onClick={() => openUpgradeModal('pro')}
+              >
+                {currentPlan === 'enterprise' ? 'Downgrade to Pro' : 'Upgrade to Pro'}
+              </Button>
+            )}
           </CardFooter>
         </Card>
         
         {/* Enterprise Plan */}
-        <Card className="border-gray-200">
+        <Card className={`border-gray-200 ${currentPlan === 'enterprise' ? 'ring-2 ring-primary' : ''}`}>
           <CardHeader>
             <CardTitle>Enterprise Plan</CardTitle>
             <CardDescription>For established businesses</CardDescription>
@@ -146,12 +192,86 @@ const SubscriptionPlans: React.FC = () => {
             </ul>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full">
-              Contact Sales
-            </Button>
+            {currentPlan === 'enterprise' ? (
+              <Button variant="outline" className="w-full" disabled>
+                Current Plan
+              </Button>
+            ) : (
+              <Button
+                variant={currentPlan === 'free' ? 'outline' : 'default'}
+                className="w-full"
+                onClick={() => openUpgradeModal('enterprise')}
+              >
+                Upgrade to Enterprise
+              </Button>
+            )}
           </CardFooter>
         </Card>
       </div>
+      
+      <Dialog open={isUpgradeModalOpen} onOpenChange={setIsUpgradeModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedPlan === 'free' 
+                ? 'Downgrade to Free Plan' 
+                : `Upgrade to ${selectedPlan === 'pro' ? 'Pro' : 'Enterprise'} Plan`}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedPlan === 'free' 
+                ? 'Are you sure you want to downgrade? You will lose access to premium features.'
+                : 'Choose your payment method to complete the upgrade.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPlan !== 'free' && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center justify-between">
+                <span>Subscription fee</span>
+                <span className="font-medium">
+                  N${selectedPlan === 'pro' ? '299' : '599'}/month
+                </span>
+              </div>
+              
+              <RadioGroup
+                value={paymentMethod}
+                onValueChange={setPaymentMethod}
+                className="space-y-3"
+              >
+                <div className="flex items-center space-x-2 border p-3 rounded-md">
+                  <RadioGroupItem value="pay_today" id="pay_today" />
+                  <Label htmlFor="pay_today" className="flex-1">PayToday</Label>
+                  <CreditCard className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="flex items-center space-x-2 border p-3 rounded-md">
+                  <RadioGroupItem value="pay_fast" id="pay_fast" />
+                  <Label htmlFor="pay_fast" className="flex-1">PayFast</Label>
+                  <CreditCard className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="flex items-center space-x-2 border p-3 rounded-md">
+                  <RadioGroupItem value="e_wallet" id="e_wallet" />
+                  <Label htmlFor="e_wallet" className="flex-1">E-Wallet</Label>
+                  <CreditCard className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="flex items-center space-x-2 border p-3 rounded-md">
+                  <RadioGroupItem value="bank_transfer" id="bank_transfer" />
+                  <Label htmlFor="bank_transfer" className="flex-1">Bank Transfer</Label>
+                  <CreditCard className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </RadioGroup>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUpgradeModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpgrade}>
+              {selectedPlan === 'free' ? 'Confirm Downgrade' : 'Complete Upgrade'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       <div className="bg-gray-50 p-4 rounded-lg border">
         <h3 className="font-medium mb-2">Enterprise Solutions</h3>
