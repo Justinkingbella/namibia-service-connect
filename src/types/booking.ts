@@ -1,4 +1,3 @@
-
 import { PaymentMethod } from './service';
 
 export type BookingStatus = 
@@ -7,7 +6,8 @@ export type BookingStatus =
   | 'in_progress'
   | 'completed'
   | 'cancelled'
-  | 'rejected';
+  | 'rejected'
+  | 'disputed';
 
 export type PaymentStatus = 
   | 'pending'

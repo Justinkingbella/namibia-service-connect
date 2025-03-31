@@ -2,8 +2,8 @@
 import React, { ElementType, ComponentPropsWithoutRef } from 'react';
 import { cn } from '@/lib/utils';
 
-type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'link';
-type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'destructive' | 'default';
+type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'icon';
 
 // This type allows for the 'as' prop
 type ButtonProps<T extends ElementType = 'button'> = {
@@ -38,6 +38,8 @@ export function Button<T extends ElementType = 'button'>({
     outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
     ghost: 'hover:bg-accent hover:text-accent-foreground',
     link: 'text-primary underline-offset-4 hover:underline',
+    destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+    default: 'bg-primary text-primary-foreground hover:bg-primary/90',
   };
 
   const sizeClasses = {
@@ -46,6 +48,7 @@ export function Button<T extends ElementType = 'button'>({
     md: circle ? 'h-10 w-10 text-base' : 'h-10 px-4 text-base',
     lg: circle ? 'h-12 w-12 text-lg' : 'h-12 px-6 text-lg',
     xl: circle ? 'h-14 w-14 text-xl' : 'h-14 px-8 text-xl',
+    icon: circle ? 'h-10 w-10 p-0' : 'h-10 w-10 p-0',
   };
 
   const circleClasses = circle ? 'flex items-center justify-center p-0 rounded-full' : 'rounded-lg';
