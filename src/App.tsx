@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -15,6 +16,7 @@ import Contact from "./pages/Contact";
 import Services from "./pages/Services";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
+import CreateAdmin from "./pages/auth/CreateAdmin";
 import Dashboard from "./pages/dashboard/Dashboard";
 import CustomerDashboard from "./pages/dashboard/CustomerDashboard";
 import ProviderDashboard from "./pages/dashboard/ProviderDashboard";
@@ -73,6 +75,7 @@ function App() {
               <Route path="/services" element={<Services />} />
               <Route path="/auth/sign-in" element={<SignIn />} />
               <Route path="/auth/sign-up" element={<SignUp />} />
+              <Route path="/auth/create-admin" element={<CreateAdmin />} />
               
               {/* Protected Routes - Dashboard */}
               <Route 

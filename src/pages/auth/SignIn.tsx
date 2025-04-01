@@ -8,10 +8,13 @@ import Button from '@/components/common/Button';
 import Container from '@/components/common/Container';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const { signIn, isLoading, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,13 +35,10 @@ const SignIn = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
     if (!email || !password) {
-      toast({
-        title: 'Missing information',
-        description: 'Please provide both email and password',
-        variant: 'destructive',
-      });
+      setError('Please provide both email and password');
       return;
     }
     
@@ -46,13 +46,26 @@ const SignIn = () => {
       await signIn(email, password);
       // The redirect will be handled by the useEffect above
       console.log('Sign in successful');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed:', error);
-      toast({
-        title: 'Login failed',
-        description: 'Please check your credentials and try again',
-        variant: 'destructive',
-      });
+      setError(error.message || 'Authentication failed. Please check your credentials and try again.');
+    }
+  };
+
+  const setDemoCredentials = (role: string) => {
+    switch (role) {
+      case 'admin':
+        setEmail('antoniojoaquimjustino@gmail.com');
+        setPassword('admin123');
+        break;
+      case 'provider':
+        setEmail('provider@namibiaservice.com');
+        setPassword('provider123');
+        break;
+      case 'customer':
+        setEmail('customer@namibiaservice.com');
+        setPassword('password');
+        break;
     }
   };
 
@@ -66,6 +79,14 @@ const SignIn = () => {
           
           <div className="bg-white shadow-md rounded-xl p-5 sm:p-8">
             <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">Sign In</h2>
+            
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             
             <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               <div>
@@ -122,31 +143,27 @@ const SignIn = () => {
             <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mt-2">
               <button 
                 className="text-primary hover:underline text-xs" 
-                onClick={() => {
-                  setEmail('antoniojoaquimjustino@gmail.com');
-                  setPassword('admin123');
-                }}
+                onClick={() => setDemoCredentials('admin')}
               >
                 Admin Login
               </button>
               <button 
                 className="text-primary hover:underline text-xs" 
-                onClick={() => {
-                  setEmail('provider@namibiaservice.com');
-                  setPassword('provider123');
-                }}
+                onClick={() => setDemoCredentials('provider')}
               >
                 Provider Login
               </button>
               <button 
                 className="text-primary hover:underline text-xs" 
-                onClick={() => {
-                  setEmail('customer@namibiaservice.com');
-                  setPassword('password');
-                }}
+                onClick={() => setDemoCredentials('customer')}
               >
                 Customer Login
               </button>
+            </div>
+            <div className="mt-2">
+              <Link to="/auth/create-admin" className="text-primary hover:underline text-xs">
+                Create Admin Account
+              </Link>
             </div>
           </div>
         </div>
