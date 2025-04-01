@@ -6,9 +6,10 @@ import { cn } from '@/lib/utils';
 
 interface MessageThreadProps {
   messages: Message[];
+  currentUserId?: string;
 }
 
-const MessageThread: React.FC<MessageThreadProps> = ({ messages }) => {
+const MessageThread: React.FC<MessageThreadProps> = ({ messages, currentUserId }) => {
   const sortedMessages = [...messages].sort(
     (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
   );
@@ -21,7 +22,7 @@ const MessageThread: React.FC<MessageThreadProps> = ({ messages }) => {
         </div>
       ) : (
         sortedMessages.map((message) => {
-          const isCurrentUser = message.senderId === 'current-user';
+          const isCurrentUser = message.senderId === currentUserId;
           return (
             <div
               key={message.id}
@@ -39,6 +40,21 @@ const MessageThread: React.FC<MessageThreadProps> = ({ messages }) => {
                 )}
               >
                 <div className="mb-1">{message.text}</div>
+                {message.attachments && message.attachments.length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    {message.attachments.map((url, index) => (
+                      <a
+                        key={index}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-xs underline"
+                      >
+                        Attachment {index + 1}
+                      </a>
+                    ))}
+                  </div>
+                )}
                 <div 
                   className={cn(
                     'text-xs mt-1',
