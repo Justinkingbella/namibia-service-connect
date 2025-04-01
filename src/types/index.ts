@@ -19,7 +19,6 @@ export type {
 export type { User, UserRole, ProviderVerificationStatus, Customer, Provider, Admin, AuthContextType } from './auth';
 
 // Explicitly re-export types with different names to resolve ambiguities
-// Note: We need to exclude PaymentMethod from the wildcard exports above
 export type { PaymentMethod as ServicePaymentMethod } from './service';
 export type { PaymentMethod as PaymentPaymentMethod } from './payment';
 export type { Transaction as PaymentTransaction } from './payment';
