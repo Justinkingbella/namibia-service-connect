@@ -121,7 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (providerData) {
           // Explicitly type the verification_status to resolve TS error
-          const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'unverified';
+          const verificationStatus = (providerData.verification_status as ProviderVerificationStatus) || 'unverified';
           
           // Create provider-specific user object
           const provider: Provider = {
@@ -131,20 +131,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             description: providerData.business_description || '',
             verificationStatus: verificationStatus,
             // Default to empty arrays if categories and locations don't exist
-            categories: Array.isArray(providerData.categories) ? providerData.categories : [],
-            locations: Array.isArray(providerData.locations) ? providerData.locations : [],
+            categories: [], // We'll set this properly below
+            locations: [], // We'll set this properly below
             subscriptionTier: providerData.subscription_tier as any || 'free',
             rating: providerData.rating || 0,
             reviewCount: providerData.rating_count || 0,
             earnings: 0,
             balance: 0,
-            // Handle bank details carefully to avoid undefined properties
-            bankDetails: (providerData.bank_name || providerData.account_name || providerData.account_number) ? {
-              accountName: providerData.account_name || '',
-              accountNumber: providerData.account_number || '',
-              bankName: providerData.bank_name || ''
-            } : undefined
+            bankDetails: undefined // We'll set this properly below
           };
+          
+          // Safely handle categories and locations which might not exist in the DB response
+          if ('categories' in providerData && Array.isArray(providerData.categories)) {
+            provider.categories = providerData.categories;
+          }
+          
+          if ('locations' in providerData && Array.isArray(providerData.locations)) {
+            provider.locations = providerData.locations;
+          }
+          
+          // Safely handle bank details
+          const hasBankDetails = 
+            ('bank_name' in providerData && providerData.bank_name) || 
+            ('account_name' in providerData && providerData.account_name) || 
+            ('account_number' in providerData && providerData.account_number);
+            
+          if (hasBankDetails) {
+            provider.bankDetails = {
+              accountName: ('account_name' in providerData ? providerData.account_name : '') || '',
+              accountNumber: ('account_number' in providerData ? providerData.account_number : '') || '',
+              bankName: ('bank_name' in providerData ? providerData.bank_name : '') || ''
+            };
+          }
           
           setUser(provider);
         } else {
