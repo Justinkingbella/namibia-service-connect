@@ -56,9 +56,9 @@ const UserManagement: React.FC = () => {
               name: displayName,
               email: user.email || '',
               role: (user.role as UserRole) || 'customer',
-              status: user.is_verified ? 'active' : 'pending',
+              status: user.active ? 'active' : 'pending',
               joinDate: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : '-',
-              isVerified: !!user.is_verified
+              isVerified: !!user.active
             };
           });
           setUsers(formattedUsers);
@@ -136,12 +136,12 @@ const UserManagement: React.FC = () => {
 
   const handleStatusChange = async (userId: string, newStatus: 'active' | 'inactive') => {
     try {
-      const isVerified = newStatus === 'active';
+      const isActive = newStatus === 'active';
       
-      // Update in Supabase
+      // Update in Supabase - using 'active' field instead of 'is_verified'
       const { error } = await supabase
         .from('profiles')
-        .update({ is_verified: isVerified })
+        .update({ active: isActive })
         .eq('id', userId);
         
       if (error) throw error;
@@ -149,7 +149,7 @@ const UserManagement: React.FC = () => {
       // Update local state
       setUsers(users.map(user => 
         user.id === userId 
-          ? { ...user, status: newStatus, isVerified } 
+          ? { ...user, status: newStatus, isVerified: isActive } 
           : user
       ));
       

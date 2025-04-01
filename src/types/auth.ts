@@ -112,6 +112,7 @@ export interface DbUserProfile {
   city?: string;
   country?: string;
   bio?: string;
+  active?: boolean; // Added this field to match our database schema
 }
 
 export interface DbProviderProfile {
