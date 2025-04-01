@@ -1,5 +1,5 @@
 
-// Export base types
+// Export base types but exclude those with name conflicts
 export * from './service';
 export * from './payment';
 export * from './subscription';
