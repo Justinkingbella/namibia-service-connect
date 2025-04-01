@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Check, X, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { SubscriptionPlan, convertJsonToFeatures, convertFeaturesToJson } from '@/types/subscription';
 import { SubscriptionForm } from './SubscriptionForm';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 const SubscriptionManagement = () => {
@@ -18,7 +17,6 @@ const SubscriptionManagement = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [activeTab, setActiveTab] = useState('all');
-  const { toast } = useToast();
 
   useEffect(() => {
     fetchSubscriptionPlans();
@@ -54,11 +52,7 @@ const SubscriptionManagement = () => {
       setSubscriptionPlans(transformedData);
     } catch (error) {
       console.error('Error fetching subscription plans:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load subscription plans.",
-        variant: "destructive",
-      });
+      toast.error("Failed to load subscription plans.");
     } finally {
       setIsLoading(false);
     }
@@ -116,17 +110,10 @@ const SubscriptionManagement = () => {
       
       setIsOpen(false);
       
-      toast({
-        title: "Subscription Plan Created",
-        description: `${plan.name} has been successfully created.`,
-      });
+      toast.success(`${plan.name} has been successfully created.`);
     } catch (error) {
       console.error('Error creating subscription plan:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create subscription plan.",
-        variant: "destructive",
-      });
+      toast.error("Failed to create subscription plan.");
     }
   };
 
@@ -177,17 +164,10 @@ const SubscriptionManagement = () => {
       setIsOpen(false);
       setEditingPlan(null);
       
-      toast({
-        title: "Subscription Plan Updated",
-        description: `${plan.name} has been successfully updated.`,
-      });
+      toast.success(`${plan.name} has been successfully updated.`);
     } catch (error) {
       console.error('Error updating subscription plan:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update subscription plan.",
-        variant: "destructive",
-      });
+      toast.error("Failed to update subscription plan.");
     }
   };
 
@@ -206,18 +186,10 @@ const SubscriptionManagement = () => {
       
       setSubscriptionPlans(subscriptionPlans.filter(p => p.id !== id));
       
-      toast({
-        title: "Subscription Plan Deleted",
-        description: `${planToDelete?.name} has been successfully deleted.`,
-        variant: "destructive",
-      });
+      toast.success(`${planToDelete?.name} has been successfully deleted.`);
     } catch (error) {
       console.error('Error deleting subscription plan:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete subscription plan.",
-        variant: "destructive",
-      });
+      toast.error("Failed to delete subscription plan.");
     }
   };
 
@@ -253,17 +225,10 @@ const SubscriptionManagement = () => {
         setSubscriptionPlans(subscriptionPlans.map(p => p.id === id ? updatedPlan : p));
       }
       
-      toast({
-        title: `Subscription Plan ${updatedStatus ? 'Activated' : 'Deactivated'}`,
-        description: `${plan.name} has been ${updatedStatus ? 'activated' : 'deactivated'}.`,
-      });
+      toast.success(`${plan.name} has been ${updatedStatus ? 'activated' : 'deactivated'}.`);
     } catch (error) {
       console.error('Error toggling plan status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update plan status.",
-        variant: "destructive",
-      });
+      toast.error("Failed to update plan status.");
     }
   };
 
