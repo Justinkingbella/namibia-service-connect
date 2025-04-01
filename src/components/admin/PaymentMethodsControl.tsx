@@ -1,17 +1,16 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/common/Button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { DollarSign, CreditCard, Smartphone, Building, Wallet, Edit, Trash, PlusCircle } from 'lucide-react';
-import { PaymentMethod } from '@/types';
+import { ServicePaymentMethod } from '@/types';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
 interface PaymentMethodOption {
-  id: PaymentMethod;
+  id: ServicePaymentMethod;
   name: string;
   description: string;
   enabled: boolean;
@@ -98,7 +97,7 @@ const PaymentMethodsControl: React.FC = () => {
   
   const [editingMethod, setEditingMethod] = useState<PaymentMethodOption | null>(null);
 
-  const togglePaymentMethod = (id: PaymentMethod) => {
+  const togglePaymentMethod = (id: ServicePaymentMethod) => {
     setPaymentMethods(methods => 
       methods.map(method => 
         method.id === id ? { ...method, enabled: !method.enabled } : method
@@ -114,7 +113,7 @@ const PaymentMethodsControl: React.FC = () => {
       return;
     }
     
-    const id = newPaymentMethod.name.toLowerCase().replace(/\s+/g, '_') as PaymentMethod;
+    const id = newPaymentMethod.name.toLowerCase().replace(/\s+/g, '_') as ServicePaymentMethod;
     
     const method: PaymentMethodOption = {
       id,
@@ -156,7 +155,7 @@ const PaymentMethodsControl: React.FC = () => {
     toast.success("Payment method updated successfully");
   };
   
-  const handleDeleteMethod = (id: PaymentMethod) => {
+  const handleDeleteMethod = (id: ServicePaymentMethod) => {
     setPaymentMethods(methods => methods.filter(method => method.id !== id));
     toast.success("Payment method removed");
   };
