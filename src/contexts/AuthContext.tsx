@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { User, UserRole, AuthContextType, Provider, Customer, Admin, DbUserProfile, DbProviderProfile } from '@/types/auth';
+import { User, UserRole, AuthContextType, Provider, Customer, Admin, DbUserProfile, DbProviderProfile, ProviderVerificationStatus } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -120,23 +120,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         if (providerData) {
+          // Explicitly type the verification_status to resolve TS error
+          const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'unverified';
+          
+          // Create provider-specific user object
           const provider: Provider = {
             ...baseUser,
             role: 'provider',
             businessName: providerData.business_name || '',
             description: providerData.business_description || '',
-            verificationStatus: providerData.verification_status || 'unverified',
-            categories: providerData.categories || [],
-            locations: providerData.locations || [],
+            verificationStatus: verificationStatus,
+            // Default to empty arrays if categories and locations don't exist
+            categories: Array.isArray(providerData.categories) ? providerData.categories : [],
+            locations: Array.isArray(providerData.locations) ? providerData.locations : [],
             subscriptionTier: providerData.subscription_tier as any || 'free',
             rating: providerData.rating || 0,
             reviewCount: providerData.rating_count || 0,
             earnings: 0,
             balance: 0,
-            bankDetails: providerData.bank_name ? {
+            // Handle bank details carefully to avoid undefined properties
+            bankDetails: (providerData.bank_name || providerData.account_name || providerData.account_number) ? {
               accountName: providerData.account_name || '',
               accountNumber: providerData.account_number || '',
-              bankName: providerData.bank_name
+              bankName: providerData.bank_name || ''
             } : undefined
           };
           
