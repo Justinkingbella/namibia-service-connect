@@ -1,27 +1,53 @@
 
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Logo from '@/components/common/Logo';
 import { Input } from '@/components/ui/input';
 import Button from '@/components/common/Button';
 import Container from '@/components/common/Container';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useToast } from '@/hooks/use-toast';
 
 const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { signIn, isLoading } = useAuth();
+  const { signIn, isLoading, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
+  const { toast } = useToast();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user) {
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
+    }
+  }, [user, navigate, location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast({
+        title: 'Missing information',
+        description: 'Please provide both email and password',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     try {
       await signIn(email, password);
-      navigate('/dashboard');
+      // The redirect will be handled by the useEffect above
     } catch (error) {
       console.error('Login failed:', error);
+      toast({
+        title: 'Login failed',
+        description: 'Please check your credentials and try again',
+        variant: 'destructive',
+      });
     }
   };
 

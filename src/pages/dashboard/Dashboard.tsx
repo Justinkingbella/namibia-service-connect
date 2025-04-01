@@ -1,28 +1,47 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import CustomerDashboard from './CustomerDashboard';
 import ProviderDashboard from './ProviderDashboard';
 import AdminDashboard from './AdminDashboard';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        navigate('/login');
+      setIsLoading(true);
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error checking auth session:', error);
+        toast({
+          title: 'Authentication Error',
+          description: 'There was a problem verifying your session. Please try signing in again.',
+          variant: 'destructive',
+        });
+        navigate('/auth/sign-in');
+        return;
       }
+      
+      if (!data.session) {
+        navigate('/auth/sign-in');
+        return;
+      }
+      
+      setIsLoading(false);
     };
 
     checkAuth();
-  }, [navigate]);
+  }, [navigate, toast]);
 
-  if (!user) {
+  if (isLoading || !user) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
