@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'provider' | 'customer';
 
 export type ProviderVerificationStatus = 'unverified' | 'pending' | 'verified';
