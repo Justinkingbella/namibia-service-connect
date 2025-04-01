@@ -147,14 +147,21 @@ const BookingSettingsPage = () => {
       let savedSetting;
       if (editingKey) {
         // Update existing setting
-        savedSetting = await updateBookingSetting(settingForm.key, parsedValue, settingForm.description);
+        savedSetting = await updateBookingSetting(settingForm.key, {
+          value: parsedValue,
+          description: settingForm.description
+        });
         toast({
           title: 'Success',
           description: 'Setting updated successfully',
         });
       } else {
         // Create new setting
-        savedSetting = await createBookingSetting(settingForm.key, parsedValue, settingForm.description);
+        savedSetting = await createBookingSetting({
+          key: settingForm.key,
+          value: parsedValue,
+          description: settingForm.description
+        });
         toast({
           title: 'Success',
           description: 'Setting created successfully',

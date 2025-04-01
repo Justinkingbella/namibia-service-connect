@@ -199,7 +199,13 @@ export const getServiceCategories = async (): Promise<ServiceCategory[]> => {
 };
 
 // Create a service category (admin only)
-export const createServiceCategory = async (category: Partial<ServiceCategory>): Promise<ServiceCategory | null> => {
+export const createServiceCategory = async (category: { name: string } & Partial<ServiceCategory>): Promise<ServiceCategory | null> => {
+  // Make sure name is provided
+  if (!category.name) {
+    console.error('Service category name is required');
+    return null;
+  }
+
   const { data, error } = await supabase
     .from('service_categories')
     .insert(category)
@@ -330,7 +336,13 @@ export const updateBookingSetting = async (id: string, updates: Partial<BookingS
 };
 
 // Create a booking setting (admin only)
-export const createBookingSetting = async (setting: Partial<BookingSetting>): Promise<BookingSetting | null> => {
+export const createBookingSetting = async (setting: { key: string, value: any } & Partial<BookingSetting>): Promise<BookingSetting | null> => {
+  // Make sure key and value are provided
+  if (!setting.key || setting.value === undefined) {
+    console.error('Booking setting key and value are required');
+    return null;
+  }
+
   const { data, error } = await supabase
     .from('booking_settings')
     .insert(setting)
