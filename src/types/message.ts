@@ -34,38 +34,28 @@ export interface DbMessage {
 export interface DbConversation {
   id: string;
   created_at: string;
-  updated_at: string;
   last_message: string;
   last_message_date: string;
   unread_count: number;
-  participants?: {
-    user_id: string;
-    user?: {
-      id: string;
-      email?: string;
-      raw_user_meta_data?: {
-        name?: string;
-      };
-    };
-  }[];
+}
+
+export interface DbConversationParticipant {
+  id?: string;
+  conversation_id: string;
+  user_id: string;
+  created_at?: string;
+  user?: {
+    id: string;
+    first_name?: string;
+    last_name?: string;
+    avatar_url?: string;
+  };
 }
 
 // These interfaces define the raw structure of our Supabase database tables
 // We'll use them to properly type-cast our Supabase queries
 export interface DbTables {
   messages: DbMessage;
-  conversations: {
-    id: string;
-    created_at: string;
-    updated_at: string;
-    last_message: string;
-    last_message_date: string;
-    unread_count: number;
-  };
-  conversation_participants: {
-    id: string;
-    conversation_id: string;
-    user_id: string;
-    created_at: string;
-  };
+  conversations: DbConversation;
+  conversation_participants: DbConversationParticipant;
 }

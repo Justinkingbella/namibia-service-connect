@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Conversation, Message, DbMessage, DbConversation, DbTables } from '@/types/message';
+import { Conversation, Message, DbMessage, DbConversation, DbTables, DbConversationParticipant } from '@/types/message';
 
 export function useConversations() {
   const { user } = useAuth();
@@ -22,9 +22,10 @@ export function useConversations() {
     const loadConversations = async () => {
       setLoading(true);
       try {
-        // Use type assertion to get around TypeScript limitations
-        const { data, error } = await (supabase
-          .from('conversation_participants') as any)
+        // Using type assertion to specify the table type
+        const supabaseQuery = supabase.from('conversation_participants') as any;
+        
+        const { data, error } = await supabaseQuery
           .select(`
             conversation_id,
             conversation:conversations (
@@ -115,13 +116,13 @@ export function useConversations() {
         if (error) throw error;
 
         // Convert DB format to our app format
-        const formattedMessages: Message[] = (data as any[]).map(msg => ({
+        const formattedMessages: Message[] = (data as DbMessage[]).map(msg => ({
           id: msg.id,
           conversationId: msg.conversation_id,
           senderId: msg.sender_id,
           text: msg.content,
           timestamp: new Date(msg.created_at),
-          isRead: msg.read, // Note: Using "read" field from DB instead of "is_read"
+          isRead: msg.read, // Using "read" field from DB
           attachments: msg.attachments || [],
         }));
 
@@ -215,7 +216,7 @@ export function useConversations() {
     return () => {
       supabase.removeChannel(messagesSubscription);
     };
-  }, [currentConversation, user?.id]);
+  }, [currentConversation, user?.id, conversations]);
 
   const sendMessage = async (conversationId: string, text: string) => {
     if (!user?.id) return false;
@@ -227,7 +228,7 @@ export function useConversations() {
           conversation_id: conversationId,
           sender_id: user.id,
           content: text,
-          read: false, // Using "read" instead of "is_read"
+          read: false, 
           attachments: []
         })
         .select()
@@ -252,9 +253,9 @@ export function useConversations() {
     
     try {
       // Check if conversation already exists
-      // Use type assertion to get around TypeScript limitations
-      const { data: existingConvos } = await (supabase
-        .from('conversation_participants') as any)
+      // Using type assertion for Supabase queries
+      const query = supabase.from('conversation_participants') as any;
+      const { data: existingConvos } = await query
         .select('conversation_id')
         .eq('user_id', user.id);
         
@@ -262,8 +263,8 @@ export function useConversations() {
         const convoIds = existingConvos.map((c: any) => c.conversation_id);
         
         // Another type assertion
-        const { data: sharedConvos } = await (supabase
-          .from('conversation_participants') as any)
+        const participantsQuery = supabase.from('conversation_participants') as any;
+        const { data: sharedConvos } = await participantsQuery
           .select('conversation_id')
           .eq('user_id', recipientId)
           .in('conversation_id', convoIds);
@@ -277,10 +278,11 @@ export function useConversations() {
       }
       
       // Create new conversation with type assertion
-      const { data: newConvo, error: convoError } = await (supabase
-        .from('conversations') as any)
+      const convoQuery = supabase.from('conversations') as any;
+      const { data: newConvo, error: convoError } = await convoQuery
         .insert({
-          last_message: initialMessage
+          last_message: initialMessage,
+          last_message_date: new Date().toISOString()
         })
         .select()
         .single();
@@ -288,8 +290,8 @@ export function useConversations() {
       if (convoError) throw convoError;
       
       // Add participants with type assertion
-      await (supabase
-        .from('conversation_participants') as any)
+      const participantsQuery = supabase.from('conversation_participants') as any;
+      await participantsQuery
         .insert([
           { conversation_id: newConvo.id, user_id: user.id },
           { conversation_id: newConvo.id, user_id: recipientId }
