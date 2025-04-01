@@ -1,5 +1,4 @@
-
-export type UserRole = 'admin' | 'provider' | 'customer';
+export type UserRole = 'admin' | 'provider' | 'customer' | string;
 
 export type ProviderVerificationStatus = 'unverified' | 'pending' | 'verified';
 
@@ -114,7 +113,7 @@ export interface DbUserProfile {
   city?: string;
   country?: string;
   bio?: string;
-  active?: boolean; // This field matches our database schema
+  active?: boolean;
   birth_date?: string;
   preferred_language?: string;
   favorites?: string[];

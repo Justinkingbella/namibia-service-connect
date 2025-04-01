@@ -6,9 +6,10 @@ export type ServiceCategory =
   | 'professional' 
   | 'freelance' 
   | 'transport' 
-  | 'health';
+  | 'health'
+  | string; // Allow any string value
 
-export type PricingModel = 'hourly' | 'fixed';
+export type PricingModel = 'hourly' | 'fixed' | string; // Allow any string value
 
 export type PaymentMethod = 
   | 'pay_today'
@@ -17,13 +18,14 @@ export type PaymentMethod =
   | 'dop'
   | 'easy_wallet'
   | 'bank_transfer'
-  | 'cash';
+  | 'cash'
+  | string; // Allow any string value
 
 export interface ServiceListItem {
   id: string;
   title: string;
-  category: ServiceCategory | string; // Allow string for backward compatibility
-  pricingModel: PricingModel | string; // Allow string for backward compatibility
+  category: ServiceCategory;
+  pricingModel: PricingModel;
   price: number;
   providerName: string;
   providerId: string;

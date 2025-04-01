@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Star, MapPin, Clock } from 'lucide-react';
-import { ServiceListItem, PricingModel } from '@/types';
+import { ServiceListItem } from '@/types';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
@@ -12,7 +12,7 @@ interface ServiceCardProps {
 }
 
 export function ServiceCard({ service, className }: ServiceCardProps) {
-  const formatPrice = (price: number, model: PricingModel) => {
+  const formatPrice = (price: number, model: string) => {
     return `N$${price}${model === 'hourly' ? '/hr' : ''}`;
   };
 

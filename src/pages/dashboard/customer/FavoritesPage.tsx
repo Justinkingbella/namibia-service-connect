@@ -4,7 +4,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ServiceCard } from '@/components/dashboard/ServiceCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ServiceListItem, ServiceCategory } from '@/types/service';
+import { ServiceListItem } from '@/types/service';
 import { Heart, Loader2 } from 'lucide-react';
 import { useFavorites } from '@/hooks/useFavorites';
 
@@ -18,7 +18,7 @@ const FavoritesPage = () => {
       return {
         id: fav.serviceId,
         title: 'Unknown Service',
-        category: 'unknown' as ServiceCategory,
+        category: 'unknown',
         pricingModel: 'fixed',
         price: 0,
         providerName: 'Unknown Provider',
@@ -34,7 +34,7 @@ const FavoritesPage = () => {
     return {
       id: fav.service.id,
       title: fav.service.title,
-      category: fav.service.category as ServiceCategory,
+      category: fav.service.category,
       pricingModel: fav.service.pricingModel,
       price: fav.service.price,
       providerName: fav.service.providerName,

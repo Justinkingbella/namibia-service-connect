@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -59,7 +58,7 @@ const mockAvailableSlots = [
   { date: '2023-07-03', slots: ['09:00', '12:00', '17:00'] },
 ];
 
-const formatPrice = (price: number, model: PricingModel) => {
+const formatPrice = (price: number, model: string) => {
   return `N$${price}${model === 'hourly' ? '/hr' : ''}`;
 };
 
