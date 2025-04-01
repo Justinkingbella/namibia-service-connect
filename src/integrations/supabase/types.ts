@@ -9,6 +9,186 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_permissions: {
+        Row: {
+          created_at: string | null
+          id: string
+          permissions: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permissions?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permissions?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      platform_analytics: {
+        Row: {
+          category_breakdown: Json | null
+          created_at: string | null
+          date: string
+          id: string
+          location_breakdown: Json | null
+          new_providers: number
+          new_users: number
+          total_bookings: number
+          total_commission: number
+          total_providers: number
+          total_revenue: number
+          total_users: number
+        }
+        Insert: {
+          category_breakdown?: Json | null
+          created_at?: string | null
+          date: string
+          id?: string
+          location_breakdown?: Json | null
+          new_providers?: number
+          new_users?: number
+          total_bookings?: number
+          total_commission?: number
+          total_providers?: number
+          total_revenue?: number
+          total_users?: number
+        }
+        Update: {
+          category_breakdown?: Json | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          location_breakdown?: Json | null
+          new_providers?: number
+          new_users?: number
+          total_bookings?: number
+          total_commission?: number
+          total_providers?: number
+          total_revenue?: number
+          total_users?: number
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          avatar_url: string | null
+          bio: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone_number: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          phone_number?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone_number?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          booking_id: string | null
+          comment: string | null
+          created_at: string | null
+          customer_id: string
+          id: string
+          is_published: boolean | null
+          provider_id: string
+          rating: number
+          response: string | null
+          service_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string | null
+          customer_id: string
+          id?: string
+          is_published?: boolean | null
+          provider_id: string
+          rating: number
+          response?: string | null
+          service_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string | null
+          customer_id?: string
+          id?: string
+          is_published?: boolean | null
+          provider_id?: string
+          rating?: number
+          response?: string | null
+          service_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           billing_cycle: string
@@ -147,7 +327,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_provider_respond_to_review: {
+        Args: {
+          provider_uuid: string
+          review_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
