@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/common/Button';
@@ -9,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { UserRole, UserProfile } from '@/types/auth';
+import { UserRole } from '@/types/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -47,11 +48,11 @@ const UserManagement: React.FC = () => {
           const formattedUsers: UserData[] = data.map((user: any) => ({
             id: user.id,
             name: user.name || user.first_name || 'Unnamed User',
-            email: user.email,
-            role: user.role as UserRole || 'customer',
+            email: user.email || '',
+            role: (user.role as UserRole) || 'customer',
             status: user.is_verified ? 'active' : 'pending',
             joinDate: new Date(user.created_at).toISOString().split('T')[0],
-            isVerified: user.is_verified || false
+            isVerified: !!user.is_verified
           }));
           setUsers(formattedUsers);
         }

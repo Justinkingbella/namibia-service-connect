@@ -67,36 +67,6 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
-// Add new type definitions for the user profiles in Supabase
-export interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  status: 'active' | 'pending' | 'inactive';
-  joinDate: string;
-  isVerified: boolean;
-  avatar_url?: string;
-  phone_number?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-// Raw Supabase user profile data
-export interface RawUserProfile {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  is_verified: boolean;
-  avatar_url?: string;
-  phone_number?: string;
-  created_at: string;
-  updated_at: string;
-  first_name?: string;
-  last_name?: string;
-}
-
 // Provider profile data
 export interface ProviderProfile {
   id: string;
@@ -124,4 +94,36 @@ export interface CustomerProfile {
   referral_code?: string;
   referred_by?: string;
   loyalty_points?: number;
+}
+
+// Extended profile types for working with database
+export interface DbUserProfile {
+  id: string;
+  name?: string;
+  email?: string;
+  role?: UserRole;
+  is_verified?: boolean;
+  avatar_url?: string;
+  phone_number?: string;
+  created_at?: string;
+  updated_at?: string;
+  first_name?: string;
+  last_name?: string;
+}
+
+export interface DbProviderProfile {
+  id: string;
+  business_name: string;
+  business_description?: string;
+  verification_status?: ProviderVerificationStatus;
+  categories?: string[];
+  locations?: string[];
+  subscription_tier?: string;
+  rating?: number;
+  rating_count?: number;
+  earnings?: number;
+  balance?: number;
+  bank_name?: string;
+  account_name?: string;
+  account_number?: string;
 }
