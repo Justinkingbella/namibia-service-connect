@@ -18,11 +18,13 @@ export type {
 // Re-export Auth but exclude SubscriptionTier to avoid name conflicts
 export type { User, UserRole, ProviderVerificationStatus, Customer, Provider, Admin, AuthContextType } from './auth';
 
-// Explicitly export Transaction and PaymentMethod with different names to resolve the ambiguity
-export type { Transaction as PaymentTransaction } from './payment';
-export type { Transaction as BookingTransaction } from './booking';
+// Explicitly export PaymentMethod types with different names to resolve the ambiguity
 export type { PaymentMethod as ServicePaymentMethod } from './service';
 export type { PaymentMethod as PaymentPaymentMethod } from './payment';
+
+// Explicitly export Transaction types with different names to resolve the ambiguity
+export type { Transaction as PaymentTransaction } from './payment';
+export type { Transaction as BookingTransaction } from './booking';
 
 export interface IResponse<T> {
   success: boolean;
