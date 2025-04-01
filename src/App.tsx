@@ -23,12 +23,19 @@ import BookingsPage from "./pages/dashboard/bookings/BookingsPage";
 import BookingDetail from "./pages/dashboard/bookings/BookingDetail";
 import MessagesPage from "./pages/dashboard/messages/MessagesPage";
 import ProviderVerificationPage from "./pages/dashboard/admin/ProviderVerificationPage";
+import WalletVerificationPage from "./pages/dashboard/admin/WalletVerificationPage";
 import PlatformAnalyticsPage from "./pages/dashboard/admin/PlatformAnalyticsPage";
 import PlatformControlsPage from "./pages/dashboard/admin/PlatformControlsPage";
 import RevenueReportsPage from "./pages/dashboard/provider/RevenueReportsPage";
 import PaymentDetailsPage from "./pages/dashboard/provider/PaymentDetailsPage";
+import ProviderWalletVerificationPage from "./pages/dashboard/provider/WalletVerificationPage";
+import ProviderDisputesPage from "./pages/dashboard/provider/DisputesPage";
+import ProviderTransactionsPage from "./pages/dashboard/provider/TransactionsPage";
 import ProfilePage from "./pages/dashboard/customer/ProfilePage";
 import FavoritesPage from "./pages/dashboard/customer/FavoritesPage";
+import CustomerWalletVerificationsPage from "./pages/dashboard/customer/WalletVerificationsPage";
+import CustomerPaymentHistoryPage from "./pages/dashboard/customer/PaymentHistoryPage";
+import CustomerDisputesPage from "./pages/dashboard/customer/DisputesPage";
 import SettingsPage from "./pages/dashboard/settings/SettingsPage";
 import NotFound from "./pages/NotFound";
 
@@ -154,6 +161,15 @@ function App() {
                 />
                 
                 <Route 
+                  path="/dashboard/admin/wallet-verification" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <WalletVerificationPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
                   path="/dashboard/admin/analytics" 
                   element={
                     <ProtectedRoute allowedRoles={['admin']}>
@@ -200,10 +216,37 @@ function App() {
                 />
                 
                 <Route 
-                  path="/dashboard/provider/payments" 
+                  path="/dashboard/provider/payment-details" 
                   element={
                     <ProtectedRoute allowedRoles={['provider']}>
                       <PaymentDetailsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/provider/wallet-verification" 
+                  element={
+                    <ProtectedRoute allowedRoles={['provider']}>
+                      <ProviderWalletVerificationPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/provider/disputes" 
+                  element={
+                    <ProtectedRoute allowedRoles={['provider']}>
+                      <ProviderDisputesPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/provider/transactions" 
+                  element={
+                    <ProtectedRoute allowedRoles={['provider']}>
+                      <ProviderTransactionsPage />
                     </ProtectedRoute>
                   } 
                 />
@@ -232,6 +275,33 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={['customer']}>
                       <FavoritesPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/customer/wallet-verifications" 
+                  element={
+                    <ProtectedRoute allowedRoles={['customer']}>
+                      <CustomerWalletVerificationsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/customer/payment-history" 
+                  element={
+                    <ProtectedRoute allowedRoles={['customer']}>
+                      <CustomerPaymentHistoryPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/customer/disputes" 
+                  element={
+                    <ProtectedRoute allowedRoles={['customer']}>
+                      <CustomerDisputesPage />
                     </ProtectedRoute>
                   } 
                 />

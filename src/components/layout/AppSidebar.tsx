@@ -86,7 +86,7 @@ export function AppSidebar() {
   const menuItems = getMenuItems();
 
   return (
-    <Sidebar>
+    <Sidebar className="border-r bg-white shadow-sm">
       <SidebarHeader className="p-4">
         <div className="text-lg font-semibold">Service Marketplace</div>
         <div className="text-xs text-muted-foreground">{user?.role}</div>
@@ -189,6 +189,18 @@ export function AppSidebar() {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === '/dashboard/customer/disputes'}
+                    tooltip="Payment Disputes"
+                  >
+                    <Link to="/dashboard/customer/disputes">
+                      <AlertCircle />
+                      <span>Disputes</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -202,5 +214,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
-export default AppSidebar;

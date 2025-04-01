@@ -1,6 +1,4 @@
 
-import { PaymentMethod } from './service';
-
 export type WalletVerificationStatus = 
   | 'pending'
   | 'submitted'

@@ -103,5 +103,5 @@ export interface Dispute {
   updatedAt: Date;
 }
 
-// Re-export PaymentMethod from service.ts
+// Use export type for re-exporting types
 export type { PaymentMethod } from './service';
