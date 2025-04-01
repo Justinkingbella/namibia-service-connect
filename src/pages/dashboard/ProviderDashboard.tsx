@@ -10,15 +10,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookingCard } from '@/components/dashboard/BookingCard';
-import { SettingsCard } from '@/components/dashboard/SettingsCard';
+import SettingsCard from '@/components/dashboard/SettingsCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
+import { Tables } from '@/integrations/supabase/types';
+
+type Subscription = Tables<'user_subscriptions'> & {
+  subscription_plans: Tables<'subscription_plans'>
+};
 
 const ProviderDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [subscription, setSubscription] = useState<any>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -59,7 +64,21 @@ const ProviderDashboard = () => {
       service: 'Home Cleaning',
       date: 'Today, 14:30',
       amount: 250,
-      status: 'confirmed'
+      status: 'confirmed',
+      // Added missing properties to match Booking type
+      serviceId: 'service-1',
+      customerId: 'customer-1',
+      providerId: 'provider-1',
+      startTime: new Date().toISOString(),
+      endTime: new Date().toISOString(),
+      serviceName: 'Home Cleaning',
+      serviceImage: '/placeholder.svg',
+      totalPrice: 250,
+      location: 'Customer address',
+      notes: '',
+      paymentStatus: 'paid',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     {
       id: '2',
@@ -67,7 +86,21 @@ const ProviderDashboard = () => {
       service: 'Garden Maintenance',
       date: 'Tomorrow, 09:00',
       amount: 350,
-      status: 'pending'
+      status: 'pending',
+      // Added missing properties to match Booking type
+      serviceId: 'service-2',
+      customerId: 'customer-2',
+      providerId: 'provider-1',
+      startTime: new Date().toISOString(),
+      endTime: new Date().toISOString(),
+      serviceName: 'Garden Maintenance',
+      serviceImage: '/placeholder.svg',
+      totalPrice: 350,
+      location: 'Customer address',
+      notes: '',
+      paymentStatus: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     {
       id: '3',
@@ -75,7 +108,21 @@ const ProviderDashboard = () => {
       service: 'Home Cleaning',
       date: 'Aug 15, 11:30',
       amount: 250,
-      status: 'completed'
+      status: 'completed',
+      // Added missing properties to match Booking type
+      serviceId: 'service-3',
+      customerId: 'customer-3',
+      providerId: 'provider-1',
+      startTime: new Date().toISOString(),
+      endTime: new Date().toISOString(),
+      serviceName: 'Home Cleaning',
+      serviceImage: '/placeholder.svg',
+      totalPrice: 250,
+      location: 'Customer address',
+      notes: '',
+      paymentStatus: 'paid',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }
   ];
 
@@ -88,13 +135,13 @@ const ProviderDashboard = () => {
         </div>
         
         {!isLoading && !subscription && (
-          <Alert variant="warning" className="mb-6">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Subscription Required</AlertTitle>
-            <AlertDescription>
+          <Alert variant="default" className="mb-6 border-yellow-400 bg-yellow-50">
+            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <AlertTitle className="text-yellow-600">Subscription Required</AlertTitle>
+            <AlertDescription className="text-yellow-700">
               You need to subscribe to a plan to offer services on our platform.
-              <Button variant="outline" asChild className="ml-2">
-                <Link to="/dashboard/provider/subscription">Subscribe Now</Link>
+              <Button variant="outline" className="ml-2" onClick={() => navigate('/dashboard/provider/subscription')}>
+                Subscribe Now
               </Button>
             </AlertDescription>
           </Alert>
@@ -137,10 +184,9 @@ const ProviderDashboard = () => {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">My Services</h2>
             <Button 
-              as={Link} 
-              to="/dashboard/services/create" 
               variant="outline"
               size="sm"
+              onClick={() => navigate('/dashboard/services/create')}
             >
               Create New Service
             </Button>
@@ -156,11 +202,10 @@ const ProviderDashboard = () => {
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Recent Bookings</h2>
               <Button 
-                as={Link} 
-                to="/dashboard/bookings" 
                 variant="ghost" 
                 size="sm"
                 className="flex items-center"
+                onClick={() => navigate('/dashboard/bookings')}
               >
                 View All <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
@@ -176,7 +221,15 @@ const ProviderDashboard = () => {
           {/* Earnings Summary */}
           <div className="lg:col-span-2 space-y-4">
             <h2 className="text-xl font-semibold">Earnings Summary</h2>
-            <ProviderEarningsCard />
+            <ProviderEarningsCard 
+              earnings={{
+                today: 120,
+                thisWeek: 850,
+                thisMonth: 3250,
+                lastMonth: 2980
+              }}
+              subscriptionTier="Professional"
+            />
             
             {!isLoading && subscription && (
               <Card>
@@ -221,8 +274,7 @@ const ProviderDashboard = () => {
                     variant="outline" 
                     className="w-full" 
                     size="sm"
-                    as={Link}
-                    to="/dashboard/provider/subscription"
+                    onClick={() => navigate('/dashboard/provider/subscription')}
                   >
                     Manage Subscription
                   </Button>

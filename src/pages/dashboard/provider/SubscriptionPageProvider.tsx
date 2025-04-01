@@ -1,29 +1,37 @@
 
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import SubscriptionPlans from '@/components/provider/SubscriptionPlans';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Calendar } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { Tables } from '@/integrations/supabase/types';
+import { useNavigate } from 'react-router-dom';
+import { AlertCircle, CheckCircle } from 'lucide-react';
+import SubscriptionPlans from '@/components/provider/SubscriptionPlans';
+
+type Subscription = Tables<'user_subscriptions'> & {
+  subscription_plans: Tables<'subscription_plans'>
+};
 
 const SubscriptionPageProvider = () => {
   const { user } = useAuth();
-  const [currentSubscription, setCurrentSubscription] = useState<any>(null);
+  const navigate = useNavigate();
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
-      fetchCurrentSubscription();
+      fetchSubscription();
     }
   }, [user]);
 
-  const fetchCurrentSubscription = async () => {
-    setIsLoading(true);
+  const fetchSubscription = async () => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('user_subscriptions')
         .select(`
@@ -34,146 +42,160 @@ const SubscriptionPageProvider = () => {
         .eq('status', 'active')
         .single();
       
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-        throw error;
+      if (error && error.code !== 'PGRST116') {
+        setError('Error fetching subscription details. Please try again later.');
+        console.error('Error fetching subscription:', error);
+      } else {
+        setSubscription(data);
+        setError(null);
       }
-      
-      setCurrentSubscription(data);
-    } catch (error) {
-      console.error('Error fetching subscription:', error);
+    } catch (err) {
+      setError('Unexpected error occurred. Please try again later.');
+      console.error('Error:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleChangePlan = async (planId: string) => {
-    await fetchCurrentSubscription();
+  const cancelSubscription = async () => {
+    // Implementation for canceling subscription
+    try {
+      setIsLoading(true);
+      
+      if (!subscription) return;
+      
+      const { error } = await supabase
+        .from('user_subscriptions')
+        .update({ status: 'cancelled' })
+        .eq('id', subscription.id);
+      
+      if (error) {
+        setError('Failed to cancel subscription. Please try again.');
+        console.error('Error cancelling subscription:', error);
+      } else {
+        setSubscription(null);
+        setError(null);
+      }
+    } catch (err) {
+      setError('Unexpected error occurred. Please try again later.');
+      console.error('Error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div>
-          <h1 className="text-2xl font-bold">My Subscription</h1>
-          <p className="text-muted-foreground mt-1">Manage your service provider subscription plan</p>
+          <h1 className="text-2xl font-bold">Subscription Management</h1>
+          <p className="text-muted-foreground mt-1">Manage your subscription plan and preferences</p>
         </div>
         
-        {isLoading ? (
-          <div className="flex items-center justify-center py-10">
-            <div className="space-y-2 text-center">
-              <div className="animate-spin size-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
-              <p className="text-muted-foreground">Loading your subscription...</p>
-            </div>
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        {!isLoading && subscription && (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Current Subscription</CardTitle>
+                  <Badge>{subscription.status}</Badge>
+                </div>
+                <CardDescription>Your active subscription details</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold">{subscription.subscription_plans.name}</h3>
+                    <p className="text-muted-foreground">{subscription.subscription_plans.description}</p>
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm">Credits</span>
+                        <span className="text-sm font-medium">
+                          250/{subscription.subscription_plans.credits}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3">
+                        <div 
+                          className="bg-primary h-2.5 rounded-full" 
+                          style={{ width: `${Math.min(250 / subscription.subscription_plans.credits * 100, 100)}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm">Bookings</span>
+                        <span className="text-sm font-medium">
+                          12/{subscription.subscription_plans.max_bookings}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div 
+                          className="bg-primary h-2.5 rounded-full" 
+                          style={{ width: `${Math.min(12 / subscription.subscription_plans.max_bookings * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-t md:border-t-0 md:border-l pt-4 md:pt-0 md:pl-4">
+                    <h4 className="font-medium mb-2">Subscription Details</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Billing Cycle:</span>
+                        <span>{subscription.subscription_plans.billing_cycle}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Price:</span>
+                        <span>N${subscription.subscription_plans.price}/{subscription.subscription_plans.billing_cycle}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Start Date:</span>
+                        <span>{new Date(subscription.start_date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Renewal Date:</span>
+                        <span>{new Date(subscription.end_date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Payment Method:</span>
+                        <span className="capitalize">{subscription.payment_method}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="border-t pt-6 flex flex-col sm:flex-row gap-3">
+                <Button variant="outline" onClick={() => navigate('/dashboard/provider/payment-details')}>
+                  Update Payment Method
+                </Button>
+                <Button variant="destructive" onClick={cancelSubscription}>
+                  Cancel Subscription
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
-        ) : (
-          <>
-            {currentSubscription ? (
-              <Card className="mb-8">
-                <CardHeader>
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                      <CardTitle className="text-xl">Current Subscription</CardTitle>
-                      <CardDescription>Your active subscription plan</CardDescription>
-                    </div>
-                    <Badge className="w-fit">Active</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground mb-1">Plan</div>
-                      <div className="text-lg font-semibold">{currentSubscription.subscription_plans?.name}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground mb-1">Price</div>
-                      <div className="text-lg font-semibold">
-                        N${currentSubscription.subscription_plans?.price}/{currentSubscription.subscription_plans?.billing_cycle}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground mb-1">Renewal Date</div>
-                      <div className="text-lg font-semibold">
-                        {format(new Date(currentSubscription.end_date), 'PPP')}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground mb-1">Payment Method</div>
-                      <div className="capitalize text-lg font-semibold">
-                        {currentSubscription.payment_method?.replace('_', ' ')}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-4 border-t">
-                    <div className="text-sm font-medium text-muted-foreground mb-2">Usage</div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm">Credits</span>
-                          <span className="text-sm font-medium">
-                            250/{currentSubscription.subscription_plans?.credits}
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div 
-                            className="bg-primary h-2.5 rounded-full" 
-                            style={{ width: `${Math.min(250 / currentSubscription.subscription_plans?.credits * 100, 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm">Bookings</span>
-                          <span className="text-sm font-medium">
-                            12/{currentSubscription.subscription_plans?.max_bookings}
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div 
-                            className="bg-primary h-2.5 rounded-full" 
-                            style={{ width: `${Math.min(12 / currentSubscription.subscription_plans?.max_bookings * 100, 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {currentSubscription.end_date && new Date(currentSubscription.end_date) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && (
-                    <Alert variant="warning" className="mt-4">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Subscription Expiring Soon</AlertTitle>
-                      <AlertDescription>
-                        Your subscription will expire on {format(new Date(currentSubscription.end_date), 'PPP')}. 
-                        Please renew your subscription to avoid service interruption.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle>No Active Subscription</CardTitle>
-                  <CardDescription>Choose a subscription plan to start offering services</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Alert className="mb-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Subscription Required</AlertTitle>
-                    <AlertDescription>
-                      You need an active subscription to offer services on our platform.
-                      Please choose a subscription plan below to continue.
-                    </AlertDescription>
-                  </Alert>
-                </CardContent>
-              </Card>
-            )}
-            
-            <SubscriptionPlans 
-              currentPlan={currentSubscription?.subscription_plan_id} 
-              onChangePlan={handleChangePlan}
-            />
-          </>
+        )}
+        
+        {!isLoading && !subscription && (
+          <Alert variant="default" className="mb-6 border-yellow-400 bg-yellow-50">
+            <AlertCircle className="h-4 w-4 text-yellow-600" />
+            <AlertTitle className="text-yellow-600">No Active Subscription</AlertTitle>
+            <AlertDescription className="text-yellow-700">
+              You don't have an active subscription plan. Choose one to start offering services on our platform.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {!subscription && (
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold mb-6">Available Plans</h2>
+            <SubscriptionPlans />
+          </div>
         )}
       </div>
     </DashboardLayout>
