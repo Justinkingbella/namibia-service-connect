@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { WalletVerification } from '@/types/payment';
 import { Button } from '@/components/ui/button';
@@ -10,76 +10,115 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-// Mock data
-const mockVerifications: WalletVerification[] = [
-  {
-    id: '1',
-    transactionId: 'TX12345',
-    bookingId: 'B1001',
-    paymentMethod: 'e_wallet',
-    amount: 350,
-    referenceNumber: 'EW78912345',
-    customerPhone: '+264811234567',
-    providerPhone: '+264817654321',
-    dateSubmitted: new Date(Date.now() - 86400000 * 2),
-    verificationStatus: 'verified',
-    customerConfirmed: true,
-    providerConfirmed: true,
-    adminVerified: true,
-    proofType: 'screenshot',
-    mobileOperator: 'MTC'
-  },
-  {
-    id: '2',
-    transactionId: 'TX12346',
-    bookingId: 'B1002',
-    paymentMethod: 'easy_wallet',
-    amount: 500,
-    referenceNumber: 'EZ45678901',
-    customerPhone: '+264811234567',
-    providerPhone: '+264817654321',
-    dateSubmitted: new Date(Date.now() - 86400000),
-    verificationStatus: 'pending',
-    customerConfirmed: true,
-    providerConfirmed: false,
-    adminVerified: false,
-    proofType: 'reference',
-    bankUsed: 'FNB'
-  },
-  {
-    id: '3',
-    transactionId: 'TX12347',
-    bookingId: 'B1003',
-    paymentMethod: 'e_wallet',
-    amount: 250,
-    referenceNumber: 'EW12345678',
-    customerPhone: '+264812345678',
-    providerPhone: '+264817654321',
-    dateSubmitted: new Date(),
-    verificationStatus: 'submitted',
-    customerConfirmed: true,
-    providerConfirmed: true,
-    adminVerified: false,
-    proofType: 'receipt',
-    mobileOperator: 'TN Mobile'
-  }
-];
-
-// Mock fetch function
-const fetchVerifications = async (): Promise<WalletVerification[]> => {
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return mockVerifications;
-};
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 const WalletVerificationPage = () => {
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedVerification, setSelectedVerification] = useState<WalletVerification | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
+  // Fetch wallet verifications from Supabase
   const { data: verifications = [], isLoading } = useQuery({
-    queryKey: ['walletVerifications'],
-    queryFn: fetchVerifications
+    queryKey: ['walletVerifications', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('wallet_verification_requests')
+        .select('*')
+        .eq('provider_id', user.id);
+      
+      if (error) {
+        console.error('Error fetching verifications:', error);
+        toast.error('Failed to load verifications');
+        return [];
+      }
+      
+      // Transform data to match our frontend type
+      return data.map(v => ({
+        id: v.id,
+        bookingId: v.booking_id,
+        customerId: v.customer_id,
+        providerId: v.provider_id,
+        amount: v.amount,
+        paymentMethod: v.payment_method as 'e_wallet' | 'easy_wallet',
+        referenceNumber: v.reference_number,
+        customerPhone: v.customer_phone,
+        providerPhone: v.provider_phone,
+        dateSubmitted: new Date(v.date_submitted),
+        verificationStatus: v.verification_status as WalletVerification['verificationStatus'],
+        dateVerified: v.date_verified ? new Date(v.date_verified) : undefined,
+        verifiedBy: v.verified_by,
+        notes: v.notes,
+        customerConfirmed: v.customer_confirmed,
+        providerConfirmed: v.provider_confirmed,
+        adminVerified: v.admin_verified,
+        proofType: v.proof_type as 'receipt' | 'screenshot' | 'reference',
+        receiptImage: v.receipt_image,
+        mobileOperator: v.mobile_operator as any,
+        bankUsed: v.bank_used as any,
+        rejectionReason: v.rejection_reason
+      }));
+    },
+    enabled: !!user?.id
+  });
+
+  // Mutation to confirm verification
+  const confirmMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('wallet_verification_requests')
+        .update({
+          provider_confirmed: true,
+          verification_status: 'submitted',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['walletVerifications'] });
+      toast.success("Payment verification confirmed");
+      setSelectedVerification(null);
+    },
+    onError: (error) => {
+      console.error('Error confirming verification:', error);
+      toast.error("Failed to confirm verification");
+    }
+  });
+
+  // Mutation to reject verification
+  const rejectMutation = useMutation({
+    mutationFn: async ({ id, reason }: { id: string, reason: string }) => {
+      const { error } = await supabase
+        .from('wallet_verification_requests')
+        .update({
+          provider_confirmed: false,
+          verification_status: 'rejected',
+          rejection_reason: reason,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['walletVerifications'] });
+      toast.success("Payment verification rejected");
+      setSelectedVerification(null);
+      setRejectReason('');
+    },
+    onError: (error) => {
+      console.error('Error rejecting verification:', error);
+      toast.error("Failed to reject verification");
+    }
   });
 
   const filteredVerifications = verifications.filter(v => {
@@ -89,9 +128,16 @@ const WalletVerificationPage = () => {
     return true;
   });
 
-  const confirmVerification = (id: string) => {
-    console.log('Confirming verification', id);
-    // In a real app, you would call an API to update the verification status
+  const handleConfirmVerification = (id: string) => {
+    confirmMutation.mutate(id);
+  };
+
+  const handleRejectVerification = (id: string) => {
+    if (!rejectReason) {
+      toast.error("Please provide a reason for rejection");
+      return;
+    }
+    rejectMutation.mutate({ id, reason: rejectReason });
   };
 
   const getStatusBadgeClass = (status: string) => {
@@ -254,14 +300,16 @@ const WalletVerificationPage = () => {
                             className="bg-gray-50 mt-1"
                           />
                         </div>
-                        <div>
-                          <Label>Provider Phone</Label>
-                          <Input 
-                            value={selectedVerification.providerPhone} 
-                            readOnly 
-                            className="bg-gray-50 mt-1"
-                          />
-                        </div>
+                        {selectedVerification.providerPhone && (
+                          <div>
+                            <Label>Provider Phone</Label>
+                            <Input 
+                              value={selectedVerification.providerPhone} 
+                              readOnly 
+                              className="bg-gray-50 mt-1"
+                            />
+                          </div>
+                        )}
                         <div>
                           <Label>Proof Type</Label>
                           <Input 
@@ -270,16 +318,26 @@ const WalletVerificationPage = () => {
                             className="bg-gray-50 mt-1"
                           />
                         </div>
-                        <div>
-                          <Label>
-                            {selectedVerification.paymentMethod === 'e_wallet' ? 'Mobile Operator' : 'Bank Used'}
-                          </Label>
-                          <Input 
-                            value={selectedVerification.mobileOperator || selectedVerification.bankUsed || 'N/A'} 
-                            readOnly 
-                            className="bg-gray-50 mt-1"
-                          />
-                        </div>
+                        {selectedVerification.mobileOperator && (
+                          <div>
+                            <Label>Mobile Operator</Label>
+                            <Input 
+                              value={selectedVerification.mobileOperator} 
+                              readOnly 
+                              className="bg-gray-50 mt-1"
+                            />
+                          </div>
+                        )}
+                        {selectedVerification.bankUsed && (
+                          <div>
+                            <Label>Bank Used</Label>
+                            <Input 
+                              value={selectedVerification.bankUsed} 
+                              readOnly 
+                              className="bg-gray-50 mt-1"
+                            />
+                          </div>
+                        )}
                       </div>
 
                       {selectedVerification.notes && (
@@ -295,34 +353,62 @@ const WalletVerificationPage = () => {
 
                       {selectedVerification.verificationStatus === 'pending' && (
                         <div className="space-y-4">
-                          <div>
-                            <Label>Confirmation Status</Label>
-                            <Select defaultValue="confirm">
-                              <SelectTrigger className="mt-1">
-                                <SelectValue placeholder="Select action" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="confirm">Confirm Receipt</SelectItem>
-                                <SelectItem value="query">Query Payment</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div>
-                            <Label>Notes (Optional)</Label>
-                            <Textarea 
-                              placeholder="Add any notes about this verification" 
-                              className="mt-1 h-20"
-                            />
-                          </div>
-                          
-                          <div className="flex justify-end space-x-3">
-                            <Button variant="outline">Cancel</Button>
+                          <div className="flex space-x-2 mt-4">
                             <Button 
-                              onClick={() => confirmVerification(selectedVerification.id)}
+                              onClick={() => handleConfirmVerification(selectedVerification.id)}
+                              disabled={confirmMutation.isPending}
                             >
-                              Submit
+                              {confirmMutation.isPending ? 'Confirming...' : 'Confirm Payment'}
                             </Button>
+                            <Button 
+                              variant="outline" 
+                              onClick={() => {
+                                if (document.getElementById('reject-reason')) {
+                                  // Toggle rejection form
+                                  const form = document.getElementById('reject-form');
+                                  if (form) {
+                                    form.classList.toggle('hidden');
+                                  }
+                                }
+                              }}
+                            >
+                              Reject Payment
+                            </Button>
+                          </div>
+                          
+                          <div id="reject-form" className="hidden space-y-4 border border-red-200 p-4 rounded-md">
+                            <div>
+                              <Label htmlFor="reject-reason">Reason for Rejection</Label>
+                              <Textarea 
+                                id="reject-reason"
+                                value={rejectReason}
+                                onChange={(e) => setRejectReason(e.target.value)}
+                                placeholder="Please provide a reason for rejection"
+                                className="h-20"
+                              />
+                            </div>
+                            
+                            <div className="flex space-x-2">
+                              <Button 
+                                variant="destructive"
+                                onClick={() => handleRejectVerification(selectedVerification.id)}
+                                disabled={rejectMutation.isPending || !rejectReason}
+                              >
+                                {rejectMutation.isPending ? 'Rejecting...' : 'Confirm Rejection'}
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                onClick={() => {
+                                  const form = document.getElementById('reject-form');
+                                  if (form) {
+                                    form.classList.add('hidden');
+                                  }
+                                  setRejectReason('');
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       )}

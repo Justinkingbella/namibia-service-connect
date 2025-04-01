@@ -33,6 +33,66 @@ export type Database = {
         }
         Relationships: []
       }
+      bookings: {
+        Row: {
+          commission: number
+          created_at: string | null
+          customer_id: string
+          date: string
+          duration: number | null
+          end_time: string | null
+          id: string
+          is_urgent: boolean | null
+          notes: string | null
+          payment_method: string
+          payment_status: string
+          provider_id: string
+          service_id: string
+          start_time: string
+          status: string
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          commission: number
+          created_at?: string | null
+          customer_id: string
+          date: string
+          duration?: number | null
+          end_time?: string | null
+          id?: string
+          is_urgent?: boolean | null
+          notes?: string | null
+          payment_method: string
+          payment_status?: string
+          provider_id: string
+          service_id: string
+          start_time: string
+          status?: string
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          commission?: number
+          created_at?: string | null
+          customer_id?: string
+          date?: string
+          duration?: number | null
+          end_time?: string | null
+          id?: string
+          is_urgent?: boolean | null
+          notes?: string | null
+          payment_method?: string
+          payment_status?: string
+          provider_id?: string
+          service_id?: string
+          start_time?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       platform_analytics: {
         Row: {
           category_breakdown: Json | null
@@ -189,6 +249,81 @@ export type Database = {
         }
         Relationships: []
       }
+      service_providers: {
+        Row: {
+          address: string | null
+          avatar_url: string | null
+          banner_url: string | null
+          business_description: string | null
+          business_name: string
+          city: string | null
+          commission_rate: number | null
+          completed_bookings: number | null
+          country: string | null
+          created_at: string | null
+          email: string
+          id: string
+          phone_number: string | null
+          rating: number | null
+          rating_count: number | null
+          services_count: number | null
+          subscription_tier: string | null
+          updated_at: string | null
+          verification_status: string | null
+          verified_at: string | null
+          verified_by: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          avatar_url?: string | null
+          banner_url?: string | null
+          business_description?: string | null
+          business_name: string
+          city?: string | null
+          commission_rate?: number | null
+          completed_bookings?: number | null
+          country?: string | null
+          created_at?: string | null
+          email: string
+          id: string
+          phone_number?: string | null
+          rating?: number | null
+          rating_count?: number | null
+          services_count?: number | null
+          subscription_tier?: string | null
+          updated_at?: string | null
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          avatar_url?: string | null
+          banner_url?: string | null
+          business_description?: string | null
+          business_name?: string
+          city?: string | null
+          commission_rate?: number | null
+          completed_bookings?: number | null
+          country?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          phone_number?: string | null
+          rating?: number | null
+          rating_count?: number | null
+          services_count?: number | null
+          subscription_tier?: string | null
+          updated_at?: string | null
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           billing_cycle: string
@@ -321,6 +456,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      wallet_verification_requests: {
+        Row: {
+          admin_verified: boolean
+          amount: number
+          bank_used: string | null
+          booking_id: string
+          created_at: string
+          customer_confirmed: boolean
+          customer_id: string
+          customer_phone: string
+          date_submitted: string
+          date_verified: string | null
+          id: string
+          mobile_operator: string | null
+          notes: string | null
+          payment_method: string
+          proof_type: string
+          provider_confirmed: boolean
+          provider_id: string
+          provider_phone: string | null
+          receipt_image: string | null
+          reference_number: string
+          rejection_reason: string | null
+          updated_at: string
+          verification_status: string
+          verified_by: string | null
+        }
+        Insert: {
+          admin_verified?: boolean
+          amount: number
+          bank_used?: string | null
+          booking_id: string
+          created_at?: string
+          customer_confirmed?: boolean
+          customer_id: string
+          customer_phone: string
+          date_submitted?: string
+          date_verified?: string | null
+          id?: string
+          mobile_operator?: string | null
+          notes?: string | null
+          payment_method: string
+          proof_type: string
+          provider_confirmed?: boolean
+          provider_id: string
+          provider_phone?: string | null
+          receipt_image?: string | null
+          reference_number: string
+          rejection_reason?: string | null
+          updated_at?: string
+          verification_status?: string
+          verified_by?: string | null
+        }
+        Update: {
+          admin_verified?: boolean
+          amount?: number
+          bank_used?: string | null
+          booking_id?: string
+          created_at?: string
+          customer_confirmed?: boolean
+          customer_id?: string
+          customer_phone?: string
+          date_submitted?: string
+          date_verified?: string | null
+          id?: string
+          mobile_operator?: string | null
+          notes?: string | null
+          payment_method?: string
+          proof_type?: string
+          provider_confirmed?: boolean
+          provider_id?: string
+          provider_phone?: string | null
+          receipt_image?: string | null
+          reference_number?: string
+          rejection_reason?: string | null
+          updated_at?: string
+          verification_status?: string
+          verified_by?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

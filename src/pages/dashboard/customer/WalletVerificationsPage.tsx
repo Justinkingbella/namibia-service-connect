@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { WalletVerification, NamibianMobileOperator, NamibianBank } from '@/types/payment';
 import { Button } from '@/components/ui/button';
@@ -12,62 +12,27 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-
-// Mock data
-const mockVerifications: WalletVerification[] = [
-  {
-    id: '1',
-    transactionId: 'TX12345',
-    bookingId: 'B1001',
-    paymentMethod: 'e_wallet',
-    amount: 350,
-    referenceNumber: 'EW78912345',
-    customerPhone: '+264811234567',
-    providerPhone: '+264817654321',
-    dateSubmitted: new Date(Date.now() - 86400000 * 2),
-    verificationStatus: 'verified',
-    customerConfirmed: true,
-    providerConfirmed: true,
-    adminVerified: true,
-    proofType: 'screenshot',
-    mobileOperator: 'MTC'
-  },
-  {
-    id: '2',
-    transactionId: 'TX12346',
-    bookingId: 'B1002',
-    paymentMethod: 'easy_wallet',
-    amount: 500,
-    referenceNumber: 'EZ45678901',
-    customerPhone: '+264811234567',
-    providerPhone: '+264817654321',
-    dateSubmitted: new Date(Date.now() - 86400000),
-    verificationStatus: 'pending',
-    customerConfirmed: true,
-    providerConfirmed: false,
-    adminVerified: false,
-    proofType: 'reference',
-    bankUsed: 'FNB'
-  }
-];
-
-// Mock fetch function
-const fetchVerifications = async (): Promise<WalletVerification[]> => {
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return mockVerifications;
-};
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const WalletVerificationsPage = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedVerification, setSelectedVerification] = useState<WalletVerification | null>(null);
   const [isNewVerificationOpen, setIsNewVerificationOpen] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   
   // New verification form state
   const [newVerification, setNewVerification] = useState({
+    bookingId: '',
+    providerId: '',
     paymentMethod: 'e_wallet' as 'e_wallet' | 'easy_wallet',
     amount: '',
     referenceNumber: '',
+    customerPhone: '',
     providerPhone: '',
     proofType: 'receipt' as 'receipt' | 'screenshot' | 'reference',
     mobileOperator: 'MTC' as NamibianMobileOperator | undefined,
@@ -75,10 +40,215 @@ const WalletVerificationsPage = () => {
     notes: ''
   });
 
-  const { data: verifications = [], isLoading } = useQuery({
-    queryKey: ['customerWalletVerifications'],
-    queryFn: fetchVerifications
+  // Fetch bookings to use when creating a new verification
+  const { data: bookings = [] } = useQuery({
+    queryKey: ['customerBookings', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('id, provider_id, service_id, total_amount')
+        .eq('customer_id', user.id)
+        .eq('payment_status', 'pending')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching bookings:', error);
+        return [];
+      }
+      
+      return data;
+    },
+    enabled: !!user?.id
   });
+
+  // Fetch verifications
+  const { data: verifications = [], isLoading } = useQuery({
+    queryKey: ['customerWalletVerifications', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('wallet_verification_requests')
+        .select('*')
+        .eq('customer_id', user.id);
+      
+      if (error) {
+        console.error('Error fetching verifications:', error);
+        toast.error('Failed to load verifications');
+        return [];
+      }
+      
+      // Transform data to match our frontend type
+      return data.map(v => ({
+        id: v.id,
+        bookingId: v.booking_id,
+        customerId: v.customer_id,
+        providerId: v.provider_id,
+        amount: v.amount,
+        paymentMethod: v.payment_method as 'e_wallet' | 'easy_wallet',
+        referenceNumber: v.reference_number,
+        customerPhone: v.customer_phone,
+        providerPhone: v.provider_phone,
+        dateSubmitted: new Date(v.date_submitted),
+        verificationStatus: v.verification_status as WalletVerification['verificationStatus'],
+        dateVerified: v.date_verified ? new Date(v.date_verified) : undefined,
+        verifiedBy: v.verified_by,
+        notes: v.notes,
+        customerConfirmed: v.customer_confirmed,
+        providerConfirmed: v.provider_confirmed,
+        adminVerified: v.admin_verified,
+        proofType: v.proof_type as 'receipt' | 'screenshot' | 'reference',
+        receiptImage: v.receipt_image,
+        mobileOperator: v.mobile_operator as any,
+        bankUsed: v.bank_used as any,
+        rejectionReason: v.rejection_reason
+      }));
+    },
+    enabled: !!user?.id
+  });
+
+  const createVerificationMutation = useMutation({
+    mutationFn: async (verification: typeof newVerification) => {
+      if (!user?.id) throw new Error('User not authenticated');
+      
+      const { error } = await supabase
+        .from('wallet_verification_requests')
+        .insert({
+          booking_id: verification.bookingId,
+          customer_id: user.id,
+          provider_id: verification.providerId,
+          amount: parseFloat(verification.amount),
+          payment_method: verification.paymentMethod,
+          reference_number: verification.referenceNumber,
+          customer_phone: verification.customerPhone,
+          provider_phone: verification.providerPhone || null,
+          proof_type: verification.proofType,
+          mobile_operator: verification.mobileOperator || null,
+          bank_used: verification.bankUsed || null,
+          receipt_image: uploadedImageUrl,
+          notes: verification.notes,
+          verification_status: 'submitted',
+          customer_confirmed: true,
+          provider_confirmed: false,
+          admin_verified: false
+        });
+      
+      if (error) throw error;
+      
+      return verification;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customerWalletVerifications'] });
+      toast.success("Payment verification submitted successfully");
+      setIsNewVerificationOpen(false);
+      resetNewVerificationForm();
+    },
+    onError: (error) => {
+      console.error('Error submitting verification:', error);
+      toast.error("Failed to submit verification");
+    }
+  });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    setUploadingFile(true);
+    
+    try {
+      // Create a bucket if it doesn't exist
+      const { data: bucketData, error: bucketError } = await supabase
+        .storage
+        .getBucket('receipts');
+      
+      if (bucketError && bucketError.message.includes('not found')) {
+        await supabase.storage.createBucket('receipts', {
+          public: true
+        });
+      }
+      
+      // Upload file
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${user?.id}/${fileName}`;
+      
+      const { error: uploadError } = await supabase
+        .storage
+        .from('receipts')
+        .upload(filePath, file);
+      
+      if (uploadError) {
+        throw uploadError;
+      }
+      
+      // Get public URL
+      const { data } = supabase
+        .storage
+        .from('receipts')
+        .getPublicUrl(filePath);
+      
+      setUploadedImageUrl(data.publicUrl);
+      toast.success("Receipt uploaded successfully");
+      
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast.error("Failed to upload receipt");
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const resetNewVerificationForm = () => {
+    setNewVerification({
+      bookingId: '',
+      providerId: '',
+      paymentMethod: 'e_wallet',
+      amount: '',
+      referenceNumber: '',
+      customerPhone: '',
+      providerPhone: '',
+      proofType: 'receipt',
+      mobileOperator: 'MTC',
+      bankUsed: undefined,
+      notes: ''
+    });
+    setUploadedImageUrl(null);
+  };
+
+  const handleBookingSelect = (bookingId: string) => {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (booking) {
+      setNewVerification({
+        ...newVerification,
+        bookingId: booking.id,
+        providerId: booking.provider_id,
+        amount: booking.total_amount.toString()
+      });
+    }
+  };
+
+  const handleSubmitNewVerification = () => {
+    // Validate required fields
+    if (!newVerification.bookingId) {
+      toast.error("Please select a booking");
+      return;
+    }
+    
+    if (!newVerification.referenceNumber) {
+      toast.error("Please enter a reference number");
+      return;
+    }
+    
+    if (!newVerification.customerPhone) {
+      toast.error("Please enter your phone number");
+      return;
+    }
+    
+    // Submit the verification
+    createVerificationMutation.mutate(newVerification);
+  };
 
   const filteredVerifications = verifications.filter(v => {
     if (activeTab === 'pending') return v.verificationStatus === 'pending' || v.verificationStatus === 'submitted';
@@ -86,23 +256,6 @@ const WalletVerificationsPage = () => {
     if (activeTab === 'rejected') return v.verificationStatus === 'rejected';
     return true;
   });
-
-  const handleSubmitNewVerification = () => {
-    console.log('Submitting new verification', newVerification);
-    // In a real app, you would call an API to create a new verification
-    setIsNewVerificationOpen(false);
-    // Reset form
-    setNewVerification({
-      paymentMethod: 'e_wallet',
-      amount: '',
-      referenceNumber: '',
-      providerPhone: '',
-      proofType: 'receipt',
-      mobileOperator: 'MTC',
-      bankUsed: undefined,
-      notes: ''
-    });
-  };
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
@@ -232,6 +385,18 @@ const WalletVerificationsPage = () => {
                         </div>
                       </div>
                       
+                      {selectedVerification.verificationStatus === 'rejected' && selectedVerification.rejectionReason && (
+                        <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
+                          <div className="flex items-start">
+                            <XCircle className="h-5 w-5 text-red-600 mr-2 mt-0.5" />
+                            <div>
+                              <h4 className="font-medium text-red-700">Verification Rejected</h4>
+                              <p className="text-sm text-red-600">{selectedVerification.rejectionReason}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <Label>Payment Method</Label>
@@ -273,14 +438,16 @@ const WalletVerificationsPage = () => {
                             className="bg-gray-50 mt-1"
                           />
                         </div>
-                        <div>
-                          <Label>Provider Phone</Label>
-                          <Input 
-                            value={selectedVerification.providerPhone} 
-                            readOnly 
-                            className="bg-gray-50 mt-1"
-                          />
-                        </div>
+                        {selectedVerification.providerPhone && (
+                          <div>
+                            <Label>Provider Phone</Label>
+                            <Input 
+                              value={selectedVerification.providerPhone} 
+                              readOnly 
+                              className="bg-gray-50 mt-1"
+                            />
+                          </div>
+                        )}
                         <div>
                           <Label>Proof Type</Label>
                           <Input 
@@ -289,16 +456,26 @@ const WalletVerificationsPage = () => {
                             className="bg-gray-50 mt-1"
                           />
                         </div>
-                        <div>
-                          <Label>
-                            {selectedVerification.paymentMethod === 'e_wallet' ? 'Mobile Operator' : 'Bank Used'}
-                          </Label>
-                          <Input 
-                            value={selectedVerification.mobileOperator || selectedVerification.bankUsed || 'N/A'} 
-                            readOnly 
-                            className="bg-gray-50 mt-1"
-                          />
-                        </div>
+                        {selectedVerification.mobileOperator && (
+                          <div>
+                            <Label>Mobile Operator</Label>
+                            <Input 
+                              value={selectedVerification.mobileOperator} 
+                              readOnly 
+                              className="bg-gray-50 mt-1"
+                            />
+                          </div>
+                        )}
+                        {selectedVerification.bankUsed && (
+                          <div>
+                            <Label>Bank Used</Label>
+                            <Input 
+                              value={selectedVerification.bankUsed} 
+                              readOnly 
+                              className="bg-gray-50 mt-1"
+                            />
+                          </div>
+                        )}
                       </div>
 
                       {selectedVerification.notes && (
@@ -315,9 +492,30 @@ const WalletVerificationsPage = () => {
                       {selectedVerification.receiptImage && (
                         <div>
                           <Label>Receipt/Proof</Label>
-                          <div className="mt-2 border rounded-md p-2 bg-gray-50 text-center">
-                            <p className="text-sm text-gray-500">(Receipt/proof image would display here)</p>
+                          <div className="mt-2 border rounded-md overflow-hidden">
+                            <img 
+                              src={selectedVerification.receiptImage} 
+                              alt="Receipt" 
+                              className="w-full max-h-64 object-contain"
+                            />
                           </div>
+                        </div>
+                      )}
+                      
+                      {selectedVerification.verificationStatus === 'rejected' && (
+                        <div className="mt-4">
+                          <Button onClick={() => {
+                            setIsNewVerificationOpen(true);
+                            setNewVerification({
+                              ...newVerification,
+                              bookingId: selectedVerification.bookingId,
+                              providerId: selectedVerification.providerId || '',
+                              amount: selectedVerification.amount.toString(),
+                              paymentMethod: selectedVerification.paymentMethod
+                            });
+                          }}>
+                            Resubmit Verification
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -348,6 +546,31 @@ const WalletVerificationsPage = () => {
           </DialogHeader>
           
           <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="booking">Select Booking</Label>
+              <Select 
+                value={newVerification.bookingId} 
+                onValueChange={handleBookingSelect}
+              >
+                <SelectTrigger id="booking">
+                  <SelectValue placeholder="Select a booking to verify" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bookings.length > 0 ? (
+                    bookings.map((booking) => (
+                      <SelectItem key={booking.id} value={booking.id}>
+                        Booking #{booking.id.substring(0, 8)} - N${booking.total_amount}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-bookings" disabled>
+                      No pending bookings available
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="space-y-2">
               <Label>Payment Method</Label>
               <RadioGroup
@@ -382,6 +605,7 @@ const WalletVerificationsPage = () => {
                   placeholder="0.00"
                   value={newVerification.amount}
                   onChange={(e) => setNewVerification({...newVerification, amount: e.target.value})}
+                  readOnly={!!newVerification.bookingId}
                 />
               </div>
               
@@ -396,9 +620,19 @@ const WalletVerificationsPage = () => {
               </div>
               
               <div>
-                <Label htmlFor="provider-phone">Provider Phone Number</Label>
+                <Label htmlFor="customerPhone">Your Phone Number</Label>
                 <Input
-                  id="provider-phone"
+                  id="customerPhone"
+                  placeholder="+264 XX XXX XXXX"
+                  value={newVerification.customerPhone}
+                  onChange={(e) => setNewVerification({...newVerification, customerPhone: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="providerPhone">Provider Phone Number (Optional)</Label>
+                <Input
+                  id="providerPhone"
                   placeholder="+264 XX XXX XXXX"
                   value={newVerification.providerPhone}
                   onChange={(e) => setNewVerification({...newVerification, providerPhone: e.target.value})}
@@ -481,26 +715,53 @@ const WalletVerificationsPage = () => {
             <div>
               <Label>Upload Receipt/Screenshot (Optional)</Label>
               <div className="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center">
-                <Upload className="h-8 w-8 text-gray-400" />
-                <p className="mt-2 text-sm text-gray-500">
-                  Click to upload or drag and drop
-                </p>
-                <p className="text-xs text-gray-400">PNG, JPG, PDF (max 2MB)</p>
-                <input
-                  type="file"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  accept="image/png, image/jpeg, application/pdf"
-                />
+                {uploadedImageUrl ? (
+                  <div className="w-full">
+                    <img src={uploadedImageUrl} alt="Uploaded receipt" className="mx-auto max-h-48 object-contain mb-2" />
+                    <Button 
+                      variant="outline" 
+                      className="w-full mt-2" 
+                      onClick={() => setUploadedImageUrl(null)}
+                    >
+                      Remove Image
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="h-8 w-8 text-gray-400" />
+                    <p className="mt-2 text-sm text-gray-500">
+                      Click to upload or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-400">PNG, JPG (max 2MB)</p>
+                    <Input
+                      type="file"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      accept="image/png, image/jpeg"
+                      onChange={handleFileUpload}
+                      disabled={uploadingFile}
+                    />
+                    {uploadingFile && <p className="text-sm text-blue-500 mt-2">Uploading...</p>}
+                  </>
+                )}
               </div>
             </div>
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNewVerificationOpen(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsNewVerificationOpen(false);
+                resetNewVerificationForm();
+              }}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSubmitNewVerification}>
-              Submit Verification
+            <Button 
+              onClick={handleSubmitNewVerification}
+              disabled={createVerificationMutation.isPending || uploadingFile}
+            >
+              {createVerificationMutation.isPending ? 'Submitting...' : 'Submit Verification'}
             </Button>
           </DialogFooter>
         </DialogContent>
