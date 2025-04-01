@@ -3,7 +3,13 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Conversation, Message, DbMessage, DbConversation, DbTables, DbConversationParticipant } from '@/types/message';
+import { Conversation, Message, DbMessage, tableNames, TableName } from '@/types/message';
+
+// This type assertion helper is needed to work around TypeScript limitations
+// with the Supabase client when accessing tables not in the auto-generated types
+const from = <T extends TableName>(table: T) => {
+  return supabase.from(table as any);
+};
 
 export function useConversations() {
   const { user } = useAuth();
@@ -22,19 +28,18 @@ export function useConversations() {
     const loadConversations = async () => {
       setLoading(true);
       try {
-        // Using type assertion to specify the table type
-        const { data, error } = await supabase
-          .from('conversation_participants')
+        // Using our type assertion helper to specify the table
+        const { data, error } = await from(tableNames.CONVERSATION_PARTICIPANTS)
           .select(`
             conversation_id,
-            conversation:conversations (
+            conversation:${tableNames.CONVERSATIONS} (
               id,
               created_at,
               last_message,
               last_message_date,
               unread_count
             ),
-            otherParticipants:conversation_participants (
+            otherParticipants:${tableNames.CONVERSATION_PARTICIPANTS} (
               user_id,
               user:profiles (
                 id,
@@ -89,7 +94,7 @@ export function useConversations() {
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
-        table: 'conversations' 
+        table: tableNames.CONVERSATIONS
       }, () => {
         loadConversations();
       })
@@ -106,8 +111,7 @@ export function useConversations() {
 
     const loadMessages = async () => {
       try {
-        const { data, error } = await supabase
-          .from('messages')
+        const { data, error } = await from(tableNames.MESSAGES)
           .select('*')
           .eq('conversation_id', currentConversation)
           .order('created_at', { ascending: true });
@@ -137,8 +141,7 @@ export function useConversations() {
         
         if (unreadMessages.length > 0) {
           await Promise.all(unreadMessages.map(msg => 
-            supabase
-              .from('messages')
+            from(tableNames.MESSAGES)
               .update({ read: true }) // Use "read" instead of "is_read"
               .eq('id', msg.id)
           ));
@@ -180,7 +183,7 @@ export function useConversations() {
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
-        table: 'messages',
+        table: tableNames.MESSAGES,
         filter: `conversation_id=eq.${currentConversation}`
       }, (payload) => {
         const newMsg = payload.new as any;
@@ -203,8 +206,7 @@ export function useConversations() {
         
         // Mark as read if it's from someone else
         if (newMsg.sender_id !== user.id) {
-          supabase
-            .from('messages')
+          from(tableNames.MESSAGES)
             .update({ read: true }) // Using "read" instead of "is_read"
             .eq('id', newMsg.id)
             .then();
@@ -221,8 +223,7 @@ export function useConversations() {
     if (!user?.id) return false;
     
     try {
-      const { data, error } = await supabase
-        .from('messages')
+      const { data, error } = await from(tableNames.MESSAGES)
         .insert({
           conversation_id: conversationId,
           sender_id: user.id,
@@ -252,16 +253,14 @@ export function useConversations() {
     
     try {
       // Check if conversation already exists
-      const { data: existingConvos } = await supabase
-        .from('conversation_participants')
+      const { data: existingConvos } = await from(tableNames.CONVERSATION_PARTICIPANTS)
         .select('conversation_id')
         .eq('user_id', user.id);
         
       if (existingConvos && existingConvos.length > 0) {
         const convoIds = existingConvos.map((c: any) => c.conversation_id);
         
-        const { data: sharedConvos } = await supabase
-          .from('conversation_participants')
+        const { data: sharedConvos } = await from(tableNames.CONVERSATION_PARTICIPANTS)
           .select('conversation_id')
           .eq('user_id', recipientId)
           .in('conversation_id', convoIds);
@@ -275,8 +274,7 @@ export function useConversations() {
       }
       
       // Create new conversation
-      const { data: newConvo, error: convoError } = await supabase
-        .from('conversations')
+      const { data: newConvo, error: convoError } = await from(tableNames.CONVERSATIONS)
         .insert({
           last_message: initialMessage,
           last_message_date: new Date().toISOString()
@@ -287,8 +285,7 @@ export function useConversations() {
       if (convoError) throw convoError;
       
       // Add participants
-      await supabase
-        .from('conversation_participants')
+      await from(tableNames.CONVERSATION_PARTICIPANTS)
         .insert([
           { conversation_id: newConvo.id, user_id: user.id },
           { conversation_id: newConvo.id, user_id: recipientId }

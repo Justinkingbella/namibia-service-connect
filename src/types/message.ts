@@ -59,3 +59,12 @@ export interface DbTables {
   conversations: DbConversation;
   conversation_participants: DbConversationParticipant;
 }
+
+// Type assertion helper for Supabase tables
+export const tableNames = {
+  MESSAGES: 'messages',
+  CONVERSATIONS: 'conversations',
+  CONVERSATION_PARTICIPANTS: 'conversation_participants'
+} as const;
+
+export type TableName = typeof tableNames[keyof typeof tableNames];
