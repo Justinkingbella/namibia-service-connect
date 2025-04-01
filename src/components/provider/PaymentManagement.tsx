@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, CreditCard, BarChart2, Download, ArrowDown, CheckCircle, Clock } from 'lucide-react';
-import { PaymentMethod } from '@/types/payment';
+import { PaymentPaymentMethod } from '@/types';
 
 interface PaymentManagementProps {
   providerId?: string;
@@ -20,7 +20,7 @@ interface Transaction {
   date: Date;
   bookingId: string;
   serviceName: string;
-  paymentMethod: PaymentMethod;
+  paymentMethod: PaymentPaymentMethod;
   status: 'completed' | 'pending' | 'failed';
 }
 
@@ -148,7 +148,7 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({ providerId
     }
   };
 
-  const getPaymentMethodName = (method: PaymentMethod) => {
+  const getPaymentMethodName = (method: PaymentPaymentMethod) => {
     switch (method) {
       case 'pay_today': return 'PayToday';
       case 'pay_fast': return 'PayFast';
