@@ -91,10 +91,18 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
       return;
     }
 
+    // Fix: Ensure all required properties are included and not optional
     const formData: SubscriptionPlan = {
-      id: initialData?.id || '',
-      ...data,
+      id: initialData?.id || crypto.randomUUID(),
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      billingCycle: data.billingCycle,
+      credits: data.credits,
+      maxBookings: data.maxBookings,
       features: validFeatures,
+      isPopular: data.isPopular || false,
+      isActive: data.isActive,
       createdAt: initialData?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
