@@ -293,7 +293,7 @@ export function useConversations() {
         .insert([
           { conversation_id: newConvo.id, user_id: user.id },
           { conversation_id: newConvo.id, user_id: recipientId }
-        ]));
+        ]);
         
       // Send initial message
       await sendMessage(newConvo.id, initialMessage);
