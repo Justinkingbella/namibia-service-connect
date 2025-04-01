@@ -14,12 +14,17 @@ import {
   Settings,
   HelpCircle,
   Menu,
-  X
+  X,
+  Home,
+  Calendar,
+  Heart,
+  CreditCard,
+  Package
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { SidebarProvider, SidebarRail, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarRail, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 
 interface DashboardLayoutProps {
@@ -33,6 +38,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [notifications, setNotifications] = useState(3); // Mock notification count
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,10 +50,37 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    // Close mobile menu when location changes
+    setShowMobileMenu(false);
+  }, [location]);
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
+
+  const getMobileNavItems = () => {
+    if (user?.role === 'provider') {
+      return [
+        { icon: Home, label: 'Dashboard', path: '/dashboard' },
+        { icon: Package, label: 'Services', path: '/dashboard/services' },
+        { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
+        { icon: CreditCard, label: 'Payments', path: '/dashboard/provider/transactions' },
+        { icon: User, label: 'Profile', path: '/dashboard/profile' },
+      ];
+    }
+    
+    return [
+      { icon: Home, label: 'Dashboard', path: '/dashboard' },
+      { icon: Package, label: 'Services', path: '/dashboard/services' },
+      { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
+      { icon: Heart, label: 'Favorites', path: '/dashboard/customer/favorites' },
+      { icon: User, label: 'Profile', path: '/dashboard/customer/profile' },
+    ];
+  };
+
+  const mobileNavItems = getMobileNavItems();
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -55,12 +88,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         {/* Fixed Header */}
         <header className={cn(
           "bg-white border-b sticky top-0 z-30 transition-all duration-300",
-          isScrolled ? "shadow-sm" : ""
+          isScrolled ? "shadow-md" : ""
         )}>
           <Container className="py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <SidebarTrigger className="p-2 text-gray-600 hover:text-primary rounded-full hover:bg-gray-100" />
+                <SidebarTrigger className="p-2 text-gray-600 hover:text-primary rounded-full hover:bg-gray-100 hidden md:flex" />
+                <button 
+                  className="p-2 text-gray-600 hover:text-primary rounded-full hover:bg-gray-100 md:hidden"
+                  onClick={() => setShowMobileMenu(!showMobileMenu)}
+                >
+                  {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
+                </button>
                 <Logo />
               </div>
               
@@ -91,7 +130,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   >
                     <Avatar className="h-8 w-8 bg-primary/10 text-primary">
-                      <span className="text-sm font-medium">{user?.name.charAt(0)}</span>
+                      <span className="text-sm font-medium">{user?.name?.charAt(0)}</span>
                     </Avatar>
                     <span className="hidden sm:block text-sm font-medium">{user?.name}</span>
                     <ChevronDown size={16} className="text-gray-400" />
@@ -152,9 +191,48 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           </Container>
         </header>
 
-        <div className="flex flex-1">
+        {/* Mobile menu */}
+        {showMobileMenu && (
+          <div className="fixed inset-0 top-[60px] bg-white z-20 md:hidden animate-fade-in">
+            <div className="p-4 space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <input 
+                  type="text" 
+                  placeholder="Search..." 
+                  className="w-full py-2 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                />
+              </div>
+              
+              <nav>
+                <ul className="space-y-3">
+                  {mobileNavItems.map((item) => (
+                    <li key={item.label}>
+                      <Link 
+                        to={item.path}
+                        className={cn(
+                          "flex items-center gap-3 p-3 rounded-lg",
+                          location.pathname === item.path 
+                            ? "bg-primary/10 text-primary" 
+                            : "text-gray-700 hover:bg-gray-100"
+                        )}
+                      >
+                        <item.icon size={20} />
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-1 relative">
           {/* Sidebar with Collapsible Feature */}
-          <AppSidebar />
+          <div className="hidden md:block">
+            <AppSidebar />
+          </div>
           
           {/* Main content */}
           <main className="flex-1 overflow-x-hidden p-4 md:p-8">
@@ -163,8 +241,47 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             </Container>
           </main>
         </div>
+
+        {/* Mobile bottom navigation */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-30">
+          <div className="flex justify-between items-center px-4">
+            {mobileNavItems.map((item) => (
+              <Link
+                key={item.label}
+                to={item.path}
+                className={cn(
+                  "flex flex-col items-center py-3 px-2",
+                  location.pathname === item.path 
+                    ? "text-primary" 
+                    : "text-gray-500"
+                )}
+              >
+                <item.icon size={20} />
+                <span className="text-xs mt-1">{item.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
     </SidebarProvider>
+  );
+};
+
+// For TypeScript compatibility
+const Link = ({ to, className, children }: { to: string, className?: string, children: React.ReactNode }) => {
+  const navigate = useNavigate();
+  
+  return (
+    <a 
+      href={to} 
+      className={className}
+      onClick={(e) => {
+        e.preventDefault();
+        navigate(to);
+      }}
+    >
+      {children}
+    </a>
   );
 };
 

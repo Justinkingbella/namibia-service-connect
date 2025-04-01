@@ -2,456 +2,439 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dispute } from '@/types/booking';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
+import { AlertCircle, FileText, CheckCircle, XCircle, Clock, Plus, Upload } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, Clock, CheckCircle, Search, FileUp, XCircle } from 'lucide-react';
-import { Dispute, Booking } from '@/types/booking';
-import { toast } from 'sonner';
 
-// Mock data for customer's bookings
-const mockBookings: Booking[] = [
-  {
-    id: 'booking1234567',
-    serviceId: 'service1',
-    customerId: 'customer1',
-    providerId: 'provider1',
-    status: 'completed',
-    date: new Date('2023-05-15'),
-    startTime: '10:00',
-    endTime: '12:00',
-    duration: 2,
-    totalAmount: 350.00,
-    commission: 35.00,
-    paymentMethod: 'e_wallet',
-    paymentStatus: 'completed',
-    notes: null,
-    isUrgent: false,
-    createdAt: new Date('2023-05-10'),
-    updatedAt: new Date('2023-05-15'),
-    serviceName: 'House Cleaning',
-    serviceImage: '/placeholder.svg'
-  },
-  {
-    id: 'booking7654321',
-    serviceId: 'service2',
-    customerId: 'customer1',
-    providerId: 'provider2',
-    status: 'completed',
-    date: new Date('2023-05-14'),
-    startTime: '14:00',
-    endTime: '15:00',
-    duration: 1,
-    totalAmount: 200.00,
-    commission: 20.00,
-    paymentMethod: 'cash',
-    paymentStatus: 'completed',
-    notes: null,
-    isUrgent: false,
-    createdAt: new Date('2023-05-12'),
-    updatedAt: new Date('2023-05-14'),
-    serviceName: 'Plumbing Service',
-    serviceImage: '/placeholder.svg'
-  }
-];
-
-// Mock data for customer's disputes
+// Mock data
 const mockDisputes: Dispute[] = [
   {
-    id: 'disp1',
-    bookingId: 'booking1234567',
-    customerId: 'customer1',
-    providerId: 'provider1',
+    id: '1',
+    bookingId: 'B1001',
+    customerId: 'C1',
+    providerId: 'P1',
     status: 'open',
-    reason: 'Service not delivered as described',
-    description: 'The cleaning service was supposed to include window cleaning but it was not done.',
-    evidenceUrls: ['/placeholder.svg'],
-    createdAt: new Date('2023-05-16T10:30:00'),
-    updatedAt: new Date('2023-05-16T10:30:00')
+    reason: 'Service not completed as described',
+    description: 'The service was not completed according to the agreed scope. Several areas were left untouched.',
+    evidenceUrls: ['evidence1.jpg'],
+    createdAt: new Date(Date.now() - 86400000 * 3),
+    updatedAt: new Date(Date.now() - 86400000 * 2)
   },
   {
-    id: 'disp2',
-    bookingId: 'booking7654321',
-    customerId: 'customer1',
-    providerId: 'provider2',
-    status: 'resolved',
-    reason: 'Incorrect pricing',
-    description: 'I was charged more than the agreed amount.',
-    evidenceUrls: ['/placeholder.svg'],
-    resolution: 'Partial refund issued to the customer.',
-    createdAt: new Date('2023-05-14T15:45:00'),
-    updatedAt: new Date('2023-05-15T14:20:00')
-  }
+    id: '2',
+    bookingId: 'B1002',
+    customerId: 'C1',
+    providerId: 'P2',
+    status: 'under_review',
+    reason: 'Overcharge for services',
+    description: 'I was charged more than the initially agreed amount without prior notification of any additional costs.',
+    evidenceUrls: ['evidence2.jpg', 'evidence3.jpg'],
+    createdAt: new Date(Date.now() - 86400000 * 5),
+    updatedAt: new Date(Date.now() - 86400000)
+  },
 ];
 
+// Mock bookings for the dropdown
+const mockBookings = [
+  { id: 'B1003', serviceName: 'Home Cleaning Service', providerName: 'CleanHome Pro', date: new Date(Date.now() - 86400000 * 1) },
+  { id: 'B1004', serviceName: 'Plumbing Repair', providerName: 'Plumb Perfect', date: new Date(Date.now() - 86400000 * 3) },
+  { id: 'B1005', serviceName: 'Lawn Mowing', providerName: 'Green Lawns', date: new Date(Date.now() - 86400000 * 5) },
+];
+
+// Mock service provider names for bookings
+const mockBookingDetails = {
+  'B1001': { serviceName: 'Home Cleaning Service', providerName: 'CleanHome Pro', date: new Date(Date.now() - 86400000 * 5) },
+  'B1002': { serviceName: 'Deep Cleaning', providerName: 'SparkleClean', date: new Date(Date.now() - 86400000 * 7) },
+};
+
+// Mock fetch function
+const fetchDisputes = async (): Promise<Dispute[]> => {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return mockDisputes;
+};
+
 const CustomerDisputesPage = () => {
-  const [disputes, setDisputes] = useState<Dispute[]>(mockDisputes);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-  const [reason, setReason] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [activeTab, setActiveTab] = useState('open');
+  const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
+  const [isNewDisputeOpen, setIsNewDisputeOpen] = useState(false);
+  const [responseText, setResponseText] = useState('');
   
-  // In a real app, we would fetch data from an API
-  const { data: bookings, isLoading: loadingBookings } = useQuery({
-    queryKey: ['customerBookings'],
-    queryFn: async () => {
-      // Simulate API call
-      return mockBookings;
-    },
-    initialData: mockBookings
+  // New dispute form state
+  const [newDispute, setNewDispute] = useState({
+    bookingId: '',
+    reason: '',
+    description: '',
+    evidenceFiles: [] as File[]
   });
-  
-  const { isLoading: loadingDisputes } = useQuery({
+
+  const { data: disputes = [], isLoading } = useQuery({
     queryKey: ['customerDisputes'],
-    queryFn: async () => {
-      // Simulate API call
-      return mockDisputes;
-    },
-    initialData: mockDisputes
+    queryFn: fetchDisputes
   });
-  
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    
-    const files = Array.from(e.target.files);
-    setUploadedFiles(prev => [...prev, ...files]);
-  };
-  
-  const handleSubmitDispute = () => {
-    if (!selectedBooking || !reason || !description) {
-      toast.error("Please fill all required fields");
-      return;
+
+  const filteredDisputes = disputes.filter(d => {
+    if (activeTab === 'open') return d.status === 'open';
+    if (activeTab === 'under_review') return d.status === 'under_review';
+    if (activeTab === 'resolved') return d.status === 'resolved' || d.status === 'declined';
+    return true;
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setNewDispute({
+        ...newDispute,
+        evidenceFiles: Array.from(e.target.files)
+      });
     }
-    
-    // In a real app, we would send this to an API
-    const newDispute: Dispute = {
-      id: `disp${Math.random().toString(36).substring(2, 9)}`,
-      bookingId: selectedBooking.id,
-      customerId: 'customer1', // Use actual customer ID from context
-      providerId: selectedBooking.providerId,
-      status: 'open',
-      reason,
-      description,
-      evidenceUrls: uploadedFiles.map(() => '/placeholder.svg'), // In a real app, we would upload files and get URLs
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    setDisputes(prev => [...prev, newDispute]);
-    setReason('');
-    setDescription('');
-    setSelectedBooking(null);
-    setUploadedFiles([]);
-    setIsDialogOpen(false);
-    
-    toast.success("Dispute submitted successfully");
   };
-  
-  const getStatusBadge = (status: Dispute['status']) => {
+
+  const handleSubmitNewDispute = () => {
+    console.log('Submitting new dispute', newDispute);
+    // In a real app, you would call an API to create a new dispute
+    setIsNewDisputeOpen(false);
+    // Reset form
+    setNewDispute({
+      bookingId: '',
+      reason: '',
+      description: '',
+      evidenceFiles: []
+    });
+  };
+
+  const handleSubmitResponse = () => {
+    console.log('Submitting additional information:', responseText);
+    // In a real app, you would call an API to submit the response
+    setResponseText('');
+  };
+
+  const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'open':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700"><Clock className="h-3 w-3 mr-1" /> Open</Badge>;
-      case 'under_review':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700"><Clock className="h-3 w-3 mr-1" /> Under Review</Badge>;
       case 'resolved':
-        return <Badge variant="outline" className="bg-green-50 text-green-700"><CheckCircle className="h-3 w-3 mr-1" /> Resolved</Badge>;
+        return 'bg-green-100 text-green-800';
       case 'declined':
-        return <Badge variant="outline" className="bg-red-50 text-red-700"><XCircle className="h-3 w-3 mr-1" /> Declined</Badge>;
+        return 'bg-red-100 text-red-800';
+      case 'open':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'under_review':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'resolved':
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'declined':
+        return <XCircle className="h-4 w-4 text-red-600" />;
+      case 'open':
+        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
+      case 'under_review':
+        return <Clock className="h-4 w-4 text-blue-600" />;
       default:
         return null;
     }
   };
-  
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
+
+  const formatDisputeStatus = (status: string) => {
+    return status
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
-  
-  const filteredDisputes = disputes.filter(d => {
-    if (!searchQuery) return true;
-    
-    const query = searchQuery.toLowerCase();
-    return (
-      d.bookingId.toLowerCase().includes(query) ||
-      d.reason.toLowerCase().includes(query) ||
-      d.description.toLowerCase().includes(query)
-    );
-  });
-  
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Payment Disputes</h1>
-          <p className="text-muted-foreground">
-            Manage your payment disputes with service providers
-          </p>
-        </div>
-        
-        <div className="flex justify-between items-center">
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search disputes"
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">Payment Disputes</h1>
+            <p className="text-muted-foreground">Submit and track disputes for your bookings.</p>
           </div>
-          
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <AlertCircle className="h-4 w-4 mr-2" />
-                Submit New Dispute
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[525px]">
-              <DialogHeader>
-                <DialogTitle>Submit Payment Dispute</DialogTitle>
-                <DialogDescription>
-                  Submit a dispute for a booking you believe has issues with payment.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-4 mt-2">
-                <div>
-                  <Label htmlFor="booking">Select Booking</Label>
-                  <Select 
-                    onValueChange={(value) => setSelectedBooking(bookings.find(b => b.id === value) || null)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a booking" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {bookings.map((booking) => (
-                        <SelectItem key={booking.id} value={booking.id}>
-                          {booking.serviceName} - {formatDate(booking.date)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+          <Button onClick={() => setIsNewDisputeOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            File New Dispute
+          </Button>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="open">Open</TabsTrigger>
+            <TabsTrigger value="under_review">Under Review</TabsTrigger>
+            <TabsTrigger value="resolved">Resolved</TabsTrigger>
+            <TabsTrigger value="all">All Disputes</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeTab} className="space-y-4">
+            {isLoading ? (
+              <div className="bg-white rounded-xl border shadow-sm p-8 text-center">
+                <AlertCircle className="h-10 w-10 mx-auto text-gray-400 animate-pulse" />
+                <h3 className="mt-4 text-lg font-medium">Loading disputes...</h3>
+              </div>
+            ) : filteredDisputes.length === 0 ? (
+              <div className="bg-white rounded-xl border shadow-sm p-8 text-center">
+                <CheckCircle className="h-10 w-10 mx-auto text-gray-400" />
+                <h3 className="mt-4 text-lg font-medium">No disputes found</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  No {activeTab === 'all' ? '' : activeTab} disputes at the moment.
+                </p>
+                <Button onClick={() => setIsNewDisputeOpen(true)} className="mt-4">
+                  File New Dispute
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="lg:col-span-1 space-y-4">
+                  {filteredDisputes.map((dispute) => (
+                    <div 
+                      key={dispute.id}
+                      className={cn(
+                        "bg-white rounded-xl border p-4 cursor-pointer hover:border-primary/50 transition-colors",
+                        selectedDispute?.id === dispute.id && "border-primary/50 shadow-sm"
+                      )}
+                      onClick={() => setSelectedDispute(dispute)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="text-sm font-medium">
+                            {mockBookingDetails[dispute.bookingId]?.serviceName || 'Unknown Service'}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {mockBookingDetails[dispute.bookingId]?.providerName || 'Unknown Provider'}
+                          </div>
+                        </div>
+                        <div className={cn(
+                          "px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1",
+                          getStatusBadgeClass(dispute.status)
+                        )}>
+                          {getStatusIcon(dispute.status)}
+                          <span>
+                            {formatDisputeStatus(dispute.status)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Reason:</span>
+                          <span className="truncate max-w-[150px]">{dispute.reason}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Created:</span>
+                          <span>{dispute.createdAt.toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
                 
-                {selectedBooking && (
-                  <div className="p-3 bg-muted/50 rounded-md">
-                    <p className="text-sm font-medium">{selectedBooking.serviceName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Date: {formatDate(selectedBooking.date)} • Amount: N${selectedBooking.totalAmount.toFixed(2)}
-                    </p>
-                  </div>
-                )}
-                
-                <div>
-                  <Label htmlFor="reason">Reason for Dispute</Label>
-                  <Select onValueChange={setReason}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a reason" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Service not delivered as described">Service not delivered as described</SelectItem>
-                      <SelectItem value="Incorrect pricing">Incorrect pricing</SelectItem>
-                      <SelectItem value="Double charged">Double charged</SelectItem>
-                      <SelectItem value="Payment made but not reflected">Payment made but not reflected</SelectItem>
-                      <SelectItem value="Other payment issue">Other payment issue</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea 
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Provide details about your dispute..."
-                    rows={4}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="evidence">Upload Evidence (optional)</Label>
-                  <div className="mt-1">
-                    <Input
-                      id="evidence" 
-                      type="file"
-                      onChange={handleFileUpload}
-                      multiple
-                      accept="image/*,.pdf"
-                    />
-                  </div>
-                  {uploadedFiles.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-xs text-muted-foreground mb-1">Uploaded files:</p>
-                      <ul className="text-xs space-y-1">
-                        {uploadedFiles.map((file, index) => (
-                          <li key={index} className="flex items-center">
-                            <FileUp className="h-3 w-3 mr-1" />
-                            {file.name}
-                          </li>
-                        ))}
-                      </ul>
+                <div className="lg:col-span-2">
+                  {selectedDispute ? (
+                    <Card>
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle>Dispute Details</CardTitle>
+                            <CardDescription>
+                              {mockBookingDetails[selectedDispute.bookingId]?.serviceName || 'Unknown Service'} - 
+                              {mockBookingDetails[selectedDispute.bookingId]?.providerName || 'Unknown Provider'}
+                            </CardDescription>
+                          </div>
+                          <div className={cn(
+                            "px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1",
+                            getStatusBadgeClass(selectedDispute.status)
+                          )}>
+                            {getStatusIcon(selectedDispute.status)}
+                            <span>
+                              {formatDisputeStatus(selectedDispute.status)}
+                            </span>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <Label>Reason for Dispute</Label>
+                          <div className="mt-1 font-medium">{selectedDispute.reason}</div>
+                        </div>
+                        
+                        <div>
+                          <Label>Your Description</Label>
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md text-sm">
+                            {selectedDispute.description}
+                          </div>
+                        </div>
+                        
+                        {selectedDispute.evidenceUrls.length > 0 && (
+                          <div>
+                            <Label>Evidence Provided</Label>
+                            <div className="mt-1 grid grid-cols-3 gap-2">
+                              {selectedDispute.evidenceUrls.map((url, index) => (
+                                <div key={index} className="h-20 bg-gray-100 rounded-md flex items-center justify-center">
+                                  <p className="text-xs text-gray-500">(Evidence image)</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {selectedDispute.resolution && (
+                          <div>
+                            <Label>Resolution</Label>
+                            <div className="mt-1 p-3 bg-green-50 rounded-md text-sm">
+                              {selectedDispute.resolution}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {(selectedDispute.status === 'open' || selectedDispute.status === 'under_review') && (
+                          <div className="pt-4">
+                            <Label htmlFor="additional-info">Additional Information</Label>
+                            <Textarea
+                              id="additional-info"
+                              placeholder="Provide any additional information about this dispute..."
+                              value={responseText}
+                              onChange={(e) => setResponseText(e.target.value)}
+                              className="mt-1 min-h-[120px]"
+                            />
+                          </div>
+                        )}
+                      </CardContent>
+                      
+                      {(selectedDispute.status === 'open' || selectedDispute.status === 'under_review') && (
+                        <CardFooter className="flex justify-between border-t pt-4">
+                          {selectedDispute.status === 'open' && (
+                            <Button variant="outline" color="red">Cancel Dispute</Button>
+                          )}
+                          <Button 
+                            onClick={handleSubmitResponse}
+                            disabled={!responseText.trim()}
+                          >
+                            Submit Additional Information
+                          </Button>
+                        </CardFooter>
+                      )}
+                    </Card>
+                  ) : (
+                    <div className="bg-white rounded-xl border shadow-sm p-8 text-center h-full flex flex-col items-center justify-center">
+                      <FileText className="h-12 w-12 text-gray-300" />
+                      <h3 className="mt-4 text-lg font-medium">No dispute selected</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Select a dispute from the list to view details
+                      </p>
                     </div>
                   )}
                 </div>
               </div>
-              
-              <DialogFooter>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleSubmitDispute}
-                  disabled={!selectedBooking || !reason || !description}
-                >
-                  Submit Dispute
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Disputes</CardTitle>
-            <CardDescription>
-              Track the status of your submitted payment disputes
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loadingDisputes ? (
-              <div className="flex items-center justify-center h-40">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-              </div>
-            ) : filteredDisputes.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4">Date</th>
-                      <th className="text-left py-3 px-4">Booking</th>
-                      <th className="text-left py-3 px-4">Reason</th>
-                      <th className="text-left py-3 px-4">Status</th>
-                      <th className="text-left py-3 px-4">Last Updated</th>
-                      <th className="text-left py-3 px-4">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredDisputes.map((dispute) => (
-                      <tr key={dispute.id} className="border-b hover:bg-muted/50">
-                        <td className="py-3 px-4">{formatDate(dispute.createdAt)}</td>
-                        <td className="py-3 px-4">
-                          #{dispute.bookingId.substring(0, 8)}
-                          <div className="text-xs text-muted-foreground">
-                            {bookings.find(b => b.id === dispute.bookingId)?.serviceName || 'Unknown Service'}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 font-medium" style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {dispute.reason}
-                        </td>
-                        <td className="py-3 px-4">
-                          {getStatusBadge(dispute.status)}
-                        </td>
-                        <td className="py-3 px-4">{formatDate(dispute.updatedAt)}</td>
-                        <td className="py-3 px-4">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="h-8">
-                                View Details
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[525px]">
-                              <DialogHeader>
-                                <DialogTitle>Dispute Details</DialogTitle>
-                                <DialogDescription>
-                                  Booking #{dispute.bookingId.substring(0, 8)} • {formatDate(dispute.createdAt)}
-                                </DialogDescription>
-                              </DialogHeader>
-                              
-                              <div className="space-y-4 mt-2">
-                                <div>
-                                  <Label>Status</Label>
-                                  <div className="mt-1">
-                                    {getStatusBadge(dispute.status)}
-                                  </div>
-                                </div>
-                                
-                                <div>
-                                  <Label>Reason</Label>
-                                  <div className="font-medium mt-1">{dispute.reason}</div>
-                                </div>
-                                
-                                <div>
-                                  <Label>Description</Label>
-                                  <div className="mt-1 p-3 bg-muted/50 rounded-md text-sm whitespace-pre-line">
-                                    {dispute.description}
-                                  </div>
-                                </div>
-                                
-                                {dispute.evidenceUrls && dispute.evidenceUrls.length > 0 && (
-                                  <div>
-                                    <Label>Evidence Provided</Label>
-                                    <div className="mt-1 flex gap-2">
-                                      {dispute.evidenceUrls.map((url, index) => (
-                                        <img 
-                                          key={index}
-                                          src={url} 
-                                          alt={`Evidence ${index + 1}`}
-                                          className="h-20 w-20 object-cover rounded-md border"
-                                        />
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                {dispute.resolution && (
-                                  <div>
-                                    <Label>Resolution</Label>
-                                    <div className="mt-1 p-3 bg-green-50 rounded-md text-sm text-green-800 whitespace-pre-line">
-                                      {dispute.resolution}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                              
-                              <DialogFooter>
-                                <Button>Close</Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">No disputes found</h3>
-                <p className="text-muted-foreground mt-1">
-                  {searchQuery ? 'Try adjusting your search' : 'You haven\'t submitted any payment disputes yet'}
-                </p>
-              </div>
             )}
-          </CardContent>
-        </Card>
+          </TabsContent>
+        </Tabs>
       </div>
+
+      {/* New Dispute Dialog */}
+      <Dialog open={isNewDisputeOpen} onOpenChange={setIsNewDisputeOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>File New Dispute</DialogTitle>
+            <DialogDescription>
+              Provide information about the issue with your booking to initiate a dispute.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div>
+              <Label htmlFor="booking">Select Booking</Label>
+              <Select 
+                value={newDispute.bookingId} 
+                onValueChange={(value) => setNewDispute({...newDispute, bookingId: value})}
+              >
+                <SelectTrigger id="booking">
+                  <SelectValue placeholder="Select a booking" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockBookings.map(booking => (
+                    <SelectItem key={booking.id} value={booking.id}>
+                      {booking.serviceName} - {booking.providerName} ({booking.date.toLocaleDateString()})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="reason">Reason for Dispute</Label>
+              <Input
+                id="reason"
+                placeholder="e.g., Service not completed, Quality issues, etc."
+                value={newDispute.reason}
+                onChange={(e) => setNewDispute({...newDispute, reason: e.target.value})}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="description">Detailed Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Provide detailed information about the issue..."
+                value={newDispute.description}
+                onChange={(e) => setNewDispute({...newDispute, description: e.target.value})}
+                className="min-h-[120px]"
+              />
+            </div>
+            
+            <div>
+              <Label>Upload Evidence (Optional)</Label>
+              <div className="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center">
+                <Upload className="h-8 w-8 text-gray-400" />
+                <p className="mt-2 text-sm text-gray-500">
+                  Click to upload or drag and drop
+                </p>
+                <p className="text-xs text-gray-400">PNG, JPG, PDF (max 3 files, 2MB each)</p>
+                <input
+                  type="file"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  accept="image/png, image/jpeg, application/pdf"
+                  multiple
+                  onChange={handleFileChange}
+                />
+              </div>
+              {newDispute.evidenceFiles.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">{newDispute.evidenceFiles.length} file(s) selected</p>
+                  <ul className="mt-1 text-xs text-gray-500">
+                    {newDispute.evidenceFiles.map((file, index) => (
+                      <li key={index}>{file.name}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNewDisputeOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmitNewDispute}>
+              Submit Dispute
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
+};
+
+// For TypeScript compatibility
+const cn = (...classes: (string | boolean | undefined)[]) => {
+  return classes.filter(Boolean).join(' ');
 };
 
 export default CustomerDisputesPage;

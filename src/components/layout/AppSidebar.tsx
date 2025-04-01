@@ -12,7 +12,8 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuButton
+  SidebarMenuButton,
+  useSidebar
 } from '@/components/ui/sidebar';
 
 import { 
@@ -32,12 +33,15 @@ import {
   CheckSquare,
   DollarSign,
   PieChart,
-  Smartphone
+  Smartphone,
+  FileText,
+  Clock
 } from 'lucide-react';
 
 export function AppSidebar() {
   const { user } = useAuth();
   const location = useLocation();
+  const { isMobile, state } = useSidebar();
   
   // Determine which menu items to show based on user role
   const getMenuItems = () => {
@@ -85,8 +89,46 @@ export function AppSidebar() {
   // Get menu items based on user role
   const menuItems = getMenuItems();
 
+  // Financial menu items for provider
+  const providerFinancialItems = [
+    { 
+      title: 'Wallet Verifications', 
+      path: '/dashboard/provider/wallet-verification', 
+      icon: CheckSquare 
+    },
+    { 
+      title: 'Payment Disputes', 
+      path: '/dashboard/provider/disputes', 
+      icon: AlertCircle 
+    },
+    { 
+      title: 'Transaction History', 
+      path: '/dashboard/provider/transactions', 
+      icon: Wallet 
+    },
+  ];
+
+  // Financial menu items for customer
+  const customerFinancialItems = [
+    { 
+      title: 'My Verifications', 
+      path: '/dashboard/customer/wallet-verifications', 
+      icon: CheckSquare 
+    },
+    { 
+      title: 'Payment History', 
+      path: '/dashboard/customer/payment-history', 
+      icon: CreditCard 
+    },
+    { 
+      title: 'Disputes', 
+      path: '/dashboard/customer/disputes', 
+      icon: AlertCircle 
+    },
+  ];
+
   return (
-    <Sidebar className="border-r bg-white shadow-sm">
+    <Sidebar className="border-r bg-white shadow-sm z-20">
       <SidebarHeader className="p-4">
         <div className="text-lg font-semibold">Service Marketplace</div>
         <div className="text-xs text-muted-foreground">{user?.role}</div>
@@ -101,10 +143,10 @@ export function AppSidebar() {
                   <SidebarMenuButton 
                     asChild 
                     isActive={location.pathname === item.path}
-                    tooltip={item.title}
+                    tooltip={state === "collapsed" ? item.title : undefined}
                   >
                     <Link to={item.path}>
-                      <item.icon />
+                      <item.icon className="flex-shrink-0" />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -119,42 +161,20 @@ export function AppSidebar() {
             <SidebarGroupLabel>Financial</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={location.pathname === '/dashboard/provider/wallet-verification'}
-                    tooltip="Wallet Verifications"
-                  >
-                    <Link to="/dashboard/provider/wallet-verification">
-                      <CheckSquare />
-                      <span>Wallet Verifications</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={location.pathname === '/dashboard/provider/disputes'}
-                    tooltip="Payment Disputes"
-                  >
-                    <Link to="/dashboard/provider/disputes">
-                      <AlertCircle />
-                      <span>Payment Disputes</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={location.pathname === '/dashboard/provider/transactions'}
-                    tooltip="Transaction History"
-                  >
-                    <Link to="/dashboard/provider/transactions">
-                      <Wallet />
-                      <span>Transaction History</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                {providerFinancialItems.map(item => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild 
+                      isActive={location.pathname === item.path}
+                      tooltip={state === "collapsed" ? item.title : undefined}
+                    >
+                      <Link to={item.path}>
+                        <item.icon className="flex-shrink-0" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -165,39 +185,64 @@ export function AppSidebar() {
             <SidebarGroupLabel>Payments</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
+                {customerFinancialItems.map(item => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild 
+                      isActive={location.pathname === item.path}
+                      tooltip={state === "collapsed" ? item.title : undefined}
+                    >
+                      <Link to={item.path}>
+                        <item.icon className="flex-shrink-0" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Only show the booking system group for provider and customer roles */}
+        {(user?.role === 'provider' || user?.role === 'customer') && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Booking System</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton 
                     asChild 
-                    isActive={location.pathname === '/dashboard/customer/wallet-verifications'}
-                    tooltip="My Verifications"
+                    isActive={location.pathname.includes('/dashboard/bookings/')}
+                    tooltip={state === "collapsed" ? "Manage Bookings" : undefined}
                   >
-                    <Link to="/dashboard/customer/wallet-verifications">
-                      <CheckSquare />
-                      <span>My Verifications</span>
+                    <Link to="/dashboard/bookings">
+                      <Calendar className="flex-shrink-0" />
+                      <span>Manage Bookings</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton 
                     asChild 
-                    isActive={location.pathname === '/dashboard/customer/payment-history'}
-                    tooltip="Payment History"
+                    isActive={location.pathname === `/dashboard/${user?.role === 'provider' ? 'provider' : 'customer'}/upcoming`}
+                    tooltip={state === "collapsed" ? "Upcoming" : undefined}
                   >
-                    <Link to="/dashboard/customer/payment-history">
-                      <CreditCard />
-                      <span>Payment History</span>
+                    <Link to={`/dashboard/${user?.role === 'provider' ? 'provider' : 'customer'}/upcoming`}>
+                      <Clock className="flex-shrink-0" />
+                      <span>Upcoming</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton 
                     asChild 
-                    isActive={location.pathname === '/dashboard/customer/disputes'}
-                    tooltip="Payment Disputes"
+                    isActive={location.pathname === `/dashboard/${user?.role === 'provider' ? 'provider' : 'customer'}/history`}
+                    tooltip={state === "collapsed" ? "History" : undefined}
                   >
-                    <Link to="/dashboard/customer/disputes">
-                      <AlertCircle />
-                      <span>Disputes</span>
+                    <Link to={`/dashboard/${user?.role === 'provider' ? 'provider' : 'customer'}/history`}>
+                      <FileText className="flex-shrink-0" />
+                      <span>Booking History</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

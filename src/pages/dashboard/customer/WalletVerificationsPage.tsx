@@ -1,356 +1,517 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { WalletVerification, NamibianMobileOperator, NamibianBank } from '@/types/payment';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { CalendarClock, FileText, CheckCircle, XCircle, Clock, Upload, Plus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/common/Button';
-import { Badge } from '@/components/ui/badge';
-import { WalletVerification } from '@/types/payment';
-import { CheckCircle, Clock, AlertCircle, Search, Download, RefreshCcw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import WalletPaymentVerification from '@/components/customer/WalletPaymentVerification';
-import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-// Mock data for customer's wallet verifications
+// Mock data
 const mockVerifications: WalletVerification[] = [
   {
-    id: 'ver1',
-    transactionId: 'trans1',
-    bookingId: 'booking1234567',
-    paymentMethod: 'easy_wallet',
-    amount: 350.00,
-    referenceNumber: 'EW123456789',
-    customerPhone: '0812345678',
-    providerPhone: '0876543210',
-    dateSubmitted: new Date('2023-05-15T10:30:00'),
+    id: '1',
+    transactionId: 'TX12345',
+    bookingId: 'B1001',
+    paymentMethod: 'e_wallet',
+    amount: 350,
+    referenceNumber: 'EW78912345',
+    customerPhone: '+264811234567',
+    providerPhone: '+264817654321',
+    dateSubmitted: new Date(Date.now() - 86400000 * 2),
     verificationStatus: 'verified',
-    dateVerified: new Date('2023-05-15T11:45:00'),
     customerConfirmed: true,
     providerConfirmed: true,
     adminVerified: true,
-    proofType: 'receipt',
-    receiptImage: '/placeholder.svg'
+    proofType: 'screenshot',
+    mobileOperator: 'MTC'
   },
   {
-    id: 'ver2',
-    transactionId: 'trans2',
-    bookingId: 'booking7654321',
-    paymentMethod: 'e_wallet',
-    amount: 200.00,
-    referenceNumber: 'TXN987654321',
-    customerPhone: '0823456789',
-    providerPhone: '0865432109',
-    dateSubmitted: new Date('2023-05-14T15:45:00'),
-    verificationStatus: 'submitted',
-    customerConfirmed: true,
-    providerConfirmed: false,
-    adminVerified: false,
-    proofType: 'screenshot'
-  },
-  {
-    id: 'ver3',
-    transactionId: 'trans3',
-    bookingId: 'booking9876543',
+    id: '2',
+    transactionId: 'TX12346',
+    bookingId: 'B1002',
     paymentMethod: 'easy_wallet',
-    amount: 150.00,
-    referenceNumber: 'EW987654321',
-    customerPhone: '0834567890',
-    providerPhone: '0854321098',
-    dateSubmitted: new Date('2023-05-13T09:15:00'),
-    verificationStatus: 'rejected',
-    notes: 'Invalid reference number provided',
+    amount: 500,
+    referenceNumber: 'EZ45678901',
+    customerPhone: '+264811234567',
+    providerPhone: '+264817654321',
+    dateSubmitted: new Date(Date.now() - 86400000),
+    verificationStatus: 'pending',
     customerConfirmed: true,
     providerConfirmed: false,
     adminVerified: false,
-    proofType: 'reference'
+    proofType: 'reference',
+    bankUsed: 'FNB'
   }
 ];
 
-// Mock bookings that need payment
-const mockPendingBookings = [
-  {
-    id: 'booking8765432',
-    serviceId: 'service1',
-    serviceName: 'House Cleaning',
-    providerName: 'CleanPro Services',
-    providerPhone: '0843210987',
-    date: new Date('2023-05-20'),
-    amount: 300.00
-  },
-  {
-    id: 'booking7654321',
-    serviceId: 'service2',
-    serviceName: 'Plumbing Service',
-    providerName: 'Quick Fix Plumbers',
-    providerPhone: '0832109876',
-    date: new Date('2023-05-22'),
-    amount: 450.00
-  }
-];
+// Mock fetch function
+const fetchVerifications = async (): Promise<WalletVerification[]> => {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return mockVerifications;
+};
 
-const CustomerWalletVerificationsPage = () => {
-  const [verifications, setVerifications] = useState<WalletVerification[]>(mockVerifications);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+const WalletVerificationsPage = () => {
+  const [activeTab, setActiveTab] = useState('pending');
+  const [selectedVerification, setSelectedVerification] = useState<WalletVerification | null>(null);
+  const [isNewVerificationOpen, setIsNewVerificationOpen] = useState(false);
   
-  // In a real app, we would fetch data from an API
-  const { isLoading: loadingVerifications } = useQuery({
+  // New verification form state
+  const [newVerification, setNewVerification] = useState({
+    paymentMethod: 'e_wallet' as 'e_wallet' | 'easy_wallet',
+    amount: '',
+    referenceNumber: '',
+    providerPhone: '',
+    proofType: 'receipt' as 'receipt' | 'screenshot' | 'reference',
+    mobileOperator: 'MTC' as NamibianMobileOperator | undefined,
+    bankUsed: undefined as NamibianBank | undefined,
+    notes: ''
+  });
+
+  const { data: verifications = [], isLoading } = useQuery({
     queryKey: ['customerWalletVerifications'],
-    queryFn: async () => {
-      // Simulate API call
-      return mockVerifications;
-    },
-    initialData: mockVerifications
+    queryFn: fetchVerifications
   });
-  
-  // Update state from initialData
-  useEffect(() => {
-    setVerifications(mockVerifications);
-  }, []);
-  
-  // In a real app, we would fetch pending bookings from an API
-  const { data: pendingBookings, isLoading: loadingBookings } = useQuery({
-    queryKey: ['pendingBookings'],
-    queryFn: async () => {
-      // Simulate API call
-      return mockPendingBookings;
-    },
-    initialData: mockPendingBookings
+
+  const filteredVerifications = verifications.filter(v => {
+    if (activeTab === 'pending') return v.verificationStatus === 'pending' || v.verificationStatus === 'submitted';
+    if (activeTab === 'verified') return v.verificationStatus === 'verified';
+    if (activeTab === 'rejected') return v.verificationStatus === 'rejected';
+    return true;
   });
-  
-  const handleVerificationSubmit = (verificationData: Partial<WalletVerification>) => {
-    // In a real app, we would send this to an API and get a response
-    const newVerification: WalletVerification = {
-      id: `ver${Math.random().toString(36).substring(2, 9)}`,
-      transactionId: `trans${Math.random().toString(36).substring(2, 9)}`,
-      ...verificationData as any,
-      adminVerified: false,
-      verificationStatus: 'submitted',
-      dateSubmitted: new Date(),
-    };
-    
-    setVerifications(prev => [...prev, newVerification as WalletVerification]);
-    setSelectedBookingId(null);
-    toast.success("Payment verification submitted successfully");
+
+  const handleSubmitNewVerification = () => {
+    console.log('Submitting new verification', newVerification);
+    // In a real app, you would call an API to create a new verification
+    setIsNewVerificationOpen(false);
+    // Reset form
+    setNewVerification({
+      paymentMethod: 'e_wallet',
+      amount: '',
+      referenceNumber: '',
+      providerPhone: '',
+      proofType: 'receipt',
+      mobileOperator: 'MTC',
+      bankUsed: undefined,
+      notes: ''
+    });
   };
-  
-  const getStatusBadge = (status: WalletVerification['verificationStatus']) => {
+
+  const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700"><Clock className="h-3 w-3 mr-1" /> Pending</Badge>;
-      case 'submitted':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700"><Clock className="h-3 w-3 mr-1" /> Submitted</Badge>;
       case 'verified':
-        return <Badge variant="outline" className="bg-green-50 text-green-700"><CheckCircle className="h-3 w-3 mr-1" /> Verified</Badge>;
+        return 'bg-green-100 text-green-800';
       case 'rejected':
-        return <Badge variant="outline" className="bg-red-50 text-red-700"><AlertCircle className="h-3 w-3 mr-1" /> Rejected</Badge>;
-      case 'expired':
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700"><RefreshCcw className="h-3 w-3 mr-1" /> Expired</Badge>;
+        return 'bg-red-100 text-red-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'submitted':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'verified':
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'rejected':
+        return <XCircle className="h-4 w-4 text-red-600" />;
+      case 'pending':
+        return <Clock className="h-4 w-4 text-yellow-600" />;
+      case 'submitted':
+        return <FileText className="h-4 w-4 text-blue-600" />;
       default:
         return null;
     }
   };
-  
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
-  
-  const filteredVerifications = verifications.filter(v => {
-    if (!searchQuery) return true;
-    
-    const query = searchQuery.toLowerCase();
-    return (
-      v.referenceNumber.toLowerCase().includes(query) ||
-      v.bookingId.toLowerCase().includes(query) ||
-      v.paymentMethod.toLowerCase().includes(query)
-    );
-  });
-  
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Wallet Verifications</h1>
-          <p className="text-muted-foreground">
-            Manage your wallet payment verifications
-          </p>
-        </div>
-        
-        {selectedBookingId ? (
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div>
-            <Button 
-              variant="outline" 
-              onClick={() => setSelectedBookingId(null)}
-              className="mb-4"
-            >
-              Back to Verifications
-            </Button>
-            
-            <WalletPaymentVerification
-              bookingId={selectedBookingId}
-              providerPhone={pendingBookings?.find(b => b.id === selectedBookingId)?.providerPhone || ''}
-              amount={pendingBookings?.find(b => b.id === selectedBookingId)?.amount || 0}
-              onVerificationSubmit={handleVerificationSubmit}
-            />
+            <h1 className="text-2xl font-bold">My Verifications</h1>
+            <p className="text-muted-foreground">Track and submit wallet payment verifications.</p>
           </div>
-        ) : (
-          <Tabs defaultValue="pending">
-            <TabsList className="mb-6">
-              <TabsTrigger value="pending">Pending Payments</TabsTrigger>
-              <TabsTrigger value="verifications">My Verifications</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="pending">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Bookings Awaiting Payment</CardTitle>
-                  <CardDescription>
-                    Submit payment verification for your bookings
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {loadingBookings ? (
-                    <div className="flex items-center justify-center h-40">
-                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+          <Button onClick={() => setIsNewVerificationOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Verification
+          </Button>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="verified">Verified</TabsTrigger>
+            <TabsTrigger value="rejected">Rejected</TabsTrigger>
+            <TabsTrigger value="all">All</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeTab} className="space-y-4">
+            {isLoading ? (
+              <div className="bg-white rounded-xl border shadow-sm p-8 text-center">
+                <CalendarClock className="h-10 w-10 mx-auto text-gray-400 animate-pulse" />
+                <h3 className="mt-4 text-lg font-medium">Loading verifications...</h3>
+              </div>
+            ) : filteredVerifications.length === 0 ? (
+              <div className="bg-white rounded-xl border shadow-sm p-8 text-center">
+                <CalendarClock className="h-10 w-10 mx-auto text-gray-400" />
+                <h3 className="mt-4 text-lg font-medium">No verifications found</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  No {activeTab === 'all' ? '' : activeTab} wallet verifications at the moment.
+                </p>
+                <Button onClick={() => setIsNewVerificationOpen(true)} className="mt-4">
+                  Submit New Verification
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="lg:col-span-1 space-y-4">
+                  {filteredVerifications.map((verification) => (
+                    <div 
+                      key={verification.id}
+                      className={cn(
+                        "bg-white rounded-xl border p-4 cursor-pointer hover:border-primary/50 transition-colors",
+                        selectedVerification?.id === verification.id && "border-primary/50 shadow-sm"
+                      )}
+                      onClick={() => setSelectedVerification(verification)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="text-sm font-medium">{verification.paymentMethod === 'e_wallet' ? 'E-Wallet' : 'Easy Wallet'} Payment</div>
+                          <div className="text-xs text-gray-500">Ref: {verification.referenceNumber}</div>
+                        </div>
+                        <div className={cn(
+                          "px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1",
+                          getStatusBadgeClass(verification.verificationStatus)
+                        )}>
+                          {getStatusIcon(verification.verificationStatus)}
+                          <span>
+                            {verification.verificationStatus.charAt(0).toUpperCase() + verification.verificationStatus.slice(1)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Amount:</span>
+                          <span className="font-medium">N${verification.amount.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Date:</span>
+                          <span>{verification.dateSubmitted.toLocaleDateString()}</span>
+                        </div>
+                      </div>
                     </div>
-                  ) : pendingBookings && pendingBookings.length > 0 ? (
-                    <div className="space-y-4">
-                      {pendingBookings.map((booking) => (
-                        <Card key={booking.id} className="overflow-hidden">
-                          <div className="p-4">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <h3 className="font-medium">{booking.serviceName}</h3>
-                                <p className="text-sm text-muted-foreground">
-                                  {booking.providerName} • {formatDate(booking.date)}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <div className="font-medium">N${booking.amount.toFixed(2)}</div>
-                                <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                                  <Clock className="h-3 w-3 mr-1" /> Payment Required
-                                </Badge>
-                              </div>
-                            </div>
-                            
-                            <div className="mt-4 flex justify-end">
-                              <Button
-                                onClick={() => setSelectedBookingId(booking.id)}
-                              >
-                                Verify Payment
-                              </Button>
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium">All Payments Up to Date</h3>
-                      <p className="text-muted-foreground mt-1">
-                        You don't have any bookings pending payment verification
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="verifications">
-              <Card>
-                <CardHeader>
-                  <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-                    <div>
-                      <CardTitle>Payment Verification History</CardTitle>
-                      <CardDescription>
-                        View the status of your wallet payment verifications
-                      </CardDescription>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                        <Input
-                          placeholder="Search verifications"
-                          className="pl-10 max-w-xs"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+                  ))}
+                </div>
+                
+                <div className="lg:col-span-2">
+                  {selectedVerification ? (
+                    <div className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-medium">
+                          Verification Details
+                        </h3>
+                        <div className={cn(
+                          "px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1",
+                          getStatusBadgeClass(selectedVerification.verificationStatus)
+                        )}>
+                          {getStatusIcon(selectedVerification.verificationStatus)}
+                          <span>
+                            {selectedVerification.verificationStatus.charAt(0).toUpperCase() + selectedVerification.verificationStatus.slice(1)}
+                          </span>
+                        </div>
                       </div>
                       
-                      <Button variant="outline" size="icon">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {loadingVerifications ? (
-                    <div className="flex items-center justify-center h-40">
-                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                    </div>
-                  ) : filteredVerifications.length > 0 ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="text-left py-3 px-4">Date</th>
-                            <th className="text-left py-3 px-4">Booking ID</th>
-                            <th className="text-left py-3 px-4">Reference</th>
-                            <th className="text-left py-3 px-4">Wallet Type</th>
-                            <th className="text-left py-3 px-4">Amount</th>
-                            <th className="text-left py-3 px-4">Status</th>
-                            <th className="text-left py-3 px-4">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredVerifications.map((verification) => (
-                            <tr key={verification.id} className="border-b hover:bg-muted/50">
-                              <td className="py-3 px-4">{formatDate(verification.dateSubmitted)}</td>
-                              <td className="py-3 px-4">#{verification.bookingId.substring(0, 8)}</td>
-                              <td className="py-3 px-4 font-medium">{verification.referenceNumber}</td>
-                              <td className="py-3 px-4">
-                                {verification.paymentMethod === 'e_wallet' ? 'E-Wallet' : 'EasyWallet'}
-                              </td>
-                              <td className="py-3 px-4 font-medium">N${verification.amount.toFixed(2)}</td>
-                              <td className="py-3 px-4">
-                                {getStatusBadge(verification.verificationStatus)}
-                              </td>
-                              <td className="py-3 px-4">
-                                <Button variant="outline" size="sm" className="h-8">
-                                  Details
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Payment Method</Label>
+                          <Input 
+                            value={selectedVerification.paymentMethod === 'e_wallet' ? 'E-Wallet' : 'Easy Wallet'} 
+                            readOnly 
+                            className="bg-gray-50 mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>Amount</Label>
+                          <Input 
+                            value={`N$${selectedVerification.amount.toLocaleString()}`} 
+                            readOnly 
+                            className="bg-gray-50 mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>Reference Number</Label>
+                          <Input 
+                            value={selectedVerification.referenceNumber} 
+                            readOnly 
+                            className="bg-gray-50 mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>Date Submitted</Label>
+                          <Input 
+                            value={selectedVerification.dateSubmitted.toLocaleDateString()} 
+                            readOnly 
+                            className="bg-gray-50 mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>Your Phone</Label>
+                          <Input 
+                            value={selectedVerification.customerPhone} 
+                            readOnly 
+                            className="bg-gray-50 mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>Provider Phone</Label>
+                          <Input 
+                            value={selectedVerification.providerPhone} 
+                            readOnly 
+                            className="bg-gray-50 mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>Proof Type</Label>
+                          <Input 
+                            value={selectedVerification.proofType.charAt(0).toUpperCase() + selectedVerification.proofType.slice(1)} 
+                            readOnly 
+                            className="bg-gray-50 mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>
+                            {selectedVerification.paymentMethod === 'e_wallet' ? 'Mobile Operator' : 'Bank Used'}
+                          </Label>
+                          <Input 
+                            value={selectedVerification.mobileOperator || selectedVerification.bankUsed || 'N/A'} 
+                            readOnly 
+                            className="bg-gray-50 mt-1"
+                          />
+                        </div>
+                      </div>
+
+                      {selectedVerification.notes && (
+                        <div>
+                          <Label>Notes</Label>
+                          <Textarea 
+                            value={selectedVerification.notes} 
+                            readOnly 
+                            className="bg-gray-50 mt-1 h-20"
+                          />
+                        </div>
+                      )}
+
+                      {selectedVerification.receiptImage && (
+                        <div>
+                          <Label>Receipt/Proof</Label>
+                          <div className="mt-2 border rounded-md p-2 bg-gray-50 text-center">
+                            <p className="text-sm text-gray-500">(Receipt/proof image would display here)</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <div className="text-center py-12">
-                      <SearchIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-medium">No verifications found</h3>
-                      <p className="text-muted-foreground mt-1">
-                        {searchQuery ? 'Try adjusting your search' : 'You haven\'t submitted any wallet payment verifications yet'}
+                    <div className="bg-white rounded-xl border shadow-sm p-8 text-center h-full flex flex-col items-center justify-center">
+                      <FileText className="h-12 w-12 text-gray-300" />
+                      <h3 className="mt-4 text-lg font-medium">No verification selected</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Select a verification from the list to view details
                       </p>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        )}
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
+
+      {/* New Verification Dialog */}
+      <Dialog open={isNewVerificationOpen} onOpenChange={setIsNewVerificationOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Submit New Verification</DialogTitle>
+            <DialogDescription>
+              Provide details about your e-wallet or easy wallet payment to verify it with the provider.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Payment Method</Label>
+              <RadioGroup
+                value={newVerification.paymentMethod}
+                onValueChange={(value: 'e_wallet' | 'easy_wallet') => 
+                  setNewVerification({
+                    ...newVerification,
+                    paymentMethod: value,
+                    mobileOperator: value === 'e_wallet' ? 'MTC' : undefined,
+                    bankUsed: value === 'easy_wallet' ? 'FNB' : undefined
+                  })
+                }
+                className="flex space-x-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="e_wallet" id="e_wallet" />
+                  <Label htmlFor="e_wallet">E-Wallet</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="easy_wallet" id="easy_wallet" />
+                  <Label htmlFor="easy_wallet">Easy Wallet</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="amount">Amount (N$)</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  placeholder="0.00"
+                  value={newVerification.amount}
+                  onChange={(e) => setNewVerification({...newVerification, amount: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="reference">Reference Number</Label>
+                <Input
+                  id="reference"
+                  placeholder="e.g., EW12345678"
+                  value={newVerification.referenceNumber}
+                  onChange={(e) => setNewVerification({...newVerification, referenceNumber: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="provider-phone">Provider Phone Number</Label>
+                <Input
+                  id="provider-phone"
+                  placeholder="+264 XX XXX XXXX"
+                  value={newVerification.providerPhone}
+                  onChange={(e) => setNewVerification({...newVerification, providerPhone: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="proof-type">Proof Type</Label>
+                <Select 
+                  value={newVerification.proofType} 
+                  onValueChange={(value: 'receipt' | 'screenshot' | 'reference') => 
+                    setNewVerification({...newVerification, proofType: value})
+                  }
+                >
+                  <SelectTrigger id="proof-type">
+                    <SelectValue placeholder="Select proof type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="receipt">Receipt</SelectItem>
+                    <SelectItem value="screenshot">Screenshot</SelectItem>
+                    <SelectItem value="reference">Reference Number Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {newVerification.paymentMethod === 'e_wallet' && (
+                <div>
+                  <Label htmlFor="mobile-operator">Mobile Operator</Label>
+                  <Select 
+                    value={newVerification.mobileOperator} 
+                    onValueChange={(value: NamibianMobileOperator) => 
+                      setNewVerification({...newVerification, mobileOperator: value})
+                    }
+                  >
+                    <SelectTrigger id="mobile-operator">
+                      <SelectValue placeholder="Select mobile operator" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MTC">MTC</SelectItem>
+                      <SelectItem value="TN Mobile">TN Mobile</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
+              {newVerification.paymentMethod === 'easy_wallet' && (
+                <div>
+                  <Label htmlFor="bank">Bank Used</Label>
+                  <Select 
+                    value={newVerification.bankUsed} 
+                    onValueChange={(value: NamibianBank) => 
+                      setNewVerification({...newVerification, bankUsed: value})
+                    }
+                  >
+                    <SelectTrigger id="bank">
+                      <SelectValue placeholder="Select bank" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NED BANK">NED BANK</SelectItem>
+                      <SelectItem value="FNB">FNB</SelectItem>
+                      <SelectItem value="Bank Windhoek">Bank Windhoek</SelectItem>
+                      <SelectItem value="Standard Bank">Standard Bank</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+            
+            <div>
+              <Label htmlFor="notes">Additional Notes (Optional)</Label>
+              <Textarea
+                id="notes"
+                placeholder="Any additional information about the payment"
+                value={newVerification.notes}
+                onChange={(e) => setNewVerification({...newVerification, notes: e.target.value})}
+                className="h-20"
+              />
+            </div>
+            
+            <div>
+              <Label>Upload Receipt/Screenshot (Optional)</Label>
+              <div className="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center">
+                <Upload className="h-8 w-8 text-gray-400" />
+                <p className="mt-2 text-sm text-gray-500">
+                  Click to upload or drag and drop
+                </p>
+                <p className="text-xs text-gray-400">PNG, JPG, PDF (max 2MB)</p>
+                <input
+                  type="file"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  accept="image/png, image/jpeg, application/pdf"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNewVerificationOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmitNewVerification}>
+              Submit Verification
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
 
-// SearchIcon component
-const SearchIcon = Search;
+// For TypeScript compatibility
+const cn = (...classes: (string | boolean | undefined)[]) => {
+  return classes.filter(Boolean).join(' ');
+};
 
-export default CustomerWalletVerificationsPage;
+export default WalletVerificationsPage;
