@@ -18,11 +18,10 @@ export type {
 // Re-export Auth but exclude SubscriptionTier to avoid name conflicts
 export type { User, UserRole, ProviderVerificationStatus, Customer, Provider, Admin, AuthContextType } from './auth';
 
-// Explicitly export PaymentMethod types with different names to resolve the ambiguity
+// Explicitly re-export types with different names to resolve ambiguities
+// Note: We need to exclude PaymentMethod from the wildcard exports above
 export type { PaymentMethod as ServicePaymentMethod } from './service';
 export type { PaymentMethod as PaymentPaymentMethod } from './payment';
-
-// Explicitly export Transaction types with different names to resolve the ambiguity
 export type { Transaction as PaymentTransaction } from './payment';
 export type { Transaction as BookingTransaction } from './booking';
 
