@@ -39,14 +39,30 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
-        .eq('isActive', true)
+        .eq('is_active', true)
         .order('price', { ascending: true });
       
       if (error) {
         throw error;
       }
       
-      setPlans(data || []);
+      // Transform the data to match our SubscriptionPlan type
+      const transformedData = data?.map(plan => ({
+        id: plan.id,
+        name: plan.name,
+        description: plan.description,
+        price: Number(plan.price),
+        billingCycle: plan.billing_cycle as 'monthly' | 'yearly',
+        credits: plan.credits,
+        maxBookings: plan.max_bookings,
+        features: Array.isArray(plan.features) ? plan.features : [],
+        isPopular: plan.is_popular || false,
+        isActive: plan.is_active || false,
+        createdAt: plan.created_at || new Date().toISOString(),
+        updatedAt: plan.updated_at || new Date().toISOString()
+      })) || [];
+      
+      setPlans(transformedData);
     } catch (error) {
       console.error('Error fetching subscription plans:', error);
       toast.error("Failed to load subscription plans.");
@@ -67,26 +83,47 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
       const plan = plans.find(p => p.id === selectedPlan);
       if (!plan) throw new Error("Selected plan not found");
 
-      // In a real app, this would connect to a payment gateway
-      // For now, we'll simulate a subscription update
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Create a transaction record
+      const transactionData = {
+        user_id: user.id,
+        subscription_plan_id: selectedPlan,
+        amount: plan.price,
+        payment_method: paymentMethod,
+        status: 'completed'
+      };
       
-      // Update the user's subscription
-      const { error } = await supabase
+      const { error: transactionError } = await supabase
+        .from('subscription_transactions')
+        .insert([transactionData]);
+        
+      if (transactionError) throw transactionError;
+      
+      // Calculate end date based on billing cycle
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+      
+      if (plan.billingCycle === 'monthly') {
+        endDate.setMonth(endDate.getMonth() + 1);
+      } else {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      }
+      
+      // Update or insert user subscription
+      const subscriptionData = {
+        user_id: user.id,
+        subscription_plan_id: selectedPlan,
+        payment_method: paymentMethod,
+        status: 'active',
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+      };
+      
+      // First try to update existing subscription
+      const { error: upsertError } = await supabase
         .from('user_subscriptions')
-        .upsert({
-          user_id: user.id,
-          subscription_plan_id: selectedPlan,
-          payment_method: paymentMethod,
-          status: 'active',
-          start_date: new Date().toISOString(),
-          // For demo, subscription lasts 30 days for monthly, 365 for yearly
-          end_date: new Date(
-            Date.now() + (plan.billingCycle === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000
-          ).toISOString(),
-        });
+        .upsert(subscriptionData);
       
-      if (error) throw error;
+      if (upsertError) throw upsertError;
       
       if (onChangePlan) {
         onChangePlan(selectedPlan);

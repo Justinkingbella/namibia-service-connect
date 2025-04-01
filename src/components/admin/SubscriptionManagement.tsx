@@ -35,7 +35,23 @@ const SubscriptionManagement = () => {
         throw error;
       }
       
-      setSubscriptionPlans(data || []);
+      // Transform the data to match our SubscriptionPlan type
+      const transformedData = data?.map(plan => ({
+        id: plan.id,
+        name: plan.name,
+        description: plan.description,
+        price: Number(plan.price),
+        billingCycle: plan.billing_cycle as 'monthly' | 'yearly',
+        credits: plan.credits,
+        maxBookings: plan.max_bookings,
+        features: Array.isArray(plan.features) ? plan.features : [],
+        isPopular: plan.is_popular || false,
+        isActive: plan.is_active || false,
+        createdAt: plan.created_at || new Date().toISOString(),
+        updatedAt: plan.updated_at || new Date().toISOString()
+      })) || [];
+      
+      setSubscriptionPlans(transformedData);
     } catch (error) {
       console.error('Error fetching subscription plans:', error);
       toast({
@@ -57,17 +73,47 @@ const SubscriptionManagement = () => {
 
   const handleCreateSubscription = async (plan: SubscriptionPlan) => {
     try {
+      // Transform the plan to match the database schema
+      const dbPlan = {
+        name: plan.name,
+        description: plan.description,
+        price: plan.price,
+        billing_cycle: plan.billingCycle,
+        credits: plan.credits,
+        max_bookings: plan.maxBookings,
+        features: plan.features,
+        is_popular: plan.isPopular,
+        is_active: plan.isActive
+      };
+      
       const { data, error } = await supabase
         .from('subscription_plans')
-        .insert([plan])
-        .select()
-        .single();
+        .insert([dbPlan])
+        .select();
       
       if (error) {
         throw error;
       }
       
-      setSubscriptionPlans([...subscriptionPlans, data]);
+      if (data && data.length > 0) {
+        const newPlan: SubscriptionPlan = {
+          id: data[0].id,
+          name: data[0].name,
+          description: data[0].description,
+          price: Number(data[0].price),
+          billingCycle: data[0].billing_cycle as 'monthly' | 'yearly',
+          credits: data[0].credits,
+          maxBookings: data[0].max_bookings,
+          features: data[0].features,
+          isPopular: data[0].is_popular || false,
+          isActive: data[0].is_active || false,
+          createdAt: data[0].created_at || new Date().toISOString(),
+          updatedAt: data[0].updated_at || new Date().toISOString()
+        };
+        
+        setSubscriptionPlans([...subscriptionPlans, newPlan]);
+      }
+      
       setIsOpen(false);
       
       toast({
@@ -86,18 +132,48 @@ const SubscriptionManagement = () => {
 
   const handleUpdateSubscription = async (plan: SubscriptionPlan) => {
     try {
+      // Transform the plan to match the database schema
+      const dbPlan = {
+        name: plan.name,
+        description: plan.description,
+        price: plan.price,
+        billing_cycle: plan.billingCycle,
+        credits: plan.credits,
+        max_bookings: plan.maxBookings,
+        features: plan.features,
+        is_popular: plan.isPopular,
+        is_active: plan.isActive
+      };
+      
       const { data, error } = await supabase
         .from('subscription_plans')
-        .update(plan)
+        .update(dbPlan)
         .eq('id', plan.id)
-        .select()
-        .single();
+        .select();
       
       if (error) {
         throw error;
       }
       
-      setSubscriptionPlans(subscriptionPlans.map(p => p.id === data.id ? data : p));
+      if (data && data.length > 0) {
+        const updatedPlan: SubscriptionPlan = {
+          id: data[0].id,
+          name: data[0].name,
+          description: data[0].description,
+          price: Number(data[0].price),
+          billingCycle: data[0].billing_cycle as 'monthly' | 'yearly',
+          credits: data[0].credits,
+          maxBookings: data[0].max_bookings,
+          features: data[0].features,
+          isPopular: data[0].is_popular || false,
+          isActive: data[0].is_active || false,
+          createdAt: data[0].created_at || new Date().toISOString(),
+          updatedAt: data[0].updated_at || new Date().toISOString()
+        };
+        
+        setSubscriptionPlans(subscriptionPlans.map(p => p.id === updatedPlan.id ? updatedPlan : p));
+      }
+      
       setIsOpen(false);
       setEditingPlan(null);
       
@@ -155,28 +231,31 @@ const SubscriptionManagement = () => {
       const plan = subscriptionPlans.find(p => p.id === id);
       if (!plan) return;
       
-      const updatedPlan = { 
-        ...plan, 
-        isActive: !plan.isActive, 
-        updatedAt: new Date().toISOString() 
-      };
+      const updatedStatus = !plan.isActive;
       
       const { data, error } = await supabase
         .from('subscription_plans')
-        .update(updatedPlan)
+        .update({ is_active: updatedStatus })
         .eq('id', id)
-        .select()
-        .single();
+        .select();
       
       if (error) {
         throw error;
       }
       
-      setSubscriptionPlans(subscriptionPlans.map(p => p.id === id ? data : p));
+      if (data && data.length > 0) {
+        const updatedPlan: SubscriptionPlan = {
+          ...plan,
+          isActive: data[0].is_active,
+          updatedAt: data[0].updated_at
+        };
+        
+        setSubscriptionPlans(subscriptionPlans.map(p => p.id === id ? updatedPlan : p));
+      }
       
       toast({
-        title: `Subscription Plan ${data.isActive ? 'Activated' : 'Deactivated'}`,
-        description: `${data.name} has been ${data.isActive ? 'activated' : 'deactivated'}.`,
+        title: `Subscription Plan ${updatedStatus ? 'Activated' : 'Deactivated'}`,
+        description: `${plan.name} has been ${updatedStatus ? 'activated' : 'deactivated'}.`,
       });
     } catch (error) {
       console.error('Error toggling plan status:', error);

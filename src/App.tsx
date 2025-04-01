@@ -32,6 +32,7 @@ import PaymentDetailsPage from "./pages/dashboard/provider/PaymentDetailsPage";
 import ProviderWalletVerificationPage from "./pages/dashboard/provider/WalletVerificationPage";
 import ProviderDisputesPage from "./pages/dashboard/provider/DisputesPage";
 import ProviderTransactionsPage from "./pages/dashboard/provider/TransactionsPage";
+import SubscriptionPageProvider from "./pages/dashboard/provider/SubscriptionPageProvider";
 import ProfilePage from "./pages/dashboard/customer/ProfilePage";
 import FavoritesPage from "./pages/dashboard/customer/FavoritesPage";
 import CustomerWalletVerificationsPage from "./pages/dashboard/customer/WalletVerificationsPage";
@@ -239,6 +240,15 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={['provider']}>
                       <ProviderWalletVerificationPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/provider/subscription" 
+                  element={
+                    <ProtectedRoute allowedRoles={['provider']}>
+                      <SubscriptionPageProvider />
                     </ProtectedRoute>
                   } 
                 />

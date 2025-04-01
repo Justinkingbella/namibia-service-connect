@@ -1,263 +1,207 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  useSidebar
-} from '@/components/ui/sidebar';
-
-import { 
-  Home, 
-  Calendar, 
-  Settings, 
-  User, 
-  CreditCard, 
+  LayoutDashboard, 
   MessageSquare, 
-  Package, 
+  FileClock, 
+  Settings, 
+  BellRing, 
+  User, 
   Users, 
-  BarChart, 
-  Shield, 
-  Wallet, 
-  Heart,
-  AlertCircle,
-  CheckSquare,
+  LineChart, 
+  ShieldCheck, 
+  FolderOpen, 
+  HelpCircle, 
+  CreditCard, 
   DollarSign,
-  PieChart,
-  Smartphone,
-  FileText,
-  Clock,
-  CreditCard as SubscriptionIcon
+  Landmark,
+  Receipt
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { Separator } from '@/components/ui/separator';
+
+interface SidebarItem {
+  title: string;
+  href: string;
+  icon: React.ElementType;
+}
+
+const customerItems: SidebarItem[] = [
+  {
+    title: 'Dashboard',
+    href: '/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    title: 'Services',
+    href: '/dashboard/services',
+    icon: FolderOpen,
+  },
+  {
+    title: 'Bookings',
+    href: '/dashboard/bookings',
+    icon: FileClock,
+  },
+  {
+    title: 'Messages',
+    href: '/dashboard/messages',
+    icon: MessageSquare,
+  },
+  {
+    title: 'Favorites',
+    href: '/dashboard/customer/favorites',
+    icon: BellRing,
+  },
+  {
+    title: 'Payment History',
+    href: '/dashboard/customer/payment-history',
+    icon: Receipt,
+  },
+  {
+    title: 'Disputes',
+    href: '/dashboard/customer/disputes',
+    icon: HelpCircle,
+  },
+  {
+    title: 'Profile',
+    href: '/dashboard/customer/profile',
+    icon: User,
+  },
+];
+
+const providerItems: SidebarItem[] = [
+  {
+    title: 'Dashboard',
+    href: '/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    title: 'My Services',
+    href: '/dashboard/services',
+    icon: FolderOpen,
+  },
+  {
+    title: 'Bookings',
+    href: '/dashboard/bookings',
+    icon: FileClock,
+  },
+  {
+    title: 'Messages',
+    href: '/dashboard/messages',
+    icon: MessageSquare,
+  },
+  {
+    title: 'Revenue Reports',
+    href: '/dashboard/provider/reports',
+    icon: LineChart,
+  },
+  {
+    title: 'Subscription',
+    href: '/dashboard/provider/subscription',
+    icon: CreditCard,
+  },
+  {
+    title: 'Transactions',
+    href: '/dashboard/provider/transactions',
+    icon: DollarSign,
+  },
+  {
+    title: 'Payment Details',
+    href: '/dashboard/provider/payment-details',
+    icon: Landmark,
+  },
+  {
+    title: 'Disputes',
+    href: '/dashboard/provider/disputes',
+    icon: HelpCircle,
+  },
+];
+
+const adminItems: SidebarItem[] = [
+  {
+    title: 'Dashboard',
+    href: '/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    title: 'User Management',
+    href: '/dashboard/users',
+    icon: Users,
+  },
+  {
+    title: 'Provider Verification',
+    href: '/dashboard/admin/providers/verification',
+    icon: ShieldCheck,
+  },
+  {
+    title: 'Wallet Verification',
+    href: '/dashboard/admin/wallet-verification',
+    icon: CreditCard,
+  },
+  {
+    title: 'Platform Analytics',
+    href: '/dashboard/admin/analytics',
+    icon: LineChart,
+  },
+  {
+    title: 'Platform Controls',
+    href: '/dashboard/admin/controls',
+    icon: Settings,
+  },
+  {
+    title: 'Subscription Plans',
+    href: '/dashboard/admin/subscriptions',
+    icon: Receipt,
+  },
+];
 
 export function AppSidebar() {
   const { user } = useAuth();
   const location = useLocation();
-  const { isMobile, state } = useSidebar();
   
-  // Determine which menu items to show based on user role
-  const getMenuItems = () => {
-    // Common items for all users
-    const commonItems = [
-      { title: 'Dashboard', path: '/dashboard', icon: Home },
-      { title: 'Messages', path: '/dashboard/messages', icon: MessageSquare },
-      { title: 'Settings', path: '/dashboard/settings', icon: Settings },
-    ];
-
-    if (user?.role === 'admin') {
-      return [
-        ...commonItems,
-        { title: 'Users', path: '/dashboard/users', icon: Users },
-        { title: 'Provider Verification', path: '/dashboard/admin/providers/verification', icon: Shield },
-        { title: 'Wallet Verification', path: '/dashboard/admin/wallet-verification', icon: Smartphone },
-        { title: 'Platform Analytics', path: '/dashboard/admin/analytics', icon: BarChart },
-        { title: 'Subscription Management', path: '/dashboard/admin/subscriptions', icon: SubscriptionIcon },
-        { title: 'Platform Controls', path: '/dashboard/admin/controls', icon: Settings },
-      ];
-    }
-
-    if (user?.role === 'provider') {
-      return [
-        ...commonItems,
-        { title: 'Services', path: '/dashboard/services', icon: Package },
-        { title: 'Bookings', path: '/dashboard/bookings', icon: Calendar },
-        { title: 'Earnings', path: '/dashboard/provider/reports', icon: DollarSign },
-        { title: 'Payment Details', path: '/dashboard/provider/payment-details', icon: CreditCard },
-        { title: 'Performance', path: '/dashboard/provider/performance', icon: PieChart },
-        { title: 'Profile', path: '/dashboard/profile', icon: User },
-      ];
-    }
-
-    // Default for customers
-    return [
-      ...commonItems,
-      { title: 'Services', path: '/dashboard/services', icon: Package },
-      { title: 'My Bookings', path: '/dashboard/bookings', icon: Calendar },
-      { title: 'Favorites', path: '/dashboard/customer/favorites', icon: Heart },
-      { title: 'Payment Methods', path: '/dashboard/customer/payment-methods', icon: CreditCard },
-      { title: 'Profile', path: '/dashboard/customer/profile', icon: User },
-    ];
-  };
-
-  // Get menu items based on user role
-  const menuItems = getMenuItems();
-
-  // Financial menu items for provider
-  const providerFinancialItems = [
-    { 
-      title: 'Wallet Verifications', 
-      path: '/dashboard/provider/wallet-verification', 
-      icon: CheckSquare 
-    },
-    { 
-      title: 'Payment Disputes', 
-      path: '/dashboard/provider/disputes', 
-      icon: AlertCircle 
-    },
-    { 
-      title: 'Transaction History', 
-      path: '/dashboard/provider/transactions', 
-      icon: Wallet 
-    },
-  ];
-
-  // Financial menu items for customer
-  const customerFinancialItems = [
-    { 
-      title: 'My Verifications', 
-      path: '/dashboard/customer/wallet-verifications', 
-      icon: CheckSquare 
-    },
-    { 
-      title: 'Payment History', 
-      path: '/dashboard/customer/payment-history', 
-      icon: CreditCard 
-    },
-    { 
-      title: 'Disputes', 
-      path: '/dashboard/customer/disputes', 
-      icon: AlertCircle 
-    },
-  ];
+  const items = user?.role === 'admin' ? adminItems : 
+                user?.role === 'provider' ? providerItems : 
+                customerItems;
 
   return (
-    <Sidebar className="border-r bg-white shadow-sm z-20">
-      <SidebarHeader className="p-4">
-        <div className="text-lg font-semibold">Service Marketplace</div>
-        <div className="text-xs text-muted-foreground">{user?.role}</div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={location.pathname === item.path}
-                    tooltip={state === "collapsed" ? item.title : undefined}
-                  >
-                    <Link to={item.path}>
-                      <item.icon className="flex-shrink-0" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        
-        {user?.role === 'provider' && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Financial</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {providerFinancialItems.map(item => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
-                      asChild 
-                      isActive={location.pathname === item.path}
-                      tooltip={state === "collapsed" ? item.title : undefined}
-                    >
-                      <Link to={item.path}>
-                        <item.icon className="flex-shrink-0" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-        
-        {user?.role === 'customer' && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Payments</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {customerFinancialItems.map(item => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
-                      asChild 
-                      isActive={location.pathname === item.path}
-                      tooltip={state === "collapsed" ? item.title : undefined}
-                    >
-                      <Link to={item.path}>
-                        <item.icon className="flex-shrink-0" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {/* Only show the booking system group for provider and customer roles */}
-        {(user?.role === 'provider' || user?.role === 'customer') && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Booking System</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={location.pathname.includes('/dashboard/bookings/')}
-                    tooltip={state === "collapsed" ? "Manage Bookings" : undefined}
-                  >
-                    <Link to="/dashboard/bookings">
-                      <Calendar className="flex-shrink-0" />
-                      <span>Manage Bookings</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={location.pathname === `/dashboard/${user?.role === 'provider' ? 'provider' : 'customer'}/upcoming`}
-                    tooltip={state === "collapsed" ? "Upcoming" : undefined}
-                  >
-                    <Link to={`/dashboard/${user?.role === 'provider' ? 'provider' : 'customer'}/upcoming`}>
-                      <Clock className="flex-shrink-0" />
-                      <span>Upcoming</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={location.pathname === `/dashboard/${user?.role === 'provider' ? 'provider' : 'customer'}/history`}
-                    tooltip={state === "collapsed" ? "History" : undefined}
-                  >
-                    <Link to={`/dashboard/${user?.role === 'provider' ? 'provider' : 'customer'}/history`}>
-                      <FileText className="flex-shrink-0" />
-                      <span>Booking History</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-      </SidebarContent>
-      <SidebarFooter>
-        <div className="p-4 text-xs text-center text-muted-foreground">
-          © {new Date().getFullYear()} Service Marketplace
-        </div>
-      </SidebarFooter>
-    </Sidebar>
+    <div className="h-full flex flex-col border-r bg-card pt-2">
+      <div className="flex-1 overflow-auto py-2">
+        <nav className="grid items-start px-2 gap-2">
+          {items.map((item, index) => (
+            <Link
+              key={index}
+              to={item.href}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors",
+                location.pathname === item.href && "bg-accent text-accent-foreground",
+                (location.pathname.includes(item.href) && item.href !== '/dashboard') && "bg-accent/50 text-accent-foreground"
+              )}
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.title}</span>
+            </Link>
+          ))}
+        </nav>
+      </div>
+      <div className="mt-auto p-4">
+        <Separator className="mb-4" />
+        <nav>
+          <Link
+            to="/dashboard/settings"
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors",
+              location.pathname === '/dashboard/settings' && "bg-accent text-accent-foreground"
+            )}
+          >
+            <Settings className="h-4 w-4" />
+            <span>Settings</span>
+          </Link>
+        </nav>
+      </div>
+    </div>
   );
 }
+
+export default AppSidebar;
