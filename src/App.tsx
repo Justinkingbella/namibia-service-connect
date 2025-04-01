@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -44,6 +43,8 @@ import CustomerPaymentHistoryPage from "./pages/dashboard/customer/PaymentHistor
 import CustomerDisputesPage from "./pages/dashboard/customer/DisputesPage";
 import SettingsPage from "./pages/dashboard/settings/SettingsPage";
 import NotFound from "./pages/NotFound";
+import AdminProfilePage from "./pages/dashboard/admin/AdminProfilePage";
+import ProviderProfilePage from "./pages/dashboard/provider/ProviderProfilePage";
 
 // Create QueryClient outside of the component
 const queryClient = new QueryClient({
@@ -214,6 +215,15 @@ function App() {
                 } 
               />
               
+              <Route 
+                path="/dashboard/admin/profile" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminProfilePage />
+                  </ProtectedRoute>
+                } 
+              />
+              
               {/* Provider Routes */}
               <Route 
                 path="/dashboard/provider" 
@@ -274,6 +284,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['provider']}>
                     <ProviderTransactionsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/provider/profile" 
+                element={
+                  <ProtectedRoute allowedRoles={['provider']}>
+                    <ProviderProfilePage />
                   </ProtectedRoute>
                 } 
               />

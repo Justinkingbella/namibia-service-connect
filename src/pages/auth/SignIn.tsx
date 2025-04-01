@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -122,8 +123,8 @@ const SignIn = () => {
               <button 
                 className="text-primary hover:underline text-xs" 
                 onClick={() => {
-                  setEmail('admin@namibiaservice.com');
-                  setPassword('password');
+                  setEmail('antoniojoaquimjustino@gmail.com');
+                  setPassword('admin123');
                 }}
               >
                 Admin Login
@@ -132,7 +133,7 @@ const SignIn = () => {
                 className="text-primary hover:underline text-xs" 
                 onClick={() => {
                   setEmail('provider@namibiaservice.com');
-                  setPassword('password');
+                  setPassword('provider123');
                 }}
               >
                 Provider Login

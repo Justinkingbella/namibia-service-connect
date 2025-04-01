@@ -1,219 +1,112 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  LayoutDashboard, 
-  MessageSquare, 
-  FileClock, 
-  Settings, 
-  BellRing, 
-  User, 
+  Home, 
+  Package, 
+  Calendar, 
   Users, 
-  LineChart, 
-  ShieldCheck, 
-  FolderOpen, 
-  HelpCircle, 
+  Settings, 
   CreditCard, 
-  DollarSign,
-  Landmark,
-  Receipt,
-  Plus,
-  Wallet
+  Heart, 
+  MessageSquare, 
+  User,
+  FileText,
+  AlertTriangle,
+  Clock,
+  BarChart,
+  Briefcase
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { Separator } from '@/components/ui/separator';
-
-interface SidebarItem {
-  title: string;
-  href: string;
-  icon: React.ElementType;
-}
-
-const customerItems: SidebarItem[] = [
-  {
-    title: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'Services',
-    href: '/dashboard/services',
-    icon: FolderOpen,
-  },
-  {
-    title: 'Bookings',
-    href: '/dashboard/bookings',
-    icon: FileClock,
-  },
-  {
-    title: 'Messages',
-    href: '/dashboard/messages',
-    icon: MessageSquare,
-  },
-  {
-    title: 'Favorites',
-    href: '/dashboard/customer/favorites',
-    icon: BellRing,
-  },
-  {
-    title: 'Payment History',
-    href: '/dashboard/customer/payment-history',
-    icon: Receipt,
-  },
-  {
-    title: 'Disputes',
-    href: '/dashboard/customer/disputes',
-    icon: HelpCircle,
-  },
-  {
-    title: 'Profile',
-    href: '/dashboard/customer/profile',
-    icon: User,
-  },
-];
-
-const providerItems: SidebarItem[] = [
-  {
-    title: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'My Services',
-    href: '/dashboard/services',
-    icon: FolderOpen,
-  },
-  {
-    title: 'Create Service',
-    href: '/dashboard/services/create',
-    icon: Plus,
-  },
-  {
-    title: 'Bookings',
-    href: '/dashboard/bookings',
-    icon: FileClock,
-  },
-  {
-    title: 'Messages',
-    href: '/dashboard/messages',
-    icon: MessageSquare,
-  },
-  {
-    title: 'Revenue Reports',
-    href: '/dashboard/provider/reports',
-    icon: LineChart,
-  },
-  {
-    title: 'Subscription',
-    href: '/dashboard/provider/subscription',
-    icon: CreditCard,
-  },
-  {
-    title: 'Transactions',
-    href: '/dashboard/provider/transactions',
-    icon: DollarSign,
-  },
-  {
-    title: 'Payment Details',
-    href: '/dashboard/provider/payment-details',
-    icon: Landmark,
-  },
-  {
-    title: 'Wallet Verification',
-    href: '/dashboard/provider/wallet-verification',
-    icon: Wallet,
-  },
-  {
-    title: 'Disputes',
-    href: '/dashboard/provider/disputes',
-    icon: HelpCircle,
-  },
-];
-
-const adminItems: SidebarItem[] = [
-  {
-    title: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'User Management',
-    href: '/dashboard/users',
-    icon: Users,
-  },
-  {
-    title: 'Provider Verification',
-    href: '/dashboard/admin/providers/verification',
-    icon: ShieldCheck,
-  },
-  {
-    title: 'Wallet Verification',
-    href: '/dashboard/admin/wallet-verification',
-    icon: CreditCard,
-  },
-  {
-    title: 'Platform Analytics',
-    href: '/dashboard/admin/analytics',
-    icon: LineChart,
-  },
-  {
-    title: 'Platform Controls',
-    href: '/dashboard/admin/controls',
-    icon: Settings,
-  },
-  {
-    title: 'Subscription Plans',
-    href: '/dashboard/admin/subscriptions',
-    icon: Receipt,
-  },
-];
+import { type UserRole } from '@/types/auth';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarNav, SidebarNavGroup, SidebarNavItem, SidebarTrigger } from '@/components/ui/sidebar';
 
 export function AppSidebar() {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   
-  const items = user?.role === 'admin' ? adminItems : 
-                user?.role === 'provider' ? providerItems : 
-                customerItems;
+  // Determine which navigation items to show based on user role
+  const getNavItems = (role: UserRole) => {
+    switch (role) {
+      case 'admin':
+        return [
+          { path: '/dashboard', label: 'Dashboard', icon: Home },
+          { path: '/dashboard/users', label: 'Users', icon: Users },
+          { path: '/dashboard/admin/providers/verification', label: 'Provider Verification', icon: Clock },
+          { path: '/dashboard/services', label: 'Services', icon: Package },
+          { path: '/dashboard/admin/wallet-verification', label: 'Wallet Verification', icon: CreditCard },
+          { path: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
+          { path: '/dashboard/admin/analytics', label: 'Analytics', icon: BarChart },
+          { path: '/dashboard/admin/profile', label: 'My Profile', icon: User },
+          { path: '/dashboard/settings', label: 'Settings', icon: Settings },
+        ];
+      case 'provider':
+        return [
+          { path: '/dashboard', label: 'Dashboard', icon: Home },
+          { path: '/dashboard/services', label: 'My Services', icon: Package },
+          { path: '/dashboard/bookings', label: 'Bookings', icon: Calendar },
+          { path: '/dashboard/provider/transactions', label: 'Payments', icon: CreditCard },
+          { path: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
+          { path: '/dashboard/provider/reports', label: 'Reports', icon: FileText },
+          { path: '/dashboard/provider/disputes', label: 'Disputes', icon: AlertTriangle },
+          { path: '/dashboard/provider/profile', label: 'My Profile', icon: User },
+          { path: '/dashboard/settings', label: 'Settings', icon: Settings },
+        ];
+      case 'customer':
+      default:
+        return [
+          { path: '/dashboard', label: 'Dashboard', icon: Home },
+          { path: '/dashboard/services', label: 'Find Services', icon: Package },
+          { path: '/dashboard/bookings', label: 'My Bookings', icon: Calendar },
+          { path: '/dashboard/customer/favorites', label: 'Favorites', icon: Heart },
+          { path: '/dashboard/customer/payment-history', label: 'Payment History', icon: CreditCard },
+          { path: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
+          { path: '/dashboard/customer/disputes', label: 'Disputes', icon: AlertTriangle },
+          { path: '/dashboard/customer/profile', label: 'My Profile', icon: User },
+          { path: '/dashboard/settings', label: 'Settings', icon: Settings },
+        ];
+    }
+  };
+  
+  const navItems = user ? getNavItems(user.role) : [];
 
   return (
-    <div className="h-full flex flex-col border-r bg-card pt-2">
-      <div className="flex-1 overflow-auto py-2">
-        <nav className="grid items-start px-2 gap-2">
-          {items.map((item, index) => (
-            <Link
-              key={index}
-              to={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors",
-                location.pathname === item.href && "bg-accent text-accent-foreground",
-                (location.pathname.includes(item.href) && item.href !== '/dashboard') && "bg-accent/50 text-accent-foreground"
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              <span>{item.title}</span>
-            </Link>
-          ))}
-        </nav>
-      </div>
-      <div className="mt-auto p-4">
-        <Separator className="mb-4" />
-        <nav>
-          <Link
-            to="/dashboard/settings"
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors",
-              location.pathname === '/dashboard/settings' && "bg-accent text-accent-foreground"
-            )}
-          >
-            <Settings className="h-4 w-4" />
-            <span>Settings</span>
-          </Link>
-        </nav>
-      </div>
-    </div>
+    <Sidebar>
+      <SidebarHeader>
+        <div className="text-xl font-bold pl-4 py-2 flex items-center">
+          <Briefcase className="mr-2 h-6 w-6" />
+          <span>Namibia Services</span>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarNav>
+          <SidebarNavGroup>
+            {navItems.map((item) => (
+              <SidebarNavItem key={item.path} onClick={() => navigate(item.path)}>
+                <div 
+                  className={cn(
+                    "flex items-center p-3 rounded-lg cursor-pointer", 
+                    location.pathname === item.path ? "bg-primary/10 text-primary font-medium" : "hover:bg-gray-100"
+                  )}
+                >
+                  <item.icon className="h-5 w-5 mr-3" />
+                  <span>{item.label}</span>
+                </div>
+              </SidebarNavItem>
+            ))}
+          </SidebarNavGroup>
+        </SidebarNav>
+      </SidebarContent>
+      <SidebarFooter className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Namibia Services
+          </div>
+          <SidebarTrigger className="h-7 w-7 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-500" />
+        </div>
+      </SidebarFooter>
+    </Sidebar>
   );
 }
-
-export default AppSidebar;
