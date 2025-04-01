@@ -35,7 +35,8 @@ import {
   PieChart,
   Smartphone,
   FileText,
-  Clock
+  Clock,
+  CreditCard as SubscriptionIcon
 } from 'lucide-react';
 
 export function AppSidebar() {
@@ -59,6 +60,7 @@ export function AppSidebar() {
         { title: 'Provider Verification', path: '/dashboard/admin/providers/verification', icon: Shield },
         { title: 'Wallet Verification', path: '/dashboard/admin/wallet-verification', icon: Smartphone },
         { title: 'Platform Analytics', path: '/dashboard/admin/analytics', icon: BarChart },
+        { title: 'Subscription Management', path: '/dashboard/admin/subscriptions', icon: SubscriptionIcon },
         { title: 'Platform Controls', path: '/dashboard/admin/controls', icon: Settings },
       ];
     }
