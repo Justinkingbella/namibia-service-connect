@@ -1,5 +1,3 @@
-
-
 import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
 
@@ -56,7 +54,6 @@ export const getSiteSettings = async (): Promise<Record<string, any>> => {
     return {};
   }
   
-  // Convert array of settings to a key-value object
   return data.reduce((acc: Record<string, any>, setting: SiteSetting) => {
     try {
       acc[setting.key] = JSON.parse(setting.value);
@@ -129,10 +126,8 @@ export const getPageSections = async (pageName: string): Promise<PageSection[]> 
     return [];
   }
   
-  // Process the data to ensure buttons is an array or null
   return data.map(section => ({
     ...section,
-    // Convert JSON buttons to array if needed
     buttons: section.buttons ? (Array.isArray(section.buttons) ? section.buttons : [section.buttons]) : null
   })) as PageSection[];
 };
@@ -150,16 +145,13 @@ export const getSectionsByName = async (pageName: string, sectionName: string): 
     return null;
   }
   
-  // Process the data to ensure buttons is an array or null
   return {
     ...data,
-    // Convert JSON buttons to array if needed
     buttons: data.buttons ? (Array.isArray(data.buttons) ? data.buttons : [data.buttons]) : null
   } as PageSection;
 };
 
 export const createPageSection = async (section: Omit<PageSection, 'id' | 'created_at' | 'updated_at'>): Promise<PageSection | null> => {
-  // Ensure buttons is properly formatted for the database
   const sectionData = { ...section };
   if (sectionData.buttons !== undefined) {
     sectionData.buttons = sectionData.buttons === null ? null : sectionData.buttons;
@@ -176,19 +168,15 @@ export const createPageSection = async (section: Omit<PageSection, 'id' | 'creat
     return null;
   }
   
-  // Process the data to ensure buttons is an array or null
   return {
     ...data,
-    // Convert JSON buttons to array if needed
     buttons: data.buttons ? (Array.isArray(data.buttons) ? data.buttons : [data.buttons]) : null
   } as PageSection;
 };
 
 export const updatePageSection = async (id: string, updates: Partial<PageSection>): Promise<PageSection | null> => {
-  // Create a copy to prevent modifying the original object
   const updateData = { ...updates };
   
-  // Ensure buttons is properly formatted for the database
   if (updateData.buttons !== undefined) {
     updateData.buttons = updateData.buttons === null ? null : updateData.buttons;
   }
@@ -205,10 +193,8 @@ export const updatePageSection = async (id: string, updates: Partial<PageSection
     return null;
   }
   
-  // Process the data to ensure buttons is an array or null
   return {
     ...data,
-    // Convert JSON buttons to array if needed
     buttons: data.buttons ? (Array.isArray(data.buttons) ? data.buttons : [data.buttons]) : null
   } as PageSection;
 };
@@ -229,165 +215,205 @@ export const deletePageSection = async (id: string): Promise<boolean> => {
 
 // Service Categories
 export const getServiceCategories = async (): Promise<ServiceCategory[]> => {
-  // Using type assertion to work around the type checking issues
-  const { data, error } = await supabase
-    .from('service_categories' as any)
-    .select('*')
-    .order('order_index');
-  
-  if (error) {
-    console.error('Error fetching service categories:', error);
+  try {
+    const { data, error } = await supabase
+      .from('service_categories' as any)
+      .select('*')
+      .order('order_index');
+    
+    if (error) {
+      console.error('Error fetching service categories:', error);
+      return [];
+    }
+    
+    return (data as unknown) as ServiceCategory[];
+  } catch (error) {
+    console.error('Unexpected error fetching service categories:', error);
     return [];
   }
-  
-  return data as ServiceCategory[];
 };
 
 export const getActiveServiceCategories = async (): Promise<ServiceCategory[]> => {
-  // Using type assertion to work around the type checking issues
-  const { data, error } = await supabase
-    .from('service_categories' as any)
-    .select('*')
-    .eq('is_active', true)
-    .order('order_index');
-  
-  if (error) {
-    console.error('Error fetching active service categories:', error);
+  try {
+    const { data, error } = await supabase
+      .from('service_categories' as any)
+      .select('*')
+      .eq('is_active', true)
+      .order('order_index');
+    
+    if (error) {
+      console.error('Error fetching active service categories:', error);
+      return [];
+    }
+    
+    return (data as unknown) as ServiceCategory[];
+  } catch (error) {
+    console.error('Unexpected error fetching active service categories:', error);
     return [];
   }
-  
-  return data as ServiceCategory[];
 };
 
 export const getServiceCategory = async (id: string): Promise<ServiceCategory | null> => {
-  // Using type assertion to work around the type checking issues
-  const { data, error } = await supabase
-    .from('service_categories' as any)
-    .select('*')
-    .eq('id', id)
-    .single();
-  
-  if (error) {
-    console.error(`Error fetching service category ${id}:`, error);
+  try {
+    const { data, error } = await supabase
+      .from('service_categories' as any)
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      console.error(`Error fetching service category ${id}:`, error);
+      return null;
+    }
+    
+    return (data as unknown) as ServiceCategory;
+  } catch (error) {
+    console.error(`Unexpected error fetching service category ${id}:`, error);
     return null;
   }
-  
-  return data as ServiceCategory;
 };
 
 export const createServiceCategory = async (category: Omit<ServiceCategory, 'id' | 'created_at' | 'updated_at'>): Promise<ServiceCategory | null> => {
-  // Using type assertion to work around the type checking issues
-  const { data, error } = await supabase
-    .from('service_categories' as any)
-    .insert(category as any)
-    .select()
-    .single();
-  
-  if (error) {
-    console.error('Error creating service category:', error);
+  try {
+    const { data, error } = await supabase
+      .from('service_categories' as any)
+      .insert(category as any)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating service category:', error);
+      return null;
+    }
+    
+    return (data as unknown) as ServiceCategory;
+  } catch (error) {
+    console.error('Unexpected error creating service category:', error);
     return null;
   }
-  
-  return data as ServiceCategory;
 };
 
 export const updateServiceCategory = async (id: string, updates: Partial<ServiceCategory>): Promise<ServiceCategory | null> => {
-  // Using type assertion to work around the type checking issues
-  const { data, error } = await supabase
-    .from('service_categories' as any)
-    .update(updates as any)
-    .eq('id', id)
-    .select()
-    .single();
-  
-  if (error) {
-    console.error('Error updating service category:', error);
+  try {
+    const { data, error } = await supabase
+      .from('service_categories' as any)
+      .update(updates as any)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating service category:', error);
+      return null;
+    }
+    
+    return (data as unknown) as ServiceCategory;
+  } catch (error) {
+    console.error('Unexpected error updating service category:', error);
     return null;
   }
-  
-  return data as ServiceCategory;
 };
 
 export const deleteServiceCategory = async (id: string): Promise<boolean> => {
-  // Using type assertion to work around the type checking issues
-  const { error } = await supabase
-    .from('service_categories' as any)
-    .delete()
-    .eq('id', id);
-  
-  if (error) {
-    console.error('Error deleting service category:', error);
+  try {
+    const { error } = await supabase
+      .from('service_categories' as any)
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error deleting service category:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Unexpected error deleting service category:', error);
     return false;
   }
-  
-  return true;
 };
 
 // Booking Settings
 export const getBookingSettings = async (): Promise<Record<string, any>> => {
-  // Using type assertion to work around the type checking issues
-  const { data, error } = await supabase
-    .from('booking_settings' as any)
-    .select('*');
-  
-  if (error) {
-    console.error('Error fetching booking settings:', error);
+  try {
+    const { data, error } = await supabase
+      .from('booking_settings' as any)
+      .select('*');
+    
+    if (error) {
+      console.error('Error fetching booking settings:', error);
+      return {};
+    }
+    
+    const typedData = (data as unknown) as BookingSetting[];
+    return typedData.reduce((acc: Record<string, any>, setting: BookingSetting) => {
+      acc[setting.key] = setting.value;
+      return acc;
+    }, {});
+  } catch (error) {
+    console.error('Unexpected error fetching booking settings:', error);
     return {};
   }
-  
-  // Convert array of settings to a key-value object
-  return data.reduce((acc: Record<string, any>, setting: BookingSetting) => {
-    acc[setting.key] = setting.value;
-    return acc;
-  }, {});
 };
 
 export const updateBookingSetting = async (key: string, value: any, description?: string): Promise<BookingSetting | null> => {
-  // Using type assertion to work around the type checking issues
-  const { data, error } = await supabase
-    .from('booking_settings' as any)
-    .update({ value, ...(description && { description }) })
-    .eq('key', key)
-    .select()
-    .single();
-  
-  if (error) {
-    console.error('Error updating booking setting:', error);
+  try {
+    const { data, error } = await supabase
+      .from('booking_settings' as any)
+      .update({ value, ...(description && { description }) })
+      .eq('key', key)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating booking setting:', error);
+      return null;
+    }
+    
+    return (data as unknown) as BookingSetting;
+  } catch (error) {
+    console.error('Unexpected error updating booking setting:', error);
     return null;
   }
-  
-  return data as BookingSetting;
 };
 
 export const createBookingSetting = async (key: string, value: any, description?: string): Promise<BookingSetting | null> => {
-  // Using type assertion to work around the type checking issues
-  const { data, error } = await supabase
-    .from('booking_settings' as any)
-    .insert({ key, value, ...(description && { description }) })
-    .select()
-    .single();
-  
-  if (error) {
-    console.error('Error creating booking setting:', error);
+  try {
+    const { data, error } = await supabase
+      .from('booking_settings' as any)
+      .insert({ key, value, ...(description && { description }) })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating booking setting:', error);
+      return null;
+    }
+    
+    return (data as unknown) as BookingSetting;
+  } catch (error) {
+    console.error('Unexpected error creating booking setting:', error);
     return null;
   }
-  
-  return data as BookingSetting;
 };
 
 export const deleteBookingSetting = async (key: string): Promise<boolean> => {
-  // Using type assertion to work around the type checking issues
-  const { error } = await supabase
-    .from('booking_settings' as any)
-    .delete()
-    .eq('key', key);
-  
-  if (error) {
-    console.error('Error deleting booking setting:', error);
+  try {
+    const { error } = await supabase
+      .from('booking_settings' as any)
+      .delete()
+      .eq('key', key);
+    
+    if (error) {
+      console.error('Error deleting booking setting:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Unexpected error deleting booking setting:', error);
     return false;
   }
-  
-  return true;
 };
 
 // Image Upload
@@ -410,4 +436,3 @@ export const uploadImage = async (file: File, path: string): Promise<string | nu
   
   return urlData.publicUrl;
 };
-
