@@ -1,7 +1,5 @@
 
 // Export base types but exclude those with name conflicts
-export * from './service';
-export * from './payment';
 export * from './subscription';
 
 // Export booking types (excluding ones that will be renamed)
@@ -23,6 +21,14 @@ export type { PaymentMethod as ServicePaymentMethod } from './service';
 export type { PaymentMethod as PaymentPaymentMethod } from './payment';
 export type { Transaction as PaymentTransaction } from './payment';
 export type { Transaction as BookingTransaction } from './booking';
+export type { ServiceCategory, PricingModel, ServiceListItem, Service } from './service';
+export type { 
+  WalletVerificationStatus, 
+  NamibianMobileOperator, 
+  NamibianBank, 
+  WalletVerification, 
+  Wallet 
+} from './payment';
 
 export interface IResponse<T> {
   success: boolean;
