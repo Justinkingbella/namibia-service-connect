@@ -26,6 +26,7 @@ import ProviderVerificationPage from "./pages/dashboard/admin/ProviderVerificati
 import WalletVerificationPage from "./pages/dashboard/admin/WalletVerificationPage";
 import PlatformAnalyticsPage from "./pages/dashboard/admin/PlatformAnalyticsPage";
 import PlatformControlsPage from "./pages/dashboard/admin/PlatformControlsPage";
+import SubscriptionManagementPage from "./pages/dashboard/admin/SubscriptionManagementPage";
 import RevenueReportsPage from "./pages/dashboard/provider/RevenueReportsPage";
 import PaymentDetailsPage from "./pages/dashboard/provider/PaymentDetailsPage";
 import ProviderWalletVerificationPage from "./pages/dashboard/provider/WalletVerificationPage";
@@ -183,6 +184,15 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={['admin']}>
                       <PlatformControlsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard/admin/subscriptions" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <SubscriptionManagementPage />
                     </ProtectedRoute>
                   } 
                 />

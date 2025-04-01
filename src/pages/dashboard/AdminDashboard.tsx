@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, DollarSign, Check, AlertTriangle, BarChart, Settings } from 'lucide-react';
+import { Users, DollarSign, Check, AlertTriangle, BarChart, Settings, CreditCard } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCard from '@/components/dashboard/StatsCard';
 import SettingsCard from '@/components/dashboard/SettingsCard';
@@ -62,6 +63,14 @@ const AdminDashboard = () => {
     }
   ];
 
+  // Mock data for subscriptions
+  const subscriptionStats = {
+    totalSubscribers: 145,
+    activeSubscriptions: 132,
+    monthlyRevenue: 8750,
+    popularPlan: "Professional"
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -108,6 +117,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="providers">Providers</TabsTrigger>
             <TabsTrigger value="disputes">Disputes</TabsTrigger>
+            <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
           </TabsList>
           
           {/* Overview Tab */}
@@ -218,6 +228,43 @@ const AdminDashboard = () => {
                 </table>
               </div>
             </div>
+            
+            {/* Subscription Overview */}
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Subscription Overview</h2>
+                <Button 
+                  as="a"
+                  onClick={() => navigate('/dashboard/admin/subscriptions')}
+                  variant="outline" 
+                  size="sm"
+                >
+                  Manage Subscriptions
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-lg border shadow-sm p-4">
+                  <div className="text-sm text-muted-foreground">Total Subscribers</div>
+                  <div className="text-2xl font-bold mt-1">{subscriptionStats.totalSubscribers}</div>
+                </div>
+                
+                <div className="bg-white rounded-lg border shadow-sm p-4">
+                  <div className="text-sm text-muted-foreground">Active Subscriptions</div>
+                  <div className="text-2xl font-bold mt-1">{subscriptionStats.activeSubscriptions}</div>
+                </div>
+                
+                <div className="bg-white rounded-lg border shadow-sm p-4">
+                  <div className="text-sm text-muted-foreground">Monthly Revenue</div>
+                  <div className="text-2xl font-bold mt-1">N${subscriptionStats.monthlyRevenue}</div>
+                </div>
+                
+                <div className="bg-white rounded-lg border shadow-sm p-4">
+                  <div className="text-sm text-muted-foreground">Most Popular Plan</div>
+                  <div className="text-2xl font-bold mt-1">{subscriptionStats.popularPlan}</div>
+                </div>
+              </div>
+            </div>
           </TabsContent>
           
           {/* Users Tab */}
@@ -240,13 +287,25 @@ const AdminDashboard = () => {
               <p className="text-sm text-muted-foreground mt-4">This feature is under development.</p>
             </div>
           </TabsContent>
+          
+          {/* Subscriptions Tab */}
+          <TabsContent value="subscriptions">
+            <div className="bg-white rounded-xl border shadow-sm p-6">
+              <h2 className="text-lg font-medium mb-4">Subscription Management</h2>
+              <p className="text-muted-foreground mb-6">Create and manage subscription plans for service providers.</p>
+              
+              <Button onClick={() => navigate('/dashboard/admin/subscriptions')}>
+                Manage Subscription Plans
+              </Button>
+            </div>
+          </TabsContent>
         </Tabs>
         
         {/* Quick Actions */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Admin Actions</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <SettingsCard
               title="Manage Users"
               description="View and manage all users"
@@ -265,6 +324,13 @@ const AdminDashboard = () => {
               description="View detailed platform metrics"
               icon={<BarChart className="h-5 w-5" />}
               onClick={() => navigate('/dashboard/admin/analytics')}
+            />
+            
+            <SettingsCard
+              title="Subscription Plans"
+              description="Manage service subscription plans"
+              icon={<CreditCard className="h-5 w-5" />}
+              onClick={() => navigate('/dashboard/admin/subscriptions')}
             />
             
             <SettingsCard
