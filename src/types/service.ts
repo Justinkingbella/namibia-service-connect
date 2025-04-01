@@ -1,3 +1,4 @@
+
 export type ServiceCategory = 
   | 'all' 
   | 'home' 
@@ -21,8 +22,8 @@ export type PaymentMethod =
 export interface ServiceListItem {
   id: string;
   title: string;
-  category: ServiceCategory;
-  pricingModel: PricingModel;
+  category: ServiceCategory | string; // Allow string for backward compatibility
+  pricingModel: PricingModel | string; // Allow string for backward compatibility
   price: number;
   providerName: string;
   providerId: string;

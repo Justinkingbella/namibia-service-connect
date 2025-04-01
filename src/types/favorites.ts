@@ -1,4 +1,6 @@
 
+import { ServiceCategory, PricingModel } from './service';
+
 export interface FavoriteService {
   id: string;
   userId: string;
@@ -7,8 +9,8 @@ export interface FavoriteService {
   service?: {
     id: string;
     title: string;
-    category: string;
-    pricingModel: string;
+    category: ServiceCategory | string;
+    pricingModel: PricingModel | string;
     price: number;
     providerName: string;
     providerId: string;

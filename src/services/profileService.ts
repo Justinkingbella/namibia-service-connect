@@ -53,7 +53,7 @@ export const updateUserPassword = async (newPassword: string): Promise<boolean> 
 // Fetch user addresses
 export const fetchUserAddresses = async (userId: string): Promise<UserAddress[]> => {
   const { data, error } = await supabase
-    .from('user_addresses')
+    .from('user_addresses' as any)
     .select('*')
     .eq('user_id', userId)
     .order('is_default', { ascending: false });
@@ -80,7 +80,7 @@ export const fetchUserAddresses = async (userId: string): Promise<UserAddress[]>
 // Add user address
 export const addUserAddress = async (userId: string, address: Omit<UserAddress, 'id' | 'userId' | 'createdAt'>): Promise<UserAddress | null> => {
   const { data, error } = await supabase
-    .from('user_addresses')
+    .from('user_addresses' as any)
     .insert({
       user_id: userId,
       name: address.name,
@@ -125,7 +125,7 @@ export const updateUserAddress = async (addressId: string, address: Partial<Omit
   if (address.isDefault !== undefined) updateData.is_default = address.isDefault;
 
   const { error } = await supabase
-    .from('user_addresses')
+    .from('user_addresses' as any)
     .update(updateData)
     .eq('id', addressId);
 
@@ -140,7 +140,7 @@ export const updateUserAddress = async (addressId: string, address: Partial<Omit
 // Delete user address
 export const deleteUserAddress = async (addressId: string): Promise<boolean> => {
   const { error } = await supabase
-    .from('user_addresses')
+    .from('user_addresses' as any)
     .delete()
     .eq('id', addressId);
 
@@ -155,7 +155,7 @@ export const deleteUserAddress = async (addressId: string): Promise<boolean> => 
 // Fetch user payment methods
 export const fetchUserPaymentMethods = async (userId: string): Promise<PaymentMethod[]> => {
   const { data, error } = await supabase
-    .from('payment_methods')
+    .from('payment_methods' as any)
     .select('*')
     .eq('user_id', userId)
     .order('is_default', { ascending: false });
@@ -179,7 +179,7 @@ export const fetchUserPaymentMethods = async (userId: string): Promise<PaymentMe
 // Add payment method
 export const addPaymentMethod = async (userId: string, paymentMethod: Omit<PaymentMethod, 'id' | 'userId' | 'createdAt'>): Promise<PaymentMethod | null> => {
   const { data, error } = await supabase
-    .from('payment_methods')
+    .from('payment_methods' as any)
     .insert({
       user_id: userId,
       type: paymentMethod.type,
@@ -209,7 +209,7 @@ export const addPaymentMethod = async (userId: string, paymentMethod: Omit<Payme
 // Delete payment method
 export const deletePaymentMethod = async (paymentMethodId: string): Promise<boolean> => {
   const { error } = await supabase
-    .from('payment_methods')
+    .from('payment_methods' as any)
     .delete()
     .eq('id', paymentMethodId);
 
@@ -225,8 +225,8 @@ export const deletePaymentMethod = async (paymentMethodId: string): Promise<bool
 export const setDefaultPaymentMethod = async (paymentMethodId: string, userId: string): Promise<boolean> => {
   // First reset all payment methods to non-default
   const { error: resetError } = await supabase
-    .from('payment_methods')
-    .update({ is_default: false })
+    .from('payment_methods' as any)
+    .update({ is_default: false } as any)
     .eq('user_id', userId);
 
   if (resetError) {
@@ -236,8 +236,8 @@ export const setDefaultPaymentMethod = async (paymentMethodId: string, userId: s
 
   // Then set the selected one as default
   const { error } = await supabase
-    .from('payment_methods')
-    .update({ is_default: true })
+    .from('payment_methods' as any)
+    .update({ is_default: true } as any)
     .eq('id', paymentMethodId);
 
   if (error) {
@@ -251,7 +251,7 @@ export const setDefaultPaymentMethod = async (paymentMethodId: string, userId: s
 // Fetch user 2FA status
 export const fetchUser2FAStatus = async (userId: string): Promise<User2FA | null> => {
   const { data, error } = await supabase
-    .from('user_2fa')
+    .from('user_2fa' as any)
     .select('*')
     .eq('user_id', userId)
     .single();
@@ -264,11 +264,11 @@ export const fetchUser2FAStatus = async (userId: string): Promise<User2FA | null
   if (!data) {
     // Create a new 2FA record if none exists
     const { data: newData, error: newError } = await supabase
-      .from('user_2fa')
+      .from('user_2fa' as any)
       .insert({
         user_id: userId,
         is_enabled: false
-      })
+      } as any)
       .select()
       .single();
 
@@ -300,12 +300,12 @@ export const fetchUser2FAStatus = async (userId: string): Promise<User2FA | null
 // Enable 2FA
 export const enable2FA = async (userId: string, secret: string, backupCodes: string[]): Promise<boolean> => {
   const { error } = await supabase
-    .from('user_2fa')
+    .from('user_2fa' as any)
     .update({
       is_enabled: true,
       secret,
       backup_codes: backupCodes
-    })
+    } as any)
     .eq('user_id', userId);
 
   if (error) {
@@ -319,12 +319,12 @@ export const enable2FA = async (userId: string, secret: string, backupCodes: str
 // Disable 2FA
 export const disable2FA = async (userId: string): Promise<boolean> => {
   const { error } = await supabase
-    .from('user_2fa')
+    .from('user_2fa' as any)
     .update({
       is_enabled: false,
       secret: null,
       backup_codes: null
-    })
+    } as any)
     .eq('user_id', userId);
 
   if (error) {
@@ -338,7 +338,7 @@ export const disable2FA = async (userId: string): Promise<boolean> => {
 // Fetch user payment history
 export const fetchPaymentHistory = async (userId: string): Promise<PaymentHistory[]> => {
   const { data, error } = await supabase
-    .from('payment_history')
+    .from('payment_history' as any)
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
@@ -364,7 +364,7 @@ export const fetchPaymentHistory = async (userId: string): Promise<PaymentHistor
 // Fetch user disputes
 export const fetchUserDisputes = async (userId: string): Promise<Dispute[]> => {
   const { data, error } = await supabase
-    .from('disputes')
+    .from('disputes' as any)
     .select('*')
     .or(`customer_id.eq.${userId},provider_id.eq.${userId}`)
     .order('created_at', { ascending: false });
@@ -392,7 +392,7 @@ export const fetchUserDisputes = async (userId: string): Promise<Dispute[]> => {
 // Create dispute
 export const createDispute = async (dispute: Omit<Dispute, 'id' | 'createdAt' | 'updatedAt'>): Promise<Dispute | null> => {
   const { data, error } = await supabase
-    .from('disputes')
+    .from('disputes' as any)
     .insert({
       booking_id: dispute.bookingId,
       customer_id: dispute.customerId,
@@ -402,7 +402,7 @@ export const createDispute = async (dispute: Omit<Dispute, 'id' | 'createdAt' | 
       status: dispute.status || 'pending',
       resolution: dispute.resolution,
       admin_notes: dispute.adminNotes
-    })
+    } as any)
     .select()
     .single();
 
@@ -429,7 +429,7 @@ export const createDispute = async (dispute: Omit<Dispute, 'id' | 'createdAt' | 
 // Fetch user favorites
 export const fetchUserFavorites = async (userId: string): Promise<FavoriteService[]> => {
   const { data, error } = await supabase
-    .from('favorite_services')
+    .from('favorite_services' as any)
     .select(`
       *,
       service:service_id (*)
@@ -466,11 +466,11 @@ export const fetchUserFavorites = async (userId: string): Promise<FavoriteServic
 // Add favorite
 export const addFavorite = async (userId: string, serviceId: string): Promise<boolean> => {
   const { error } = await supabase
-    .from('favorite_services')
+    .from('favorite_services' as any)
     .insert({
       user_id: userId,
       service_id: serviceId
-    });
+    } as any);
 
   if (error) {
     console.error('Error adding favorite:', error);
@@ -483,7 +483,7 @@ export const addFavorite = async (userId: string, serviceId: string): Promise<bo
 // Remove favorite
 export const removeFavorite = async (userId: string, serviceId: string): Promise<boolean> => {
   const { error } = await supabase
-    .from('favorite_services')
+    .from('favorite_services' as any)
     .delete()
     .eq('user_id', userId)
     .eq('service_id', serviceId);
@@ -499,7 +499,7 @@ export const removeFavorite = async (userId: string, serviceId: string): Promise
 // Fetch user messages
 export const fetchUserMessages = async (userId: string): Promise<Message[]> => {
   const { data, error } = await supabase
-    .from('messages')
+    .from('messages' as any)
     .select('*')
     .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
     .order('created_at', { ascending: false });
@@ -523,14 +523,14 @@ export const fetchUserMessages = async (userId: string): Promise<Message[]> => {
 // Send message
 export const sendMessage = async (senderId: string, recipientId: string, content: string, attachments?: string[]): Promise<boolean> => {
   const { error } = await supabase
-    .from('messages')
+    .from('messages' as any)
     .insert({
       sender_id: senderId,
       recipient_id: recipientId,
       content,
       read: false,
       attachments
-    });
+    } as any);
 
   if (error) {
     console.error('Error sending message:', error);
@@ -543,8 +543,8 @@ export const sendMessage = async (senderId: string, recipientId: string, content
 // Mark message as read
 export const markMessageAsRead = async (messageId: string): Promise<boolean> => {
   const { error } = await supabase
-    .from('messages')
-    .update({ read: true })
+    .from('messages' as any)
+    .update({ read: true } as any)
     .eq('id', messageId);
 
   if (error) {

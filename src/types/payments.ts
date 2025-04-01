@@ -8,7 +8,7 @@ export interface PaymentHistory {
   amount: number;
   description: string;
   paymentMethod: string;
-  status: 'completed' | 'pending' | 'failed' | 'refunded';
+  status: 'completed' | 'pending' | 'failed' | 'refunded' | string;
   transactionId?: string;
   createdAt: string;
 }
@@ -20,11 +20,11 @@ export interface Dispute {
   providerId: string;
   subject: string;
   description: string;
-  status: 'pending' | 'in_progress' | 'resolved' | 'rejected';
+  status: 'pending' | 'in_progress' | 'resolved' | 'rejected' | string;
   resolution?: string;
   adminNotes?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export type PaymentMethodType = 'credit_card' | 'e_wallet' | 'bank_transfer';
+export type PaymentMethodType = 'credit_card' | 'e_wallet' | 'bank_transfer' | string;
