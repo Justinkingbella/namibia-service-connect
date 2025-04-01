@@ -1,84 +1,52 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Check, X, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { SubscriptionPlan } from '@/types';
+import { SubscriptionPlan } from '@/types/subscription';
 import { SubscriptionForm } from './SubscriptionForm';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-
-// Mock data for subscription plans
-const mockSubscriptionPlans: SubscriptionPlan[] = [
-  {
-    id: '1',
-    name: 'Basic Plan',
-    description: 'Perfect for individuals and small service providers',
-    price: 49.99,
-    billingCycle: 'monthly',
-    credits: 100,
-    maxBookings: 20,
-    features: [
-      { id: '1', name: 'Basic listing', description: 'List your services', included: true },
-      { id: '2', name: 'Customer messaging', description: 'Message with customers', included: true },
-      { id: '3', name: 'Analytics dashboard', description: 'Basic analytics', included: true },
-      { id: '4', name: 'Priority support', description: '24/7 support access', included: false },
-      { id: '5', name: 'Featured listing', description: 'Appear at the top of search', included: false },
-    ],
-    isActive: true,
-    createdAt: '2023-01-01',
-    updatedAt: '2023-01-01',
-  },
-  {
-    id: '2',
-    name: 'Professional Plan',
-    description: 'Ideal for growing service providers',
-    price: 99.99,
-    billingCycle: 'monthly',
-    credits: 300,
-    maxBookings: 50,
-    features: [
-      { id: '1', name: 'Basic listing', description: 'List your services', included: true },
-      { id: '2', name: 'Customer messaging', description: 'Message with customers', included: true },
-      { id: '3', name: 'Analytics dashboard', description: 'Advanced analytics', included: true },
-      { id: '4', name: 'Priority support', description: '24/7 support access', included: true },
-      { id: '5', name: 'Featured listing', description: 'Appear at the top of search', included: false },
-    ],
-    isPopular: true,
-    isActive: true,
-    createdAt: '2023-01-01',
-    updatedAt: '2023-01-01',
-  },
-  {
-    id: '3',
-    name: 'Enterprise Plan',
-    description: 'For large service providers with multiple services',
-    price: 199.99,
-    billingCycle: 'monthly',
-    credits: 1000,
-    maxBookings: 200,
-    features: [
-      { id: '1', name: 'Basic listing', description: 'List your services', included: true },
-      { id: '2', name: 'Customer messaging', description: 'Message with customers', included: true },
-      { id: '3', name: 'Analytics dashboard', description: 'Advanced analytics', included: true },
-      { id: '4', name: 'Priority support', description: '24/7 support access', included: true },
-      { id: '5', name: 'Featured listing', description: 'Appear at the top of search', included: true },
-    ],
-    isActive: true,
-    createdAt: '2023-01-01',
-    updatedAt: '2023-01-01',
-  }
-];
+import { supabase } from '@/integrations/supabase/client';
 
 const SubscriptionManagement = () => {
-  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
+  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [activeTab, setActiveTab] = useState('all');
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchSubscriptionPlans();
+  }, []);
+
+  const fetchSubscriptionPlans = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*');
+      
+      if (error) {
+        throw error;
+      }
+      
+      setSubscriptionPlans(data || []);
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load subscription plans.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const onOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -87,51 +55,94 @@ const SubscriptionManagement = () => {
     }
   };
 
-  const handleCreateSubscription = (plan: SubscriptionPlan) => {
-    // In a real app, this would be an API call
-    const newPlan = {
-      ...plan,
-      id: Math.random().toString(36).substr(2, 9),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    
-    setSubscriptionPlans([...subscriptionPlans, newPlan]);
-    setIsOpen(false);
-    
-    toast({
-      title: "Subscription Plan Created",
-      description: `${plan.name} has been successfully created.`,
-    });
+  const handleCreateSubscription = async (plan: SubscriptionPlan) => {
+    try {
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .insert([plan])
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      setSubscriptionPlans([...subscriptionPlans, data]);
+      setIsOpen(false);
+      
+      toast({
+        title: "Subscription Plan Created",
+        description: `${plan.name} has been successfully created.`,
+      });
+    } catch (error) {
+      console.error('Error creating subscription plan:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create subscription plan.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleUpdateSubscription = (plan: SubscriptionPlan) => {
-    // In a real app, this would be an API call
-    const updatedPlans = subscriptionPlans.map(p => 
-      p.id === plan.id ? { ...plan, updatedAt: new Date().toISOString() } : p
-    );
-    
-    setSubscriptionPlans(updatedPlans);
-    setIsOpen(false);
-    setEditingPlan(null);
-    
-    toast({
-      title: "Subscription Plan Updated",
-      description: `${plan.name} has been successfully updated.`,
-    });
+  const handleUpdateSubscription = async (plan: SubscriptionPlan) => {
+    try {
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .update(plan)
+        .eq('id', plan.id)
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      setSubscriptionPlans(subscriptionPlans.map(p => p.id === data.id ? data : p));
+      setIsOpen(false);
+      setEditingPlan(null);
+      
+      toast({
+        title: "Subscription Plan Updated",
+        description: `${plan.name} has been successfully updated.`,
+      });
+    } catch (error) {
+      console.error('Error updating subscription plan:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update subscription plan.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteSubscription = (id: string) => {
-    // In a real app, this would be an API call
-    const planToDelete = subscriptionPlans.find(p => p.id === id);
-    
-    setSubscriptionPlans(subscriptionPlans.filter(p => p.id !== id));
-    
-    toast({
-      title: "Subscription Plan Deleted",
-      description: `${planToDelete?.name} has been successfully deleted.`,
-      variant: "destructive",
-    });
+  const handleDeleteSubscription = async (id: string) => {
+    try {
+      const planToDelete = subscriptionPlans.find(p => p.id === id);
+      
+      const { error } = await supabase
+        .from('subscription_plans')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      setSubscriptionPlans(subscriptionPlans.filter(p => p.id !== id));
+      
+      toast({
+        title: "Subscription Plan Deleted",
+        description: `${planToDelete?.name} has been successfully deleted.`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error('Error deleting subscription plan:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete subscription plan.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditSubscription = (plan: SubscriptionPlan) => {
@@ -139,19 +150,42 @@ const SubscriptionManagement = () => {
     setIsOpen(true);
   };
 
-  const togglePlanStatus = (id: string) => {
-    // In a real app, this would be an API call
-    const updatedPlans = subscriptionPlans.map(p => 
-      p.id === id ? { ...p, isActive: !p.isActive, updatedAt: new Date().toISOString() } : p
-    );
-    
-    setSubscriptionPlans(updatedPlans);
-    
-    const plan = updatedPlans.find(p => p.id === id);
-    toast({
-      title: `Subscription Plan ${plan?.isActive ? 'Activated' : 'Deactivated'}`,
-      description: `${plan?.name} has been ${plan?.isActive ? 'activated' : 'deactivated'}.`,
-    });
+  const togglePlanStatus = async (id: string) => {
+    try {
+      const plan = subscriptionPlans.find(p => p.id === id);
+      if (!plan) return;
+      
+      const updatedPlan = { 
+        ...plan, 
+        isActive: !plan.isActive, 
+        updatedAt: new Date().toISOString() 
+      };
+      
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .update(updatedPlan)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      setSubscriptionPlans(subscriptionPlans.map(p => p.id === id ? data : p));
+      
+      toast({
+        title: `Subscription Plan ${data.isActive ? 'Activated' : 'Deactivated'}`,
+        description: `${data.name} has been ${data.isActive ? 'activated' : 'deactivated'}.`,
+      });
+    } catch (error) {
+      console.error('Error toggling plan status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update plan status.",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredPlans = activeTab === 'all' 
@@ -160,11 +194,22 @@ const SubscriptionManagement = () => {
         activeTab === 'active' ? plan.isActive : !plan.isActive
       );
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <div className="space-y-2 text-center">
+          <div className="animate-spin size-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+          <p className="text-muted-foreground">Loading subscription plans...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="all">All Plans</TabsTrigger>
             <TabsTrigger value="active">Active</TabsTrigger>
             <TabsTrigger value="inactive">Inactive</TabsTrigger>
@@ -177,10 +222,10 @@ const SubscriptionManagement = () => {
         </Button>
       </div>
       
-      {/* Plans List View */}
+      {/* Plans Grid View */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredPlans.map((plan) => (
-          <Card key={plan.id} className={`shadow-sm transition duration-200 ${!plan.isActive ? 'opacity-70' : ''}`}>
+          <Card key={plan.id} className={`shadow-sm transition duration-200 h-full flex flex-col ${!plan.isActive ? 'opacity-70' : ''}`}>
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
@@ -193,7 +238,7 @@ const SubscriptionManagement = () => {
               </div>
             </CardHeader>
             
-            <CardContent>
+            <CardContent className="flex-grow">
               <div className="mb-4">
                 <div className="text-2xl font-bold">N${plan.price}</div>
                 <div className="text-sm text-muted-foreground">per {plan.billingCycle}</div>
@@ -214,13 +259,13 @@ const SubscriptionManagement = () => {
                 
                 <div>
                   <div className="text-sm font-medium mb-2">Features:</div>
-                  <ul className="space-y-2">
+                  <ul className="space-y-2 max-h-48 overflow-y-auto">
                     {plan.features.map((feature) => (
                       <li key={feature.id} className="flex items-start">
                         {feature.included ? (
-                          <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
+                          <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5 shrink-0" />
                         ) : (
-                          <X className="h-4 w-4 text-gray-300 mr-2 mt-0.5" />
+                          <X className="h-4 w-4 text-gray-300 mr-2 mt-0.5 shrink-0" />
                         )}
                         <span className={feature.included ? "" : "text-gray-400"}>{feature.name}</span>
                       </li>
@@ -230,16 +275,17 @@ const SubscriptionManagement = () => {
               </div>
             </CardContent>
             
-            <CardFooter className="flex justify-between">
+            <CardFooter className="flex flex-col sm:flex-row sm:justify-between gap-2 border-t pt-4 mt-auto">
               <div>
                 <Badge variant={plan.isActive ? "default" : "outline"} className="mr-2">
                   {plan.isActive ? "Active" : "Inactive"}
                 </Badge>
               </div>
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 w-full sm:w-auto">
                 <Button 
                   variant="outline" 
                   size="sm" 
+                  className="flex-1 sm:flex-none"
                   onClick={() => togglePlanStatus(plan.id)}
                 >
                   {plan.isActive ? "Deactivate" : "Activate"}
@@ -279,7 +325,7 @@ const SubscriptionManagement = () => {
       {/* Table View for larger screens */}
       <div className="hidden lg:block mt-8">
         <h2 className="text-xl font-semibold mb-4">Subscription Plans Table View</h2>
-        <div className="border rounded-md overflow-hidden">
+        <div className="border rounded-md overflow-hidden overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -344,7 +390,7 @@ const SubscriptionManagement = () => {
       
       {/* Subscription Form Sheet */}
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent className="sm:max-w-lg overflow-y-auto max-h-screen">
+        <SheetContent className="sm:max-w-lg w-full overflow-y-auto max-h-screen">
           <SheetHeader>
             <SheetTitle>{editingPlan ? 'Edit Subscription Plan' : 'Create Subscription Plan'}</SheetTitle>
             <SheetDescription>

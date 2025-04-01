@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { PlusCircle, MinusCircle, Trash2 } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { SubscriptionFeature, SubscriptionPlan } from '@/types';
+import { SubscriptionFeature, SubscriptionPlan } from '@/types/subscription';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -91,7 +91,7 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
       return;
     }
 
-    // Fix: Ensure all required properties are included and not optional
+    // Make sure all required properties are explicitly assigned to fix the TypeScript error
     const formData: SubscriptionPlan = {
       id: initialData?.id || crypto.randomUUID(),
       name: data.name,
@@ -122,7 +122,7 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 max-w-3xl mx-auto">
         <div className="space-y-4">
           <FormField
             control={form.control}
@@ -147,7 +147,7 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
                 <FormControl>
                   <Textarea 
                     placeholder="A brief description of what this plan offers"
-                    className="resize-none"
+                    className="resize-none min-h-24"
                     {...field}
                   />
                 </FormControl>
