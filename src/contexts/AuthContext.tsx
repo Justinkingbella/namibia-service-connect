@@ -158,9 +158,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
           if (hasBankDetails) {
             provider.bankDetails = {
-              accountName: ('account_name' in providerData ? providerData.account_name : '') || '',
-              accountNumber: ('account_number' in providerData ? providerData.account_number : '') || '',
-              bankName: ('bank_name' in providerData ? providerData.bank_name : '') || ''
+              accountName: ('account_name' in providerData ? String(providerData.account_name || '') : '') || '',
+              accountNumber: ('account_number' in providerData ? String(providerData.account_number || '') : '') || '',
+              bankName: ('bank_name' in providerData ? String(providerData.bank_name || '') : '') || ''
             };
           }
           
