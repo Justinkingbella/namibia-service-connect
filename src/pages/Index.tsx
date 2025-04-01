@@ -8,7 +8,7 @@ import ServiceCategories from '@/components/home/ServiceCategories';
 import CTASection from '@/components/home/CTASection';
 import Footer from '@/components/layout/Footer';
 import { ArrowRight } from 'lucide-react';
-import Button from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import Container from '@/components/common/Container';
 import FadeIn from '@/components/animations/FadeIn';
 
@@ -64,13 +64,13 @@ const HowItWorks = () => (
       
       <div className="mt-12 text-center">
         <Button 
-          as={Link} 
-          to="/auth/sign-up" 
-          size="lg" 
-          icon={<ArrowRight className="h-5 w-5" />} 
-          iconPosition="right"
+          asChild
+          size="lg"
         >
-          Get Started Now
+          <Link to="/auth/sign-up">
+            Get Started Now
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Link>
         </Button>
       </div>
     </Container>

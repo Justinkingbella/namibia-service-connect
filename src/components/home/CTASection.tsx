@@ -3,7 +3,7 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import Button from '../common/Button';
+import { Button } from '@/components/ui/button';
 import Container from '../common/Container';
 import FadeIn from '../animations/FadeIn';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,32 +46,33 @@ export function CTASection({ className }: CTASectionProps) {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {user ? (
                   <Button 
-                    as={Link} 
-                    to="/dashboard" 
-                    size="lg" 
-                    icon={<ArrowRight className="h-5 w-5" />} 
-                    iconPosition="right"
+                    asChild
+                    size="lg"
                   >
-                    Go to Dashboard
+                    <Link to="/dashboard">
+                      Go to Dashboard
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
                   </Button>
                 ) : (
                   <>
                     <Button 
-                      as={Link} 
-                      to="/auth/sign-up?role=customer" 
-                      size="lg" 
-                      icon={<ArrowRight className="h-5 w-5" />} 
-                      iconPosition="right"
-                    >
-                      Find a Service
-                    </Button>
-                    <Button 
-                      as={Link}
-                      to="/auth/sign-up?role=provider" 
-                      variant="outline" 
+                      asChild
                       size="lg"
                     >
-                      Become a Provider
+                      <Link to="/auth/sign-up?role=customer">
+                        Find a Service
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Link>
+                    </Button>
+                    <Button 
+                      asChild
+                      variant="outline"
+                      size="lg"
+                    >
+                      <Link to="/auth/sign-up?role=provider">
+                        Become a Provider
+                      </Link>
                     </Button>
                   </>
                 )}

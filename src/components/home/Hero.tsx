@@ -3,7 +3,7 @@ import React from 'react';
 import { Search, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import Button from '../common/Button';
+import { Button } from '@/components/ui/button';
 import Container from '../common/Container';
 import FadeIn from '../animations/FadeIn';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,7 +31,7 @@ export function Hero({ className }: HeroProps) {
 
       <Container className="relative z-10">
         <div className="mx-auto max-w-4xl text-center">
-          <FadeIn direction="up">
+          <FadeIn>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
               <span className="block">Your One-Stop Marketplace for</span>
               <span className="block mt-1 text-gradient">Local Services in Namibia</span>
@@ -58,23 +58,21 @@ export function Hero({ className }: HeroProps) {
               </div>
               {user ? (
                 <Button 
-                  as={Link} 
-                  to="/dashboard" 
-                  className="w-full sm:w-auto" 
-                  icon={<ArrowRight className="h-4 w-4" />} 
-                  iconPosition="right"
+                  asChild
                 >
-                  Find Services
+                  <Link to="/dashboard" className="w-full sm:w-auto">
+                    Find Services
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
                 </Button>
               ) : (
                 <Button 
-                  as={Link} 
-                  to="/auth/sign-up" 
-                  className="w-full sm:w-auto" 
-                  icon={<ArrowRight className="h-4 w-4" />} 
-                  iconPosition="right"
+                  asChild
                 >
-                  Get Started
+                  <Link to="/auth/sign-up" className="w-full sm:w-auto">
+                    Get Started
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
                 </Button>
               )}
             </div>
