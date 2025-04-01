@@ -1,10 +1,7 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuthContextType, User, UserRole, Provider, Customer, Admin } from '@/types/auth';
-import { useToast } from '@/hooks/use-toast';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { User, UserRole, RawUserProfile, ProviderProfile, CustomerProfile } from '@/types/auth';
 
-// Create the auth context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -12,7 +9,152 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { toast } = useToast();
 
-  // Check for saved session on initial load
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      // Fetch the basic user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError) throw profileError;
+      if (!profileData) return null;
+
+      const userProfile = {
+        id: profileData.id,
+        email: profileData.email,
+        name: profileData.name || profileData.email,
+        role: profileData.role as UserRole,
+        avatar_url: profileData.avatar_url,
+        phone_number: profileData.phone_number,
+        created_at: profileData.created_at,
+        updated_at: profileData.updated_at,
+        is_verified: profileData.is_verified
+      } as RawUserProfile;
+
+      // If user is a provider, fetch provider profile details
+      if (userProfile.role === 'provider') {
+        const { data: providerData, error: providerError } = await supabase
+          .from('provider_profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        
+        if (!providerError && providerData) {
+          const providerProfile: ProviderProfile = {
+            id: providerData.id,
+            business_name: providerData.business_name,
+            description: providerData.description,
+            verification_status: providerData.verification_status,
+            categories: providerData.categories,
+            locations: providerData.locations,
+            subscription_tier: providerData.subscription_tier,
+            rating: providerData.rating,
+            review_count: providerData.review_count,
+            earnings: providerData.earnings,
+            balance: providerData.balance,
+            bank_name: providerData.bank_name,
+            account_name: providerData.account_name,
+            account_number: providerData.account_number,
+            bank_name: providerData.bank_name
+          };
+          return { ...userProfile, providerDetails: providerProfile };
+        }
+      }
+      
+      // If user is a customer, fetch customer profile details
+      if (userProfile.role === 'customer') {
+        const { data: customerData, error: customerError } = await supabase
+          .from('customer_profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        
+        if (!customerError && customerData) {
+          const customerProfile: CustomerProfile = {
+            id: customerData.id,
+            favorites: customerData.favorites,
+            booking_count: customerData.booking_count,
+            total_spent: customerData.total_spent,
+            referral_code: customerData.referral_code,
+            referred_by: customerData.referred_by,
+            loyalty_points: customerData.loyalty_points
+          };
+          return { ...userProfile, customerDetails: customerProfile };
+        }
+      }
+
+      return userProfile;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+  };
+
+  const updateUserProfile = async (userId: string, userData: Partial<User>) => {
+    try {
+      // Extract user profile data
+      const { name, email, avatar_url, phone_number, isVerified } = userData;
+      
+      // Update user_profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .update({
+          name,
+          email,
+          avatar_url,
+          phone_number,
+          is_verified: isVerified
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+      
+      if (profileError) throw profileError;
+      
+      // Update role-specific data
+      const role = profileData.role as UserRole;
+      
+      if (role === 'provider' && userData.providerDetails) {
+        const { data: providerData, error: providerError } = await supabase
+          .from('provider_profiles')
+          .update(userData.providerDetails)
+          .eq('id', userId)
+          .select()
+          .single();
+        
+        if (providerError) throw providerError;
+        
+        return {
+          ...profileData,
+          providerDetails: providerData
+        };
+      }
+      
+      if (role === 'customer' && userData.customerDetails) {
+        const { data: customerData, error: customerError } = await supabase
+          .from('customer_profiles')
+          .update(userData.customerDetails)
+          .eq('id', userId)
+          .select()
+          .single();
+        
+        if (customerError) throw customerError;
+        
+        return {
+          ...profileData,
+          customerDetails: customerData
+        };
+      }
+      
+      return profileData;
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
@@ -157,7 +299,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Sign in function
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
     try {
@@ -326,7 +467,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Sign up function
   const signUp = async (email: string, password: string, name: string, role: UserRole) => {
     setIsLoading(true);
     try {
@@ -472,7 +612,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Sign out function
   const signOut = async () => {
     setIsLoading(true);
     try {

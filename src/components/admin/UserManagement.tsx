@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { UserRole } from '@/types/auth';
+import { UserRole, RawUserProfile } from '@/types/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -45,7 +45,7 @@ const UserManagement: React.FC = () => {
         }
 
         if (data) {
-          const formattedUsers: UserData[] = data.map(user => ({
+          const formattedUsers: UserData[] = data.map((user: RawUserProfile) => ({
             id: user.id,
             name: user.name || 'Unnamed User',
             email: user.email,

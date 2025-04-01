@@ -1,4 +1,3 @@
-
 export type UserRole = 'admin' | 'provider' | 'customer';
 
 export type ProviderVerificationStatus = 'unverified' | 'pending' | 'verified';
@@ -63,4 +62,61 @@ export interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string, role: UserRole) => Promise<void>;
   signOut: () => Promise<void>;
+}
+
+// Add new type definitions for the user profiles in Supabase
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  status: 'active' | 'pending' | 'inactive';
+  joinDate: string;
+  isVerified: boolean;
+  avatar_url?: string;
+  phone_number?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Raw Supabase user profile data
+export interface RawUserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  is_verified: boolean;
+  avatar_url?: string;
+  phone_number?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Provider profile data
+export interface ProviderProfile {
+  id: string;
+  business_name: string;
+  description?: string;
+  verification_status: ProviderVerificationStatus;
+  categories?: string[];
+  locations?: string[];
+  subscription_tier?: string;
+  rating?: number;
+  review_count?: number;
+  earnings?: number;
+  balance?: number;
+  bank_name?: string;
+  account_name?: string;
+  account_number?: string;
+}
+
+// Customer profile data
+export interface CustomerProfile {
+  id: string;
+  favorites?: string[];
+  booking_count?: number;
+  total_spent?: number;
+  referral_code?: string;
+  referred_by?: string;
+  loyalty_points?: number;
 }
