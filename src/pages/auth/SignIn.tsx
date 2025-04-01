@@ -137,7 +137,7 @@ const SignIn = () => {
               <Button 
                 type="submit" 
                 className="w-full mt-2" 
-                
+                loading={isLoading || isSubmitting}
               >
                 Sign In
               </Button>
