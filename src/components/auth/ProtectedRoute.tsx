@@ -18,8 +18,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   useEffect(() => {
     // Log authentication state for debugging
-    console.log('ProtectedRoute - Auth State:', { user, isLoading, currentPath: location.pathname });
-  }, [user, isLoading, location.pathname]);
+    console.log('ProtectedRoute - Auth State:', { 
+      user, 
+      isLoading, 
+      currentPath: location.pathname,
+      allowedRoles
+    });
+  }, [user, isLoading, location.pathname, allowedRoles]);
 
   if (isLoading) {
     return (
@@ -30,11 +35,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!user) {
+    console.log('No user found, redirecting to sign-in');
     // Redirect to sign-in page but save the location they tried to access
     return <Navigate to="/auth/sign-in" state={{ from: location }} replace />;
   }
 
   if (!allowedRoles.includes(user.role)) {
+    console.log(`User role ${user.role} not in allowed roles:`, allowedRoles);
     // User doesn't have permission to access this route
     return <Navigate to="/dashboard" replace />;
   }

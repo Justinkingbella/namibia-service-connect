@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
@@ -59,277 +58,275 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/auth/sign-in" element={<SignIn />} />
-                <Route path="/auth/sign-up" element={<SignUp />} />
-                
-                {/* Protected Routes - Dashboard */}
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Service Routes */}
-                <Route 
-                  path="/dashboard/services" 
-                  element={
-                    <ProtectedRoute>
-                      <ServicesPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/services/:id" 
-                  element={
-                    <ProtectedRoute>
-                      <ServiceDetail />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/services/create" 
-                  element={
-                    <ProtectedRoute allowedRoles={['provider', 'admin']}>
-                      <CreateServicePage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Booking Routes */}
-                <Route 
-                  path="/dashboard/bookings" 
-                  element={
-                    <ProtectedRoute>
-                      <BookingsPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/bookings/:id" 
-                  element={
-                    <ProtectedRoute>
-                      <BookingDetail />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Messages Route */}
-                <Route 
-                  path="/dashboard/messages" 
-                  element={
-                    <ProtectedRoute>
-                      <MessagesPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Settings Route */}
-                <Route 
-                  path="/dashboard/settings" 
-                  element={
-                    <ProtectedRoute>
-                      <SettingsPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Admin Routes */}
-                <Route 
-                  path="/dashboard/admin" 
-                  element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <AdminDashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/admin/providers/verification" 
-                  element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <ProviderVerificationPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/admin/wallet-verification" 
-                  element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <WalletVerificationPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/admin/analytics" 
-                  element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <PlatformAnalyticsPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/admin/controls" 
-                  element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <PlatformControlsPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/admin/subscriptions" 
-                  element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <SubscriptionManagementPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/users" 
-                  element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Provider Routes */}
-                <Route 
-                  path="/dashboard/provider" 
-                  element={
-                    <ProtectedRoute allowedRoles={['provider']}>
-                      <ProviderDashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/provider/reports" 
-                  element={
-                    <ProtectedRoute allowedRoles={['provider']}>
-                      <RevenueReportsPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/provider/payment-details" 
-                  element={
-                    <ProtectedRoute allowedRoles={['provider']}>
-                      <PaymentDetailsPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/provider/wallet-verification" 
-                  element={
-                    <ProtectedRoute allowedRoles={['provider']}>
-                      <ProviderWalletVerificationPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/provider/subscription" 
-                  element={
-                    <ProtectedRoute allowedRoles={['provider']}>
-                      <SubscriptionPageProvider />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/provider/disputes" 
-                  element={
-                    <ProtectedRoute allowedRoles={['provider']}>
-                      <ProviderDisputesPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/provider/transactions" 
-                  element={
-                    <ProtectedRoute allowedRoles={['provider']}>
-                      <ProviderTransactionsPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Customer Routes */}
-                <Route 
-                  path="/dashboard/customer" 
-                  element={
-                    <ProtectedRoute allowedRoles={['customer']}>
-                      <CustomerDashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/customer/profile" 
-                  element={
-                    <ProtectedRoute allowedRoles={['customer']}>
-                      <ProfilePage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/customer/favorites" 
-                  element={
-                    <ProtectedRoute allowedRoles={['customer']}>
-                      <FavoritesPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/customer/wallet-verifications" 
-                  element={
-                    <ProtectedRoute allowedRoles={['customer']}>
-                      <CustomerWalletVerificationsPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/customer/payment-history" 
-                  element={
-                    <ProtectedRoute allowedRoles={['customer']}>
-                      <CustomerPaymentHistoryPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dashboard/customer/disputes" 
-                  element={
-                    <ProtectedRoute allowedRoles={['customer']}>
-                      <CustomerDisputesPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Catch-all Route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/auth/sign-in" element={<SignIn />} />
+              <Route path="/auth/sign-up" element={<SignUp />} />
+              
+              {/* Protected Routes - Dashboard */}
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Service Routes */}
+              <Route 
+                path="/dashboard/services" 
+                element={
+                  <ProtectedRoute>
+                    <ServicesPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/services/:id" 
+                element={
+                  <ProtectedRoute>
+                    <ServiceDetail />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/services/create" 
+                element={
+                  <ProtectedRoute allowedRoles={['provider', 'admin']}>
+                    <CreateServicePage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Booking Routes */}
+              <Route 
+                path="/dashboard/bookings" 
+                element={
+                  <ProtectedRoute>
+                    <BookingsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/bookings/:id" 
+                element={
+                  <ProtectedRoute>
+                    <BookingDetail />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Messages Route */}
+              <Route 
+                path="/dashboard/messages" 
+                element={
+                  <ProtectedRoute>
+                    <MessagesPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Settings Route */}
+              <Route 
+                path="/dashboard/settings" 
+                element={
+                  <ProtectedRoute>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Admin Routes */}
+              <Route 
+                path="/dashboard/admin" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/admin/providers/verification" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <ProviderVerificationPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/admin/wallet-verification" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <WalletVerificationPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/admin/analytics" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <PlatformAnalyticsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/admin/controls" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <PlatformControlsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/admin/subscriptions" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <SubscriptionManagementPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/users" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Provider Routes */}
+              <Route 
+                path="/dashboard/provider" 
+                element={
+                  <ProtectedRoute allowedRoles={['provider']}>
+                    <ProviderDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/provider/reports" 
+                element={
+                  <ProtectedRoute allowedRoles={['provider']}>
+                    <RevenueReportsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/provider/payment-details" 
+                element={
+                  <ProtectedRoute allowedRoles={['provider']}>
+                    <PaymentDetailsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/provider/wallet-verification" 
+                element={
+                  <ProtectedRoute allowedRoles={['provider']}>
+                    <ProviderWalletVerificationPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/provider/subscription" 
+                element={
+                  <ProtectedRoute allowedRoles={['provider']}>
+                    <SubscriptionPageProvider />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/provider/disputes" 
+                element={
+                  <ProtectedRoute allowedRoles={['provider']}>
+                    <ProviderDisputesPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/provider/transactions" 
+                element={
+                  <ProtectedRoute allowedRoles={['provider']}>
+                    <ProviderTransactionsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Customer Routes */}
+              <Route 
+                path="/dashboard/customer" 
+                element={
+                  <ProtectedRoute allowedRoles={['customer']}>
+                    <CustomerDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/customer/profile" 
+                element={
+                  <ProtectedRoute allowedRoles={['customer']}>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/customer/favorites" 
+                element={
+                  <ProtectedRoute allowedRoles={['customer']}>
+                    <FavoritesPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/customer/wallet-verifications" 
+                element={
+                  <ProtectedRoute allowedRoles={['customer']}>
+                    <CustomerWalletVerificationsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/customer/payment-history" 
+                element={
+                  <ProtectedRoute allowedRoles={['customer']}>
+                    <CustomerPaymentHistoryPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/dashboard/customer/disputes" 
+                element={
+                  <ProtectedRoute allowedRoles={['customer']}>
+                    <CustomerDisputesPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Catch-all Route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </TooltipProvider>
         </AuthProvider>
       </QueryClientProvider>

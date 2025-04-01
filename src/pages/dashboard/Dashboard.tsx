@@ -5,7 +5,6 @@ import CustomerDashboard from './CustomerDashboard';
 import ProviderDashboard from './ProviderDashboard';
 import AdminDashboard from './AdminDashboard';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
@@ -15,22 +14,12 @@ const Dashboard = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Simple auth check without relying on Supabase in iframe environment
     const checkAuth = async () => {
       setIsLoading(true);
-      const { data, error } = await supabase.auth.getSession();
       
-      if (error) {
-        console.error('Error checking auth session:', error);
-        toast({
-          title: 'Authentication Error',
-          description: 'There was a problem verifying your session. Please try signing in again.',
-          variant: 'destructive',
-        });
-        navigate('/auth/sign-in');
-        return;
-      }
-      
-      if (!data.session) {
+      if (!user) {
+        console.log('No user found, redirecting to sign-in');
         navigate('/auth/sign-in');
         return;
       }
@@ -39,7 +28,7 @@ const Dashboard = () => {
     };
 
     checkAuth();
-  }, [navigate, toast]);
+  }, [navigate, toast, user]);
 
   if (isLoading || !user) {
     return (

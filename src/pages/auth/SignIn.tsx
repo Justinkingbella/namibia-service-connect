@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,11 +17,15 @@ const SignIn = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated - using useEffect to handle navigation
   useEffect(() => {
     if (user) {
+      console.log('User already signed in, navigating to dashboard');
       const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+      // Use setTimeout to delay the navigation slightly, preventing immediate state changes
+      setTimeout(() => {
+        navigate(from);
+      }, 100);
     }
   }, [user, navigate, location]);
 
@@ -41,6 +44,7 @@ const SignIn = () => {
     try {
       await signIn(email, password);
       // The redirect will be handled by the useEffect above
+      console.log('Sign in successful');
     } catch (error) {
       console.error('Login failed:', error);
       toast({
