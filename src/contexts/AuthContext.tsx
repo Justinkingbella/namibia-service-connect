@@ -396,7 +396,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: `Welcome to Namibia Service Hub, ${name}!`,
       });
       
-      return userWithRole;
+      // Removed the return statement to match the Promise<void> return type
     } catch (error: any) {
       console.error('Sign up error:', error);
       toast({
