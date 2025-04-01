@@ -4,6 +4,17 @@ export * from './service';
 export * from './payment';
 export * from './subscription';
 
+// Export booking types (excluding ones that will be renamed)
+export type { 
+  BookingStatus, 
+  PaymentStatus, 
+  Booking, 
+  BookingWithDetails,
+  Dispute,
+  Withdrawal,
+  WalletVerificationRequest
+} from './booking';
+
 // Re-export Auth but exclude SubscriptionTier to avoid name conflicts
 export type { User, UserRole, ProviderVerificationStatus, Customer, Provider, Admin, AuthContextType } from './auth';
 
