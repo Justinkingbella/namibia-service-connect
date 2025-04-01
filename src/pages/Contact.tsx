@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Container from '@/components/common/Container';
@@ -7,15 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Mail, MapPin, Phone } from 'lucide-react';
 import FadeIn from '@/components/animations/FadeIn';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { getPageSections, PageSection } from '@/services/contentService';
-import DynamicSection from '@/components/common/DynamicSection';
+import ContentBlock from '@/components/content/ContentBlock';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, {
@@ -37,40 +36,11 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 const Contact = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pageSections, setPageSections] = useState<PageSection[]>([]);
   const [contactInfo, setContactInfo] = useState({
     address: "Innovation Hub, Windhoek, Namibia",
     email: "info@namibiaservicehub.com",
     phone: "+264 81 234 5678"
   });
-
-  useEffect(() => {
-    const fetchPageSections = async () => {
-      try {
-        const sections = await getPageSections('contact');
-        setPageSections(sections);
-        
-        // Extract contact info if available
-        const contactInfoSection = sections.find(s => s.section_name === 'contact_info');
-        if (contactInfoSection && contactInfoSection.content) {
-          try {
-            const parsedInfo = JSON.parse(contactInfoSection.content);
-            setContactInfo({
-              address: parsedInfo.address || contactInfo.address,
-              email: parsedInfo.email || contactInfo.email,
-              phone: parsedInfo.phone || contactInfo.phone
-            });
-          } catch (e) {
-            console.error('Error parsing contact info:', e);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching contact page sections:', error);
-      }
-    };
-
-    fetchPageSections();
-  }, []);
 
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -122,23 +92,23 @@ const Contact = () => {
       <Navbar />
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="py-16 md:py-24 bg-gray-50">
+        <section className="py-16 md:py-24 bg-gradient-to-b from-blue-50 to-blue-100">
           <Container>
-            <DynamicSection 
+            <ContentBlock 
               pageName="contact" 
-              sectionName="hero"
+              blockName="hero"
               showEditButton
               className="text-center"
             >
-              {(section) => (
+              {(content) => (
                 <>
-                  <h1 className="text-4xl md:text-5xl font-bold">{section.title}</h1>
+                  <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">{content.title}</h1>
                   <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                    {section.subtitle}
+                    {content.subtitle}
                   </p>
                 </>
               )}
-            </DynamicSection>
+            </ContentBlock>
           </Container>
         </section>
 
@@ -148,25 +118,41 @@ const Contact = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <FadeIn>
                 <div className="lg:col-span-1 space-y-6">
-                  <DynamicSection 
+                  <ContentBlock 
                     pageName="contact" 
-                    sectionName="contact_info"
+                    blockName="contact_info"
                     showEditButton
                   >
-                    {(section) => (
-                      <div>
-                        <h2 className="text-2xl font-bold mb-6">{section.title}</h2>
-                        <p className="text-muted-foreground mb-8">
-                          {section.subtitle}
-                        </p>
-                      </div>
-                    )}
-                  </DynamicSection>
+                    {(content) => {
+                      // Parse JSON content if it exists
+                      if (content.content) {
+                        try {
+                          const parsedInfo = JSON.parse(content.content);
+                          setContactInfo({
+                            address: parsedInfo.address || contactInfo.address,
+                            email: parsedInfo.email || contactInfo.email,
+                            phone: parsedInfo.phone || contactInfo.phone
+                          });
+                        } catch (e) {
+                          console.error('Error parsing contact info:', e);
+                        }
+                      }
+                      
+                      return (
+                        <div>
+                          <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">{content.title}</h2>
+                          <p className="text-muted-foreground mb-8">
+                            {content.subtitle}
+                          </p>
+                        </div>
+                      );
+                    }}
+                  </ContentBlock>
 
                   {contactInfoItems.map((info, index) => (
-                    <Card key={index}>
+                    <Card key={index} className="border border-blue-100 shadow-md hover:shadow-xl transition-shadow duration-300">
                       <CardContent className="p-6 flex items-center gap-4">
-                        <div className="flex-shrink-0 bg-primary/10 p-3 rounded-full">
+                        <div className="flex-shrink-0 bg-blue-100 text-blue-600 p-3 rounded-full">
                           {info.icon}
                         </div>
                         <div>
@@ -180,22 +166,22 @@ const Contact = () => {
               </FadeIn>
 
               <FadeIn delay={200} className="lg:col-span-2">
-                <Card>
+                <Card className="border border-blue-100 shadow-lg">
                   <CardHeader>
-                    <DynamicSection 
+                    <ContentBlock 
                       pageName="contact" 
-                      sectionName="form"
+                      blockName="form"
                       showEditButton
                     >
-                      {(section) => (
+                      {(content) => (
                         <>
-                          <CardTitle>{section.title}</CardTitle>
+                          <CardTitle className="bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">{content.title}</CardTitle>
                           <CardDescription>
-                            {section.subtitle}
+                            {content.subtitle}
                           </CardDescription>
                         </>
                       )}
-                    </DynamicSection>
+                    </ContentBlock>
                   </CardHeader>
                   <CardContent>
                     <Form {...form}>
@@ -208,7 +194,7 @@ const Contact = () => {
                               <FormItem>
                                 <FormLabel>Name</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Your name" {...field} />
+                                  <Input placeholder="Your name" {...field} className="border-blue-200 focus:border-blue-500" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -221,7 +207,7 @@ const Contact = () => {
                               <FormItem>
                                 <FormLabel>Email</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Your email" {...field} />
+                                  <Input placeholder="Your email" {...field} className="border-blue-200 focus:border-blue-500" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -235,7 +221,7 @@ const Contact = () => {
                             <FormItem>
                               <FormLabel>Subject</FormLabel>
                               <FormControl>
-                                <Input placeholder="Message subject" {...field} />
+                                <Input placeholder="Message subject" {...field} className="border-blue-200 focus:border-blue-500" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -252,13 +238,14 @@ const Contact = () => {
                                   placeholder="How can we help you?" 
                                   rows={6} 
                                   {...field} 
+                                  className="border-blue-200 focus:border-blue-500"
                                 />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
+                        <Button type="submit" className="w-full md:w-auto bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600" disabled={isSubmitting}>
                           {isSubmitting ? "Sending..." : "Send Message"}
                         </Button>
                       </form>
@@ -271,30 +258,34 @@ const Contact = () => {
         </section>
 
         {/* Map Section */}
-        <section className="py-16 md:py-24 bg-gray-50">
+        <section className="py-16 md:py-24 bg-gradient-to-b from-white to-blue-50">
           <Container>
-            <DynamicSection 
+            <ContentBlock 
               pageName="contact" 
-              sectionName="map"
+              blockName="map"
               showEditButton
               className="text-center mb-12"
             >
-              {(section) => (
+              {(content) => (
                 <>
-                  <h2 className="text-3xl font-bold">{section.title}</h2>
+                  <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">{content.title}</h2>
                   <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-                    {section.subtitle}
+                    {content.subtitle}
                   </p>
                 </>
               )}
-            </DynamicSection>
+            </ContentBlock>
             
             <FadeIn delay={200}>
-              <div className="w-full h-96 bg-gray-200 rounded-lg overflow-hidden">
-                {/* This would be a Google Map or other map embed */}
-                <div className="w-full h-full flex items-center justify-center bg-gray-300">
-                  <span className="text-muted-foreground">Interactive Map Here</span>
-                </div>
+              <div className="w-full h-96 rounded-lg overflow-hidden shadow-xl border border-blue-100">
+                <iframe 
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d233867.8248755433!2d16.957805749999998!3d-22.5698138!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1c0b1b5cb30c01ed%3A0xe4b84940cc445d3b!2sWindhoek%2C%20Namibia!5e0!3m2!1sen!2sus!4v1646862937726!5m2!1sen!2sus"
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: 0 }} 
+                  allowFullScreen 
+                  loading="lazy"
+                ></iframe>
               </div>
             </FadeIn>
           </Container>

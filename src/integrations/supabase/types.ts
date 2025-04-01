@@ -120,6 +120,48 @@ export type Database = {
         }
         Relationships: []
       }
+      content_blocks: {
+        Row: {
+          block_name: string
+          buttons: Json | null
+          content: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          order_index: number
+          page_name: string
+          subtitle: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          block_name: string
+          buttons?: Json | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          order_index?: number
+          page_name: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          block_name?: string
+          buttons?: Json | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          order_index?: number
+          page_name?: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conversation_participants: {
         Row: {
           conversation_id: string

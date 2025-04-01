@@ -8,17 +8,27 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Wait for auth to finish loading
+      if (authLoading) {
+        return;
+      }
+      
       setIsLoading(true);
       
       if (!user) {
         console.log('No user found, redirecting to sign-in');
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to access your dashboard",
+          variant: "destructive"
+        });
         navigate('/auth/sign-in');
         return;
       }
@@ -26,18 +36,16 @@ const Dashboard = () => {
       setIsLoading(false);
     };
 
-    // Small delay to ensure auth state is properly loaded
-    const timeoutId = setTimeout(() => {
-      checkAuth();
-    }, 500);
+    checkAuth();
+  }, [navigate, user, authLoading, toast]);
 
-    return () => clearTimeout(timeoutId);
-  }, [navigate, user]);
-
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center h-screen bg-gradient-to-r from-blue-50 to-blue-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-blue-800">Loading your dashboard...</p>
+        </div>
       </div>
     ); 
   }
