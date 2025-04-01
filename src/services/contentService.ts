@@ -1,4 +1,5 @@
 
+
 import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
 
@@ -228,8 +229,9 @@ export const deletePageSection = async (id: string): Promise<boolean> => {
 
 // Service Categories
 export const getServiceCategories = async (): Promise<ServiceCategory[]> => {
+  // Using type assertion to work around the type checking issues
   const { data, error } = await supabase
-    .from('service_categories')
+    .from('service_categories' as any)
     .select('*')
     .order('order_index');
   
@@ -238,12 +240,13 @@ export const getServiceCategories = async (): Promise<ServiceCategory[]> => {
     return [];
   }
   
-  return data;
+  return data as ServiceCategory[];
 };
 
 export const getActiveServiceCategories = async (): Promise<ServiceCategory[]> => {
+  // Using type assertion to work around the type checking issues
   const { data, error } = await supabase
-    .from('service_categories')
+    .from('service_categories' as any)
     .select('*')
     .eq('is_active', true)
     .order('order_index');
@@ -253,12 +256,13 @@ export const getActiveServiceCategories = async (): Promise<ServiceCategory[]> =
     return [];
   }
   
-  return data;
+  return data as ServiceCategory[];
 };
 
 export const getServiceCategory = async (id: string): Promise<ServiceCategory | null> => {
+  // Using type assertion to work around the type checking issues
   const { data, error } = await supabase
-    .from('service_categories')
+    .from('service_categories' as any)
     .select('*')
     .eq('id', id)
     .single();
@@ -268,13 +272,14 @@ export const getServiceCategory = async (id: string): Promise<ServiceCategory | 
     return null;
   }
   
-  return data;
+  return data as ServiceCategory;
 };
 
 export const createServiceCategory = async (category: Omit<ServiceCategory, 'id' | 'created_at' | 'updated_at'>): Promise<ServiceCategory | null> => {
+  // Using type assertion to work around the type checking issues
   const { data, error } = await supabase
-    .from('service_categories')
-    .insert(category)
+    .from('service_categories' as any)
+    .insert(category as any)
     .select()
     .single();
   
@@ -283,13 +288,14 @@ export const createServiceCategory = async (category: Omit<ServiceCategory, 'id'
     return null;
   }
   
-  return data;
+  return data as ServiceCategory;
 };
 
 export const updateServiceCategory = async (id: string, updates: Partial<ServiceCategory>): Promise<ServiceCategory | null> => {
+  // Using type assertion to work around the type checking issues
   const { data, error } = await supabase
-    .from('service_categories')
-    .update(updates)
+    .from('service_categories' as any)
+    .update(updates as any)
     .eq('id', id)
     .select()
     .single();
@@ -299,12 +305,13 @@ export const updateServiceCategory = async (id: string, updates: Partial<Service
     return null;
   }
   
-  return data;
+  return data as ServiceCategory;
 };
 
 export const deleteServiceCategory = async (id: string): Promise<boolean> => {
+  // Using type assertion to work around the type checking issues
   const { error } = await supabase
-    .from('service_categories')
+    .from('service_categories' as any)
     .delete()
     .eq('id', id);
   
@@ -318,8 +325,9 @@ export const deleteServiceCategory = async (id: string): Promise<boolean> => {
 
 // Booking Settings
 export const getBookingSettings = async (): Promise<Record<string, any>> => {
+  // Using type assertion to work around the type checking issues
   const { data, error } = await supabase
-    .from('booking_settings')
+    .from('booking_settings' as any)
     .select('*');
   
   if (error) {
@@ -335,8 +343,9 @@ export const getBookingSettings = async (): Promise<Record<string, any>> => {
 };
 
 export const updateBookingSetting = async (key: string, value: any, description?: string): Promise<BookingSetting | null> => {
+  // Using type assertion to work around the type checking issues
   const { data, error } = await supabase
-    .from('booking_settings')
+    .from('booking_settings' as any)
     .update({ value, ...(description && { description }) })
     .eq('key', key)
     .select()
@@ -347,12 +356,13 @@ export const updateBookingSetting = async (key: string, value: any, description?
     return null;
   }
   
-  return data;
+  return data as BookingSetting;
 };
 
 export const createBookingSetting = async (key: string, value: any, description?: string): Promise<BookingSetting | null> => {
+  // Using type assertion to work around the type checking issues
   const { data, error } = await supabase
-    .from('booking_settings')
+    .from('booking_settings' as any)
     .insert({ key, value, ...(description && { description }) })
     .select()
     .single();
@@ -362,12 +372,13 @@ export const createBookingSetting = async (key: string, value: any, description?
     return null;
   }
   
-  return data;
+  return data as BookingSetting;
 };
 
 export const deleteBookingSetting = async (key: string): Promise<boolean> => {
+  // Using type assertion to work around the type checking issues
   const { error } = await supabase
-    .from('booking_settings')
+    .from('booking_settings' as any)
     .delete()
     .eq('key', key);
   
@@ -399,3 +410,4 @@ export const uploadImage = async (file: File, path: string): Promise<string | nu
   
   return urlData.publicUrl;
 };
+
