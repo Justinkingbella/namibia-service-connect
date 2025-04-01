@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -10,8 +10,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowRight, Building, Car, Heart, Home, ShoppingBag, Truck, User, Utensils, Wrench } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import FadeIn from '@/components/animations/FadeIn';
+import DynamicSection from '@/components/common/DynamicSection';
+import { getPageSections, PageSection } from '@/services/contentService';
 
 const Services = () => {
+  const [pageSections, setPageSections] = useState<PageSection[]>([]);
+
+  useEffect(() => {
+    const fetchPageSections = async () => {
+      try {
+        const sections = await getPageSections('services');
+        setPageSections(sections);
+      } catch (error) {
+        console.error('Error fetching services page sections:', error);
+      }
+    };
+
+    fetchPageSections();
+  }, []);
+
   const categories = [
     {
       id: "home",
@@ -166,23 +183,37 @@ const Services = () => {
         {/* Hero Section */}
         <section className="py-16 md:py-24 bg-gray-50">
           <Container>
-            <div className="text-center">
-              <FadeIn>
-                <h1 className="text-4xl md:text-5xl font-bold">Our Services</h1>
-                <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                  Browse through our wide range of services available across Namibia.
-                </p>
-              </FadeIn>
-            </div>
+            <DynamicSection 
+              pageName="services" 
+              sectionName="hero"
+              showEditButton
+              className="text-center"
+            >
+              {(section) => (
+                <>
+                  <h1 className="text-4xl md:text-5xl font-bold">{section.title}</h1>
+                  <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+                    {section.subtitle}
+                  </p>
+                </>
+              )}
+            </DynamicSection>
           </Container>
         </section>
 
         {/* Categories Overview */}
         <section className="py-16 md:py-24">
           <Container>
-            <FadeIn>
-              <h2 className="text-3xl font-bold mb-12 text-center">Browse by Category</h2>
-            </FadeIn>
+            <DynamicSection 
+              pageName="services" 
+              sectionName="categories"
+              showEditButton
+              className="text-center mb-12"
+            >
+              {(section) => (
+                <h2 className="text-3xl font-bold">{section.title}</h2>
+              )}
+            </DynamicSection>
             
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {[
@@ -215,12 +246,21 @@ const Services = () => {
         {/* Featured Services */}
         <section className="py-16 md:py-24 bg-gray-50">
           <Container>
-            <FadeIn>
-              <h2 className="text-3xl font-bold mb-6 text-center">Featured Services</h2>
-              <p className="text-center text-muted-foreground max-w-2xl mx-auto mb-12">
-                Explore our most popular services available across Namibia.
-              </p>
-            </FadeIn>
+            <DynamicSection 
+              pageName="services" 
+              sectionName="featured"
+              showEditButton
+              className="text-center mb-12"
+            >
+              {(section) => (
+                <>
+                  <h2 className="text-3xl font-bold">{section.title}</h2>
+                  <p className="text-center text-muted-foreground max-w-2xl mx-auto">
+                    {section.subtitle}
+                  </p>
+                </>
+              )}
+            </DynamicSection>
 
             <Tabs defaultValue={categories[0].id} className="w-full">
               <TabsList className="w-full flex flex-wrap justify-center mb-8">
@@ -282,14 +322,21 @@ const Services = () => {
         {/* How It Works */}
         <section className="py-16 md:py-24">
           <Container>
-            <FadeIn>
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold">How It Works</h2>
-                <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-                  Booking a service with Namibia Service Hub is simple and efficient.
-                </p>
-              </div>
-            </FadeIn>
+            <DynamicSection 
+              pageName="services" 
+              sectionName="how_it_works"
+              showEditButton
+              className="text-center mb-12"
+            >
+              {(section) => (
+                <>
+                  <h2 className="text-3xl font-bold">{section.title}</h2>
+                  <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
+                    {section.subtitle}
+                  </p>
+                </>
+              )}
+            </DynamicSection>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <FadeIn delay={100}>

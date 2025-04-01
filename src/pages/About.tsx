@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Container from '@/components/common/Container';
@@ -7,8 +7,31 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Shield, Target, Users } from 'lucide-react';
 import FadeIn from '@/components/animations/FadeIn';
+import DynamicSection from '@/components/common/DynamicSection';
+import { getPageSections, PageSection } from '@/services/contentService';
+import { useSite } from '@/contexts/SiteContext';
 
 const About = () => {
+  const [pageSections, setPageSections] = useState<PageSection[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { settings } = useSite();
+
+  useEffect(() => {
+    const fetchPageSections = async () => {
+      setIsLoading(true);
+      try {
+        const sections = await getPageSections('about');
+        setPageSections(sections);
+      } catch (error) {
+        console.error('Error fetching about page sections:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPageSections();
+  }, []);
+
   const values = [
     {
       icon: <Shield className="h-8 w-8 text-primary" />,
@@ -56,21 +79,26 @@ const About = () => {
         <section className="py-16 md:py-24 bg-gray-50">
           <Container>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <FadeIn>
-                <div>
-                  <h1 className="text-4xl md:text-5xl font-bold mb-6">About Namibia Service Hub</h1>
-                  <p className="text-lg text-muted-foreground mb-8">
-                    We're on a mission to transform how services are discovered and delivered in Namibia, connecting quality service providers with customers seamlessly.
-                  </p>
-                  <Button asChild size="lg">
-                    <Link to="/contact">Get in Touch</Link>
-                  </Button>
-                </div>
-              </FadeIn>
+              <DynamicSection 
+                pageName="about" 
+                sectionName="hero"
+                showEditButton
+                className="space-y-4"
+              >
+                {(section) => (
+                  <>
+                    <h1 className="text-4xl md:text-5xl font-bold mb-6">{section.title}</h1>
+                    <p className="text-lg text-muted-foreground mb-8">{section.subtitle}</p>
+                    <Button asChild size="lg">
+                      <Link to="/contact">Get in Touch</Link>
+                    </Button>
+                  </>
+                )}
+              </DynamicSection>
               <FadeIn delay={200}>
                 <div className="bg-gray-100 rounded-lg overflow-hidden aspect-video">
                   <img 
-                    src="/placeholder.svg" 
+                    src={pageSections.find(s => s.section_name === 'hero')?.image_url || "/placeholder.svg"} 
                     alt="About Namibia Service Hub" 
                     className="w-full h-full object-cover"
                   />
@@ -87,26 +115,27 @@ const About = () => {
               <FadeIn>
                 <div className="bg-gray-100 rounded-lg overflow-hidden aspect-video">
                   <img 
-                    src="/placeholder.svg" 
+                    src={pageSections.find(s => s.section_name === 'story')?.image_url || "/placeholder.svg"} 
                     alt="Our Story" 
                     className="w-full h-full object-cover"
                   />
                 </div>
               </FadeIn>
-              <FadeIn delay={200}>
-                <div>
-                  <h2 className="text-3xl font-bold mb-6">Our Story</h2>
-                  <p className="text-muted-foreground mb-4">
-                    Namibia Service Hub was founded in 2023 with a simple idea: make it easier for people to find reliable service providers in Namibia.
-                  </p>
-                  <p className="text-muted-foreground mb-4">
-                    Our founder experienced firsthand the challenge of finding quality service providers for home repairs. After struggling to find reliable plumbers, electricians, and other service professionals through traditional means, the idea for a centralized platform was born.
-                  </p>
-                  <p className="text-muted-foreground">
-                    Today, we're proud to connect thousands of customers with verified service providers across the country, making service booking simple, reliable, and efficient.
-                  </p>
-                </div>
-              </FadeIn>
+              <DynamicSection 
+                pageName="about" 
+                sectionName="story"
+                showEditButton
+                className="space-y-4"
+              >
+                {(section) => (
+                  <>
+                    <h2 className="text-3xl font-bold mb-6">{section.title}</h2>
+                    <p className="text-muted-foreground mb-4">
+                      {section.content}
+                    </p>
+                  </>
+                )}
+              </DynamicSection>
             </div>
           </Container>
         </section>
@@ -114,14 +143,21 @@ const About = () => {
         {/* Our Values */}
         <section className="py-16 md:py-24 bg-gray-50">
           <Container>
-            <FadeIn>
-              <div className="text-center mb-16">
-                <h2 className="text-3xl md:text-4xl font-bold">Our Values</h2>
-                <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                  The core principles that guide our mission and operations.
-                </p>
-              </div>
-            </FadeIn>
+            <DynamicSection 
+              pageName="about" 
+              sectionName="values"
+              showEditButton
+              className="text-center mb-16"
+            >
+              {(section) => (
+                <>
+                  <h2 className="text-3xl md:text-4xl font-bold">{section.title}</h2>
+                  <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+                    {section.subtitle}
+                  </p>
+                </>
+              )}
+            </DynamicSection>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {values.map((value, index) => (
@@ -142,14 +178,21 @@ const About = () => {
         {/* Our Team */}
         <section className="py-16 md:py-24">
           <Container>
-            <FadeIn>
-              <div className="text-center mb-16">
-                <h2 className="text-3xl md:text-4xl font-bold">Meet Our Team</h2>
-                <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                  The dedicated individuals working to connect Namibia's service providers with customers.
-                </p>
-              </div>
-            </FadeIn>
+            <DynamicSection 
+              pageName="about" 
+              sectionName="team"
+              showEditButton
+              className="text-center mb-16"
+            >
+              {(section) => (
+                <>
+                  <h2 className="text-3xl md:text-4xl font-bold">{section.title}</h2>
+                  <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+                    {section.subtitle}
+                  </p>
+                </>
+              )}
+            </DynamicSection>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {team.map((member, index) => (

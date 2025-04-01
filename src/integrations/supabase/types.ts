@@ -258,6 +258,48 @@ export type Database = {
           },
         ]
       }
+      page_sections: {
+        Row: {
+          buttons: Json | null
+          content: string | null
+          created_at: string | null
+          id: string
+          image_url: string | null
+          order_index: number
+          page_name: string
+          section_name: string
+          subtitle: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          buttons?: Json | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          order_index?: number
+          page_name: string
+          section_name: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          buttons?: Json | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          order_index?: number
+          page_name?: string
+          section_name?: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       payment_history: {
         Row: {
           amount: number
@@ -626,6 +668,30 @@ export type Database = {
           provider_id?: string | null
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json
         }
         Relationships: []
       }

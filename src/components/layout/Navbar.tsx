@@ -1,193 +1,155 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, ChevronDown, User, LogOut } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import Logo from '../common/Logo';
-import Button from '../common/Button';
-import Container from '../common/Container';
+import { Link, useLocation } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSite } from '@/contexts/SiteContext';
+import Logo from '@/components/common/Logo';
+import Container from '@/components/common/Container';
+import { Menu, X } from 'lucide-react';
 
-interface NavItem {
-  label: string;
-  href: string;
-  children?: NavItem[];
-}
-
-interface NavbarProps {
-  className?: string;
-}
-
-const menuItems: NavItem[] = [
-  { label: 'Home', href: '/' },
-  { label: 'Services', href: '/services' },
-  { label: 'How It Works', href: '/how-it-works' },
-  { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
-];
-
-export function Navbar({ className }: NavbarProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
+  const { settings } = useSite();
+  const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
 
+  // Get app name from settings or use default
+  const appName = settings.app_name || 'Namibia Service Hub';
+  
+  // Listen for scroll events to add background when scrolled
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-
+    
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+  
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+  const navLinks = [
+    { label: 'Home', path: '/' },
+    { label: 'Services', path: '/services' },
+    { label: 'How It Works', path: '/how-it-works' },
+    { label: 'About', path: '/about' },
+    { label: 'Contact', path: '/contact' },
+  ];
+
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === path;
+    }
+    return location.pathname.startsWith(path);
   };
 
   return (
-    <header
-      className={cn(
-        'sticky top-0 z-50 transition-all duration-300 ease-in-out',
-        isScrolled 
-          ? 'py-3 bg-white/90 backdrop-blur-md shadow-sm' 
-          : 'py-5 bg-transparent',
-        className
-      )}
+    <header 
+      className={`sticky top-0 z-50 transition-all duration-200 ${
+        isScrolled ? 'bg-white shadow-sm' : 'bg-transparent'
+      }`}
     >
-      <Container className="flex items-center justify-between">
-        <div className="flex items-center">
-          <Logo />
-        </div>
-
-        {/* Desktop Menu */}
-        <nav className="hidden md:flex items-center space-x-8">
-          <ul className="flex space-x-6">
-            {menuItems.map((item) => (
-              <li key={item.label}>
-                <Link
-                  to={item.href}
-                  className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors duration-200"
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+      <Container>
+        <div className="flex items-center justify-between py-4">
+          <Link to="/" className="flex items-center">
+            <Logo size="md" />
+          </Link>
           
-          {user ? (
-            <div className="relative">
-              <button 
-                className="flex items-center gap-2 py-1 px-2 rounded-full hover:bg-gray-100"
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive(link.path)
+                    ? 'text-primary'
+                    : 'text-gray-700 hover:text-primary hover:bg-gray-100'
+                }`}
               >
-                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                  {user.name.charAt(0)}
-                </div>
-                <span className="text-sm font-medium">{user.name}</span>
-                <ChevronDown size={16} />
-              </button>
-              
-              {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border">
-                  <div className="px-4 py-2 border-b">
-                    <p className="text-sm font-medium">{user.name}</p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
-                  </div>
-                  <Link 
-                    to="/dashboard" 
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setIsUserMenuOpen(false)}
-                  >
-                    <User size={16} />
-                    Dashboard
-                  </Link>
-                  <button 
-                    className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                    onClick={handleSignOut}
-                  >
-                    <LogOut size={16} />
-                    Sign out
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex space-x-3">
-              <Button variant="outline" size="sm" as={Link} to="/auth/sign-in">
-                Sign In
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          
+          {/* Desktop CTA Buttons */}
+          <div className="hidden md:flex items-center space-x-4">
+            {user ? (
+              <Button asChild variant="default">
+                <Link to="/dashboard">Dashboard</Link>
               </Button>
-              <Button size="sm" as={Link} to="/auth/sign-up">
-                Sign Up
-              </Button>
-            </div>
-          )}
-        </nav>
-
-        {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center">
-          {user && (
-            <Link to="/dashboard" className="mr-4">
-              <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                {user.name.charAt(0)}
-              </div>
-            </Link>
-          )}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 -mr-2 text-foreground hover:text-primary transition-colors"
-            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-          >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+            ) : (
+              <>
+                <Button asChild variant="outline">
+                  <Link to="/auth/sign-in">Sign In</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/auth/sign-up">Sign Up</Link>
+                </Button>
+              </>
+            )}
+          </div>
+          
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsOpen(!isOpen)}
+              aria-label="Toggle menu"
+            >
+              {isOpen ? <X /> : <Menu />}
+            </Button>
+          </div>
         </div>
       </Container>
-
-      {/* Mobile Menu Content */}
-      {isMenuOpen && (
-        <div className="fixed inset-0 top-[60px] z-40 bg-white/95 backdrop-blur-md md:hidden flex flex-col animate-fade-in">
-          <Container className="py-8">
-            <ul className="flex flex-col space-y-5">
-              {menuItems.map((item) => (
-                <li key={item.label} className="border-b border-border pb-3">
-                  <Link
-                    to={item.href}
-                    className="flex items-center justify-between text-foreground hover:text-primary py-2 transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <span className="text-base font-medium">{item.label}</span>
-                    {item.children && <ChevronDown size={18} />}
-                  </Link>
-                </li>
+      
+      {/* Mobile Navigation */}
+      {isOpen && (
+        <div className="md:hidden bg-white border-t">
+          <Container>
+            <div className="py-2 space-y-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${
+                    isActive(link.path)
+                      ? 'text-primary bg-primary/5'
+                      : 'text-gray-700 hover:text-primary hover:bg-gray-100'
+                  }`}
+                >
+                  {link.label}
+                </Link>
               ))}
-            </ul>
-            
-            {user ? (
-              <div className="flex flex-col space-y-3 mt-8">
-                <Button as={Link} to="/dashboard" size="lg" className="w-full">
-                  Dashboard
-                </Button>
-                <Button variant="outline" size="lg" className="w-full" onClick={handleSignOut}>
-                  Sign Out
-                </Button>
+              
+              <div className="pt-4 pb-2 border-t border-gray-200 mt-4 space-y-2">
+                {user ? (
+                  <Button asChild className="w-full">
+                    <Link to="/dashboard">Dashboard</Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button asChild variant="outline" className="w-full">
+                      <Link to="/auth/sign-in">Sign In</Link>
+                    </Button>
+                    <Button asChild className="w-full">
+                      <Link to="/auth/sign-up">Sign Up</Link>
+                    </Button>
+                  </>
+                )}
               </div>
-            ) : (
-              <div className="flex flex-col space-y-3 mt-8">
-                <Button as={Link} to="/auth/sign-in" variant="outline" size="lg" className="w-full">
-                  Sign In
-                </Button>
-                <Button as={Link} to="/auth/sign-up" size="lg" className="w-full">
-                  Sign Up
-                </Button>
-              </div>
-            )}
+            </div>
           </Container>
         </div>
       )}
     </header>
   );
-}
+};
 
 export default Navbar;

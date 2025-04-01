@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -7,8 +7,25 @@ import Container from '@/components/common/Container';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Check } from 'lucide-react';
 import FadeIn from '@/components/animations/FadeIn';
+import DynamicSection from '@/components/common/DynamicSection';
+import { getPageSections, PageSection } from '@/services/contentService';
 
 const HowItWorks = () => {
+  const [pageSections, setPageSections] = useState<PageSection[]>([]);
+
+  useEffect(() => {
+    const fetchPageSections = async () => {
+      try {
+        const sections = await getPageSections('how_it_works');
+        setPageSections(sections);
+      } catch (error) {
+        console.error('Error fetching how it works page sections:', error);
+      }
+    };
+
+    fetchPageSections();
+  }, []);
+
   const steps = [
     {
       number: 1,
@@ -43,20 +60,43 @@ const HowItWorks = () => {
         {/* Hero Section */}
         <section className="py-16 md:py-24 bg-gray-50">
           <Container>
-            <div className="text-center mb-16">
-              <FadeIn>
-                <h1 className="text-4xl md:text-5xl font-bold">How Namibia Service Hub Works</h1>
-                <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                  We make finding and booking services in Namibia simple and reliable. Here's how our platform connects customers with quality service providers.
-                </p>
-              </FadeIn>
-            </div>
+            <DynamicSection 
+              pageName="how_it_works" 
+              sectionName="hero"
+              showEditButton
+              className="text-center mb-16"
+            >
+              {(section) => (
+                <>
+                  <h1 className="text-4xl md:text-5xl font-bold">{section.title}</h1>
+                  <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+                    {section.subtitle}
+                  </p>
+                </>
+              )}
+            </DynamicSection>
           </Container>
         </section>
 
         {/* Process Steps */}
         <section className="py-16 md:py-24">
           <Container>
+            <DynamicSection 
+              pageName="how_it_works" 
+              sectionName="process"
+              showEditButton
+              className="text-center mb-12"
+            >
+              {(section) => (
+                <>
+                  <h2 className="text-3xl font-bold">{section.title}</h2>
+                  <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+                    {section.subtitle}
+                  </p>
+                </>
+              )}
+            </DynamicSection>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
               {steps.map((step, index) => (
                 <FadeIn key={step.number} delay={index * 100}>
@@ -85,14 +125,21 @@ const HowItWorks = () => {
         {/* For Service Providers */}
         <section className="py-16 md:py-24 bg-gray-50">
           <Container>
-            <FadeIn>
-              <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold">For Service Providers</h2>
-                <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                  Join our platform to grow your business and reach more customers across Namibia.
-                </p>
-              </div>
-            </FadeIn>
+            <DynamicSection 
+              pageName="how_it_works" 
+              sectionName="for_providers"
+              showEditButton
+              className="text-center mb-12"
+            >
+              {(section) => (
+                <>
+                  <h2 className="text-3xl md:text-4xl font-bold">{section.title}</h2>
+                  <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+                    {section.subtitle}
+                  </p>
+                </>
+              )}
+            </DynamicSection>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
               <FadeIn delay={100}>
@@ -164,14 +211,21 @@ const HowItWorks = () => {
         {/* FAQ Section */}
         <section className="py-16 md:py-24">
           <Container>
-            <FadeIn>
-              <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold">Frequently Asked Questions</h2>
-                <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                  Find answers to common questions about using Namibia Service Hub.
-                </p>
-              </div>
-            </FadeIn>
+            <DynamicSection 
+              pageName="how_it_works" 
+              sectionName="faq"
+              showEditButton
+              className="text-center mb-12"
+            >
+              {(section) => (
+                <>
+                  <h2 className="text-3xl md:text-4xl font-bold">{section.title}</h2>
+                  <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+                    {section.subtitle}
+                  </p>
+                </>
+              )}
+            </DynamicSection>
 
             <div className="max-w-3xl mx-auto mt-12">
               {[

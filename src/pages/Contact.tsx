@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Container from '@/components/common/Container';
@@ -14,6 +14,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { getPageSections, PageSection } from '@/services/contentService';
+import DynamicSection from '@/components/common/DynamicSection';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, {
@@ -35,6 +37,40 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 const Contact = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pageSections, setPageSections] = useState<PageSection[]>([]);
+  const [contactInfo, setContactInfo] = useState({
+    address: "Innovation Hub, Windhoek, Namibia",
+    email: "info@namibiaservicehub.com",
+    phone: "+264 81 234 5678"
+  });
+
+  useEffect(() => {
+    const fetchPageSections = async () => {
+      try {
+        const sections = await getPageSections('contact');
+        setPageSections(sections);
+        
+        // Extract contact info if available
+        const contactInfoSection = sections.find(s => s.section_name === 'contact_info');
+        if (contactInfoSection && contactInfoSection.content) {
+          try {
+            const parsedInfo = JSON.parse(contactInfoSection.content);
+            setContactInfo({
+              address: parsedInfo.address || contactInfo.address,
+              email: parsedInfo.email || contactInfo.email,
+              phone: parsedInfo.phone || contactInfo.phone
+            });
+          } catch (e) {
+            console.error('Error parsing contact info:', e);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching contact page sections:', error);
+      }
+    };
+
+    fetchPageSections();
+  }, []);
 
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -63,21 +99,21 @@ const Contact = () => {
     }, 1500);
   };
 
-  const contactInfo = [
+  const contactInfoItems = [
     {
       icon: <MapPin className="h-6 w-6 text-primary" />,
       title: "Address",
-      content: "Innovation Hub, Windhoek, Namibia",
+      content: contactInfo.address,
     },
     {
       icon: <Mail className="h-6 w-6 text-primary" />,
       title: "Email",
-      content: "info@namibiaservicehub.com",
+      content: contactInfo.email,
     },
     {
       icon: <Phone className="h-6 w-6 text-primary" />,
       title: "Phone",
-      content: "+264 81 234 5678",
+      content: contactInfo.phone,
     },
   ];
 
@@ -88,14 +124,21 @@ const Contact = () => {
         {/* Hero Section */}
         <section className="py-16 md:py-24 bg-gray-50">
           <Container>
-            <div className="text-center">
-              <FadeIn>
-                <h1 className="text-4xl md:text-5xl font-bold">Contact Us</h1>
-                <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                  Have questions or feedback? We'd love to hear from you. Our team is here to help.
-                </p>
-              </FadeIn>
-            </div>
+            <DynamicSection 
+              pageName="contact" 
+              sectionName="hero"
+              showEditButton
+              className="text-center"
+            >
+              {(section) => (
+                <>
+                  <h1 className="text-4xl md:text-5xl font-bold">{section.title}</h1>
+                  <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+                    {section.subtitle}
+                  </p>
+                </>
+              )}
+            </DynamicSection>
           </Container>
         </section>
 
@@ -105,14 +148,22 @@ const Contact = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <FadeIn>
                 <div className="lg:col-span-1 space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-6">Get in Touch</h2>
-                    <p className="text-muted-foreground mb-8">
-                      We're here to help with any questions about our services, partnerships, or anything else. Reach out to us using the information below or fill out the contact form.
-                    </p>
-                  </div>
+                  <DynamicSection 
+                    pageName="contact" 
+                    sectionName="contact_info"
+                    showEditButton
+                  >
+                    {(section) => (
+                      <div>
+                        <h2 className="text-2xl font-bold mb-6">{section.title}</h2>
+                        <p className="text-muted-foreground mb-8">
+                          {section.subtitle}
+                        </p>
+                      </div>
+                    )}
+                  </DynamicSection>
 
-                  {contactInfo.map((info, index) => (
+                  {contactInfoItems.map((info, index) => (
                     <Card key={index}>
                       <CardContent className="p-6 flex items-center gap-4">
                         <div className="flex-shrink-0 bg-primary/10 p-3 rounded-full">
@@ -131,10 +182,20 @@ const Contact = () => {
               <FadeIn delay={200} className="lg:col-span-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Send Us a Message</CardTitle>
-                    <CardDescription>
-                      Fill out the form below and we'll get back to you as soon as possible.
-                    </CardDescription>
+                    <DynamicSection 
+                      pageName="contact" 
+                      sectionName="form"
+                      showEditButton
+                    >
+                      {(section) => (
+                        <>
+                          <CardTitle>{section.title}</CardTitle>
+                          <CardDescription>
+                            {section.subtitle}
+                          </CardDescription>
+                        </>
+                      )}
+                    </DynamicSection>
                   </CardHeader>
                   <CardContent>
                     <Form {...form}>
@@ -212,14 +273,21 @@ const Contact = () => {
         {/* Map Section */}
         <section className="py-16 md:py-24 bg-gray-50">
           <Container>
-            <FadeIn>
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold">Our Location</h2>
-                <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-                  Find us at our central office in Windhoek.
-                </p>
-              </div>
-            </FadeIn>
+            <DynamicSection 
+              pageName="contact" 
+              sectionName="map"
+              showEditButton
+              className="text-center mb-12"
+            >
+              {(section) => (
+                <>
+                  <h2 className="text-3xl font-bold">{section.title}</h2>
+                  <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
+                    {section.subtitle}
+                  </p>
+                </>
+              )}
+            </DynamicSection>
             
             <FadeIn delay={200}>
               <div className="w-full h-96 bg-gray-200 rounded-lg overflow-hidden">
