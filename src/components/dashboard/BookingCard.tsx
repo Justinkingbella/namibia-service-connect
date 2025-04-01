@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, Clock, AlertCircle, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { Booking, BookingStatus, PaymentStatus } from '@/types';
 import { cn } from '@/lib/utils';
-import { format, isValid } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
 
 interface BookingCardProps {
   booking: Booking & {
@@ -108,16 +108,17 @@ export function BookingCard({ booking, viewAs, className }: BookingCardProps) {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateValue: string | Date) => {
     try {
-      const date = new Date(dateString);
+      const date = typeof dateValue === 'string' ? parseISO(dateValue) : dateValue;
+      
       if (isValid(date)) {
         return format(date, 'MMM dd, yyyy');
       }
-      return dateString;
+      return typeof dateValue === 'string' ? dateValue : dateValue.toISOString();
     } catch (error) {
-      console.error('Invalid date:', dateString);
-      return dateString;
+      console.error('Invalid date:', dateValue);
+      return String(dateValue);
     }
   };
 

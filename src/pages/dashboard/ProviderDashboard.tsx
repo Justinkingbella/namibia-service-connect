@@ -15,7 +15,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
 import { BookingStatus, PaymentStatus } from '@/types/booking';
-import { SubscriptionTier } from '@/types/subscription';
 
 type Subscription = Tables<'user_subscriptions'> & {
   subscription_plans: Tables<'subscription_plans'>
@@ -103,7 +102,7 @@ const ProviderDashboard = () => {
       totalPrice: 250,
       location: 'Customer address',
       notes: '',
-      paymentStatus: 'paid',
+      paymentStatus: 'completed',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       duration: 60,
@@ -157,7 +156,7 @@ const ProviderDashboard = () => {
       totalPrice: 250,
       location: 'Customer address',
       notes: '',
-      paymentStatus: 'paid',
+      paymentStatus: 'completed',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       duration: 60,
@@ -252,7 +251,14 @@ const ProviderDashboard = () => {
             
             <div className="space-y-4">
               {recentBookings.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} viewAs="provider" />
+                <BookingCard 
+                  key={booking.id} 
+                  booking={{
+                    ...booking,
+                    date: booking.date
+                  } as any} 
+                  viewAs="provider" 
+                />
               ))}
             </div>
           </div>
@@ -266,7 +272,7 @@ const ProviderDashboard = () => {
                 thisMonth: 3250,
                 lastMonth: 2980
               }}
-              subscriptionTier="Professional" as SubscriptionTier
+              subscriptionTier="pro"
             />
             
             {!isLoading && subscription && (
