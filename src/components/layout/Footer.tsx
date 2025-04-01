@@ -1,138 +1,101 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Logo from '@/components/common/Logo';
 import Container from '@/components/common/Container';
-import { Facebook, Instagram, Twitter } from 'lucide-react';
+import Logo from '@/components/common/Logo';
+import { Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
 import { useSite } from '@/contexts/SiteContext';
 
 const Footer = () => {
   const { settings } = useSite();
   
-  // Get footer links from settings or use defaults
-  const footerLinks = Array.isArray(settings.footer_links) 
-    ? settings.footer_links 
-    : [
-        { label: "Home", url: "/" },
-        { label: "Services", url: "/services" },
-        { label: "About Us", url: "/about" },
-        { label: "Contact", url: "/contact" },
-        { label: "How It Works", url: "/how-it-works" }
-      ];
-  
-  // Get copyright text from settings or use default
-  const copyright = settings.copyright || '© 2023 Namibia Service Hub. All rights reserved.';
-      
-  const categories = [
-    { name: "Home Services", url: "/services#home" },
-    { name: "Transportation", url: "/services#transport" },
-    { name: "Professional Services", url: "/services#professional" },
-    { name: "Health & Wellness", url: "/services#health" },
+  const footerLinks = settings.footer_links || [
+    { label: 'Home', url: '/' },
+    { label: 'Services', url: '/services' },
+    { label: 'About Us', url: '/about' },
+    { label: 'Contact', url: '/contact' },
+    { label: 'How It Works', url: '/how-it-works' }
   ];
   
-  const resources = [
-    { name: "Blog", url: "#" },
-    { name: "Help Center", url: "#" },
-    { name: "Pricing", url: "#" },
-    { name: "Providers", url: "#" },
-  ];
+  const copyrightText = settings.copyright || '© 2023 Namibia Service Hub. All rights reserved.';
   
-  const company = [
-    { name: "About Us", url: "/about" },
-    { name: "Contact", url: "/contact" },
-    { name: "Careers", url: "#" },
-    { name: "Privacy Policy", url: "#" },
-  ];
-  
-  const socialLinks = [
-    { icon: <Facebook size={20} />, url: "https://facebook.com" },
-    { icon: <Twitter size={20} />, url: "https://twitter.com" },
-    { icon: <Instagram size={20} />, url: "https://instagram.com" },
-  ];
-
   return (
-    <footer className="bg-gray-900 text-white pt-12 pb-6">
+    <footer className="bg-gray-900 text-white pt-12 pb-8">
       <Container>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-          <div className="md:col-span-2">
-            <div className="mb-4">
-              <Logo variant="light" />
-            </div>
-            <p className="text-gray-400 mb-6 max-w-md">
-              Connecting quality service providers with customers across Namibia. Find, book, and enjoy reliable services.
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          <div className="col-span-1 md:col-span-1">
+            <Logo />
+            <p className="mt-4 text-gray-400 text-sm">
+              Connecting service providers with customers across Namibia.
             </p>
-            <div className="flex space-x-4">
-              {socialLinks.map((link, i) => (
-                <a 
-                  key={i}
-                  href={link.url}
-                  className="bg-gray-800 p-2 rounded-full hover:bg-primary/80 transition-colors"
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                >
-                  {link.icon}
-                </a>
-              ))}
+            <div className="flex mt-4 space-x-4">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Facebook size={20} />
+              </a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Twitter size={20} />
+              </a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Instagram size={20} />
+              </a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Linkedin size={20} />
+              </a>
             </div>
           </div>
           
-          <div>
-            <h3 className="font-semibold text-lg mb-4">Categories</h3>
+          <div className="col-span-1">
+            <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
-              {categories.map((item, i) => (
-                <li key={i}>
-                  <Link to={item.url} className="text-gray-400 hover:text-white transition-colors">
-                    {item.name}
+              {footerLinks.slice(0, 4).map((link, index) => (
+                <li key={index}>
+                  <Link to={link.url} className="text-gray-400 hover:text-white transition-colors">
+                    {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
           
-          <div>
-            <h3 className="font-semibold text-lg mb-4">Resources</h3>
+          <div className="col-span-1">
+            <h4 className="text-lg font-semibold mb-4">Resources</h4>
             <ul className="space-y-2">
-              {resources.map((item, i) => (
-                <li key={i}>
-                  <Link to={item.url} className="text-gray-400 hover:text-white transition-colors">
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link to="/how-it-works" className="text-gray-400 hover:text-white transition-colors">
+                  How It Works
+                </Link>
+              </li>
+              <li>
+                <Link to="/help" className="text-gray-400 hover:text-white transition-colors">
+                  Help Center
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="text-gray-400 hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="text-gray-400 hover:text-white transition-colors">
+                  Terms of Service
+                </Link>
+              </li>
             </ul>
           </div>
           
-          <div>
-            <h3 className="font-semibold text-lg mb-4">Company</h3>
-            <ul className="space-y-2">
-              {company.map((item, i) => (
-                <li key={i}>
-                  <Link to={item.url} className="text-gray-400 hover:text-white transition-colors">
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
+          <div className="col-span-1">
+            <h4 className="text-lg font-semibold mb-4">Contact</h4>
+            <ul className="space-y-2 text-gray-400">
+              <li>Innovation Hub</li>
+              <li>Windhoek, Namibia</li>
+              <li>info@namibiaservicehub.com</li>
+              <li>+264 81 234 5678</li>
             </ul>
           </div>
         </div>
         
-        <div className="mt-12 pt-6 border-t border-gray-800">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-gray-500 text-sm mb-4 md:mb-0">
-              {copyright}
-            </div>
-            <div className="flex flex-wrap justify-center gap-4">
-              {footerLinks.map((link, i) => (
-                <Link 
-                  key={i} 
-                  to={link.url} 
-                  className="text-gray-400 hover:text-white text-sm transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </div>
+        <div className="border-t border-gray-800 pt-8 mt-8 text-sm text-center text-gray-400">
+          <p>{copyrightText}</p>
         </div>
       </Container>
     </footer>
