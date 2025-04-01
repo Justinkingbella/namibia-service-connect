@@ -1,7 +1,6 @@
 
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import CustomerProfile from '@/components/customer/CustomerProfile';
 import UserProfile from '@/components/customer/UserProfile';
 import DisputeResolutionPanel from '@/components/dashboard/DisputeResolutionPanel';
 
