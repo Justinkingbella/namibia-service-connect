@@ -99,7 +99,8 @@ export interface CustomerProfile {
 // Extended profile types for working with database
 export interface DbUserProfile {
   id: string;
-  name?: string;
+  first_name?: string;
+  last_name?: string;
   email?: string;
   role?: UserRole;
   is_verified?: boolean;
@@ -107,8 +108,10 @@ export interface DbUserProfile {
   phone_number?: string;
   created_at?: string;
   updated_at?: string;
-  first_name?: string;
-  last_name?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  bio?: string;
 }
 
 export interface DbProviderProfile {
@@ -126,4 +129,19 @@ export interface DbProviderProfile {
   bank_name?: string;
   account_name?: string;
   account_number?: string;
+  email?: string;
+  phone_number?: string;
+  website?: string;
+  city?: string;
+  country?: string;
+  avatar_url?: string;
+  banner_url?: string;
+  created_at?: string;
+  updated_at?: string;
+  address?: string;
+  commission_rate?: number;
+  completed_bookings?: number;
+  services_count?: number;
+  verified_at?: string;
+  verified_by?: string;
 }

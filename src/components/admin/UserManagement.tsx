@@ -45,15 +45,22 @@ const UserManagement: React.FC = () => {
         }
 
         if (data) {
-          const formattedUsers: UserData[] = data.map((user: any) => ({
-            id: user.id,
-            name: user.name || user.first_name || 'Unnamed User',
-            email: user.email || '',
-            role: (user.role as UserRole) || 'customer',
-            status: user.is_verified ? 'active' : 'pending',
-            joinDate: new Date(user.created_at).toISOString().split('T')[0],
-            isVerified: !!user.is_verified
-          }));
+          const formattedUsers: UserData[] = data.map((user: any) => {
+            // Create a display name from first_name and last_name or default
+            const displayName = user.first_name && user.last_name 
+              ? `${user.first_name} ${user.last_name}`
+              : user.first_name || 'Unnamed User';
+              
+            return {
+              id: user.id,
+              name: displayName,
+              email: user.email || '',
+              role: (user.role as UserRole) || 'customer',
+              status: user.is_verified ? 'active' : 'pending',
+              joinDate: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : '-',
+              isVerified: !!user.is_verified
+            };
+          });
           setUsers(formattedUsers);
         }
       } catch (error) {

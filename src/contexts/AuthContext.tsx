@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { User, UserRole, AuthContextType, Provider, Customer, Admin } from '@/types/auth';
+import { User, UserRole, AuthContextType, Provider, Customer, Admin, DbUserProfile, DbProviderProfile } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,52 +31,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error('Error fetching user profile:', profileError);
             setUser(null);
           } else if (profileData) {
+            const userProfile = profileData as DbUserProfile;
+            
+            // Construct a name from first_name and last_name or use email
+            const displayName = userProfile.first_name && userProfile.last_name 
+              ? `${userProfile.first_name} ${userProfile.last_name}`
+              : userProfile.first_name || userProfile.email?.split('@')[0] || 'Unknown User';
+            
             // Create user object based on role
             const baseUser: User = {
-              id: profileData.id,
-              email: profileData.email || '',
-              name: profileData.name || profileData.first_name || profileData.email?.split('@')[0] || 'Unknown User',
-              role: (profileData.role as UserRole) || 'customer',
-              avatar: profileData.avatar_url,
-              phoneNumber: profileData.phone_number,
-              createdAt: new Date(profileData.created_at),
-              isVerified: !!profileData.is_verified
+              id: userProfile.id,
+              email: userProfile.email || '',
+              name: displayName,
+              role: userProfile.role || 'customer',
+              avatar: userProfile.avatar_url,
+              phoneNumber: userProfile.phone_number,
+              createdAt: new Date(userProfile.created_at || ''),
+              isVerified: !!userProfile.is_verified
             };
             
-            // Get additional role-specific data from service_providers
-            if (profileData.role === 'provider') {
+            // Get additional role-specific data
+            if (userProfile.role === 'provider') {
               const { data: providerData } = await supabase
                 .from('service_providers')
                 .select('*')
-                .eq('id', profileData.id)
+                .eq('id', userProfile.id)
                 .single();
               
               if (providerData) {
+                const providerProfile = providerData as DbProviderProfile;
+                
                 const provider: Provider = {
                   ...baseUser,
                   role: 'provider',
-                  businessName: providerData.business_name || '',
-                  description: providerData.business_description || '',
-                  verificationStatus: providerData.verification_status as any || 'unverified',
-                  categories: providerData.categories || [],
-                  locations: providerData.locations || [],
-                  subscriptionTier: providerData.subscription_tier as any || 'free',
-                  rating: providerData.rating || 0,
-                  reviewCount: providerData.rating_count || 0,
-                  earnings: providerData.earnings || 0,
-                  balance: providerData.balance || 0,
-                  bankDetails: providerData.bank_name ? {
-                    accountName: providerData.account_name || '',
-                    accountNumber: providerData.account_number || '',
-                    bankName: providerData.bank_name
+                  businessName: providerProfile.business_name || '',
+                  description: providerProfile.business_description || '',
+                  verificationStatus: providerProfile.verification_status || 'unverified',
+                  categories: providerProfile.categories || [],
+                  locations: providerProfile.locations || [],
+                  subscriptionTier: (providerProfile.subscription_tier as any) || 'free',
+                  rating: providerProfile.rating || 0,
+                  reviewCount: providerProfile.rating_count || 0,
+                  earnings: 0, // These fields might not exist in the current schema
+                  balance: 0,
+                  bankDetails: providerProfile.bank_name ? {
+                    accountName: providerProfile.account_name || '',
+                    accountNumber: providerProfile.account_number || '',
+                    bankName: providerProfile.bank_name
                   } : undefined
                 };
                 setUser(provider);
               } else {
                 setUser(baseUser);
               }
-            } else if (profileData.role === 'customer') {
-              // For customers, use a mock implementation since there's no customer_profiles table
+            } else if (userProfile.role === 'customer') {
+              // For customers, use a mock implementation since there might not be a customer_profiles table
               const customer: Customer = {
                 ...baseUser,
                 role: 'customer',
@@ -86,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 loyaltyPoints: 0
               };
               setUser(customer);
-            } else if (profileData.role === 'admin') {
+            } else if (userProfile.role === 'admin') {
               // For admins, use a mock implementation 
               const admin: Admin = {
                 ...baseUser,
@@ -159,50 +168,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           throw profileError;
         }
 
+        const userProfile = profileData as DbUserProfile;
+        
+        // Construct a name from first_name and last_name or use email
+        const displayName = userProfile.first_name && userProfile.last_name 
+          ? `${userProfile.first_name} ${userProfile.last_name}`
+          : userProfile.first_name || userProfile.email?.split('@')[0] || 'Unknown User';
+        
         // Create base user object
         const baseUser: User = {
-          id: profileData.id,
-          email: profileData.email || '',
-          name: profileData.name || profileData.first_name || profileData.email?.split('@')[0] || 'Unknown User',
-          role: (profileData.role as UserRole) || 'customer',
-          avatar: profileData.avatar_url,
-          phoneNumber: profileData.phone_number,
-          createdAt: new Date(profileData.created_at),
-          isVerified: !!profileData.is_verified
+          id: userProfile.id,
+          email: userProfile.email || '',
+          name: displayName,
+          role: userProfile.role || 'customer',
+          avatar: userProfile.avatar_url,
+          phoneNumber: userProfile.phone_number,
+          createdAt: new Date(userProfile.created_at || ''),
+          isVerified: !!userProfile.is_verified
         };
 
         // Get role-specific data
         let userWithRole: User = baseUser;
         
-        if (profileData.role === 'provider') {
+        if (userProfile.role === 'provider') {
           const { data: providerData } = await supabase
             .from('service_providers')
             .select('*')
-            .eq('id', profileData.id)
+            .eq('id', userProfile.id)
             .single();
           
           if (providerData) {
+            const providerProfile = providerData as DbProviderProfile;
+            
             userWithRole = {
               ...baseUser,
               role: 'provider',
-              businessName: providerData.business_name || '',
-              description: providerData.business_description || '',
-              verificationStatus: providerData.verification_status as any || 'unverified',
-              categories: providerData.categories || [],
-              locations: providerData.locations || [],
-              subscriptionTier: providerData.subscription_tier as any || 'free',
-              rating: providerData.rating || 0,
-              reviewCount: providerData.rating_count || 0,
-              earnings: providerData.earnings || 0,
-              balance: providerData.balance || 0,
-              bankDetails: providerData.bank_name ? {
-                accountName: providerData.account_name || '',
-                accountNumber: providerData.account_number || '',
-                bankName: providerData.bank_name
+              businessName: providerProfile.business_name || '',
+              description: providerProfile.business_description || '',
+              verificationStatus: providerProfile.verification_status as any || 'unverified',
+              categories: providerProfile.categories || [],
+              locations: providerProfile.locations || [],
+              subscriptionTier: providerProfile.subscription_tier as any || 'free',
+              rating: providerProfile.rating || 0,
+              reviewCount: providerProfile.rating_count || 0,
+              earnings: 0, // These fields might not exist in the current schema
+              balance: 0,
+              bankDetails: providerProfile.bank_name ? {
+                accountName: providerProfile.account_name || '',
+                accountNumber: providerProfile.account_number || '',
+                bankName: providerProfile.bank_name
               } : undefined
             } as Provider;
           }
-        } else if (profileData.role === 'customer') {
+        } else if (userProfile.role === 'customer') {
           userWithRole = {
             ...baseUser,
             role: 'customer',
@@ -213,7 +231,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             referredBy: '',
             loyaltyPoints: 0
           } as Customer;
-        } else if (profileData.role === 'admin') {
+        } else if (userProfile.role === 'admin') {
           userWithRole = {
             ...baseUser,
             role: 'admin',
@@ -298,7 +316,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
         options: {
           data: {
-            name,
+            first_name: name,
             role,
             businessName: role === 'provider' ? `${name}'s Business` : undefined
           }
@@ -310,13 +328,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data.user) {
+        // Extract first and last name
+        const nameParts = name.split(' ');
+        const firstName = nameParts[0];
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+        
         // Create a new profile for the user
         const { error: profileError } = await supabase
           .from('profiles')
           .upsert({
             id: data.user.id,
             email: email,
-            name: name,
+            first_name: firstName,
+            last_name: lastName,
             role: role,
             is_verified: false,
             created_at: new Date().toISOString()
