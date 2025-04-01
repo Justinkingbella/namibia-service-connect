@@ -19,13 +19,19 @@ import {
   Calendar,
   Heart,
   CreditCard,
-  Package
+  Package,
+  PieChart,
+  Users,
+  Briefcase,
+  Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarRail, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -39,6 +45,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [notifications, setNotifications] = useState(3); // Mock notification count
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -61,6 +68,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   };
 
   const getMobileNavItems = () => {
+    if (user?.role === 'admin') {
+      return [
+        { icon: Home, label: 'Dashboard', path: '/dashboard' },
+        { icon: Users, label: 'Users', path: '/dashboard/users' },
+        { icon: Package, label: 'Services', path: '/dashboard/services' },
+        { icon: Clock, label: 'Verifications', path: '/dashboard/admin/wallet-verification' },
+        { icon: PieChart, label: 'Analytics', path: '/dashboard/admin/analytics' },
+      ];
+    }
+    
     if (user?.role === 'provider') {
       return [
         { icon: Home, label: 'Dashboard', path: '/dashboard' },
@@ -76,14 +93,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       { icon: Package, label: 'Services', path: '/dashboard/services' },
       { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
       { icon: Heart, label: 'Favorites', path: '/dashboard/customer/favorites' },
-      { icon: User, label: 'Profile', path: '/dashboard/customer/profile' },
+      { icon: CreditCard, label: 'Payments', path: '/dashboard/customer/payment-history' },
     ];
   };
 
   const mobileNavItems = getMobileNavItems();
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen bg-gray-50 flex flex-col w-full">
         {/* Fixed Header */}
         <header className={cn(
@@ -194,37 +211,39 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         {/* Mobile menu */}
         {showMobileMenu && (
           <div className="fixed inset-0 top-[60px] bg-white z-20 md:hidden animate-fade-in">
-            <div className="p-4 space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <input 
-                  type="text" 
-                  placeholder="Search..." 
-                  className="w-full py-2 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-lg text-sm"
-                />
+            <ScrollArea className="h-[calc(100vh-60px)]">
+              <div className="p-4 space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <input 
+                    type="text" 
+                    placeholder="Search..." 
+                    className="w-full py-2 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+                
+                <nav>
+                  <ul className="space-y-3">
+                    {mobileNavItems.map((item) => (
+                      <li key={item.label}>
+                        <Link 
+                          to={item.path}
+                          className={cn(
+                            "flex items-center gap-3 p-3 rounded-lg",
+                            location.pathname === item.path 
+                              ? "bg-primary/10 text-primary" 
+                              : "text-gray-700 hover:bg-gray-100"
+                          )}
+                        >
+                          <item.icon size={20} />
+                          <span className="font-medium">{item.label}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
               </div>
-              
-              <nav>
-                <ul className="space-y-3">
-                  {mobileNavItems.map((item) => (
-                    <li key={item.label}>
-                      <Link 
-                        to={item.path}
-                        className={cn(
-                          "flex items-center gap-3 p-3 rounded-lg",
-                          location.pathname === item.path 
-                            ? "bg-primary/10 text-primary" 
-                            : "text-gray-700 hover:bg-gray-100"
-                        )}
-                      >
-                        <item.icon size={20} />
-                        <span className="font-medium">{item.label}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-            </div>
+            </ScrollArea>
           </div>
         )}
 
@@ -235,29 +254,36 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           </div>
           
           {/* Main content */}
-          <main className="flex-1 overflow-x-hidden p-4 md:p-8">
-            <Container>
-              {children}
-            </Container>
+          <main className="flex-1 overflow-x-hidden p-4 md:p-8 pb-20 md:pb-8">
+            <ScrollArea className="h-[calc(100vh-145px)] md:h-auto">
+              <Container>
+                {children}
+              </Container>
+            </ScrollArea>
           </main>
         </div>
 
-        {/* Mobile bottom navigation */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-30">
-          <div className="flex justify-between items-center px-4">
-            {mobileNavItems.map((item) => (
+        {/* Modern Mobile bottom navigation */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-30 shadow-lg">
+          <div className="flex justify-between items-center px-1">
+            {mobileNavItems.map((item, index) => (
               <Link
                 key={item.label}
                 to={item.path}
                 className={cn(
-                  "flex flex-col items-center py-3 px-2",
+                  "flex flex-col items-center py-2 px-2 rounded-lg m-1 transition-all",
                   location.pathname === item.path 
-                    ? "text-primary" 
+                    ? "text-primary bg-primary/5" 
                     : "text-gray-500"
                 )}
               >
-                <item.icon size={20} />
-                <span className="text-xs mt-1">{item.label}</span>
+                <div className={cn(
+                  "p-1 rounded-full transition-colors",
+                  location.pathname === item.path ? "bg-primary/10" : ""
+                )}>
+                  <item.icon size={20} />
+                </div>
+                <span className="text-xs mt-1 font-medium">{item.label}</span>
               </Link>
             ))}
           </div>
