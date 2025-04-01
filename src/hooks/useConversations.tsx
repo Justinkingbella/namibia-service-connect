@@ -3,12 +3,12 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Conversation, Message, DbMessage, tableNames, TableName } from '@/types/message';
+import { Conversation, Message, DbMessage, tableNames, TableName, DbConversation, DbConversationParticipant } from '@/types/message';
 
 // This type assertion helper is needed to work around TypeScript limitations
 // with the Supabase client when accessing tables not in the auto-generated types
 const from = <T extends TableName>(table: T) => {
-  return supabase.from(table as any);
+  return supabase.from(table);
 };
 
 export function useConversations() {
@@ -55,7 +55,7 @@ export function useConversations() {
         if (error) throw error;
 
         // Transform the data into our expected format
-        const transformedConversations: Conversation[] = data.map((item: any) => {
+        const transformedConversations: Conversation[] = (data as any[]).map((item: any) => {
           const otherParticipant = item.otherParticipants.find(
             (p: any) => p.user_id !== user.id
           )?.user;
@@ -118,7 +118,7 @@ export function useConversations() {
 
         if (error) throw error;
 
-        // Convert DB format to our app format
+        // Convert DB format to our app format with type assertion
         const formattedMessages: Message[] = (data as DbMessage[]).map(msg => ({
           id: msg.id,
           conversationId: msg.conversation_id,
@@ -186,7 +186,7 @@ export function useConversations() {
         table: tableNames.MESSAGES,
         filter: `conversation_id=eq.${currentConversation}`
       }, (payload) => {
-        const newMsg = payload.new as any;
+        const newMsg = payload.new as DbMessage;
         
         // Add the new message to state
         const formattedMsg: Message = {
@@ -231,8 +231,7 @@ export function useConversations() {
           read: false, 
           attachments: []
         })
-        .select()
-        .single();
+        .select();
 
       if (error) throw error;
       
@@ -267,7 +266,7 @@ export function useConversations() {
           
         if (sharedConvos && sharedConvos.length > 0) {
           // Conversation exists, use the first one
-          const existingConvoId = sharedConvos[0].conversation_id;
+          const existingConvoId = (sharedConvos[0] as any).conversation_id;
           await sendMessage(existingConvoId, initialMessage);
           return existingConvoId;
         }
@@ -284,17 +283,19 @@ export function useConversations() {
         
       if (convoError) throw convoError;
       
+      const convoData = newConvo as DbConversation;
+      
       // Add participants
       await from(tableNames.CONVERSATION_PARTICIPANTS)
         .insert([
-          { conversation_id: newConvo.id, user_id: user.id },
-          { conversation_id: newConvo.id, user_id: recipientId }
+          { conversation_id: convoData.id, user_id: user.id },
+          { conversation_id: convoData.id, user_id: recipientId }
         ]);
         
       // Send initial message
-      await sendMessage(newConvo.id, initialMessage);
+      await sendMessage(convoData.id, initialMessage);
       
-      return newConvo.id;
+      return convoData.id;
     } catch (error) {
       console.error('Error creating conversation:', error);
       toast({
