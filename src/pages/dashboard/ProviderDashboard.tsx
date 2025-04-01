@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, Users, DollarSign, ChevronRight, LineChart, Briefcase, AlertTriangle, CreditCard } from 'lucide-react';
+import { Calendar, Users, DollarSign, ChevronRight, LineChart, Briefcase, AlertTriangle, CreditCard, Plus, Wallet } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCard from '@/components/dashboard/StatsCard';
 import ServiceManagement from '@/components/provider/ServiceManagement';
@@ -335,7 +335,7 @@ const ProviderDashboard = () => {
             <SettingsCard
               title="Add New Service"
               description="Create a new service listing"
-              icon={<Briefcase className="h-5 w-5" />}
+              icon={<Plus className="h-5 w-5" />}
               onClick={() => navigate('/dashboard/services/create')}
             />
             
@@ -358,6 +358,13 @@ const ProviderDashboard = () => {
               description="Update payment information"
               icon={<DollarSign className="h-5 w-5" />}
               onClick={() => navigate('/dashboard/provider/payment-details')}
+            />
+
+            <SettingsCard
+              title="Wallet Verification"
+              description="Verify customer wallet payments"
+              icon={<Wallet className="h-5 w-5" />}
+              onClick={() => navigate('/dashboard/provider/wallet-verification')}
             />
           </div>
         </div>

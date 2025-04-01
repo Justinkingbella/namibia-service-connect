@@ -1,3 +1,4 @@
+
 import { PaymentMethod } from './service';
 
 export type BookingStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'disputed';
@@ -24,6 +25,7 @@ export interface Booking {
   serviceName?: string;
   serviceImage?: string;
   customerName?: string;
+  providerName?: string;
 }
 
 export interface BookingWithDetails extends Booking {
@@ -86,6 +88,24 @@ export interface Dispute {
   resolution?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface WalletVerificationRequest {
+  id: string;
+  bookingId: string;
+  customerId: string;
+  providerId: string;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  referenceNumber: string;
+  customerPhone: string;
+  receiptImage?: string;
+  notes?: string;
+  verificationStatus: 'pending' | 'submitted' | 'verified' | 'rejected' | 'expired';
+  dateSubmitted: Date;
+  dateVerified?: Date;
+  providerConfirmed: boolean;
+  rejectionReason?: string;
 }
 
 // Use export type for re-exporting types

@@ -16,7 +16,9 @@ import {
   CreditCard, 
   DollarSign,
   Landmark,
-  Receipt
+  Receipt,
+  Plus,
+  Wallet
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -83,6 +85,11 @@ const providerItems: SidebarItem[] = [
     icon: FolderOpen,
   },
   {
+    title: 'Create Service',
+    href: '/dashboard/services/create',
+    icon: Plus,
+  },
+  {
     title: 'Bookings',
     href: '/dashboard/bookings',
     icon: FileClock,
@@ -111,6 +118,11 @@ const providerItems: SidebarItem[] = [
     title: 'Payment Details',
     href: '/dashboard/provider/payment-details',
     icon: Landmark,
+  },
+  {
+    title: 'Wallet Verification',
+    href: '/dashboard/provider/wallet-verification',
+    icon: Wallet,
   },
   {
     title: 'Disputes',
