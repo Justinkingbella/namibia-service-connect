@@ -1,18 +1,22 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getSiteSettings } from '@/services/contentService';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getSiteSettings, getServiceCategories } from '@/services/contentService';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SiteContextType {
   settings: Record<string, any>;
+  categories: any[];
   isLoading: boolean;
   refreshSettings: () => Promise<void>;
+  refreshCategories: () => Promise<void>;
 }
 
 const SiteContext = createContext<SiteContextType | undefined>(undefined);
 
 export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<Record<string, any>>({});
+  const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -33,16 +37,78 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
+  const fetchCategories = async () => {
+    try {
+      const serviceCategories = await getServiceCategories();
+      setCategories(serviceCategories);
+    } catch (error) {
+      console.error('Failed to load service categories:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load service categories',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const refreshSettings = async () => {
     await fetchSettings();
   };
 
+  const refreshCategories = async () => {
+    await fetchCategories();
+  };
+
+  useEffect(() => {
+    Promise.all([fetchSettings(), fetchCategories()]);
+
+    // Subscribe to changes in site_settings table
+    const settingsChannel = supabase
+      .channel('site-settings-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'site_settings'
+        },
+        () => {
+          fetchSettings();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to changes in service_categories table
+    const categoriesChannel = supabase
+      .channel('service-categories-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'service_categories'
+        },
+        () => {
+          fetchCategories();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions
+    return () => {
+      supabase.removeChannel(settingsChannel);
+      supabase.removeChannel(categoriesChannel);
+    };
+  }, []);
+
   return (
-    <SiteContext.Provider value={{ settings, isLoading, refreshSettings }}>
+    <SiteContext.Provider value={{ 
+      settings, 
+      categories,
+      isLoading, 
+      refreshSettings,
+      refreshCategories
+    }}>
       {children}
     </SiteContext.Provider>
   );

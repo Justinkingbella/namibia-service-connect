@@ -42,6 +42,8 @@ import ProviderVerificationPage from './pages/dashboard/admin/ProviderVerificati
 import AdminWalletVerificationPage from './pages/dashboard/admin/WalletVerificationPage';
 import SubscriptionManagementPage from './pages/dashboard/admin/SubscriptionManagementPage';
 import SiteSettingsPage from './pages/dashboard/admin/SiteSettingsPage';
+import CategoryManagementPage from './pages/dashboard/admin/CategoryManagementPage';
+import BookingSettingsPage from './pages/dashboard/admin/BookingSettingsPage';
 import NotFound from './pages/NotFound';
 import './App.css';
 import { Toaster } from './components/ui/toaster';
@@ -307,6 +309,22 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <SiteSettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/admin/categories"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <CategoryManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/admin/booking-settings"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <BookingSettingsPage />
               </ProtectedRoute>
             }
           />

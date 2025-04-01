@@ -10,7 +10,7 @@ import {
   Globe, 
   Heart, 
   Home, 
-  Mail, 
+  Layers, 
   MessageCircle, 
   Settings, 
   ShieldCheck, 
@@ -128,6 +128,16 @@ export const sidebarItems = (userRole: string) => {
         name: 'Services',
         icon: <Store className="h-5 w-5" />,
         path: '/dashboard/services',
+      },
+      {
+        name: 'Categories',
+        icon: <Layers className="h-5 w-5" />,
+        path: '/dashboard/admin/categories',
+      },
+      {
+        name: 'Booking Settings',
+        icon: <Calendar className="h-5 w-5" />,
+        path: '/dashboard/admin/booking-settings',
       },
       {
         name: 'Site Settings',
