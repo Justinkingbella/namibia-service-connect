@@ -93,6 +93,59 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_participants: {
+        Row: {
+          conversation_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_message: string | null
+          last_message_date: string | null
+          unread_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_message?: string | null
+          last_message_date?: string | null
+          unread_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_message?: string | null
+          last_message_date?: string | null
+          unread_count?: number | null
+        }
+        Relationships: []
+      }
       disputes: {
         Row: {
           admin_notes: string | null
@@ -166,7 +219,9 @@ export type Database = {
       }
       messages: {
         Row: {
+          attachments: string[] | null
           content: string
+          conversation_id: string | null
           created_at: string | null
           id: string
           read: boolean | null
@@ -174,7 +229,9 @@ export type Database = {
           sender_id: string | null
         }
         Insert: {
+          attachments?: string[] | null
           content: string
+          conversation_id?: string | null
           created_at?: string | null
           id?: string
           read?: boolean | null
@@ -182,14 +239,24 @@ export type Database = {
           sender_id?: string | null
         }
         Update: {
+          attachments?: string[] | null
           content?: string
+          conversation_id?: string | null
           created_at?: string | null
           id?: string
           read?: boolean | null
           recipient_id?: string | null
           sender_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_history: {
         Row: {

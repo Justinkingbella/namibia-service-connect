@@ -23,9 +23,8 @@ export function useConversations() {
       setLoading(true);
       try {
         // Using type assertion to specify the table type
-        const supabaseQuery = supabase.from('conversation_participants') as any;
-        
-        const { data, error } = await supabaseQuery
+        const { data, error } = await supabase
+          .from('conversation_participants')
           .select(`
             conversation_id,
             conversation:conversations (
@@ -253,18 +252,16 @@ export function useConversations() {
     
     try {
       // Check if conversation already exists
-      // Using type assertion for Supabase queries
-      const query = supabase.from('conversation_participants') as any;
-      const { data: existingConvos } = await query
+      const { data: existingConvos } = await supabase
+        .from('conversation_participants')
         .select('conversation_id')
         .eq('user_id', user.id);
         
       if (existingConvos && existingConvos.length > 0) {
         const convoIds = existingConvos.map((c: any) => c.conversation_id);
         
-        // Another type assertion
-        const participantsQuery = supabase.from('conversation_participants') as any;
-        const { data: sharedConvos } = await participantsQuery
+        const { data: sharedConvos } = await supabase
+          .from('conversation_participants')
           .select('conversation_id')
           .eq('user_id', recipientId)
           .in('conversation_id', convoIds);
@@ -277,9 +274,9 @@ export function useConversations() {
         }
       }
       
-      // Create new conversation with type assertion
-      const convoQuery = supabase.from('conversations') as any;
-      const { data: newConvo, error: convoError } = await convoQuery
+      // Create new conversation
+      const { data: newConvo, error: convoError } = await supabase
+        .from('conversations')
         .insert({
           last_message: initialMessage,
           last_message_date: new Date().toISOString()
@@ -289,9 +286,9 @@ export function useConversations() {
         
       if (convoError) throw convoError;
       
-      // Add participants with type assertion
-      const participantsQuery = supabase.from('conversation_participants') as any;
-      await participantsQuery
+      // Add participants
+      await supabase
+        .from('conversation_participants')
         .insert([
           { conversation_id: newConvo.id, user_id: user.id },
           { conversation_id: newConvo.id, user_id: recipientId }
