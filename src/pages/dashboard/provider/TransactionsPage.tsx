@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { PaymentMethod } from '@/types/payment';
@@ -385,22 +384,596 @@ const TransactionsPage = () => {
                 </div>
               </TabsContent>
               
-              {/* Duplicate for other tabs but showing filtered content */}
               <TabsContent value="pay_today" className="mt-0">
-                {/* Same table structure but filtered for pay_today */}
-                {/* ... */}
+                <div className="overflow-hidden rounded-lg border">
+                  <ScrollArea className={isMobile ? "h-[calc(100vh-490px)]" : ""}>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {filteredTransactions.filter(transaction => transaction.method === 'pay_today').map((transaction) => (
+                            <tr key={transaction.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {transaction.date.toLocaleDateString()}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {transaction.description}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                N${transaction.amount.toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-red-500">
+                                -N${transaction.fee.toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                                N${transaction.net.toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div className="flex items-center">
+                                  {getPaymentMethodIcon(transaction.method)}
+                                  {getPaymentMethodName(transaction.method)}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                {getStatusBadge(transaction.status)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <Drawer>
+                                  <DrawerTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => setSelectedTransaction(transaction)}
+                                    >
+                                      <ExternalLink className="h-4 w-4" />
+                                      <span className="sr-only">View</span>
+                                    </Button>
+                                  </DrawerTrigger>
+                                  <DrawerContent>
+                                    <DrawerHeader>
+                                      <DrawerTitle>Transaction Details</DrawerTitle>
+                                      <DrawerDescription>
+                                        View complete information about this transaction
+                                      </DrawerDescription>
+                                    </DrawerHeader>
+                                    {selectedTransaction && (
+                                      <div className="px-4 pb-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Transaction ID</h4>
+                                            <p className="font-medium">{selectedTransaction.id}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Booking ID</h4>
+                                            <p className="font-medium">{selectedTransaction.bookingId}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Date</h4>
+                                            <p className="font-medium">
+                                              {selectedTransaction.date.toLocaleDateString()} at {selectedTransaction.date.toLocaleTimeString()}
+                                            </p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Status</h4>
+                                            <p>{getStatusBadge(selectedTransaction.status)}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Customer</h4>
+                                            <p className="font-medium">{selectedTransaction.customer}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Phone</h4>
+                                            <p className="font-medium">{selectedTransaction.phone}</p>
+                                          </div>
+                                        </div>
+
+                                        <div className="rounded-md bg-gray-50 p-4 mb-4">
+                                          <h4 className="text-sm font-medium mb-2">Payment Details</h4>
+                                          <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                              <p className="text-sm text-gray-500">Method</p>
+                                              <p className="font-medium flex items-center">
+                                                {getPaymentMethodIcon(selectedTransaction.method)}
+                                                {getPaymentMethodName(selectedTransaction.method)}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <p className="text-sm text-gray-500">Description</p>
+                                              <p className="font-medium">{selectedTransaction.description}</p>
+                                            </div>
+                                            <div>
+                                              <p className="text-sm text-gray-500">Amount</p>
+                                              <p className="font-medium">N${selectedTransaction.amount.toLocaleString()}</p>
+                                            </div>
+                                            <div>
+                                              <p className="text-sm text-gray-500">Fee</p>
+                                              <p className="font-medium text-red-500">
+                                                -N${selectedTransaction.fee.toLocaleString()}
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <div className="mt-4 pt-4 border-t border-gray-200">
+                                            <div className="flex justify-between items-center">
+                                              <p className="font-medium">Net Amount</p>
+                                              <p className="font-bold text-green-600">
+                                                N${selectedTransaction.net.toLocaleString()}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    <DrawerFooter>
+                                      <Button>Download Receipt</Button>
+                                      <DrawerClose asChild>
+                                        <Button variant="outline">Close</Button>
+                                      </DrawerClose>
+                                    </DrawerFooter>
+                                  </DrawerContent>
+                                </Drawer>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </ScrollArea>
+                </div>
               </TabsContent>
+              
               <TabsContent value="e_wallet" className="mt-0">
-                {/* Same table structure but filtered for e_wallet */}
-                {/* ... */}
+                <div className="overflow-hidden rounded-lg border">
+                  <ScrollArea className={isMobile ? "h-[calc(100vh-490px)]" : ""}>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {filteredTransactions.filter(transaction => transaction.method === 'e_wallet').map((transaction) => (
+                            <tr key={transaction.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {transaction.date.toLocaleDateString()}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {transaction.description}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                N${transaction.amount.toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-red-500">
+                                -N${transaction.fee.toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                                N${transaction.net.toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div className="flex items-center">
+                                  {getPaymentMethodIcon(transaction.method)}
+                                  {getPaymentMethodName(transaction.method)}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                {getStatusBadge(transaction.status)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <Drawer>
+                                  <DrawerTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => setSelectedTransaction(transaction)}
+                                    >
+                                      <ExternalLink className="h-4 w-4" />
+                                      <span className="sr-only">View</span>
+                                    </Button>
+                                  </DrawerTrigger>
+                                  <DrawerContent>
+                                    <DrawerHeader>
+                                      <DrawerTitle>Transaction Details</DrawerTitle>
+                                      <DrawerDescription>
+                                        View complete information about this transaction
+                                      </DrawerDescription>
+                                    </DrawerHeader>
+                                    {selectedTransaction && (
+                                      <div className="px-4 pb-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Transaction ID</h4>
+                                            <p className="font-medium">{selectedTransaction.id}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Booking ID</h4>
+                                            <p className="font-medium">{selectedTransaction.bookingId}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Date</h4>
+                                            <p className="font-medium">
+                                              {selectedTransaction.date.toLocaleDateString()} at {selectedTransaction.date.toLocaleTimeString()}
+                                            </p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Status</h4>
+                                            <p>{getStatusBadge(selectedTransaction.status)}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Customer</h4>
+                                            <p className="font-medium">{selectedTransaction.customer}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Phone</h4>
+                                            <p className="font-medium">{selectedTransaction.phone}</p>
+                                          </div>
+                                        </div>
+
+                                        <div className="rounded-md bg-gray-50 p-4 mb-4">
+                                          <h4 className="text-sm font-medium mb-2">Payment Details</h4>
+                                          <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                              <p className="text-sm text-gray-500">Method</p>
+                                              <p className="font-medium flex items-center">
+                                                {getPaymentMethodIcon(selectedTransaction.method)}
+                                                {getPaymentMethodName(selectedTransaction.method)}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <p className="text-sm text-gray-500">Description</p>
+                                              <p className="font-medium">{selectedTransaction.description}</p>
+                                            </div>
+                                            <div>
+                                              <p className="text-sm text-gray-500">Amount</p>
+                                              <p className="font-medium">N${selectedTransaction.amount.toLocaleString()}</p>
+                                            </div>
+                                            <div>
+                                              <p className="text-sm text-gray-500">Fee</p>
+                                              <p className="font-medium text-red-500">
+                                                -N${selectedTransaction.fee.toLocaleString()}
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <div className="mt-4 pt-4 border-t border-gray-200">
+                                            <div className="flex justify-between items-center">
+                                              <p className="font-medium">Net Amount</p>
+                                              <p className="font-bold text-green-600">
+                                                N${selectedTransaction.net.toLocaleString()}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    <DrawerFooter>
+                                      <Button>Download Receipt</Button>
+                                      <DrawerClose asChild>
+                                        <Button variant="outline">Close</Button>
+                                      </DrawerClose>
+                                    </DrawerFooter>
+                                  </DrawerContent>
+                                </Drawer>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </ScrollArea>
+                </div>
               </TabsContent>
+              
               <TabsContent value="easy_wallet" className="mt-0">
-                {/* Same table structure but filtered for easy_wallet */}
-                {/* ... */}
+                <div className="overflow-hidden rounded-lg border">
+                  <ScrollArea className={isMobile ? "h-[calc(100vh-490px)]" : ""}>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {filteredTransactions.filter(transaction => transaction.method === 'easy_wallet').map((transaction) => (
+                            <tr key={transaction.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {transaction.date.toLocaleDateString()}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {transaction.description}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                N${transaction.amount.toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-red-500">
+                                -N${transaction.fee.toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                                N${transaction.net.toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div className="flex items-center">
+                                  {getPaymentMethodIcon(transaction.method)}
+                                  {getPaymentMethodName(transaction.method)}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                {getStatusBadge(transaction.status)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <Drawer>
+                                  <DrawerTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => setSelectedTransaction(transaction)}
+                                    >
+                                      <ExternalLink className="h-4 w-4" />
+                                      <span className="sr-only">View</span>
+                                    </Button>
+                                  </DrawerTrigger>
+                                  <DrawerContent>
+                                    <DrawerHeader>
+                                      <DrawerTitle>Transaction Details</DrawerTitle>
+                                      <DrawerDescription>
+                                        View complete information about this transaction
+                                      </DrawerDescription>
+                                    </DrawerHeader>
+                                    {selectedTransaction && (
+                                      <div className="px-4 pb-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Transaction ID</h4>
+                                            <p className="font-medium">{selectedTransaction.id}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Booking ID</h4>
+                                            <p className="font-medium">{selectedTransaction.bookingId}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Date</h4>
+                                            <p className="font-medium">
+                                              {selectedTransaction.date.toLocaleDateString()} at {selectedTransaction.date.toLocaleTimeString()}
+                                            </p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Status</h4>
+                                            <p>{getStatusBadge(selectedTransaction.status)}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Customer</h4>
+                                            <p className="font-medium">{selectedTransaction.customer}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Phone</h4>
+                                            <p className="font-medium">{selectedTransaction.phone}</p>
+                                          </div>
+                                        </div>
+
+                                        <div className="rounded-md bg-gray-50 p-4 mb-4">
+                                          <h4 className="text-sm font-medium mb-2">Payment Details</h4>
+                                          <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                              <p className="text-sm text-gray-500">Method</p>
+                                              <p className="font-medium flex items-center">
+                                                {getPaymentMethodIcon(selectedTransaction.method)}
+                                                {getPaymentMethodName(selectedTransaction.method)}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <p className="text-sm text-gray-500">Description</p>
+                                              <p className="font-medium">{selectedTransaction.description}</p>
+                                            </div>
+                                            <div>
+                                              <p className="text-sm text-gray-500">Amount</p>
+                                              <p className="font-medium">N${selectedTransaction.amount.toLocaleString()}</p>
+                                            </div>
+                                            <div>
+                                              <p className="text-sm text-gray-500">Fee</p>
+                                              <p className="font-medium text-red-500">
+                                                -N${selectedTransaction.fee.toLocaleString()}
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <div className="mt-4 pt-4 border-t border-gray-200">
+                                            <div className="flex justify-between items-center">
+                                              <p className="font-medium">Net Amount</p>
+                                              <p className="font-bold text-green-600">
+                                                N${selectedTransaction.net.toLocaleString()}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    <DrawerFooter>
+                                      <Button>Download Receipt</Button>
+                                      <DrawerClose asChild>
+                                        <Button variant="outline">Close</Button>
+                                      </DrawerClose>
+                                    </DrawerFooter>
+                                  </DrawerContent>
+                                </Drawer>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </ScrollArea>
+                </div>
               </TabsContent>
+              
               <TabsContent value="bank_transfer" className="mt-0">
-                {/* Same table structure but filtered for bank_transfer */}
-                {/* ... */}
+                <div className="overflow-hidden rounded-lg border">
+                  <ScrollArea className={isMobile ? "h-[calc(100vh-490px)]" : ""}>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {filteredTransactions.filter(transaction => transaction.method === 'bank_transfer').map((transaction) => (
+                            <tr key={transaction.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {transaction.date.toLocaleDateString()}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {transaction.description}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                N${transaction.amount.toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-red-500">
+                                -N${transaction.fee.toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                                N${transaction.net.toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div className="flex items-center">
+                                  {getPaymentMethodIcon(transaction.method)}
+                                  {getPaymentMethodName(transaction.method)}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                {getStatusBadge(transaction.status)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <Drawer>
+                                  <DrawerTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => setSelectedTransaction(transaction)}
+                                    >
+                                      <ExternalLink className="h-4 w-4" />
+                                      <span className="sr-only">View</span>
+                                    </Button>
+                                  </DrawerTrigger>
+                                  <DrawerContent>
+                                    <DrawerHeader>
+                                      <DrawerTitle>Transaction Details</DrawerTitle>
+                                      <DrawerDescription>
+                                        View complete information about this transaction
+                                      </DrawerDescription>
+                                    </DrawerHeader>
+                                    {selectedTransaction && (
+                                      <div className="px-4 pb-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Transaction ID</h4>
+                                            <p className="font-medium">{selectedTransaction.id}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Booking ID</h4>
+                                            <p className="font-medium">{selectedTransaction.bookingId}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Date</h4>
+                                            <p className="font-medium">
+                                              {selectedTransaction.date.toLocaleDateString()} at {selectedTransaction.date.toLocaleTimeString()}
+                                            </p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Status</h4>
+                                            <p>{getStatusBadge(selectedTransaction.status)}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Customer</h4>
+                                            <p className="font-medium">{selectedTransaction.customer}</p>
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-medium text-gray-500">Phone</h4>
+                                            <p className="font-medium">{selectedTransaction.phone}</p>
+                                          </div>
+                                        </div>
+
+                                        <div className="rounded-md bg-gray-50 p-4 mb-4">
+                                          <h4 className="text-sm font-medium mb-2">Payment Details</h4>
+                                          <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                              <p className="text-sm text-gray-500">Method</p>
+                                              <p className="font-medium flex items-center">
+                                                {getPaymentMethodIcon(selectedTransaction.method)}
+                                                {getPaymentMethodName(selectedTransaction.method)}
+                                              </p>
+                                            </div>
+                                            <div>
+                                              <p className="text-sm text-gray-500">Description</p>
+                                              <p className="font-medium">{selectedTransaction.description}</p>
+                                            </div>
+                                            <div>
+                                              <p className="text-sm text-gray-500">Amount</p>
+                                              <p className="font-medium">N${selectedTransaction.amount.toLocaleString()}</p>
+                                            </div>
+                                            <div>
+                                              <p className="text-sm text-gray-500">Fee</p>
+                                              <p className="font-medium text-red-500">
+                                                -N${selectedTransaction.fee.toLocaleString()}
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <div className="mt-4 pt-4 border-t border-gray-200">
+                                            <div className="flex justify-between items-center">
+                                              <p className="font-medium">Net Amount</p>
+                                              <p className="font-bold text-green-600">
+                                                N${selectedTransaction.net.toLocaleString()}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    <DrawerFooter>
+                                      <Button>Download Receipt</Button>
+                                      <DrawerClose asChild>
+                                        <Button variant="outline">Close</Button>
+                                      </DrawerClose>
+                                    </DrawerFooter>
+                                  </DrawerContent>
+                                </Drawer>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </ScrollArea>
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>

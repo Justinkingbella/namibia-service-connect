@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, CreditCard, BarChart2, Download, ArrowDown, CheckCircle, Clock } from 'lucide-react';
-import { PaymentMethod } from '@/types';
+import { PaymentMethod } from '@/types/payment';
 
 interface PaymentManagementProps {
   providerId?: string;

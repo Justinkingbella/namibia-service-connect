@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { PaymentMethod } from '@/types/payment';
@@ -164,7 +163,6 @@ const PaymentHistoryPage = () => {
     setSelectedTransactionId(id === selectedTransactionId ? null : id);
   };
 
-  // Get the selected transaction details
   const selectedTransaction = selectedTransactionId 
     ? mockTransactions.find(t => t.id === selectedTransactionId) 
     : null;
