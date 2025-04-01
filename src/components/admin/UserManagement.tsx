@@ -138,7 +138,7 @@ const UserManagement: React.FC = () => {
     try {
       const isActive = newStatus === 'active';
       
-      // Update in Supabase - using 'active' field instead of 'is_verified'
+      // Update in Supabase - using 'active' field
       const { error } = await supabase
         .from('profiles')
         .update({ active: isActive })

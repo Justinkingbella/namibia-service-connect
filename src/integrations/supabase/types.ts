@@ -167,6 +167,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active: boolean | null
           address: string | null
           avatar_url: string | null
           bio: string | null
@@ -180,6 +181,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          active?: boolean | null
           address?: string | null
           avatar_url?: string | null
           bio?: string | null
@@ -193,6 +195,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          active?: boolean | null
           address?: string | null
           avatar_url?: string | null
           bio?: string | null
