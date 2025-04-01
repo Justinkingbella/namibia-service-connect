@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
 export interface SiteSetting {
   id: string;
@@ -17,7 +18,7 @@ export interface PageSection {
   subtitle: string | null;
   content: string | null;
   image_url: string | null;
-  buttons: any[] | null;
+  buttons: any[] | null;  // Keep as any[] | null to match existing code
   order_index: number;
   created_at: string;
   updated_at: string;
@@ -56,7 +57,12 @@ export const getPageSections = async (pageName: string): Promise<PageSection[]> 
     return [];
   }
   
-  return data || [];
+  // Process the data to ensure buttons is an array or null
+  return data.map(section => ({
+    ...section,
+    // Convert JSON buttons to array if needed
+    buttons: section.buttons ? (Array.isArray(section.buttons) ? section.buttons : [section.buttons]) : null
+  })) as PageSection[];
 };
 
 export const getSectionsByName = async (pageName: string, sectionName: string): Promise<PageSection | null> => {
@@ -72,13 +78,26 @@ export const getSectionsByName = async (pageName: string, sectionName: string): 
     return null;
   }
   
-  return data;
+  // Process the data to ensure buttons is an array or null
+  return {
+    ...data,
+    // Convert JSON buttons to array if needed
+    buttons: data.buttons ? (Array.isArray(data.buttons) ? data.buttons : [data.buttons]) : null
+  } as PageSection;
 };
 
 export const updatePageSection = async (id: string, updates: Partial<PageSection>): Promise<PageSection | null> => {
+  // Create a copy to prevent modifying the original object
+  const updateData = { ...updates };
+  
+  // Ensure buttons is properly formatted for the database
+  if (updateData.buttons !== undefined) {
+    updateData.buttons = updateData.buttons === null ? null : updateData.buttons;
+  }
+  
   const { data, error } = await supabase
     .from('page_sections')
-    .update(updates)
+    .update(updateData)
     .eq('id', id)
     .select()
     .single();
@@ -88,7 +107,12 @@ export const updatePageSection = async (id: string, updates: Partial<PageSection
     return null;
   }
   
-  return data;
+  // Process the data to ensure buttons is an array or null
+  return {
+    ...data,
+    // Convert JSON buttons to array if needed
+    buttons: data.buttons ? (Array.isArray(data.buttons) ? data.buttons : [data.buttons]) : null
+  } as PageSection;
 };
 
 export const updateSiteSetting = async (key: string, value: any): Promise<SiteSetting | null> => {
