@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { PlusCircle, MinusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, MinusCircle, Trash2, Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SubscriptionFeature, SubscriptionPlan } from '@/types/subscription';
@@ -39,9 +39,10 @@ type FormValues = z.infer<typeof formSchema> & {
 interface SubscriptionFormProps {
   initialData?: SubscriptionPlan | null;
   onSubmit: (data: SubscriptionPlan) => void;
+  isSubmitting?: boolean;
 }
 
-export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProps) => {
+export const SubscriptionForm = ({ initialData, onSubmit, isSubmitting = false }: SubscriptionFormProps) => {
   const [features, setFeatures] = useState<SubscriptionFeature[]>(
     initialData?.features || [
       { id: crypto.randomUUID(), name: '', description: '', included: true }
@@ -131,7 +132,7 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
               <FormItem>
                 <FormLabel>Plan Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., Basic Plan" {...field} />
+                  <Input placeholder="e.g., Basic Plan" {...field} disabled={isSubmitting} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -149,6 +150,7 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
                     placeholder="A brief description of what this plan offers"
                     className="resize-none min-h-24"
                     {...field}
+                    disabled={isSubmitting}
                   />
                 </FormControl>
                 <FormMessage />
@@ -164,7 +166,7 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
                 <FormItem>
                   <FormLabel>Price (N$)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" min="0" {...field} />
+                    <Input type="number" step="0.01" min="0" {...field} disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -181,6 +183,7 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
+                      disabled={isSubmitting}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a billing cycle" />
@@ -205,7 +208,7 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
                 <FormItem>
                   <FormLabel>Credits</FormLabel>
                   <FormControl>
-                    <Input type="number" min="1" {...field} />
+                    <Input type="number" min="1" {...field} disabled={isSubmitting} />
                   </FormControl>
                   <FormDescription>
                     Amount of credits included in this plan.
@@ -222,7 +225,7 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
                 <FormItem>
                   <FormLabel>Maximum Bookings</FormLabel>
                   <FormControl>
-                    <Input type="number" min="1" {...field} />
+                    <Input type="number" min="1" {...field} disabled={isSubmitting} />
                   </FormControl>
                   <FormDescription>
                     Maximum bookings allowed per billing cycle.
@@ -249,6 +252,7 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
+                      disabled={isSubmitting}
                     />
                   </FormControl>
                 </FormItem>
@@ -270,6 +274,7 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
+                      disabled={isSubmitting}
                     />
                   </FormControl>
                 </FormItem>
@@ -292,12 +297,14 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
                       value={feature.name}
                       onChange={(e) => handleFeatureChange(feature.id, 'name', e.target.value)}
                       className="mb-1"
+                      disabled={isSubmitting}
                     />
                     <Input
                       placeholder="Feature description (optional)"
                       value={feature.description}
                       onChange={(e) => handleFeatureChange(feature.id, 'description', e.target.value)}
                       className="mb-1"
+                      disabled={isSubmitting}
                     />
                   </div>
                   <div className="flex items-center space-x-2">
@@ -305,6 +312,7 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
                       id={`feature-included-${index}`}
                       checked={feature.included}
                       onCheckedChange={(checked) => handleFeatureChange(feature.id, 'included', checked)}
+                      disabled={isSubmitting}
                     />
                     <label htmlFor={`feature-included-${index}`} className="text-sm cursor-pointer">
                       {feature.included ? 'Included in plan' : 'Not included in plan'}
@@ -317,7 +325,7 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
                     variant="ghost"
                     size="icon"
                     onClick={() => handleRemoveFeature(feature.id)}
-                    disabled={features.length <= 1}
+                    disabled={features.length <= 1 || isSubmitting}
                     className="h-9 w-9"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -333,6 +341,7 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
             size="sm"
             className="mt-4"
             onClick={handleAddFeature}
+            disabled={isSubmitting}
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Feature
@@ -346,7 +355,8 @@ export const SubscriptionForm = ({ initialData, onSubmit }: SubscriptionFormProp
         </div>
 
         <div className="flex justify-end space-x-2 pt-4">
-          <Button type="submit" className="w-full sm:w-auto">
+          <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {initialData ? 'Update Plan' : 'Create Plan'}
           </Button>
         </div>
