@@ -111,14 +111,11 @@ const TransactionsPage: React.FC = () => {
   const [dateSort, setDateSort] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
-    // In a real app, fetch transactions from API
-    // For now, we'll just use the mock data
     console.log('Fetching transactions for provider:', user?.id);
   }, [user]);
 
   const filteredTransactions = transactions
     .filter((txn) => {
-      // Apply search filter
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
         return (
@@ -131,14 +128,12 @@ const TransactionsPage: React.FC = () => {
       return true;
     })
     .filter((txn) => {
-      // Apply status filter
       if (statusFilter) {
         return txn.status === statusFilter;
       }
       return true;
     })
     .sort((a, b) => {
-      // Apply date sorting
       if (dateSort === 'asc') {
         return a.date.getTime() - b.date.getTime();
       } else {
@@ -362,7 +357,6 @@ const TransactionsPage: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="completed" className="mt-6">
-            {/* Similar content as "all" but filtered for completed transactions */}
             <Card>
               <CardContent className="pt-6">
                 <div className="rounded-md border">
@@ -410,7 +404,6 @@ const TransactionsPage: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="pending" className="mt-6">
-            {/* Similar content as "all" but filtered for pending transactions */}
             <Card>
               <CardContent className="pt-6">
                 <div className="rounded-md border">
@@ -458,7 +451,6 @@ const TransactionsPage: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="refunded" className="mt-6">
-            {/* Similar content as "all" but filtered for refunded transactions */}
             <Card>
               <CardContent className="pt-6">
                 <div className="rounded-md border">
