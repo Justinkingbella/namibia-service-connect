@@ -93,6 +93,181 @@ export type Database = {
         }
         Relationships: []
       }
+      disputes: {
+        Row: {
+          admin_notes: string | null
+          booking_id: string | null
+          created_at: string | null
+          customer_id: string | null
+          description: string
+          id: string
+          provider_id: string | null
+          resolution: string | null
+          status: string | null
+          subject: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          booking_id?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          description: string
+          id?: string
+          provider_id?: string | null
+          resolution?: string | null
+          status?: string | null
+          subject: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          booking_id?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          description?: string
+          id?: string
+          provider_id?: string | null
+          resolution?: string | null
+          status?: string | null
+          subject?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorite_services: {
+        Row: {
+          created_at: string | null
+          id: string
+          service_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          service_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          service_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          read: boolean | null
+          recipient_id: string | null
+          sender_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          read?: boolean | null
+          recipient_id?: string | null
+          sender_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          read?: boolean | null
+          recipient_id?: string | null
+          sender_id?: string | null
+        }
+        Relationships: []
+      }
+      payment_history: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string | null
+          description: string
+          id: string
+          payment_method: string
+          status: string
+          transaction_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          payment_method: string
+          status: string
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          payment_method?: string
+          status?: string
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_history_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_methods: {
+        Row: {
+          created_at: string | null
+          details: Json
+          id: string
+          is_default: boolean | null
+          name: string
+          type: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details: Json
+          id?: string
+          is_default?: boolean | null
+          name: string
+          type: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       platform_analytics: {
         Row: {
           category_breakdown: Json | null
@@ -171,13 +346,18 @@ export type Database = {
           address: string | null
           avatar_url: string | null
           bio: string | null
+          birth_date: string | null
           city: string | null
           country: string | null
           created_at: string | null
+          favorites: string[] | null
           first_name: string | null
           id: string
           last_name: string | null
+          loyalty_points: number | null
           phone_number: string | null
+          preferred_language: string | null
+          role: string | null
           updated_at: string | null
         }
         Insert: {
@@ -185,13 +365,18 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
           city?: string | null
           country?: string | null
           created_at?: string | null
+          favorites?: string[] | null
           first_name?: string | null
           id: string
           last_name?: string | null
+          loyalty_points?: number | null
           phone_number?: string | null
+          preferred_language?: string | null
+          role?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -199,13 +384,18 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
           city?: string | null
           country?: string | null
           created_at?: string | null
+          favorites?: string[] | null
           first_name?: string | null
           id?: string
           last_name?: string | null
+          loyalty_points?: number | null
           phone_number?: string | null
+          preferred_language?: string | null
+          role?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -327,6 +517,51 @@ export type Database = {
         }
         Relationships: []
       }
+      services: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          image: string | null
+          is_active: boolean | null
+          location: string | null
+          price: number
+          pricing_model: string
+          provider_id: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image?: string | null
+          is_active?: boolean | null
+          location?: string | null
+          price: number
+          pricing_model: string
+          provider_id?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image?: string | null
+          is_active?: boolean | null
+          location?: string | null
+          price?: number
+          pricing_model?: string
+          provider_id?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           billing_cycle: string
@@ -412,6 +647,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_2fa: {
+        Row: {
+          backup_codes: string[] | null
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          secret: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          backup_codes?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          secret?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          backup_codes?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          secret?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_addresses: {
+        Row: {
+          city: string
+          country: string
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          postal_code: string | null
+          region: string | null
+          street: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          city: string
+          country: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          postal_code?: string | null
+          region?: string | null
+          street: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          city?: string
+          country?: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          postal_code?: string | null
+          region?: string | null
+          street?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       user_subscriptions: {
         Row: {

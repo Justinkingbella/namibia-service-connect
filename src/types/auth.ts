@@ -94,6 +94,8 @@ export interface CustomerProfile {
   referral_code?: string;
   referred_by?: string;
   loyalty_points?: number;
+  birth_date?: string;
+  preferred_language?: string;
 }
 
 // Extended profile types for working with database
@@ -113,6 +115,10 @@ export interface DbUserProfile {
   country?: string;
   bio?: string;
   active?: boolean; // This field matches our database schema
+  birth_date?: string;
+  preferred_language?: string;
+  favorites?: string[];
+  loyalty_points?: number;
 }
 
 export interface DbProviderProfile {
@@ -145,4 +151,39 @@ export interface DbProviderProfile {
   services_count?: number;
   verified_at?: string;
   verified_by?: string;
+}
+
+// Payment method types
+export interface PaymentMethod {
+  id: string;
+  userId: string;
+  type: 'credit_card' | 'e_wallet' | 'bank_transfer';
+  name: string;
+  details: Record<string, any>;
+  isDefault: boolean;
+  createdAt: string;
+}
+
+// User address types
+export interface UserAddress {
+  id: string;
+  userId: string;
+  name: string;
+  street: string;
+  city: string;
+  region?: string;
+  postalCode?: string;
+  country: string;
+  isDefault: boolean;
+  createdAt: string;
+}
+
+// 2FA types
+export interface User2FA {
+  id: string;
+  userId: string;
+  isEnabled: boolean;
+  secret?: string;
+  backupCodes?: string[];
+  createdAt: string;
 }

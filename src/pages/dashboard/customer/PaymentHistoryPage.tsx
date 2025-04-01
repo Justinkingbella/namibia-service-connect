@@ -1,3 +1,4 @@
+
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,77 +12,34 @@ import {
   TableFooter,
   TableRow,
 } from "@/components/ui/table"
-import { PaymentPaymentMethod } from '@/types';
-
-// Mock data for payment history
-const paymentHistory = [
-  {
-    id: '1',
-    date: '2024-01-20',
-    description: 'Home Cleaning Service',
-    amount: 150.00,
-    status: 'Completed',
-    method: 'Credit Card',
-  },
-  {
-    id: '2',
-    date: '2024-01-15',
-    description: 'Grocery Delivery',
-    amount: 75.50,
-    status: 'Completed',
-    method: 'PayToday',
-  },
-  {
-    id: '3',
-    date: '2024-01-10',
-    description: 'Plumbing Repair',
-    amount: 200.00,
-    status: 'Completed',
-    method: 'E-Wallet',
-  },
-  {
-    id: '4',
-    date: '2023-12-28',
-    description: 'Dog Walking',
-    amount: 30.00,
-    status: 'Completed',
-    method: 'Cash',
-  },
-  {
-    id: '5',
-    date: '2023-12-20',
-    description: 'Home Cleaning Service',
-    amount: 150.00,
-    status: 'Completed',
-    method: 'Credit Card',
-  },
-  {
-    id: '6',
-    date: '2023-12-15',
-    description: 'Grocery Delivery',
-    amount: 75.50,
-    status: 'Completed',
-    method: 'PayToday',
-  },
-  {
-    id: '7',
-    date: '2023-12-10',
-    description: 'Plumbing Repair',
-    amount: 200.00,
-    status: 'Completed',
-    method: 'E-Wallet',
-  },
-  {
-    id: '8',
-    date: '2023-11-28',
-    description: 'Dog Walking',
-    amount: 30.00,
-    status: 'Completed',
-    method: 'Cash',
-  },
-];
+import { Badge } from '@/components/ui/badge';
+import { Loader2 } from 'lucide-react';
+import { usePaymentHistory } from '@/hooks/usePaymentHistory';
+import { formatCurrency } from '@/lib/formatters';
 
 const PaymentHistoryPage: React.FC = () => {
+  const { payments, loading } = usePaymentHistory();
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800 border-green-200">Completed</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-100 text-red-800 border-red-200">Failed</Badge>;
+      case 'refunded':
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Refunded</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="container py-10">
@@ -90,37 +48,56 @@ const PaymentHistoryPage: React.FC = () => {
             <CardTitle>Payment History</CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea>
-              <Table>
-                <TableCaption>A history of all your payments.</TableCaption>
-                <TableHead>
-                  <TableRow>
-                    <TableHead className="w-[100px]">Date</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Method</TableHead>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {paymentHistory.map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell className="font-medium">{payment.date}</TableCell>
-                      <TableCell>{payment.description}</TableCell>
-                      <TableCell>${payment.amount.toFixed(2)}</TableCell>
-                      <TableCell>{payment.status}</TableCell>
-                      <TableCell>{payment.method}</TableCell>
+            {loading ? (
+              <div className="flex justify-center items-center p-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading payment history...</span>
+              </div>
+            ) : (
+              <ScrollArea>
+                <Table>
+                  <TableCaption>A history of all your payments.</TableCaption>
+                  <TableHead>
+                    <TableRow>
+                      <TableHead className="w-[100px]">Date</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Method</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-                <TableFooter>
-                  <TableRow>
-                    <TableCell colSpan={3}>Total</TableCell>
-                    <TableCell>${paymentHistory.reduce((acc, payment) => acc + payment.amount, 0).toFixed(2)}</TableCell>
-                  </TableRow>
-                </TableFooter>
-              </Table>
-            </ScrollArea>
+                  </TableHead>
+                  <TableBody>
+                    {payments.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          No payment history found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      payments.map((payment) => (
+                        <TableRow key={payment.id}>
+                          <TableCell className="font-medium">{formatDate(payment.createdAt)}</TableCell>
+                          <TableCell>{payment.description}</TableCell>
+                          <TableCell>${payment.amount.toFixed(2)}</TableCell>
+                          <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                          <TableCell>{payment.paymentMethod}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                  {payments.length > 0 && (
+                    <TableFooter>
+                      <TableRow>
+                        <TableCell colSpan={3}>Total</TableCell>
+                        <TableCell>
+                          ${payments.reduce((acc, payment) => acc + Number(payment.amount), 0).toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    </TableFooter>
+                  )}
+                </Table>
+              </ScrollArea>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -6,15 +6,19 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Mail, Phone, User, Edit, Save, Star, Clock, Calendar, CreditCard, Shield, Smartphone, TrendingUp } from 'lucide-react';
-
-interface Address {
-  street: string;
-  city: string;
-  region: string;
-  postalCode: string;
-  country: string;
-}
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { 
+  MapPin, Mail, Phone, User, Edit, Save, Star, Clock, Calendar, 
+  CreditCard, Shield, Smartphone, TrendingUp, Loader2, Plus, Trash2, Check
+} from 'lucide-react';
+import { useProfile } from '@/hooks/useProfile';
+import { useAddresses } from '@/hooks/useAddresses';
+import { usePaymentMethods } from '@/hooks/usePaymentMethods';
+import { use2FA } from '@/hooks/use2FA';
+import { DbUserProfile, UserAddress, PaymentMethod } from '@/types/auth';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface UserProfileProps {
   userId?: string;
@@ -23,78 +27,153 @@ interface UserProfileProps {
 const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
   const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);
+  const { profile, loading: profileLoading, updateProfile } = useProfile();
+  const { addresses, loading: addressesLoading, addAddress, updateAddress, removeAddress } = useAddresses();
+  const { paymentMethods, loading: paymentMethodsLoading, addMethod, removeMethod, setDefault } = usePaymentMethods();
+  const { twoFAStatus, loading: twoFALoading } = use2FA();
   
-  const [profile, setProfile] = useState({
-    firstName: 'Sarah',
-    lastName: 'Johnson',
-    email: 'sarah.johnson@example.com',
-    phone: '+264 81 123 4567',
-    birthDate: '1985-06-15',
-    address: {
-      street: '123 Main Street',
-      city: 'Windhoek',
-      region: 'Khomas',
-      postalCode: '10001',
-      country: 'Namibia'
-    },
-    preferredLanguage: 'English',
-    joinDate: new Date(2021, 5, 10), // June 10, 2021
-    paymentMethods: [
-      { id: 'pm1', type: 'credit_card', name: 'Visa ending in 4242', isDefault: true },
-      { id: 'pm2', type: 'e_wallet', name: 'E-Wallet (081 123 4567)', isDefault: false }
-    ],
-    addresses: [
-      {
-        id: 'addr1',
-        name: 'Home',
-        street: '123 Main Street',
-        city: 'Windhoek',
-        region: 'Khomas',
-        postalCode: '10001',
-        country: 'Namibia',
-        isDefault: true
-      },
-      {
-        id: 'addr2',
-        name: 'Work',
-        street: '456 Business Avenue',
-        city: 'Windhoek',
-        region: 'Khomas',
-        postalCode: '10002',
-        country: 'Namibia',
-        isDefault: false
-      }
-    ]
+  const [editedProfile, setEditedProfile] = useState<Partial<DbUserProfile>>({});
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [newAddress, setNewAddress] = useState<Omit<UserAddress, 'id' | 'userId' | 'createdAt'>>({
+    name: '',
+    street: '',
+    city: '',
+    region: '',
+    postalCode: '',
+    country: '',
+    isDefault: false
+  });
+  
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  
+  const [isAddingPayment, setIsAddingPayment] = useState(false);
+  const [newPaymentMethod, setNewPaymentMethod] = useState<Omit<PaymentMethod, 'id' | 'userId' | 'createdAt'>>({
+    type: 'credit_card',
+    name: '',
+    details: {},
+    isDefault: false
   });
   
   const toggleEdit = () => {
+    if (isEditing) {
+      // Discard changes
+      setEditedProfile({});
+    } else {
+      // Set initial edited values from profile
+      setEditedProfile({
+        first_name: profile?.first_name || '',
+        last_name: profile?.last_name || '',
+        email: profile?.email || '',
+        phone_number: profile?.phone_number || '',
+        birth_date: profile?.birth_date || '',
+        preferred_language: profile?.preferred_language || 'English',
+        bio: profile?.bio || '',
+      });
+    }
     setIsEditing(!isEditing);
   };
   
-  const saveProfile = () => {
-    setIsEditing(false);
-    // Here you would normally save the profile to the backend
-    console.log('Saving profile:', profile);
+  const saveProfile = async () => {
+    if (await updateProfile(editedProfile)) {
+      setIsEditing(false);
+      setEditedProfile({});
+    }
   };
   
-  const handleChange = (field: string, value: string) => {
-    setProfile(prev => ({
+  const handleProfileChange = (field: string, value: string) => {
+    setEditedProfile(prev => ({
       ...prev,
       [field]: value
     }));
   };
   
   const handleAddressChange = (field: string, value: string) => {
-    setProfile(prev => ({
+    setNewAddress(prev => ({
       ...prev,
-      address: {
-        ...prev.address,
-        [field]: value
-      }
+      [field]: value
     }));
   };
   
-  const formatDate = (date: Date) => {
+  const handlePaymentMethodChange = (field: string, value: any) => {
+    if (field === 'details') {
+      setNewPaymentMethod(prev => ({
+        ...prev,
+        details: {
+          ...prev.details,
+          ...value
+        }
+      }));
+    } else {
+      setNewPaymentMethod(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
+  };
+  
+  const handlePasswordChange = (field: string, value: string) => {
+    setPasswordData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+  
+  const submitNewAddress = async () => {
+    // Validate address
+    if (!newAddress.name || !newAddress.street || !newAddress.city || !newAddress.country) {
+      return;
+    }
+    
+    const result = await addAddress(newAddress);
+    if (result) {
+      setIsAddingAddress(false);
+      setNewAddress({
+        name: '',
+        street: '',
+        city: '',
+        region: '',
+        postalCode: '',
+        country: '',
+        isDefault: false
+      });
+    }
+  };
+  
+  const submitNewPaymentMethod = async () => {
+    // Validate payment method
+    if (!newPaymentMethod.name || !newPaymentMethod.type) {
+      return;
+    }
+    
+    // Add payment method specific validation
+    if (newPaymentMethod.type === 'credit_card') {
+      if (!newPaymentMethod.details.cardNumber || !newPaymentMethod.details.cardName || 
+          !newPaymentMethod.details.expiryDate || !newPaymentMethod.details.cvv) {
+        return;
+      }
+    }
+    
+    const result = await addMethod(newPaymentMethod);
+    if (result) {
+      setIsAddingPayment(false);
+      setNewPaymentMethod({
+        type: 'credit_card',
+        name: '',
+        details: {},
+        isDefault: false
+      });
+    }
+  };
+  
+  // Format date for display
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
@@ -102,37 +181,50 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
     });
   };
   
+  if (profileLoading) {
+    return (
+      <div className="flex justify-center items-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading profile...</span>
+      </div>
+    );
+  }
+  
+  const displayName = profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'User';
+  
   return (
     <div className="space-y-6">
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             <Avatar className="h-24 w-24">
-              <AvatarImage src="https://via.placeholder.com/150" alt="Profile picture" />
-              <AvatarFallback className="text-2xl">SJ</AvatarFallback>
+              <AvatarImage src={profile?.avatar_url || "https://via.placeholder.com/150"} alt="Profile picture" />
+              <AvatarFallback className="text-2xl">
+                {displayName.split(' ').map(n => n[0]).join('')}
+              </AvatarFallback>
             </Avatar>
             
             <div className="flex-1">
-              <h2 className="text-2xl font-bold">{profile.firstName} {profile.lastName}</h2>
+              <h2 className="text-2xl font-bold">{displayName}</h2>
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-1 text-muted-foreground">
                 <div className="flex items-center">
                   <Mail className="h-4 w-4 mr-1" />
-                  {profile.email}
+                  {profile?.email || 'No email'}
                 </div>
                 <span className="hidden sm:inline">•</span>
                 <div className="flex items-center">
                   <Phone className="h-4 w-4 mr-1" />
-                  {profile.phone}
+                  {profile?.phone_number || 'No phone number'}
                 </div>
               </div>
               <div className="flex items-center mt-1 text-muted-foreground">
                 <MapPin className="h-4 w-4 mr-1" />
-                {profile.address.city}, {profile.address.country}
+                {profile?.city ? `${profile.city}, ${profile.country || ''}` : 'No location set'}
               </div>
               
               <div className="flex items-center mt-3 text-sm">
                 <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-                <span>Member since {formatDate(profile.joinDate)}</span>
+                <span>Member since {formatDate(profile?.created_at)}</span>
               </div>
             </div>
             
@@ -183,61 +275,59 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="firstName">First Name</Label>
-                  <input
+                  <Input
                     id="firstName"
-                    type="text"
-                    value={profile.firstName}
-                    onChange={(e) => handleChange('firstName', e.target.value)}
+                    value={isEditing ? editedProfile.first_name || '' : profile?.first_name || ''}
+                    onChange={(e) => handleProfileChange('first_name', e.target.value)}
                     disabled={!isEditing}
-                    className="w-full p-2 mt-1 border rounded-md"
+                    className="w-full mt-1"
                   />
                 </div>
                 
                 <div>
                   <Label htmlFor="lastName">Last Name</Label>
-                  <input
+                  <Input
                     id="lastName"
-                    type="text"
-                    value={profile.lastName}
-                    onChange={(e) => handleChange('lastName', e.target.value)}
+                    value={isEditing ? editedProfile.last_name || '' : profile?.last_name || ''}
+                    onChange={(e) => handleProfileChange('last_name', e.target.value)}
                     disabled={!isEditing}
-                    className="w-full p-2 mt-1 border rounded-md"
+                    className="w-full mt-1"
                   />
                 </div>
                 
                 <div>
                   <Label htmlFor="email">Email Address</Label>
-                  <input
+                  <Input
                     id="email"
                     type="email"
-                    value={profile.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
+                    value={isEditing ? editedProfile.email || '' : profile?.email || ''}
+                    onChange={(e) => handleProfileChange('email', e.target.value)}
                     disabled={!isEditing}
-                    className="w-full p-2 mt-1 border rounded-md"
+                    className="w-full mt-1"
                   />
                 </div>
                 
                 <div>
                   <Label htmlFor="phone">Phone Number</Label>
-                  <input
+                  <Input
                     id="phone"
                     type="tel"
-                    value={profile.phone}
-                    onChange={(e) => handleChange('phone', e.target.value)}
+                    value={isEditing ? editedProfile.phone_number || '' : profile?.phone_number || ''}
+                    onChange={(e) => handleProfileChange('phone_number', e.target.value)}
                     disabled={!isEditing}
-                    className="w-full p-2 mt-1 border rounded-md"
+                    className="w-full mt-1"
                   />
                 </div>
                 
                 <div>
                   <Label htmlFor="birthDate">Date of Birth</Label>
-                  <input
+                  <Input
                     id="birthDate"
                     type="date"
-                    value={profile.birthDate}
-                    onChange={(e) => handleChange('birthDate', e.target.value)}
+                    value={isEditing ? editedProfile.birth_date || '' : profile?.birth_date || ''}
+                    onChange={(e) => handleProfileChange('birth_date', e.target.value)}
                     disabled={!isEditing}
-                    className="w-full p-2 mt-1 border rounded-md"
+                    className="w-full mt-1"
                   />
                 </div>
                 
@@ -245,8 +335,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                   <Label htmlFor="language">Preferred Language</Label>
                   <select
                     id="language"
-                    value={profile.preferredLanguage}
-                    onChange={(e) => handleChange('preferredLanguage', e.target.value)}
+                    value={isEditing ? editedProfile.preferred_language || 'English' : profile?.preferred_language || 'English'}
+                    onChange={(e) => handleProfileChange('preferred_language', e.target.value)}
                     disabled={!isEditing}
                     className="w-full p-2 mt-1 border rounded-md"
                   >
@@ -257,6 +347,18 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                     <option value="Rukwangali">Rukwangali</option>
                     <option value="Silozi">Silozi</option>
                   </select>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <Label htmlFor="bio">Bio</Label>
+                  <Textarea
+                    id="bio"
+                    value={isEditing ? editedProfile.bio || '' : profile?.bio || ''}
+                    onChange={(e) => handleProfileChange('bio', e.target.value)}
+                    disabled={!isEditing}
+                    className="w-full mt-1"
+                    rows={3}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -317,40 +419,155 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                     Manage your saved addresses for service bookings
                   </CardDescription>
                 </div>
-                <Button size="sm">Add New Address</Button>
+                <Button size="sm" onClick={() => setIsAddingAddress(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Address
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {profile.addresses.map((address) => (
-                  <div key={address.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center">
-                        <h3 className="font-medium">{address.name}</h3>
-                        {address.isDefault && (
-                          <Badge className="ml-2 bg-primary">Default</Badge>
-                        )}
+              {addressesLoading ? (
+                <div className="flex justify-center items-center p-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="ml-2">Loading addresses...</span>
+                </div>
+              ) : addresses.length > 0 ? (
+                <div className="space-y-4">
+                  {addresses.map((address) => (
+                    <div key={address.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center">
+                          <h3 className="font-medium">{address.name}</h3>
+                          {address.isDefault && (
+                            <Badge className="ml-2 bg-primary">Default</Badge>
+                          )}
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => removeAddress(address.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div>
-                        <Button variant="ghost" size="sm" circle>
-                          <Edit className="h-4 w-4" />
+                      <p className="text-sm">{address.street}</p>
+                      <p className="text-sm">{address.city}, {address.region} {address.postalCode}</p>
+                      <p className="text-sm">{address.country}</p>
+                      
+                      {!address.isDefault && (
+                        <Button 
+                          variant="link" 
+                          className="p-0 h-auto mt-2 text-sm"
+                          onClick={() => updateAddress(address.id, { isDefault: true })}
+                        >
+                          Set as default
                         </Button>
-                      </div>
+                      )}
                     </div>
-                    <p className="text-sm">{address.street}</p>
-                    <p className="text-sm">{address.city}, {address.region} {address.postalCode}</p>
-                    <p className="text-sm">{address.country}</p>
-                    
-                    {!address.isDefault && (
-                      <Button variant="link" className="p-0 h-auto mt-2 text-sm">
-                        Set as default
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-muted-foreground">You haven't added any addresses yet.</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-2"
+                    onClick={() => setIsAddingAddress(true)}
+                  >
+                    Add your first address
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
+          
+          {/* Add Address Dialog */}
+          <Dialog open={isAddingAddress} onOpenChange={setIsAddingAddress}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Address</DialogTitle>
+                <DialogDescription>
+                  Enter the details for your new address.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div>
+                  <Label htmlFor="addressName">Address Name</Label>
+                  <Input
+                    id="addressName"
+                    placeholder="Home, Work, etc."
+                    value={newAddress.name}
+                    onChange={(e) => handleAddressChange('name', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="street">Street Address</Label>
+                  <Input
+                    id="street"
+                    placeholder="123 Main St"
+                    value={newAddress.street}
+                    onChange={(e) => handleAddressChange('street', e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      placeholder="Windhoek"
+                      value={newAddress.city}
+                      onChange={(e) => handleAddressChange('city', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="region">Region/State</Label>
+                    <Input
+                      id="region"
+                      placeholder="Khomas"
+                      value={newAddress.region}
+                      onChange={(e) => handleAddressChange('region', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="postalCode">Postal Code</Label>
+                    <Input
+                      id="postalCode"
+                      placeholder="10001"
+                      value={newAddress.postalCode}
+                      onChange={(e) => handleAddressChange('postalCode', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="country">Country</Label>
+                    <Input
+                      id="country"
+                      placeholder="Namibia"
+                      value={newAddress.country}
+                      onChange={(e) => handleAddressChange('country', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="defaultAddress"
+                    checked={newAddress.isDefault}
+                    onChange={(e) => handleAddressChange('isDefault', e.target.checked.toString())}
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="defaultAddress">Set as default address</Label>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddingAddress(false)}>Cancel</Button>
+                <Button onClick={submitNewAddress}>Save Address</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
         
         <TabsContent value="payment" className="space-y-6">
@@ -363,50 +580,241 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                     Manage your payment methods for service bookings
                   </CardDescription>
                 </div>
-                <Button size="sm">Add Payment Method</Button>
+                <Button size="sm" onClick={() => setIsAddingPayment(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Payment Method
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {profile.paymentMethods.map((method) => (
-                  <div key={method.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center">
-                        <div className="bg-primary/10 p-2 rounded-full mr-3">
-                          {method.type === 'credit_card' ? (
-                            <CreditCard className="h-5 w-5 text-primary" />
-                          ) : (
-                            <Smartphone className="h-5 w-5 text-primary" />
-                          )}
+              {paymentMethodsLoading ? (
+                <div className="flex justify-center items-center p-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="ml-2">Loading payment methods...</span>
+                </div>
+              ) : paymentMethods.length > 0 ? (
+                <div className="space-y-4">
+                  {paymentMethods.map((method) => (
+                    <div key={method.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center">
+                          <div className="bg-primary/10 p-2 rounded-full mr-3">
+                            {method.type === 'credit_card' ? (
+                              <CreditCard className="h-5 w-5 text-primary" />
+                            ) : (
+                              <Smartphone className="h-5 w-5 text-primary" />
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-medium">{method.name}</h3>
+                            {method.isDefault && (
+                              <Badge className="mt-1 bg-primary">Default</Badge>
+                            )}
+                          </div>
                         </div>
                         <div>
-                          <h3 className="font-medium">{method.name}</h3>
-                          {method.isDefault && (
-                            <Badge className="mt-1 bg-primary">Default</Badge>
-                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => removeMethod(method.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                      <div>
-                        <Button variant="ghost" size="sm" circle>
-                          <Edit className="h-4 w-4" />
+                      
+                      {!method.isDefault && (
+                        <Button 
+                          variant="link" 
+                          className="p-0 h-auto mt-2 text-sm"
+                          onClick={() => setDefault(method.id)}
+                        >
+                          Set as default
                         </Button>
-                      </div>
+                      )}
                     </div>
-                    
-                    {!method.isDefault && (
-                      <Button variant="link" className="p-0 h-auto mt-2 text-sm">
-                        Set as default
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-muted-foreground">You haven't added any payment methods yet.</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-2"
+                    onClick={() => setIsAddingPayment(true)}
+                  >
+                    Add your first payment method
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
           
+          {/* Add Payment Method Dialog */}
+          <Dialog open={isAddingPayment} onOpenChange={setIsAddingPayment}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Payment Method</DialogTitle>
+                <DialogDescription>
+                  Enter the details for your new payment method.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div>
+                  <Label htmlFor="paymentType">Payment Type</Label>
+                  <select
+                    id="paymentType"
+                    value={newPaymentMethod.type}
+                    onChange={(e) => handlePaymentMethodChange('type', e.target.value)}
+                    className="w-full p-2 mt-1 border rounded-md"
+                  >
+                    <option value="credit_card">Credit/Debit Card</option>
+                    <option value="e_wallet">E-Wallet</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="paymentName">Name</Label>
+                  <Input
+                    id="paymentName"
+                    placeholder="Personal Card, Business Card, etc."
+                    value={newPaymentMethod.name}
+                    onChange={(e) => handlePaymentMethodChange('name', e.target.value)}
+                  />
+                </div>
+                
+                {newPaymentMethod.type === 'credit_card' && (
+                  <>
+                    <div>
+                      <Label htmlFor="cardNumber">Card Number</Label>
+                      <Input
+                        id="cardNumber"
+                        placeholder="**** **** **** ****"
+                        value={newPaymentMethod.details.cardNumber || ''}
+                        onChange={(e) => handlePaymentMethodChange('details', { cardNumber: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="cardName">Card Holder Name</Label>
+                      <Input
+                        id="cardName"
+                        placeholder="John Doe"
+                        value={newPaymentMethod.details.cardName || ''}
+                        onChange={(e) => handlePaymentMethodChange('details', { cardName: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="expiryDate">Expiry Date</Label>
+                        <Input
+                          id="expiryDate"
+                          placeholder="MM/YY"
+                          value={newPaymentMethod.details.expiryDate || ''}
+                          onChange={(e) => handlePaymentMethodChange('details', { expiryDate: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="cvv">CVV</Label>
+                        <Input
+                          id="cvv"
+                          placeholder="***"
+                          type="password"
+                          value={newPaymentMethod.details.cvv || ''}
+                          onChange={(e) => handlePaymentMethodChange('details', { cvv: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+                
+                {newPaymentMethod.type === 'e_wallet' && (
+                  <>
+                    <div>
+                      <Label htmlFor="walletProvider">Wallet Provider</Label>
+                      <select
+                        id="walletProvider"
+                        className="w-full p-2 mt-1 border rounded-md"
+                        value={newPaymentMethod.details.provider || ''}
+                        onChange={(e) => handlePaymentMethodChange('details', { provider: e.target.value })}
+                      >
+                        <option value="">Select Provider</option>
+                        <option value="paytoday">PayToday</option>
+                        <option value="bluewallet">BlueWallet</option>
+                        <option value="easywallet">EasyWallet</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="phoneNumber">Phone Number</Label>
+                      <Input
+                        id="phoneNumber"
+                        placeholder="+264 81 XXX XXXX"
+                        value={newPaymentMethod.details.phoneNumber || ''}
+                        onChange={(e) => handlePaymentMethodChange('details', { phoneNumber: e.target.value })}
+                      />
+                    </div>
+                  </>
+                )}
+                
+                {newPaymentMethod.type === 'bank_transfer' && (
+                  <>
+                    <div>
+                      <Label htmlFor="bankName">Bank Name</Label>
+                      <select
+                        id="bankName"
+                        className="w-full p-2 mt-1 border rounded-md"
+                        value={newPaymentMethod.details.bankName || ''}
+                        onChange={(e) => handlePaymentMethodChange('details', { bankName: e.target.value })}
+                      >
+                        <option value="">Select Bank</option>
+                        <option value="NED BANK">NED BANK</option>
+                        <option value="FNB">FNB</option>
+                        <option value="Bank Windhoek">Bank Windhoek</option>
+                        <option value="Standard Bank">Standard Bank</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="accountName">Account Holder Name</Label>
+                      <Input
+                        id="accountName"
+                        placeholder="John Doe"
+                        value={newPaymentMethod.details.accountName || ''}
+                        onChange={(e) => handlePaymentMethodChange('details', { accountName: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="accountNumber">Account Number</Label>
+                      <Input
+                        id="accountNumber"
+                        placeholder="123456789"
+                        value={newPaymentMethod.details.accountNumber || ''}
+                        onChange={(e) => handlePaymentMethodChange('details', { accountNumber: e.target.value })}
+                      />
+                    </div>
+                  </>
+                )}
+                
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="defaultPayment"
+                    checked={newPaymentMethod.isDefault}
+                    onChange={(e) => handlePaymentMethodChange('isDefault', e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="defaultPayment">Set as default payment method</Label>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddingPayment(false)}>Cancel</Button>
+                <Button onClick={submitNewPaymentMethod}>Save Payment Method</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          
           <Card>
             <CardHeader>
-              <CardTitle>Billing History</CardTitle>
+              <CardTitle>Payment History</CardTitle>
               <CardDescription>
                 View your recent payment transactions
               </CardDescription>
@@ -462,7 +870,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                   </table>
                 </div>
               </div>
-              <Button variant="outline" className="mt-4">
+              <Button variant="outline" className="mt-4" as="a" href="/dashboard/customer/payment-history">
                 View All Transactions
               </Button>
             </CardContent>
@@ -481,9 +889,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
               <div className="border rounded-lg p-4">
                 <h3 className="font-medium">Password</h3>
                 <p className="text-sm text-muted-foreground mt-1 mb-3">
-                  Last changed 3 months ago
+                  Change your password regularly to keep your account secure
                 </p>
-                <Button>Change Password</Button>
+                <Button onClick={() => setIsChangingPassword(true)}>Change Password</Button>
               </div>
               
               <div className="border rounded-lg p-4">
@@ -491,7 +899,23 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
                 <p className="text-sm text-muted-foreground mt-1 mb-3">
                   Add an extra layer of security to your account
                 </p>
-                <Button variant="outline">Enable 2FA</Button>
+                <div className="flex items-center">
+                  {twoFALoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    twoFAStatus && twoFAStatus.isEnabled ? (
+                      <Check className="h-4 w-4 text-green-500 mr-2" />
+                    ) : (
+                      <div className="h-4 w-4 mr-2"></div>
+                    )
+                  )}
+                  <span className="mr-4">
+                    {twoFAStatus?.isEnabled ? 'Enabled' : 'Disabled'}
+                  </span>
+                  <Button variant="outline">
+                    {twoFAStatus?.isEnabled ? 'Disable 2FA' : 'Enable 2FA'}
+                  </Button>
+                </div>
               </div>
               
               <div className="border rounded-lg p-4">
@@ -564,6 +988,73 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {/* Change Password Dialog */}
+      <Dialog open={isChangingPassword} onOpenChange={setIsChangingPassword}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>
+              Update your password to a new secure one.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={passwordData.currentPassword}
+                onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+              />
+            </div>
+            {passwordData.newPassword && passwordData.confirmPassword && 
+             passwordData.newPassword !== passwordData.confirmPassword && (
+              <Alert variant="destructive">
+                <AlertTitle>Passwords do not match</AlertTitle>
+                <AlertDescription>
+                  Please make sure your passwords match.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsChangingPassword(false)}>Cancel</Button>
+            <Button 
+              onClick={() => {
+                // Add password change logic here
+                setIsChangingPassword(false);
+              }}
+              disabled={
+                !passwordData.currentPassword || 
+                !passwordData.newPassword || 
+                !passwordData.confirmPassword ||
+                passwordData.newPassword !== passwordData.confirmPassword
+              }
+            >
+              Update Password
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

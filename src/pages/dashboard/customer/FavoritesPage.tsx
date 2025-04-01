@@ -1,64 +1,50 @@
 
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ServiceCard } from '@/components/dashboard/ServiceCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ServiceListItem } from '@/types/service';
-import { Heart } from 'lucide-react';
-
-// Mock data for favorites
-const mockFavoriteServices: ServiceListItem[] = [
-  {
-    id: '1',
-    title: 'House Cleaning',
-    category: 'home',
-    pricingModel: 'hourly',
-    price: 25,
-    providerName: 'CleanPro Services',
-    providerId: 'prov1',
-    rating: 4.8,
-    reviewCount: 156,
-    image: '/placeholder.svg',
-    location: 'Windhoek',
-    description: 'Professional house cleaning services for all your needs.',
-  },
-  {
-    id: '2',
-    title: 'Plumbing Repair',
-    category: 'home',
-    pricingModel: 'fixed',
-    price: 80,
-    providerName: 'Pipe Masters',
-    providerId: 'prov2',
-    rating: 4.6,
-    reviewCount: 89,
-    image: '/placeholder.svg',
-    location: 'Windhoek',
-    description: 'Expert plumbing repair services.',
-  },
-  {
-    id: '3',
-    title: 'Grocery Delivery',
-    category: 'errand',
-    pricingModel: 'fixed',
-    price: 15,
-    providerName: 'Quick Deliveries',
-    providerId: 'prov3',
-    rating: 4.9,
-    reviewCount: 210,
-    image: '/placeholder.svg',
-    location: 'Swakopmund',
-    description: 'Fast and reliable grocery delivery service.',
-  },
-];
+import { Heart, Loader2 } from 'lucide-react';
+import { useFavorites } from '@/hooks/useFavorites';
 
 const FavoritesPage = () => {
-  // In a real app, we would fetch the user's favorites from an API
-  const { data: favorites, isLoading } = useQuery({
-    queryKey: ['favorites'],
-    queryFn: () => Promise.resolve(mockFavoriteServices),
+  const { favorites, loading } = useFavorites();
+  
+  // Transform favorites to ServiceListItem for the ServiceCard component
+  const favoriteServices: ServiceListItem[] = favorites.map(fav => {
+    if (!fav.service) {
+      // Fallback for favorites without service data
+      return {
+        id: fav.serviceId,
+        title: 'Unknown Service',
+        category: 'unknown',
+        pricingModel: 'fixed',
+        price: 0,
+        providerName: 'Unknown Provider',
+        providerId: '',
+        rating: 0,
+        reviewCount: 0,
+        image: '/placeholder.svg',
+        location: '',
+        description: '',
+      };
+    }
+    
+    return {
+      id: fav.service.id,
+      title: fav.service.title,
+      category: fav.service.category,
+      pricingModel: fav.service.pricingModel,
+      price: fav.service.price,
+      providerName: fav.service.providerName,
+      providerId: fav.service.providerId,
+      rating: fav.service.rating,
+      reviewCount: fav.service.reviewCount,
+      image: fav.service.image,
+      location: fav.service.location,
+      description: fav.service.description,
+    };
   });
 
   return (
@@ -80,24 +66,14 @@ const FavoritesPage = () => {
           </TabsList>
 
           <TabsContent value="all" className="mt-6">
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3].map((i) => (
-                  <Card key={i} className="animate-pulse">
-                    <CardContent className="p-0">
-                      <div className="h-48 bg-gray-200 rounded-t-lg"></div>
-                      <div className="p-4 space-y-3">
-                        <div className="h-5 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-full"></div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+            {loading ? (
+              <div className="flex justify-center items-center p-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading favorites...</span>
               </div>
-            ) : favorites && favorites.length > 0 ? (
+            ) : favoriteServices.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {favorites.map((service) => (
+                {favoriteServices.map((service) => (
                   <ServiceCard key={service.id} service={service} />
                 ))}
               </div>
@@ -130,17 +106,53 @@ const FavoritesPage = () => {
           
           <TabsContent value="home" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {favorites?.filter(s => s.category === 'home').map((service) => (
-                <ServiceCard key={service.id} service={service} />
-              ))}
+              {loading ? (
+                <div className="flex justify-center items-center p-12 col-span-full">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <span className="ml-2">Loading favorites...</span>
+                </div>
+              ) : favoriteServices.filter(s => s.category === 'home').length > 0 ? (
+                favoriteServices.filter(s => s.category === 'home').map((service) => (
+                  <ServiceCard key={service.id} service={service} />
+                ))
+              ) : (
+                <div className="col-span-full">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-center">No home services in favorites</CardTitle>
+                      <CardDescription className="text-center">
+                        Browse home services and add some to your favorites
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                </div>
+              )}
             </div>
           </TabsContent>
           
           <TabsContent value="errand" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {favorites?.filter(s => s.category === 'errand').map((service) => (
-                <ServiceCard key={service.id} service={service} />
-              ))}
+              {loading ? (
+                <div className="flex justify-center items-center p-12 col-span-full">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <span className="ml-2">Loading favorites...</span>
+                </div>
+              ) : favoriteServices.filter(s => s.category === 'errand').length > 0 ? (
+                favoriteServices.filter(s => s.category === 'errand').map((service) => (
+                  <ServiceCard key={service.id} service={service} />
+                ))
+              ) : (
+                <div className="col-span-full">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-center">No errand services in favorites</CardTitle>
+                      <CardDescription className="text-center">
+                        Browse errand services and add some to your favorites
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
