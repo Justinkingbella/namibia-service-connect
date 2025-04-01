@@ -15,6 +15,7 @@ const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { signIn, isLoading, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,26 +37,31 @@ const SignIn = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsSubmitting(true);
     
     if (!email || !password) {
       setError('Please provide both email and password');
+      setIsSubmitting(false);
       return;
     }
     
     try {
+      console.log('Attempting login with credentials:', email);
       await signIn(email, password);
       // The redirect will be handled by the useEffect above
       console.log('Sign in successful');
     } catch (error: any) {
       console.error('Login failed:', error);
       setError(error.message || 'Authentication failed. Please check your credentials and try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const setDemoCredentials = (role: string) => {
     switch (role) {
       case 'admin':
-        setEmail('antoniojoaquimjustino@gmail.com');
+        setEmail('admin@namibiaservice.com');
         setPassword('admin123');
         break;
       case 'provider':
@@ -67,6 +73,9 @@ const SignIn = () => {
         setPassword('password');
         break;
     }
+    
+    // Clear any previous errors when setting new credentials
+    setError(null);
   };
 
   return (
@@ -125,7 +134,11 @@ const SignIn = () => {
                 </Link>
               </div>
               
-              <Button type="submit" className="w-full mt-2" loading={isLoading}>
+              <Button 
+                type="submit" 
+                className="w-full mt-2" 
+                loading={isLoading || isSubmitting}
+              >
                 Sign In
               </Button>
             </form>
