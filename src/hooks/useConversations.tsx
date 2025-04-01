@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Conversation, Message, DbMessage, DbConversation } from '@/types/message';
+import { Conversation, Message, DbMessage, DbConversation, DbTables } from '@/types/message';
 
 export function useConversations() {
   const { user } = useAuth();
@@ -22,9 +22,9 @@ export function useConversations() {
     const loadConversations = async () => {
       setLoading(true);
       try {
-        // Manually construct a query that gets around the type system limitations
-        const { data, error } = await supabase
-          .from('conversation_participants')
+        // Use type assertion to get around TypeScript limitations
+        const { data, error } = await (supabase
+          .from('conversation_participants') as any)
           .select(`
             conversation_id,
             conversation:conversations (
@@ -121,7 +121,7 @@ export function useConversations() {
           senderId: msg.sender_id,
           text: msg.content,
           timestamp: new Date(msg.created_at),
-          isRead: msg.is_read,
+          isRead: msg.read, // Note: Using "read" field from DB instead of "is_read"
           attachments: msg.attachments || [],
         }));
 
@@ -139,7 +139,7 @@ export function useConversations() {
           await Promise.all(unreadMessages.map(msg => 
             supabase
               .from('messages')
-              .update({ is_read: true })
+              .update({ read: true }) // Use "read" instead of "is_read"
               .eq('id', msg.id)
           ));
           
@@ -192,7 +192,7 @@ export function useConversations() {
           senderId: newMsg.sender_id,
           text: newMsg.content,
           timestamp: new Date(newMsg.created_at),
-          isRead: newMsg.is_read,
+          isRead: newMsg.read, // Using "read" instead of "is_read"
           attachments: newMsg.attachments || [],
         };
         
@@ -205,7 +205,7 @@ export function useConversations() {
         if (newMsg.sender_id !== user.id) {
           supabase
             .from('messages')
-            .update({ is_read: true })
+            .update({ read: true }) // Using "read" instead of "is_read"
             .eq('id', newMsg.id)
             .then();
         }
@@ -227,7 +227,7 @@ export function useConversations() {
           conversation_id: conversationId,
           sender_id: user.id,
           content: text,
-          is_read: false,
+          read: false, // Using "read" instead of "is_read"
           attachments: []
         })
         .select()
@@ -252,18 +252,18 @@ export function useConversations() {
     
     try {
       // Check if conversation already exists
-      // This is a manual query to get around type system limitations
-      const { data: existingConvos } = await supabase
-        .from('conversation_participants')
+      // Use type assertion to get around TypeScript limitations
+      const { data: existingConvos } = await (supabase
+        .from('conversation_participants') as any)
         .select('conversation_id')
         .eq('user_id', user.id);
         
       if (existingConvos && existingConvos.length > 0) {
-        const convoIds = existingConvos.map(c => c.conversation_id);
+        const convoIds = existingConvos.map((c: any) => c.conversation_id);
         
-        // Another manual query
-        const { data: sharedConvos } = await supabase
-          .from('conversation_participants')
+        // Another type assertion
+        const { data: sharedConvos } = await (supabase
+          .from('conversation_participants') as any)
           .select('conversation_id')
           .eq('user_id', recipientId)
           .in('conversation_id', convoIds);
@@ -276,10 +276,9 @@ export function useConversations() {
         }
       }
       
-      // Create new conversation
-      // Manual query to get around type limitations
-      const { data: newConvo, error: convoError } = await supabase
-        .from('conversations')
+      // Create new conversation with type assertion
+      const { data: newConvo, error: convoError } = await (supabase
+        .from('conversations') as any)
         .insert({
           last_message: initialMessage
         })
@@ -288,13 +287,13 @@ export function useConversations() {
         
       if (convoError) throw convoError;
       
-      // Add participants
-      await supabase
-        .from('conversation_participants')
+      // Add participants with type assertion
+      await (supabase
+        .from('conversation_participants') as any)
         .insert([
           { conversation_id: newConvo.id, user_id: user.id },
           { conversation_id: newConvo.id, user_id: recipientId }
-        ]);
+        ]));
         
       // Send initial message
       await sendMessage(newConvo.id, initialMessage);

@@ -26,7 +26,7 @@ export interface DbMessage {
   sender_id: string;
   content: string;
   created_at: string;
-  is_read: boolean;
+  read: boolean; // Note: this field is "read" in the database, not "is_read"
   attachments: string[];
   recipient_id?: string;
 }
@@ -48,4 +48,24 @@ export interface DbConversation {
       };
     };
   }[];
+}
+
+// These interfaces define the raw structure of our Supabase database tables
+// We'll use them to properly type-cast our Supabase queries
+export interface DbTables {
+  messages: DbMessage;
+  conversations: {
+    id: string;
+    created_at: string;
+    updated_at: string;
+    last_message: string;
+    last_message_date: string;
+    unread_count: number;
+  };
+  conversation_participants: {
+    id: string;
+    conversation_id: string;
+    user_id: string;
+    created_at: string;
+  };
 }
