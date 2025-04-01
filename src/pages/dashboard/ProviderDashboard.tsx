@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, Users, DollarSign, ChevronRight, LineChart, Briefcase, AlertTriangle, CreditCard } from 'lucide-react';
@@ -15,10 +14,40 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
+import { BookingStatus, PaymentStatus } from '@/types/booking';
+import { SubscriptionTier } from '@/types/subscription';
 
 type Subscription = Tables<'user_subscriptions'> & {
   subscription_plans: Tables<'subscription_plans'>
 };
+
+interface DashboardBooking {
+  id: string;
+  customer: string;
+  service: string;
+  date: string;
+  amount: number;
+  status: BookingStatus;
+  serviceId: string;
+  customerId: string;
+  providerId: string;
+  startTime: string;
+  endTime: string;
+  serviceName: string;
+  serviceImage: string;
+  totalPrice: number;
+  location: string;
+  notes: string;
+  paymentStatus: PaymentStatus;
+  createdAt: string;
+  updatedAt: string;
+  duration: number;
+  totalAmount: number;
+  commission: number;
+  paymentMethod: string;
+  isUrgent: boolean;
+  customerName?: string;
+}
 
 const ProviderDashboard = () => {
   const navigate = useNavigate();
@@ -44,7 +73,7 @@ const ProviderDashboard = () => {
         .eq('status', 'active')
         .single();
       
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      if (error && error.code !== 'PGRST116') {
         console.error('Error fetching subscription:', error);
       }
       
@@ -56,8 +85,7 @@ const ProviderDashboard = () => {
     }
   };
 
-  // Mock data for recent bookings
-  const recentBookings = [
+  const recentBookings: DashboardBooking[] = [
     {
       id: '1',
       customer: 'John Smith',
@@ -65,7 +93,6 @@ const ProviderDashboard = () => {
       date: 'Today, 14:30',
       amount: 250,
       status: 'confirmed',
-      // Added missing properties to match Booking type
       serviceId: 'service-1',
       customerId: 'customer-1',
       providerId: 'provider-1',
@@ -79,6 +106,12 @@ const ProviderDashboard = () => {
       paymentStatus: 'paid',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      duration: 60,
+      totalAmount: 250,
+      commission: 25,
+      paymentMethod: 'card',
+      isUrgent: false,
+      customerName: 'John Smith'
     },
     {
       id: '2',
@@ -87,7 +120,6 @@ const ProviderDashboard = () => {
       date: 'Tomorrow, 09:00',
       amount: 350,
       status: 'pending',
-      // Added missing properties to match Booking type
       serviceId: 'service-2',
       customerId: 'customer-2',
       providerId: 'provider-1',
@@ -101,6 +133,12 @@ const ProviderDashboard = () => {
       paymentStatus: 'pending',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      duration: 120,
+      totalAmount: 350,
+      commission: 35,
+      paymentMethod: 'card',
+      isUrgent: false,
+      customerName: 'Sarah Johnson'
     },
     {
       id: '3',
@@ -109,7 +147,6 @@ const ProviderDashboard = () => {
       date: 'Aug 15, 11:30',
       amount: 250,
       status: 'completed',
-      // Added missing properties to match Booking type
       serviceId: 'service-3',
       customerId: 'customer-3',
       providerId: 'provider-1',
@@ -123,6 +160,12 @@ const ProviderDashboard = () => {
       paymentStatus: 'paid',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      duration: 60,
+      totalAmount: 250,
+      commission: 25,
+      paymentMethod: 'card',
+      isUrgent: false,
+      customerName: 'Alex Williams'
     }
   ];
 
@@ -147,7 +190,6 @@ const ProviderDashboard = () => {
           </Alert>
         )}
         
-        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
             title="Total Bookings"
@@ -179,7 +221,6 @@ const ProviderDashboard = () => {
           />
         </div>
         
-        {/* Service Management Section */}
         <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">My Services</h2>
@@ -195,9 +236,7 @@ const ProviderDashboard = () => {
           <ServiceManagement />
         </div>
         
-        {/* Two column layout for bookings and earnings */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Recent Bookings */}
           <div className="lg:col-span-3 space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Recent Bookings</h2>
@@ -213,22 +252,21 @@ const ProviderDashboard = () => {
             
             <div className="space-y-4">
               {recentBookings.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} />
+                <BookingCard key={booking.id} booking={booking} viewAs="provider" />
               ))}
             </div>
           </div>
           
-          {/* Earnings Summary */}
           <div className="lg:col-span-2 space-y-4">
             <h2 className="text-xl font-semibold">Earnings Summary</h2>
             <ProviderEarningsCard 
               earnings={{
-                today: 120,
-                thisWeek: 850,
+                totalEarnings: 3250,
+                pendingPayouts: 850,
                 thisMonth: 3250,
                 lastMonth: 2980
               }}
-              subscriptionTier="Professional"
+              subscriptionTier="Professional" as SubscriptionTier
             />
             
             {!isLoading && subscription && (
@@ -284,7 +322,6 @@ const ProviderDashboard = () => {
           </div>
         </div>
         
-        {/* Quick Actions */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
           

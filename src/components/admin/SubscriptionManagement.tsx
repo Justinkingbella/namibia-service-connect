@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { SubscriptionPlan } from '@/types/subscription';
+import { SubscriptionPlan, convertJsonToFeatures, convertFeaturesToJson } from '@/types/subscription';
 import { SubscriptionForm } from './SubscriptionForm';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
@@ -36,7 +36,7 @@ const SubscriptionManagement = () => {
       }
       
       // Transform the data to match our SubscriptionPlan type
-      const transformedData = data?.map(plan => ({
+      const transformedData: SubscriptionPlan[] = data?.map(plan => ({
         id: plan.id,
         name: plan.name,
         description: plan.description,
@@ -44,7 +44,7 @@ const SubscriptionManagement = () => {
         billingCycle: plan.billing_cycle as 'monthly' | 'yearly',
         credits: plan.credits,
         maxBookings: plan.max_bookings,
-        features: Array.isArray(plan.features) ? plan.features : [],
+        features: convertJsonToFeatures(plan.features),
         isPopular: plan.is_popular || false,
         isActive: plan.is_active || false,
         createdAt: plan.created_at || new Date().toISOString(),
@@ -81,7 +81,7 @@ const SubscriptionManagement = () => {
         billing_cycle: plan.billingCycle,
         credits: plan.credits,
         max_bookings: plan.maxBookings,
-        features: plan.features,
+        features: convertFeaturesToJson(plan.features),
         is_popular: plan.isPopular,
         is_active: plan.isActive
       };
@@ -104,7 +104,7 @@ const SubscriptionManagement = () => {
           billingCycle: data[0].billing_cycle as 'monthly' | 'yearly',
           credits: data[0].credits,
           maxBookings: data[0].max_bookings,
-          features: data[0].features,
+          features: convertJsonToFeatures(data[0].features),
           isPopular: data[0].is_popular || false,
           isActive: data[0].is_active || false,
           createdAt: data[0].created_at || new Date().toISOString(),
@@ -140,7 +140,7 @@ const SubscriptionManagement = () => {
         billing_cycle: plan.billingCycle,
         credits: plan.credits,
         max_bookings: plan.maxBookings,
-        features: plan.features,
+        features: convertFeaturesToJson(plan.features),
         is_popular: plan.isPopular,
         is_active: plan.isActive
       };
@@ -164,7 +164,7 @@ const SubscriptionManagement = () => {
           billingCycle: data[0].billing_cycle as 'monthly' | 'yearly',
           credits: data[0].credits,
           maxBookings: data[0].max_bookings,
-          features: data[0].features,
+          features: convertJsonToFeatures(data[0].features),
           isPopular: data[0].is_popular || false,
           isActive: data[0].is_active || false,
           createdAt: data[0].created_at || new Date().toISOString(),

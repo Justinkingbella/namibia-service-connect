@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { SubscriptionPlan } from '@/types/subscription';
+import { SubscriptionPlan, convertJsonToFeatures } from '@/types/subscription';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface SubscriptionPlansProps {
@@ -47,7 +47,7 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
       }
       
       // Transform the data to match our SubscriptionPlan type
-      const transformedData = data?.map(plan => ({
+      const transformedData: SubscriptionPlan[] = data?.map(plan => ({
         id: plan.id,
         name: plan.name,
         description: plan.description,
@@ -55,7 +55,7 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
         billingCycle: plan.billing_cycle as 'monthly' | 'yearly',
         credits: plan.credits,
         maxBookings: plan.max_bookings,
-        features: Array.isArray(plan.features) ? plan.features : [],
+        features: convertJsonToFeatures(plan.features),
         isPopular: plan.is_popular || false,
         isActive: plan.is_active || false,
         createdAt: plan.created_at || new Date().toISOString(),

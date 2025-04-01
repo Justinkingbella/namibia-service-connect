@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Clock, AlertCircle, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { Booking, BookingStatus, PaymentStatus } from '@/types';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 
 interface BookingCardProps {
   booking: Booking & {
@@ -109,6 +108,19 @@ export function BookingCard({ booking, viewAs, className }: BookingCardProps) {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      if (isValid(date)) {
+        return format(date, 'MMM dd, yyyy');
+      }
+      return dateString;
+    } catch (error) {
+      console.error('Invalid date:', dateString);
+      return dateString;
+    }
+  };
+
   return (
     <Link
       to={`/dashboard/bookings/${booking.id}`}
@@ -144,10 +156,10 @@ export function BookingCard({ booking, viewAs, className }: BookingCardProps) {
           
           <div className="flex items-center mt-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4 mr-1" />
-            <span>{format(new Date(booking.date), 'MMM dd, yyyy')}</span>
+            <span>{formatDate(booking.date)}</span>
             <span className="mx-2">•</span>
             <Clock className="h-4 w-4 mr-1" />
-            <span>{booking.startTime}</span>
+            <span>{typeof booking.startTime === 'string' ? booking.startTime : '(time not available)'}</span>
           </div>
           
           <div className="flex justify-between items-center mt-2">
