@@ -41,7 +41,7 @@ const SignIn = () => {
     
     if (!email || !password) {
       setError('Please provide both email and password');
-      setIsSubmitting(false);
+      setIsSubmitting(true);
       return;
     }
     
