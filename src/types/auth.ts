@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'provider' | 'customer' | string;
 
 export type ProviderVerificationStatus = 'unverified' | 'pending' | 'verified';
@@ -156,7 +157,7 @@ export interface DbProviderProfile {
 export interface PaymentMethod {
   id: string;
   userId: string;
-  type: 'credit_card' | 'e_wallet' | 'bank_transfer';
+  type: 'credit_card' | 'e_wallet' | 'bank_transfer' | string;
   name: string;
   details: Record<string, any>;
   isDefault: boolean;

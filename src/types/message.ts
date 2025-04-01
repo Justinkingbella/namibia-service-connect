@@ -6,7 +6,7 @@ export interface Message {
   text: string;
   timestamp: Date;
   isRead: boolean;
-  attachments?: string[]; // URLs to attached files
+  attachments: string[]; // Always defined as an array
 }
 
 export interface Conversation {
