@@ -60,6 +60,7 @@ const mockMessages: Record<string, Message[]> = {
       text: 'Hello, I booked a cleaning service for tomorrow.',
       timestamp: new Date(Date.now() - 1000 * 60 * 60),
       isRead: true,
+      attachments: [],
     },
     {
       id: '1-2',
@@ -68,6 +69,7 @@ const mockMessages: Record<string, Message[]> = {
       text: "Yes, I see your booking. I'll be there at 10 AM.",
       timestamp: new Date(Date.now() - 1000 * 60 * 30),
       isRead: true,
+      attachments: [],
     },
     {
       id: '1-3',
@@ -76,6 +78,7 @@ const mockMessages: Record<string, Message[]> = {
       text: 'Perfect! Do I need to prepare anything?',
       timestamp: new Date(Date.now() - 1000 * 60 * 25),
       isRead: true,
+      attachments: [],
     },
     {
       id: '1-4',
@@ -84,6 +87,7 @@ const mockMessages: Record<string, Message[]> = {
       text: "Just ensure access to all areas that need cleaning. I'll bring all supplies.",
       timestamp: new Date(Date.now() - 1000 * 60 * 20),
       isRead: true,
+      attachments: [],
     },
     {
       id: '1-5',
@@ -92,6 +96,7 @@ const mockMessages: Record<string, Message[]> = {
       text: 'When will you arrive for the cleaning service?',
       timestamp: new Date(Date.now() - 1000 * 60 * 5),
       isRead: false,
+      attachments: [],
     },
   ],
   '2': [
@@ -102,6 +107,7 @@ const mockMessages: Record<string, Message[]> = {
       text: 'Thank you for fixing my sink yesterday.',
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4),
       isRead: true,
+      attachments: [],
     },
     {
       id: '2-2',
@@ -110,6 +116,7 @@ const mockMessages: Record<string, Message[]> = {
       text: 'Happy to help! Let me know if there are any other issues.',
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
       isRead: true,
+      attachments: [],
     },
     {
       id: '2-3',
@@ -118,6 +125,7 @@ const mockMessages: Record<string, Message[]> = {
       text: 'The plumbing service was great, thank you!',
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
       isRead: true,
+      attachments: [],
     },
   ],
 };
@@ -158,6 +166,7 @@ const MessagesPage: React.FC = () => {
       text: newMessage,
       timestamp: new Date(),
       isRead: true,
+      attachments: [],
     };
 
     mockMessages[selectedConversation] = [
