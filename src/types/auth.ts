@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'provider' | 'customer';
 
 export type ProviderVerificationStatus = 'unverified' | 'pending' | 'verified';
@@ -13,6 +14,8 @@ export interface User {
   phoneNumber?: string;
   createdAt: Date;
   isVerified: boolean;
+  providerDetails?: ProviderProfile;
+  customerDetails?: CustomerProfile;
 }
 
 export interface Customer extends User {
@@ -90,6 +93,8 @@ export interface RawUserProfile {
   phone_number?: string;
   created_at: string;
   updated_at: string;
+  first_name?: string;
+  last_name?: string;
 }
 
 // Provider profile data

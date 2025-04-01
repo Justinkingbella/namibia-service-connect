@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/common/Button';
@@ -10,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { UserRole, RawUserProfile } from '@/types/auth';
+import { UserRole, UserProfile } from '@/types/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -36,7 +35,7 @@ const UserManagement: React.FC = () => {
       setIsLoading(true);
       try {
         const { data, error } = await supabase
-          .from('user_profiles')
+          .from('profiles')
           .select('*')
           .order('created_at', { ascending: false });
 
@@ -45,14 +44,14 @@ const UserManagement: React.FC = () => {
         }
 
         if (data) {
-          const formattedUsers: UserData[] = data.map((user: RawUserProfile) => ({
+          const formattedUsers: UserData[] = data.map((user: any) => ({
             id: user.id,
-            name: user.name || 'Unnamed User',
+            name: user.name || user.first_name || 'Unnamed User',
             email: user.email,
-            role: user.role,
+            role: user.role as UserRole || 'customer',
             status: user.is_verified ? 'active' : 'pending',
             joinDate: new Date(user.created_at).toISOString().split('T')[0],
-            isVerified: user.is_verified
+            isVerified: user.is_verified || false
           }));
           setUsers(formattedUsers);
         }
@@ -133,7 +132,7 @@ const UserManagement: React.FC = () => {
       
       // Update in Supabase
       const { error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({ is_verified: isVerified })
         .eq('id', userId);
         
