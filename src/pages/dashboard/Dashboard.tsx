@@ -14,7 +14,6 @@ const Dashboard = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Simple auth check without relying on Supabase in iframe environment
     const checkAuth = async () => {
       setIsLoading(true);
       
@@ -27,18 +26,23 @@ const Dashboard = () => {
       setIsLoading(false);
     };
 
-    checkAuth();
-  }, [navigate, toast, user]);
+    // Small delay to ensure auth state is properly loaded
+    const timeoutId = setTimeout(() => {
+      checkAuth();
+    }, 500);
 
-  if (isLoading || !user) {
+    return () => clearTimeout(timeoutId);
+  }, [navigate, user]);
+
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     ); 
   }
 
-  switch (user.role) {
+  switch (user?.role) {
     case 'admin':
       return <AdminDashboard />;
     case 'provider':

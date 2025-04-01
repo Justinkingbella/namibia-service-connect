@@ -9,6 +9,8 @@ import Button from '@/components/common/Button';
 import Container from '@/components/common/Container';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
 
 const SignUp = () => {
   const [name, setName] = useState('');
@@ -17,10 +19,12 @@ const SignUp = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [role, setRole] = useState<UserRole>('customer');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { signUp, isLoading } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { toast } = useToast();
 
   const validatePassword = () => {
     if (password !== confirmPassword) {
@@ -41,131 +45,154 @@ const SignUp = () => {
     if (!validatePassword()) return;
     
     try {
+      setIsSubmitting(true);
       await signUp(email, password, name, role);
+      toast({
+        title: "Account created!",
+        description: "You've been successfully registered.",
+      });
       navigate('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration failed:', error);
+      toast({
+        title: "Registration failed",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-6 px-4 sm:py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12">
       <Container size="sm">
         <div className="mx-auto w-full max-w-md">
-          <div className="flex justify-center mb-6 sm:mb-8">
+          <div className="flex flex-col items-center justify-center mb-8">
             <Logo size="lg" />
+            <h1 className="mt-4 text-2xl font-bold text-center text-gray-900">Create your account</h1>
+            <p className="mt-2 text-center text-gray-600">Join our community and start exploring services in Namibia</p>
           </div>
           
-          <div className="bg-white shadow-md rounded-xl p-5 sm:p-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">Create Account</h2>
+          <Card className="shadow-lg border-0">
+            <CardHeader className="pb-2">
+              <Tabs defaultValue="customer" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger 
+                    value="customer" 
+                    onClick={() => setRole('customer')}
+                    className="text-sm"
+                  >
+                    I need services
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="provider" 
+                    onClick={() => setRole('provider')}
+                    className="text-sm"
+                  >
+                    I provide services
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="customer" className="mt-3 text-sm text-muted-foreground">
+                  Create an account to find and book services in Namibia.
+                </TabsContent>
+                
+                <TabsContent value="provider" className="mt-3 text-sm text-muted-foreground">
+                  Create an account to offer your services on our platform.
+                </TabsContent>
+              </Tabs>
+            </CardHeader>
             
-            <Tabs defaultValue="customer" className="mb-5 sm:mb-6">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger 
-                  value="customer" 
-                  onClick={() => setRole('customer')}
-                  className="text-xs sm:text-sm"
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                    Full Name
+                  </label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    placeholder="John Doe"
+                    className="text-sm w-full"
+                  />
+                </div>
+                
+                <div className="space-y-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="you@example.com"
+                    className="text-sm w-full"
+                  />
+                </div>
+                
+                <div className="space-y-1">
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                    Password
+                  </label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                    className={`text-sm w-full ${passwordError ? 'border-red-500' : ''}`}
+                  />
+                </div>
+                
+                <div className="space-y-1">
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                    Confirm Password
+                  </label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                    className={`text-sm w-full ${passwordError ? 'border-red-500' : ''}`}
+                  />
+                  {passwordError && (
+                    <p className="mt-1 text-xs text-red-500">{passwordError}</p>
+                  )}
+                </div>
+                
+                <div className="text-xs text-muted-foreground">
+                  By creating an account, you agree to our <a href="#" className="text-primary hover:underline">Terms of Service</a> and <a href="#" className="text-primary hover:underline">Privacy Policy</a>.
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full mt-4" 
+                  loading={isSubmitting || isLoading}
+                  disabled={isSubmitting || isLoading}
                 >
-                  I need services
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="provider" 
-                  onClick={() => setRole('provider')}
-                  className="text-xs sm:text-sm"
-                >
-                  I provide services
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="customer" className="mt-3 text-xs sm:text-sm text-muted-foreground">
-                Create an account to find and book services in Namibia.
-              </TabsContent>
-              
-              <TabsContent value="provider" className="mt-3 text-xs sm:text-sm text-muted-foreground">
-                Create an account to offer your services on our platform.
-              </TabsContent>
-            </Tabs>
+                  Create Account
+                </Button>
+              </form>
+            </CardContent>
             
-            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-              <div>
-                <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                  Full Name
-                </label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  placeholder="John Doe"
-                  className="text-sm"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  className="text-sm"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className={`text-sm ${passwordError ? 'border-red-500' : ''}`}
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="confirmPassword" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                  Confirm Password
-                </label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className={`text-sm ${passwordError ? 'border-red-500' : ''}`}
-                />
-                {passwordError && (
-                  <p className="mt-1 text-xs text-red-500">{passwordError}</p>
-                )}
-              </div>
-              
-              <div className="text-xs text-muted-foreground">
-                By creating an account, you agree to our <a href="#" className="text-primary hover:underline">Terms of Service</a> and <a href="#" className="text-primary hover:underline">Privacy Policy</a>.
-              </div>
-              
-              <Button type="submit" className="w-full mt-4" loading={isLoading}>
-                Create Account
-              </Button>
-            </form>
-            
-            <div className="mt-5 sm:mt-6 text-center text-xs sm:text-sm">
-              <span className="text-gray-600">Already have an account?</span>{' '}
-              <Link to="/auth/sign-in" className="text-primary font-medium hover:underline">
-                Sign In
-              </Link>
-            </div>
-          </div>
+            <CardFooter className="border-t pt-4 flex justify-center">
+              <p className="text-sm text-gray-600">
+                Already have an account?{' '}
+                <Link to="/auth/sign-in" className="text-primary font-medium hover:underline">
+                  Sign In
+                </Link>
+              </p>
+            </CardFooter>
+          </Card>
         </div>
       </Container>
     </div>

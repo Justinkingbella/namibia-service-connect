@@ -395,6 +395,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: 'Registration successful',
         description: `Welcome to Namibia Service Hub, ${name}!`,
       });
+      
+      return userWithRole;
     } catch (error: any) {
       console.error('Sign up error:', error);
       toast({
