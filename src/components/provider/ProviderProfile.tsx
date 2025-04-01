@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/common/Button';
 import { useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/use-toast';
-import { DbUserProfile, DbProviderProfile } from '@/types/auth';
+import { DbUserProfile, DbProviderProfile, ProviderVerificationStatus } from '@/types/auth';
 import { Avatar } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Building, MapPin, Phone, Mail, Globe, Key, Star } from 'lucide-react';
@@ -35,7 +35,14 @@ const ProviderProfile: React.FC = () => {
           .single();
           
         if (error) throw error;
-        setProviderProfile(data);
+        
+        // Ensure verification_status is of type ProviderVerificationStatus
+        const typedData: DbProviderProfile = {
+          ...data,
+          verification_status: data.verification_status as ProviderVerificationStatus
+        };
+        
+        setProviderProfile(typedData);
       } catch (error) {
         console.error('Error fetching provider profile:', error);
         toast({
@@ -116,7 +123,14 @@ const ProviderProfile: React.FC = () => {
           .single();
           
         if (error) throw error;
-        setProviderProfile(data);
+        
+        // Ensure verification_status is of type ProviderVerificationStatus
+        const typedData: DbProviderProfile = {
+          ...data,
+          verification_status: data.verification_status as ProviderVerificationStatus
+        };
+        
+        setProviderProfile(typedData);
       }
       
       toast({

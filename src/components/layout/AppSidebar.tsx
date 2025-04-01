@@ -20,7 +20,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { type UserRole } from '@/types/auth';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarNav, SidebarNavGroup, SidebarNavItem, SidebarTrigger } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarGroup, SidebarMenuItem, SidebarTrigger } from '@/components/ui/sidebar';
 
 export function AppSidebar() {
   const { user } = useAuth();
@@ -81,23 +81,24 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarNav>
-          <SidebarNavGroup>
+        <SidebarMenu>
+          <SidebarGroup>
             {navItems.map((item) => (
-              <SidebarNavItem key={item.path} onClick={() => navigate(item.path)}>
+              <SidebarMenuItem key={item.path}>
                 <div 
                   className={cn(
                     "flex items-center p-3 rounded-lg cursor-pointer", 
                     location.pathname === item.path ? "bg-primary/10 text-primary font-medium" : "hover:bg-gray-100"
                   )}
+                  onClick={() => navigate(item.path)}
                 >
                   <item.icon className="h-5 w-5 mr-3" />
                   <span>{item.label}</span>
                 </div>
-              </SidebarNavItem>
+              </SidebarMenuItem>
             ))}
-          </SidebarNavGroup>
-        </SidebarNav>
+          </SidebarGroup>
+        </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-4">
         <div className="flex items-center justify-between">
