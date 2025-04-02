@@ -19,6 +19,7 @@ import AnalyticsPage from './pages/dashboard/admin/PlatformAnalyticsPage';
 import WalletVerificationPage from './pages/dashboard/admin/WalletVerificationPage';
 import SiteSettingsPage from './pages/dashboard/admin/SiteSettingsPage';
 import AdminProfilePage from './pages/dashboard/admin/AdminProfilePage';
+import PlatformControlsPage from './pages/dashboard/admin/PlatformControlsPage';
 import HomePage from './pages/Index';
 import SignInPage from './pages/auth/SignIn';
 import SignUpPage from './pages/auth/SignUp';
@@ -72,6 +73,7 @@ function App() {
             <Route path="/dashboard/admin/profile" element={<RoleBasedRoute role="admin"><AdminProfilePage /></RoleBasedRoute>} />
             <Route path="/dashboard/users" element={<RoleBasedRoute role="admin"><UsersPage /></RoleBasedRoute>} />
             <Route path="/dashboard/admin/analytics" element={<RoleBasedRoute role="admin"><AnalyticsPage /></RoleBasedRoute>} />
+            <Route path="/dashboard/admin/platform-controls" element={<RoleBasedRoute role="admin"><PlatformControlsPage /></RoleBasedRoute>} />
             <Route path="/dashboard/admin/wallet-verification" element={<RoleBasedRoute role="admin"><WalletVerificationPage /></RoleBasedRoute>} />
             <Route path="/dashboard/settings" element={<RoleBasedRoute role="admin"><SiteSettingsPage /></RoleBasedRoute>} />
             <Route path="/dashboard/admin/content-editor" element={<RoleBasedRoute role="admin"><ContentEditorPage /></RoleBasedRoute>} />

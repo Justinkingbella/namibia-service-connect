@@ -3,459 +3,237 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/common/Button';
-import { BarChart, LineChart, AreaChart, PieChart, ResponsiveContainer, XAxis, YAxis, Bar, Line, Area, Pie, Tooltip, Legend, Cell } from 'recharts';
-import { Download, TrendingUp, Calendar, MapPin, User, Users, DollarSign, PieChart as PieChartIcon } from 'lucide-react';
+import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Download, TrendingUp, Users, CreditCard, Calendar } from 'lucide-react';
 
-const userEngagementData = [
-  { month: 'Jan', customers: 120, providers: 45, bookings: 210 },
-  { month: 'Feb', customers: 135, providers: 48, bookings: 240 },
-  { month: 'Mar', customers: 155, providers: 52, bookings: 285 },
-  { month: 'Apr', customers: 180, providers: 56, bookings: 310 },
-  { month: 'May', customers: 205, providers: 60, bookings: 345 },
-  { month: 'Jun', customers: 230, providers: 65, bookings: 390 },
+// Mock data for platform analytics
+const platformData = [
+  { name: 'Jan', users: 120, bookings: 80, revenue: 2400, providers: 45 },
+  { name: 'Feb', users: 140, bookings: 95, revenue: 3000, providers: 50 },
+  { name: 'Mar', users: 170, bookings: 110, revenue: 3500, providers: 57 },
+  { name: 'Apr', users: 200, bookings: 140, revenue: 4200, providers: 65 },
+  { name: 'May', users: 220, bookings: 160, revenue: 4800, providers: 72 },
+  { name: 'Jun', users: 250, bookings: 180, revenue: 5500, providers: 80 },
+  { name: 'Jul', users: 280, bookings: 200, revenue: 6200, providers: 87 },
+  { name: 'Aug', users: 310, bookings: 225, revenue: 6800, providers: 93 },
+  { name: 'Sep', users: 330, bookings: 240, revenue: 7200, providers: 98 },
+  { name: 'Oct', users: 350, bookings: 260, revenue: 7800, providers: 105 },
+  { name: 'Nov', users: 370, bookings: 275, revenue: 8300, providers: 112 },
+  { name: 'Dec', users: 400, bookings: 300, revenue: 9000, providers: 120 },
 ];
 
-const revenueData = [
-  { month: 'Jan', totalRevenue: 25000, commissions: 5000 },
-  { month: 'Feb', totalRevenue: 28000, commissions: 5600 },
-  { month: 'Mar', totalRevenue: 32000, commissions: 6400 },
-  { month: 'Apr', totalRevenue: 38000, commissions: 7600 },
-  { month: 'May', totalRevenue: 45000, commissions: 9000 },
-  { month: 'Jun', totalRevenue: 52000, commissions: 10400 },
+// Mock data for key metrics
+const keyMetrics = [
+  { 
+    title: 'Total Users', 
+    value: '4,320', 
+    change: '+12.5%', 
+    trend: 'up',
+    icon: <Users className="h-5 w-5" />,
+    color: 'bg-blue-500'
+  },
+  { 
+    title: 'Active Providers', 
+    value: '120', 
+    change: '+8.3%', 
+    trend: 'up',
+    icon: <Users className="h-5 w-5" />,
+    color: 'bg-green-500'
+  },
+  { 
+    title: 'Total Revenue', 
+    value: 'N$85,400', 
+    change: '+15.2%', 
+    trend: 'up',
+    icon: <CreditCard className="h-5 w-5" />,
+    color: 'bg-purple-500'
+  },
+  { 
+    title: 'Bookings', 
+    value: '2,150', 
+    change: '+10.7%', 
+    trend: 'up',
+    icon: <Calendar className="h-5 w-5" />,
+    color: 'bg-orange-500'
+  },
 ];
 
-const topCategoriesData = [
-  { name: 'Home Services', value: 45 },
-  { name: 'Errands', value: 25 },
-  { name: 'Professional', value: 15 },
-  { name: 'Freelance', value: 10 },
-  { name: 'Transport', value: 5 },
-];
+const AdvancedAnalytics = () => {
+  const [timeframe, setTimeframe] = useState<string>('yearly');
+  const [chartView, setChartView] = useState<string>('revenue');
 
-const regionalData = [
-  { name: 'Windhoek', bookings: 450, customers: 350, providers: 120 },
-  { name: 'Swakopmund', bookings: 180, customers: 120, providers: 45 },
-  { name: 'Walvis Bay', bookings: 160, customers: 110, providers: 40 },
-  { name: 'Oshakati', bookings: 130, customers: 95, providers: 35 },
-  { name: 'Rundu', bookings: 90, customers: 70, providers: 25 },
-];
-
-const topProvidersData = [
-  { name: 'CleanHome Pro', bookings: 98, earnings: 24500, rating: 4.8 },
-  { name: 'Plumb Perfect', bookings: 76, earnings: 19000, rating: 4.6 },
-  { name: 'Swift Errands', bookings: 65, earnings: 13000, rating: 4.9 },
-  { name: 'Elite Movers', bookings: 54, earnings: 13500, rating: 4.7 },
-  { name: 'Tech Wizards', bookings: 48, earnings: 12000, rating: 4.5 },
-];
-
-const COLORS = ['#8884d8', '#83a6ed', '#8dd1e1', '#82ca9d', '#a4de6c'];
-
-const AdvancedAnalytics: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('engagement');
-  const [timeRange, setTimeRange] = useState('6m');
-  
   return (
     <Card className="w-full">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <CardTitle>Advanced Analytics</CardTitle>
-            <CardDescription>
-              Comprehensive platform metrics and performance insights
-            </CardDescription>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <select 
-              className="p-2 border rounded-md text-sm"
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-            >
-              <option value="1m">Last Month</option>
-              <option value="3m">Last 3 Months</option>
-              <option value="6m">Last 6 Months</option>
-              <option value="1y">Last Year</option>
-              <option value="all">All Time</option>
-            </select>
-            
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" /> Export
-            </Button>
-          </div>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Platform Performance</CardTitle>
+          <CardDescription>
+            Comprehensive analytics and key metrics overview
+          </CardDescription>
+        </div>
+        <div className="flex items-center gap-4">
+          <Tabs defaultValue="yearly" value={timeframe} onValueChange={setTimeframe}>
+            <TabsList>
+              <TabsTrigger value="monthly">Monthly</TabsTrigger>
+              <TabsTrigger value="quarterly">Quarterly</TabsTrigger>
+              <TabsTrigger value="yearly">Yearly</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Button variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="engagement" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="engagement">User Engagement</TabsTrigger>
-            <TabsTrigger value="revenue">Revenue</TabsTrigger>
-            <TabsTrigger value="services">Services</TabsTrigger>
-            <TabsTrigger value="regional">Regional</TabsTrigger>
-            <TabsTrigger value="providers">Top Providers</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="engagement">
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Total Users</p>
-                        <h3 className="text-2xl font-bold">265</h3>
-                        <p className="text-xs text-green-600 flex items-center mt-1">
-                          <TrendingUp className="h-3 w-3 mr-1" /> +15% vs. previous period
-                        </p>
-                      </div>
-                      <Users className="h-10 w-10 text-primary-foreground bg-primary rounded-full p-2" />
+      <CardContent className="space-y-6">
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          {keyMetrics.map((metric, index) => (
+            <Card key={index}>
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm text-muted-foreground">{metric.title}</p>
+                    <h3 className="text-2xl font-bold mt-1">{metric.value}</h3>
+                    <div className="flex items-center mt-1">
+                      <TrendingUp className={`h-4 w-4 mr-1 ${metric.trend === 'up' ? 'text-green-500' : 'text-red-500'}`} />
+                      <span className={`text-xs ${metric.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                        {metric.change} from last period
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Total Bookings</p>
-                        <h3 className="text-2xl font-bold">390</h3>
-                        <p className="text-xs text-green-600 flex items-center mt-1">
-                          <TrendingUp className="h-3 w-3 mr-1" /> +12% vs. previous period
-                        </p>
-                      </div>
-                      <Calendar className="h-10 w-10 text-primary-foreground bg-primary rounded-full p-2" />
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Active Providers</p>
-                        <h3 className="text-2xl font-bold">65</h3>
-                        <p className="text-xs text-green-600 flex items-center mt-1">
-                          <TrendingUp className="h-3 w-3 mr-1" /> +8% vs. previous period
-                        </p>
-                      </div>
-                      <User className="h-10 w-10 text-primary-foreground bg-primary rounded-full p-2" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">User Growth & Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={userEngagementData}>
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Area type="monotone" dataKey="customers" stackId="1" stroke="#8884d8" fill="#8884d8" name="Customers" />
-                        <Area type="monotone" dataKey="providers" stackId="1" stroke="#82ca9d" fill="#82ca9d" name="Providers" />
-                        <Area type="monotone" dataKey="bookings" stackId="2" stroke="#ffc658" fill="#ffc658" name="Bookings" />
-                      </AreaChart>
-                    </ResponsiveContainer>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                  <div className={`p-2 rounded-full ${metric.color}`}>
+                    {React.cloneElement(metric.icon as React.ReactElement, { className: "h-5 w-5 text-white" })}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Chart Tabs */}
+        <Tabs defaultValue="revenue" value={chartView} onValueChange={setChartView}>
+          <div className="flex justify-between items-center mb-4">
+            <TabsList>
+              <TabsTrigger value="revenue">Revenue</TabsTrigger>
+              <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="bookings">Bookings</TabsTrigger>
+              <TabsTrigger value="providers">Providers</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="revenue" className="mt-0">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Revenue Growth</CardTitle>
+                <CardDescription>
+                  Platform revenue in Namibian Dollars (N$)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={platformData}
+                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => [`N$${value}`, 'Revenue']} />
+                      <Area type="monotone" dataKey="revenue" stroke="#8884d8" fillOpacity={1} fill="url(#colorRevenue)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
-          
-          <TabsContent value="revenue">
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Total Revenue</p>
-                        <h3 className="text-2xl font-bold">N$220,000</h3>
-                        <p className="text-xs text-green-600 flex items-center mt-1">
-                          <TrendingUp className="h-3 w-3 mr-1" /> +18% vs. previous period
-                        </p>
-                      </div>
-                      <DollarSign className="h-10 w-10 text-primary-foreground bg-primary rounded-full p-2" />
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Platform Commissions</p>
-                        <h3 className="text-2xl font-bold">N$44,000</h3>
-                        <p className="text-xs text-green-600 flex items-center mt-1">
-                          <TrendingUp className="h-3 w-3 mr-1" /> +18% vs. previous period
-                        </p>
-                      </div>
-                      <DollarSign className="h-10 w-10 text-primary-foreground bg-primary rounded-full p-2" />
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Avg. Booking Value</p>
-                        <h3 className="text-2xl font-bold">N$564</h3>
-                        <p className="text-xs text-green-600 flex items-center mt-1">
-                          <TrendingUp className="h-3 w-3 mr-1" /> +5% vs. previous period
-                        </p>
-                      </div>
-                      <DollarSign className="h-10 w-10 text-primary-foreground bg-primary rounded-full p-2" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Revenue & Commissions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={revenueData}>
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => `N$${value}`} />
-                        <Legend />
-                        <Line type="monotone" dataKey="totalRevenue" stroke="#8884d8" name="Total Revenue" />
-                        <Line type="monotone" dataKey="commissions" stroke="#82ca9d" name="Commissions" />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+
+          <TabsContent value="users" className="mt-0">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">User Growth</CardTitle>
+                <CardDescription>
+                  Total platform users over time
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={platformData}
+                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="users" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
-          
-          <TabsContent value="services">
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Service Categories Distribution</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={topCategoriesData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          >
-                            {topCategoriesData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(value) => `${value}%`} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Top 5 Services</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">SERVICE</th>
-                            <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">BOOKINGS</th>
-                            <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">REVENUE</th>
-                            <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">AVG. RATING</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr className="border-b">
-                            <td className="py-3 px-4">Home Cleaning</td>
-                            <td className="py-3 px-4">142</td>
-                            <td className="py-3 px-4">N$35,500</td>
-                            <td className="py-3 px-4">4.8</td>
-                          </tr>
-                          <tr className="border-b">
-                            <td className="py-3 px-4">Plumbing Services</td>
-                            <td className="py-3 px-4">98</td>
-                            <td className="py-3 px-4">N$29,400</td>
-                            <td className="py-3 px-4">4.6</td>
-                          </tr>
-                          <tr className="border-b">
-                            <td className="py-3 px-4">Errand Running</td>
-                            <td className="py-3 px-4">87</td>
-                            <td className="py-3 px-4">N$13,050</td>
-                            <td className="py-3 px-4">4.7</td>
-                          </tr>
-                          <tr className="border-b">
-                            <td className="py-3 px-4">Computer Repair</td>
-                            <td className="py-3 px-4">65</td>
-                            <td className="py-3 px-4">N$19,500</td>
-                            <td className="py-3 px-4">4.5</td>
-                          </tr>
-                          <tr>
-                            <td className="py-3 px-4">House Moving</td>
-                            <td className="py-3 px-4">52</td>
-                            <td className="py-3 px-4">N$26,000</td>
-                            <td className="py-3 px-4">4.4</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+
+          <TabsContent value="bookings" className="mt-0">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Booking Activity</CardTitle>
+                <CardDescription>
+                  Total bookings processed over time
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={platformData}
+                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="bookings" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
-          
-          <TabsContent value="regional">
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Regional Distribution</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={regionalData}>
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="bookings" fill="#8884d8" name="Bookings" />
-                        <Bar dataKey="customers" fill="#82ca9d" name="Customers" />
-                        <Bar dataKey="providers" fill="#ffc658" name="Providers" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Regional Service Demand</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">REGION</th>
-                          <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">TOP SERVICE</th>
-                          <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">DEMAND GROWTH</th>
-                          <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">PROVIDER RATIO</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr className="border-b">
-                          <td className="py-3 px-4">Windhoek</td>
-                          <td className="py-3 px-4">Home Cleaning</td>
-                          <td className="py-3 px-4 text-green-600">+18%</td>
-                          <td className="py-3 px-4">1:2.9</td>
-                        </tr>
-                        <tr className="border-b">
-                          <td className="py-3 px-4">Swakopmund</td>
-                          <td className="py-3 px-4">Errand Running</td>
-                          <td className="py-3 px-4 text-green-600">+22%</td>
-                          <td className="py-3 px-4">1:2.7</td>
-                        </tr>
-                        <tr className="border-b">
-                          <td className="py-3 px-4">Walvis Bay</td>
-                          <td className="py-3 px-4">Plumbing</td>
-                          <td className="py-3 px-4 text-green-600">+15%</td>
-                          <td className="py-3 px-4">1:2.8</td>
-                        </tr>
-                        <tr className="border-b">
-                          <td className="py-3 px-4">Oshakati</td>
-                          <td className="py-3 px-4">House Moving</td>
-                          <td className="py-3 px-4 text-green-600">+12%</td>
-                          <td className="py-3 px-4">1:2.7</td>
-                        </tr>
-                        <tr>
-                          <td className="py-3 px-4">Rundu</td>
-                          <td className="py-3 px-4">Computer Repair</td>
-                          <td className="py-3 px-4 text-green-600">+8%</td>
-                          <td className="py-3 px-4">1:2.8</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="providers">
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Top Performing Providers</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">PROVIDER</th>
-                          <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">BOOKINGS</th>
-                          <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">EARNINGS</th>
-                          <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">RATING</th>
-                          <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">CUSTOMER RETENTION</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {topProvidersData.map((provider, index) => (
-                          <tr key={index} className="border-b">
-                            <td className="py-3 px-4">{provider.name}</td>
-                            <td className="py-3 px-4">{provider.bookings}</td>
-                            <td className="py-3 px-4">N${provider.earnings}</td>
-                            <td className="py-3 px-4">{provider.rating}</td>
-                            <td className="py-3 px-4">{75 + Math.floor(Math.random() * 15)}%</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Provider Performance Metrics</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={topProvidersData}>
-                        <XAxis dataKey="name" />
-                        <YAxis yAxisId="left" orientation="left" />
-                        <YAxis yAxisId="right" orientation="right" />
-                        <Tooltip />
-                        <Legend />
-                        <Bar yAxisId="left" dataKey="bookings" fill="#8884d8" name="Bookings" />
-                        <Bar yAxisId="right" dataKey="earnings" fill="#82ca9d" name="Earnings (N$)" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+
+          <TabsContent value="providers" className="mt-0">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Service Provider Growth</CardTitle>
+                <CardDescription>
+                  Active service providers on the platform
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={platformData}
+                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="providers" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </CardContent>
