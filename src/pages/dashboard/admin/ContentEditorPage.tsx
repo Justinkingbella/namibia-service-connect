@@ -27,12 +27,14 @@ const ContentEditorPage = () => {
 
   const [editingBlock, setEditingBlock] = useState<ContentBlock>({
     id: '',
-    page: '',
+    page_name: '',
+    block_name: '',
     title: '',
     subtitle: '',
     content: '',
-    order: 0,
+    order_index: 0,
     image_url: '',
+    buttons: [],
     is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
@@ -73,12 +75,14 @@ const ContentEditorPage = () => {
   const handleAddNewBlock = () => {
     const newBlock: ContentBlock = {
       id: `new-${Date.now()}`,
-      page: activeTab,
+      page_name: activeTab,
+      block_name: `block-${Date.now()}`,
       title: '',
       subtitle: '',
       content: '',
-      order: contentBlocks.length + 1,
+      order_index: contentBlocks.length + 1,
       image_url: '',
+      buttons: [],
       is_active: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
