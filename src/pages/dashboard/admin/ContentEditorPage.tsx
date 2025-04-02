@@ -195,7 +195,11 @@ const ContentEditorPage = () => {
             title: editingBlock.title,
             content: editingBlock.content,
             image_url: '',
-            subtitle: ''
+            subtitle: '',
+            buttons: null,
+            order_index: editingBlock.position,
+            created_at: editingBlock.createdAt,
+            updated_at: editingBlock.updatedAt
           }}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
