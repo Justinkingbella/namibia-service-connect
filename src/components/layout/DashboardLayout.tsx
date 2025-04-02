@@ -96,6 +96,21 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
   const mobileNavItems = getMobileNavItems();
 
+  // Helper function to get user display name
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    // Handle both name and email cases safely
+    const firstName = user.name?.split(' ')[0] || '';
+    const lastName = user.name?.split(' ')[1] || '';
+    return firstName ? `${firstName} ${lastName}`.trim() : user.email || '';
+  };
+
+  // Get avatar initials
+  const getAvatarInitials = () => {
+    if (!user) return 'U';
+    return user.name?.charAt(0) || user.email?.charAt(0) || 'U';
+  };
+
   return (
     <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen bg-gray-50 flex flex-col w-full">
@@ -143,16 +158,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   >
                     <Avatar className="h-8 w-8 bg-primary/10 text-primary">
-                      {user?.avatar_url ? (
-                        <img src={user.avatar_url} alt="Profile" className="h-full w-full object-cover" />
+                      {user?.avatar ? (
+                        <img src={user.avatar} alt="Profile" className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-sm font-medium">
-                          {user?.first_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                          {getAvatarInitials()}
                         </span>
                       )}
                     </Avatar>
                     <span className="hidden sm:block text-sm font-medium">
-                      {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.email}
+                      {getUserDisplayName()}
                     </span>
                     <ChevronDown size={16} className="text-gray-400" />
                   </button>
@@ -161,7 +176,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg py-1 z-50 border animate-fade-in">
                       <div className="px-4 py-3 border-b">
                         <p className="text-sm font-medium">
-                          {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : ''}
+                          {getUserDisplayName()}
                         </p>
                         <p className="text-xs text-gray-500">{user?.email}</p>
                       </div>

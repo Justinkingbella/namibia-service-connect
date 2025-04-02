@@ -4,34 +4,34 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import { SiteProvider } from './contexts/SiteContext';
 import { Toaster } from './components/ui/toaster';
-import DashboardPage from './pages/dashboard/DashboardPage';
+import Dashboard from './pages/dashboard/Dashboard';
 import ProfilePage from './pages/dashboard/ProfilePage';
 import ServicesPage from './pages/dashboard/services/ServicesPage';
-import ServiceDetailPage from './pages/dashboard/services/ServiceDetailPage';
+import ServiceDetailPage from './pages/dashboard/services/ServiceDetail';
 import BookingsPage from './pages/dashboard/bookings/BookingsPage';
-import BookingDetailPage from './pages/dashboard/bookings/BookingDetailPage';
+import BookingDetailPage from './pages/dashboard/bookings/BookingDetail';
 import FavoritesPage from './pages/dashboard/customer/FavoritesPage';
 import PaymentHistoryPage from './pages/dashboard/customer/PaymentHistoryPage';
 import ProviderTransactionsPage from './pages/dashboard/provider/TransactionsPage';
 import ProviderProfilePage from './pages/dashboard/provider/ProviderProfilePage';
 import UsersPage from './pages/dashboard/admin/UsersPage';
-import AnalyticsPage from './pages/dashboard/admin/AnalyticsPage';
+import AnalyticsPage from './pages/dashboard/admin/PlatformAnalyticsPage';
 import WalletVerificationPage from './pages/dashboard/admin/WalletVerificationPage';
 import SiteSettingsPage from './pages/dashboard/admin/SiteSettingsPage';
 import AdminProfilePage from './pages/dashboard/admin/AdminProfilePage';
-import HomePage from './pages/HomePage';
-import SignInPage from './pages/auth/SignInPage';
-import SignUpPage from './pages/auth/SignUpPage';
-import ServicesListPage from './pages/ServicesListPage';
-import ServiceDetailsPage from './pages/ServiceDetailsPage';
+import HomePage from './pages/Index';
+import SignInPage from './pages/auth/SignIn';
+import SignUpPage from './pages/auth/SignUp';
+import ServicesListPage from './pages/Services';
+import ServiceDetailsPage from './pages/Services';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
-import HowItWorksPage from './pages/HowItWorksPage';
+import HowItWorksPage from './pages/HowItWorks';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
-import NotFoundPage from './pages/NotFoundPage';
+import NotFoundPage from './pages/NotFound';
 import MessagesPage from './pages/dashboard/messages/MessagesPage';
-import SettingsPage from './pages/dashboard/SettingsPage';
+import SettingsPage from './pages/dashboard/settings/SettingsPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import RoleBasedRoute from './components/auth/RoleBasedRoute';
 import TermsPage from './pages/TermsPage';
@@ -61,7 +61,7 @@ function App() {
             <Route path="/faq" element={<FAQPage />} />
             
             {/* Dashboard Routes - Protected */}
-            <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/dashboard/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/dashboard/services" element={<ProtectedRoute><ServicesPage /></ProtectedRoute>} />
             <Route path="/dashboard/services/:id" element={<ProtectedRoute><ServiceDetailPage /></ProtectedRoute>} />
