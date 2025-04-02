@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar } from '@/components/ui/avatar';
 import { User, Key, MapPin, Phone, Mail, Briefcase, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { DbUserProfile, DbProviderProfile } from '@/types/auth';
+import { DbUserProfile, DbProviderProfile, ProviderVerificationStatus } from '@/types/auth';
 import { AvatarUpload } from '@/components/ui/avatar-upload';
 
 const ProviderProfile: React.FC = () => {
@@ -26,7 +25,6 @@ const ProviderProfile: React.FC = () => {
     totalEarnings: 0
   });
 
-  // Fetch provider profile data
   useEffect(() => {
     const fetchProviderData = async () => {
       if (!profile?.id) return;
@@ -34,7 +32,6 @@ const ProviderProfile: React.FC = () => {
       try {
         setLoadingProvider(true);
         
-        // Fetch provider data
         const { data, error } = await supabase
           .from('service_providers')
           .select('*')
@@ -43,13 +40,17 @@ const ProviderProfile: React.FC = () => {
           
         if (error) throw error;
         
-        setProviderData(data);
+        const typedData: Partial<DbProviderProfile> = {
+          ...data,
+          verification_status: data.verification_status as ProviderVerificationStatus
+        };
         
-        // Set statistics
+        setProviderData(typedData);
+        
         setStats({
           totalServices: data.services_count || 0,
           completedBookings: data.completed_bookings || 0,
-          totalEarnings: 0 // You might want to calculate this from another table
+          totalEarnings: 0
         });
       } catch (error) {
         console.error('Error fetching provider data:', error);
@@ -103,11 +104,7 @@ const ProviderProfile: React.FC = () => {
     setIsSaving(true);
     
     try {
-      // Update profile data
       await updateProfile(personalData);
-      
-      // Update provider data if needed
-      // This would require another function to update the service_providers table
       
       toast({
         title: "Profile updated",
