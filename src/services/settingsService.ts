@@ -13,6 +13,7 @@ import {
   SettingGroup,
   SettingCategory
 } from '@/types/settings';
+import { Json } from '@/integrations/supabase/types';
 
 // Helper function to safely access object properties
 const safeGet = (obj: any, key: string, defaultValue: any = undefined) => {
@@ -56,10 +57,13 @@ export const getSettingsByCategory = async (category: string): Promise<SiteSetti
 
   // Transform the data to match the SiteSetting interface
   return data.map(item => {
-    // Ensure valueObj is a valid object and not an array or null
     const rawValue = item.value;
-    const valueObj = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
+    let valueObj: Record<string, any> = {};
     
+    if (rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue)) {
+      valueObj = rawValue as Record<string, any>;
+    }
+
     return {
       id: item.id,
       key: item.key,
@@ -128,9 +132,12 @@ export const getAllSettingsGrouped = async (): Promise<SettingGroup[]> => {
 
   // Transform data to match SiteSetting interface
   const transformedData = data.map(item => {
-    // Ensure valueObj is a valid object and not an array or null
     const rawValue = item.value;
-    const valueObj = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
+    let valueObj: Record<string, any> = {};
+    
+    if (rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue)) {
+      valueObj = rawValue as Record<string, any>;
+    }
     
     return {
       id: item.id,
@@ -178,9 +185,12 @@ export const getBookingSettings = async (): Promise<BookingSetting[]> => {
 
   // Transform data to match BookingSetting interface
   return data.map(item => {
-    // Ensure valueObj is a valid object and not an array or null
     const rawValue = item.value;
-    const valueObj = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
+    let valueObj: Record<string, any> = {};
+    
+    if (rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue)) {
+      valueObj = rawValue as Record<string, any>;
+    }
     
     return {
       id: item.id,
