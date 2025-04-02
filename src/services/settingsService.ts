@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { 
+  BaseSetting,
   SiteSetting,
   AppearanceSettings,
   GeneralSettings,
@@ -9,7 +10,8 @@ import {
   SecuritySettings,
   IntegrationSettings,
   BookingSetting,
-  SettingGroup
+  SettingGroup,
+  SettingCategory
 } from '@/types/settings';
 
 // Fetch all site settings
@@ -44,7 +46,25 @@ export const getSettingsByCategory = async (category: string): Promise<SiteSetti
     throw new Error(`Failed to fetch ${category} settings`);
   }
 
-  return data as SiteSetting[];
+  // Transform the data to match the SiteSetting interface
+  return data.map(item => {
+    const valueObj = typeof item.value === 'object' ? item.value : {};
+    return {
+      id: item.id,
+      key: item.key,
+      value: item.value,
+      label: valueObj.label || item.key,
+      description: valueObj.description || '',
+      category: valueObj.category || category as SettingCategory,
+      isPublic: valueObj.isPublic || false,
+      dataType: valueObj.dataType || 'string',
+      options: valueObj.options || [],
+      defaultValue: valueObj.defaultValue,
+      isRequired: valueObj.isRequired || false,
+      createdAt: item.created_at || new Date().toISOString(),
+      updatedAt: item.updated_at || new Date().toISOString()
+    } as SiteSetting;
+  });
 };
 
 // Update a single setting
@@ -95,9 +115,29 @@ export const getAllSettingsGrouped = async (): Promise<SettingGroup[]> => {
     throw new Error('Failed to fetch settings');
   }
 
+  // Transform data to match SiteSetting interface
+  const transformedData = data.map(item => {
+    const valueObj = typeof item.value === 'object' ? item.value : {};
+    return {
+      id: item.id,
+      key: item.key,
+      value: item.value,
+      label: valueObj.label || item.key,
+      description: valueObj.description || '',
+      category: valueObj.category || 'general' as SettingCategory,
+      isPublic: valueObj.isPublic || false,
+      dataType: valueObj.dataType || 'string',
+      options: valueObj.options || [],
+      defaultValue: valueObj.defaultValue,
+      isRequired: valueObj.isRequired || false,
+      createdAt: item.created_at || new Date().toISOString(),
+      updatedAt: item.updated_at || new Date().toISOString()
+    } as SiteSetting;
+  });
+
   // Group settings by category
   const groupedSettings: Record<string, SiteSetting[]> = {};
-  (data as SiteSetting[]).forEach(setting => {
+  transformedData.forEach(setting => {
     if (!groupedSettings[setting.category]) {
       groupedSettings[setting.category] = [];
     }
@@ -122,7 +162,21 @@ export const getBookingSettings = async (): Promise<BookingSetting[]> => {
     throw new Error('Failed to fetch booking settings');
   }
 
-  return data as BookingSetting[];
+  // Transform data to match BookingSetting interface
+  return data.map(item => {
+    const valueObj = typeof item.value === 'object' ? item.value : {};
+    return {
+      id: item.id,
+      key: item.key,
+      value: item.value,
+      label: valueObj.label || item.key,
+      description: item.description || '',
+      category: valueObj.category || 'general',
+      isEnabled: valueObj.isEnabled || false,
+      createdAt: item.created_at || new Date().toISOString(),
+      updatedAt: item.updated_at || new Date().toISOString()
+    } as BookingSetting;
+  });
 };
 
 // Update booking setting

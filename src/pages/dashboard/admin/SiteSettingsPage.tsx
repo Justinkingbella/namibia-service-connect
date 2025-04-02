@@ -1,14 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { getSiteSettings, updateSiteSetting, uploadImage } from '@/services/contentService';
+import { getSiteSettings, updateSiteSetting, uploadImage } from '@/services/settingsService';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ImageUpload } from '@/components/ui/image-upload';
 
 const SiteSettingsPage = () => {
   const [settings, setSettings] = useState<Record<string, any>>({});

@@ -1,10 +1,17 @@
 
 export type SettingCategory = 'general' | 'appearance' | 'notifications' | 'payments' | 'security' | 'integrations';
 
-export interface SiteSetting {
+// Base setting interface matching Supabase structure
+export interface BaseSetting {
   id: string;
   key: string;
-  value: string | number | boolean;
+  value: string | number | boolean | Record<string, any>;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Extended setting interface with additional app properties
+export interface SiteSetting extends BaseSetting {
   label: string;
   description: string;
   category: SettingCategory;
@@ -78,10 +85,8 @@ export interface IntegrationSettings {
   }[];
 }
 
-export interface BookingSetting {
-  id: string;
-  key: string;
-  value: string | number | boolean;
+// Modified BookingSetting to match database structure
+export interface BookingSetting extends BaseSetting {
   label: string;
   description: string;
   category: 'general' | 'restrictions' | 'cancellation' | 'reminders';
