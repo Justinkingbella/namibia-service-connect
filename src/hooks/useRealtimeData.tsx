@@ -52,8 +52,8 @@ export function useRealtimeData<T>({
         throw queryError;
       }
       
-      setData(resultData as unknown as T);
-      return resultData as unknown as T;
+      setData(resultData as T);
+      return resultData as T;
     } catch (err) {
       console.error(`Error fetching data from ${table}:`, err);
       setError(err as Error);
@@ -71,7 +71,7 @@ export function useRealtimeData<T>({
     const channel = supabase
       .channel(`table-changes-${table}`)
       .on(
-        'postgres_changes',
+        'postgres_changes', // This is the correct event type for Supabase channels
         {
           event: event,
           schema: 'public',

@@ -841,22 +841,18 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteServic
       };
 
       // Safely handle the case where service might be null or have an error
-      let service = defaultService;
-      
-      if (fav.service && typeof fav.service === 'object') {
-        service = {
-          id: fav.service_id,
-          title: fav.service?.title || 'Unknown Service',
-          description: fav.service?.description || '',
-          price: fav.service?.price || 0,
-          providerId: fav.service?.provider_id || '',
-          providerName: fav.service?.provider_name || 'Unknown Provider',
-          categoryId: fav.service?.category || '',
-          imageUrl: fav.service?.image || undefined,
-          rating: fav.service?.rating || 0,
-          reviewCount: fav.service?.review_count || 0
-        };
-      }
+      const service = fav.service && typeof fav.service === 'object' ? {
+        id: fav.service_id,
+        title: fav.service.title || 'Unknown Service',
+        description: fav.service.description || '',
+        price: fav.service.price || 0,
+        providerId: fav.service.provider_id || '',
+        providerName: fav.service.provider_name || 'Unknown Provider',
+        categoryId: fav.service.category || '',
+        imageUrl: fav.service.image || undefined,
+        rating: fav.service.rating || 0,
+        reviewCount: fav.service.review_count || 0
+      } : defaultService;
 
       return {
         id: fav.id,
@@ -941,25 +937,27 @@ export function formatFavorites(favorites: any[]) {
   if (!favorites || !Array.isArray(favorites)) return [];
   
   return favorites.map(fav => {
+    const service = fav.service && typeof fav.service === 'object' ? {
+      id: fav.service.id,
+      title: fav.service.title,
+      description: fav.service.description,
+      price: fav.service.price,
+      location: fav.service.location,
+      image: fav.service.image,
+      category: fav.service.category,
+      isActive: fav.service.is_active,
+      providerId: fav.service.provider_id,
+      pricingModel: fav.service.pricing_model,
+      createdAt: fav.service.created_at,
+      updatedAt: fav.service.updated_at
+    } : null;
+
     return {
       id: fav.id,
       userId: fav.user_id,
       serviceId: fav.service_id,
       createdAt: fav.created_at,
-      service: fav.service ? {
-        id: fav.service?.id,
-        title: fav.service?.title,
-        description: fav.service?.description,
-        price: fav.service?.price,
-        location: fav.service?.location,
-        image: fav.service?.image,
-        category: fav.service?.category,
-        isActive: fav.service?.is_active,
-        providerId: fav.service?.provider_id,
-        pricingModel: fav.service?.pricing_model,
-        createdAt: fav.service?.created_at,
-        updatedAt: fav.service?.updated_at
-      } : null
+      service
     };
   });
 }
@@ -992,17 +990,28 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
       .filter(fav => fav.services !== null) // Filter out any null services
       .map((fav) => {
         // Handle the case where service might be null or not an object
-        const service = fav.services && typeof fav.services === 'object' ? fav.services : {};
+        if (!fav.services || typeof fav.services !== 'object') {
+          return {
+            id: fav.id,
+            serviceId: fav.service_id || '',
+            title: '',
+            description: '',
+            price: 0,
+            image: '',
+            category: '',
+            providerId: '',
+          };
+        }
         
         return {
           id: fav.id,
-          serviceId: service.id || fav.service_id || '',
-          title: service.title || '',
-          description: service.description || '',
-          price: service.price || 0,
-          image: service.image || '',
-          category: service.category || '',
-          providerId: service.provider_id || '',
+          serviceId: fav.services.id || fav.service_id || '',
+          title: fav.services.title || '',
+          description: fav.services.description || '',
+          price: fav.services.price || 0,
+          image: fav.services.image || '',
+          category: fav.services.category || '',
+          providerId: fav.services.provider_id || '',
         };
       });
 
