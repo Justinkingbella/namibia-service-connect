@@ -1,1143 +1,1024 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { PaymentHistory, Dispute } from '@/types/payments';
-import { DbUserProfile, UserAddress, PaymentMethod, User2FA } from '@/types/auth';
-import { FavoriteService } from '@/types/favorites';
-import { Message } from '@/types/message';
-import { ServiceData } from '@/types/service';
+import { ServiceCategory, PricingModel } from '@/types';
+import { uploadImage, deleteImage } from '@/utils/imageUtils';
 
-// Enable real-time updates for the tables we're working with
-const setupRealtimeSubscription = () => {
-  try {
-    return supabase
-      .channel('public-db-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'profiles'
-      }, (payload) => console.log('Profile change received:', payload))
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'payment_history'
-      }, (payload) => console.log('Payment history change received:', payload))
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'disputes'
-      }, (payload) => console.log('Disputes change received:', payload))
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'user_addresses'
-      }, (payload) => console.log('Addresses change received:', payload))
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'payment_methods'
-      }, (payload) => console.log('Payment methods change received:', payload))
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'favorite_services'
-      }, (payload) => console.log('Favorites change received:', payload))
-      .subscribe();
-  } catch (error) {
-    console.error('Error setting up real-time subscription:', error);
-    return null;
-  }
-};
-
-// Initialize the real-time subscription
-const realtimeSubscription = setupRealtimeSubscription();
-
-// Cleanup function to remove subscription when app unmounts
-export const cleanupRealtimeSubscription = () => {
-  if (realtimeSubscription) {
-    supabase.removeChannel(realtimeSubscription);
-  }
-};
-
-// Fetch payment history for a user
-export async function fetchPaymentHistory(userId: string): Promise<PaymentHistory[]> {
-  try {
-    const { data, error } = await supabase
-      .from('payment_history')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching payment history:', error);
-      toast.error('Failed to load payment history');
-      return [];
-    }
-
-    return data.map((item) => ({
-      id: item.id,
-      transactionType: item.booking_id ? 'booking' : 'subscription',
-      amount: item.amount,
-      status: item.status as 'pending' | 'processing' | 'completed' | 'failed' | 'refunded',
-      date: item.created_at,
-      paymentMethod: item.payment_method,
-      description: item.description
-    }));
-  } catch (error) {
-    console.error('Error in fetchPaymentHistory:', error);
-    toast.error('Failed to load payment history');
-    return [];
-  }
+// Profile types
+export interface Profile {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string;
+  avatar?: string;
+  bio?: string;
+  location?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Fetch disputes for a user
-export async function fetchUserDisputes(userId: string): Promise<Dispute[]> {
-  try {
-    const { data, error } = await supabase
-      .from('disputes')
-      .select('*')
-      .or(`customer_id.eq.${userId},provider_id.eq.${userId}`)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching disputes:', error);
-      toast.error('Failed to load disputes');
-      return [];
-    }
-
-    return data.map((item) => ({
-      id: item.id,
-      bookingId: item.booking_id,
-      customerId: item.customer_id,
-      providerId: item.provider_id,
-      status: item.status as 'open' | 'under_review' | 'resolved' | 'declined',
-      reason: item.subject,
-      description: item.description,
-      evidenceUrls: [],
-      resolution: item.resolution,
-      createdAt: new Date(item.created_at),
-      updatedAt: new Date(item.updated_at)
-    }));
-  } catch (error) {
-    console.error('Error in fetchUserDisputes:', error);
-    toast.error('Failed to load disputes');
-    return [];
-  }
+export interface CustomerProfile extends Profile {
+  preferredCategories?: string[];
+  notificationPreferences?: {
+    email: boolean;
+    sms: boolean;
+    push: boolean;
+  };
+  savedServices?: string[];
+  recentSearches?: string[];
 }
 
-// Create a new dispute
-export async function createDispute(dispute: Omit<Dispute, 'id' | 'createdAt' | 'updatedAt'>): Promise<Dispute | null> {
+export interface ProviderProfile extends Profile {
+  businessName: string;
+  businessDescription?: string;
+  businessLogo?: string;
+  businessAddress?: string;
+  businessHours?: Record<string, { open: string; close: string }>;
+  categories?: string[];
+  verificationStatus: 'pending' | 'verified' | 'rejected';
+  verificationDocuments?: string[];
+  rating?: number;
+  reviewCount?: number;
+  subscriptionTier?: string;
+  bankDetails?: {
+    accountName: string;
+    accountNumber: string;
+    bankName: string;
+    branchCode?: string;
+  };
+}
+
+// Service types
+export interface ServiceData {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  pricing_model: PricingModel;
+  category: ServiceCategory;
+  provider_id: string;
+  provider_name?: string;
+  image?: string;
+  features?: string[];
+  is_active: boolean;
+  location?: string;
+  rating?: number;
+  review_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Fetch user profile
+export async function fetchUserProfile(userId: string): Promise<Profile | null> {
   try {
     const { data, error } = await supabase
-      .from('disputes')
-      .insert([{
-        booking_id: dispute.bookingId,
-        customer_id: dispute.customerId,
-        provider_id: dispute.providerId,
-        subject: dispute.reason,
-        description: dispute.description,
-        status: dispute.status || 'open'
-      }])
-      .select()
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
       .single();
 
     if (error) {
-      console.error('Error creating dispute:', error);
-      toast.error('Failed to create dispute');
+      console.error('Error fetching profile:', error);
+      toast.error('Failed to load profile data');
       return null;
     }
 
-    toast.success('Dispute submitted successfully');
-    
     return {
       id: data.id,
-      bookingId: data.booking_id,
-      customerId: data.customer_id,
-      providerId: data.provider_id,
-      status: data.status as 'open' | 'under_review' | 'resolved' | 'declined',
-      reason: data.subject,
-      description: data.description,
-      evidenceUrls: [],
-      resolution: data.resolution,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      firstName: data.first_name,
+      lastName: data.last_name,
+      email: data.email,
+      phoneNumber: data.phone_number,
+      avatar: data.avatar_url,
+      bio: data.bio,
+      location: data.location,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
     };
   } catch (error) {
-    console.error('Error in createDispute:', error);
-    toast.error('Failed to create dispute');
+    console.error('Unexpected error in fetchUserProfile:', error);
+    toast.error('Something went wrong while loading your profile');
     return null;
   }
 }
 
-// User Profile Functions
-export async function fetchUserProfile(userId: string): Promise<DbUserProfile | null> {
+// Fetch customer profile
+export async function fetchCustomerProfile(userId: string): Promise<CustomerProfile | null> {
   try {
     const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
+      .from('customers')
+      .select(`
+        *,
+        profile:profiles(*)
+      `)
       .eq('id', userId)
       .single();
 
     if (error) {
-      console.error('Error fetching user profile:', error);
-      toast.error('Failed to load profile');
+      console.error('Error fetching customer profile:', error);
+      toast.error('Failed to load customer profile');
       return null;
     }
 
-    return data;
+    if (!data.profile) {
+      toast.error('Profile information not found');
+      return null;
+    }
+
+    return {
+      id: data.id,
+      firstName: data.profile.first_name,
+      lastName: data.profile.last_name,
+      email: data.profile.email,
+      phoneNumber: data.profile.phone_number,
+      avatar: data.profile.avatar_url,
+      bio: data.profile.bio,
+      location: data.profile.location,
+      createdAt: data.profile.created_at,
+      updatedAt: data.profile.updated_at,
+      preferredCategories: data.preferred_categories,
+      notificationPreferences: data.notification_preferences,
+      savedServices: data.saved_services,
+      recentSearches: data.recent_searches
+    };
   } catch (error) {
-    console.error('Error in fetchUserProfile:', error);
-    toast.error('Failed to load profile');
+    console.error('Unexpected error in fetchCustomerProfile:', error);
+    toast.error('Something went wrong while loading your profile');
     return null;
   }
 }
 
-export async function updateUserProfile(userId: string, profileData: Partial<DbUserProfile>): Promise<DbUserProfile | null> {
+// Fetch provider profile
+export async function fetchProviderProfile(userId: string): Promise<ProviderProfile | null> {
   try {
     const { data, error } = await supabase
-      .from('profiles')
-      .update(profileData)
+      .from('service_providers')
+      .select(`
+        *,
+        profile:profiles(*)
+      `)
       .eq('id', userId)
-      .select()
       .single();
 
     if (error) {
-      console.error('Error updating user profile:', error);
-      toast.error('Failed to update profile');
+      console.error('Error fetching provider profile:', error);
+      toast.error('Failed to load provider profile');
       return null;
+    }
+
+    if (!data.profile) {
+      toast.error('Profile information not found');
+      return null;
+    }
+
+    return {
+      id: data.id,
+      firstName: data.profile.first_name,
+      lastName: data.profile.last_name,
+      email: data.profile.email,
+      phoneNumber: data.profile.phone_number,
+      avatar: data.profile.avatar_url,
+      bio: data.profile.bio,
+      location: data.profile.location,
+      createdAt: data.profile.created_at,
+      updatedAt: data.profile.updated_at,
+      businessName: data.business_name,
+      businessDescription: data.business_description,
+      businessLogo: data.business_logo,
+      businessAddress: data.business_address,
+      businessHours: data.business_hours,
+      categories: data.categories,
+      verificationStatus: data.verification_status,
+      verificationDocuments: data.verification_documents,
+      rating: data.rating,
+      reviewCount: data.review_count,
+      subscriptionTier: data.subscription_tier,
+      bankDetails: data.bank_details
+    };
+  } catch (error) {
+    console.error('Unexpected error in fetchProviderProfile:', error);
+    toast.error('Something went wrong while loading your profile');
+    return null;
+  }
+}
+
+// Update user profile
+export async function updateUserProfile(
+  userId: string,
+  profileData: Partial<Profile>,
+  avatarFile?: File
+): Promise<boolean> {
+  try {
+    let avatarUrl = profileData.avatar;
+
+    // Upload avatar if provided
+    if (avatarFile) {
+      const uploadResult = await uploadImage(avatarFile, `avatars/${userId}`);
+      if (uploadResult.success) {
+        avatarUrl = uploadResult.url;
+      } else {
+        toast.error('Failed to upload avatar');
+        return false;
+      }
+    }
+
+    // Prepare data for update
+    const updateData = {
+      first_name: profileData.firstName,
+      last_name: profileData.lastName,
+      phone_number: profileData.phoneNumber,
+      avatar_url: avatarUrl,
+      bio: profileData.bio,
+      location: profileData.location,
+      updated_at: new Date().toISOString()
+    };
+
+    // Update profile
+    const { error } = await supabase
+      .from('profiles')
+      .update(updateData)
+      .eq('id', userId);
+
+    if (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
+      return false;
     }
 
     toast.success('Profile updated successfully');
-    return data;
-  } catch (error) {
-    console.error('Error in updateUserProfile:', error);
-    toast.error('Failed to update profile');
-    return null;
-  }
-}
-
-export async function updateUserPassword(newPassword: string): Promise<boolean> {
-  try {
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword
-    });
-
-    if (error) {
-      console.error('Error updating password:', error);
-      toast.error('Failed to update password');
-      return false;
-    }
-
-    toast.success('Password updated successfully');
     return true;
   } catch (error) {
-    console.error('Error in updateUserPassword:', error);
-    toast.error('Failed to update password');
+    console.error('Unexpected error in updateUserProfile:', error);
+    toast.error('Something went wrong while updating your profile');
     return false;
   }
 }
 
-// User Address Functions
-export async function fetchUserAddresses(userId: string): Promise<UserAddress[]> {
+// Update customer profile
+export async function updateCustomerProfile(
+  userId: string,
+  profileData: Partial<CustomerProfile>,
+  avatarFile?: File
+): Promise<boolean> {
   try {
-    const { data, error } = await supabase
-      .from('user_addresses')
-      .select('*')
-      .eq('user_id', userId)
-      .order('is_default', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching user addresses:', error);
-      toast.error('Failed to load addresses');
-      return [];
-    }
-
-    return data.map(address => ({
-      id: address.id,
-      userId: address.user_id,
-      name: address.name,
-      street: address.street,
-      city: address.city,
-      region: address.region,
-      postalCode: address.postal_code,
-      country: address.country,
-      isDefault: address.is_default,
-      createdAt: address.created_at
-    }));
-  } catch (error) {
-    console.error('Error in fetchUserAddresses:', error);
-    toast.error('Failed to load addresses');
-    return [];
-  }
-}
-
-export async function addUserAddress(userId: string, address: Omit<UserAddress, 'id' | 'userId' | 'createdAt'>): Promise<UserAddress | null> {
-  try {
-    // If this is the default address, update other addresses
-    if (address.isDefault) {
-      await supabase
-        .from('user_addresses')
-        .update({ is_default: false })
-        .eq('user_id', userId);
-    }
-
-    const { data, error } = await supabase
-      .from('user_addresses')
-      .insert([{
-        user_id: userId,
-        name: address.name,
-        street: address.street,
-        city: address.city,
-        region: address.region,
-        postal_code: address.postalCode,
-        country: address.country,
-        is_default: address.isDefault
-      }])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error adding user address:', error);
-      toast.error('Failed to add address');
-      return null;
-    }
-
-    toast.success('Address added successfully');
+    // First update the base profile
+    const baseProfileUpdated = await updateUserProfile(userId, profileData, avatarFile);
     
-    return {
-      id: data.id,
-      userId: data.user_id,
-      name: data.name,
-      street: data.street,
-      city: data.city,
-      region: data.region,
-      postalCode: data.postal_code,
-      country: data.country,
-      isDefault: data.is_default,
-      createdAt: data.created_at
+    if (!baseProfileUpdated) {
+      return false;
+    }
+
+    // Prepare customer-specific data
+    const customerData = {
+      preferred_categories: profileData.preferredCategories,
+      notification_preferences: profileData.notificationPreferences,
+      updated_at: new Date().toISOString()
     };
+
+    // Update customer data
+    const { error } = await supabase
+      .from('customers')
+      .update(customerData)
+      .eq('id', userId);
+
+    if (error) {
+      console.error('Error updating customer profile:', error);
+      toast.error('Failed to update customer preferences');
+      return false;
+    }
+
+    toast.success('Profile updated successfully');
+    return true;
   } catch (error) {
-    console.error('Error in addUserAddress:', error);
-    toast.error('Failed to add address');
-    return null;
+    console.error('Unexpected error in updateCustomerProfile:', error);
+    toast.error('Something went wrong while updating your profile');
+    return false;
   }
 }
 
-export async function updateUserAddress(addressId: string, addressData: Partial<Omit<UserAddress, 'id' | 'userId' | 'createdAt'>>): Promise<boolean> {
+// Update provider profile
+export async function updateProviderProfile(
+  userId: string,
+  profileData: Partial<ProviderProfile>,
+  avatarFile?: File,
+  businessLogoFile?: File
+): Promise<boolean> {
   try {
-    // Convert from camelCase to snake_case for database
-    const dbAddressData: any = {};
-    if (addressData.name) dbAddressData.name = addressData.name;
-    if (addressData.street) dbAddressData.street = addressData.street;
-    if (addressData.city) dbAddressData.city = addressData.city;
-    if (addressData.region) dbAddressData.region = addressData.region;
-    if (addressData.postalCode) dbAddressData.postal_code = addressData.postalCode;
-    if (addressData.country) dbAddressData.country = addressData.country;
-    if (addressData.isDefault !== undefined) dbAddressData.is_default = addressData.isDefault;
+    // First update the base profile
+    const baseProfileUpdated = await updateUserProfile(userId, profileData, avatarFile);
+    
+    if (!baseProfileUpdated) {
+      return false;
+    }
 
-    // If setting as default, update other addresses
-    if (addressData.isDefault) {
-      // Get the user ID first
-      const { data: addressData, error: fetchError } = await supabase
-        .from('user_addresses')
-        .select('user_id')
-        .eq('id', addressId)
-        .single();
+    let businessLogoUrl = profileData.businessLogo;
 
-      if (fetchError) {
-        console.error('Error fetching address:', fetchError);
-        toast.error('Failed to update address');
+    // Upload business logo if provided
+    if (businessLogoFile) {
+      const uploadResult = await uploadImage(businessLogoFile, `business_logos/${userId}`);
+      if (uploadResult.success) {
+        businessLogoUrl = uploadResult.url;
+      } else {
+        toast.error('Failed to upload business logo');
         return false;
       }
-
-      // Update other addresses to not be default
-      await supabase
-        .from('user_addresses')
-        .update({ is_default: false })
-        .eq('user_id', addressData.user_id)
-        .neq('id', addressId);
     }
 
+    // Prepare provider-specific data
+    const providerData = {
+      business_name: profileData.businessName,
+      business_description: profileData.businessDescription,
+      business_logo: businessLogoUrl,
+      business_address: profileData.businessAddress,
+      business_hours: profileData.businessHours,
+      categories: profileData.categories,
+      bank_details: profileData.bankDetails,
+      updated_at: new Date().toISOString()
+    };
+
+    // Update provider data
     const { error } = await supabase
-      .from('user_addresses')
-      .update(dbAddressData)
-      .eq('id', addressId);
+      .from('service_providers')
+      .update(providerData)
+      .eq('id', userId);
 
     if (error) {
-      console.error('Error updating user address:', error);
-      toast.error('Failed to update address');
+      console.error('Error updating provider profile:', error);
+      toast.error('Failed to update business information');
       return false;
     }
 
-    toast.success('Address updated successfully');
+    toast.success('Business profile updated successfully');
     return true;
   } catch (error) {
-    console.error('Error in updateUserAddress:', error);
-    toast.error('Failed to update address');
+    console.error('Unexpected error in updateProviderProfile:', error);
+    toast.error('Something went wrong while updating your business profile');
     return false;
   }
 }
 
-export async function deleteUserAddress(addressId: string): Promise<boolean> {
+// Submit verification documents
+export async function submitVerificationDocuments(
+  userId: string,
+  documents: File[]
+): Promise<boolean> {
   try {
+    const documentUrls: string[] = [];
+
+    // Upload each document
+    for (const document of documents) {
+      const uploadResult = await uploadImage(document, `verification/${userId}`);
+      if (uploadResult.success) {
+        documentUrls.push(uploadResult.url);
+      } else {
+        toast.error(`Failed to upload document: ${document.name}`);
+        return false;
+      }
+    }
+
+    // Update provider verification status and documents
     const { error } = await supabase
-      .from('user_addresses')
-      .delete()
-      .eq('id', addressId);
+      .from('service_providers')
+      .update({
+        verification_status: 'pending',
+        verification_documents: documentUrls,
+        verification_submitted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId);
 
     if (error) {
-      console.error('Error deleting user address:', error);
-      toast.error('Failed to delete address');
+      console.error('Error submitting verification documents:', error);
+      toast.error('Failed to submit verification documents');
       return false;
     }
 
-    toast.success('Address deleted successfully');
+    toast.success('Verification documents submitted successfully');
     return true;
   } catch (error) {
-    console.error('Error in deleteUserAddress:', error);
-    toast.error('Failed to delete address');
+    console.error('Unexpected error in submitVerificationDocuments:', error);
+    toast.error('Something went wrong while submitting your documents');
     return false;
   }
 }
 
-// Payment Methods Functions
-export async function fetchUserPaymentMethods(userId: string): Promise<PaymentMethod[]> {
+// Create a new service
+export async function createService(
+  providerId: string,
+  serviceData: Partial<ServiceData>,
+  imageFile?: File
+): Promise<string | null> {
   try {
-    const { data, error } = await supabase
-      .from('payment_methods')
-      .select('*')
-      .eq('user_id', userId)
-      .order('is_default', { ascending: false });
+    let imageUrl = serviceData.image;
 
-    if (error) {
-      console.error('Error fetching payment methods:', error);
-      toast.error('Failed to load payment methods');
-      return [];
+    // Upload service image if provided
+    if (imageFile) {
+      const uploadResult = await uploadImage(imageFile, `services/${providerId}`);
+      if (uploadResult.success) {
+        imageUrl = uploadResult.url;
+      } else {
+        toast.error('Failed to upload service image');
+        return null;
+      }
     }
 
-    return data.map(method => ({
-      id: method.id,
-      userId: method.user_id,
-      type: method.type,
-      name: method.name,
-      details: method.details as Record<string, any>,
-      isDefault: method.is_default,
-      createdAt: method.created_at
-    }));
-  } catch (error) {
-    console.error('Error in fetchUserPaymentMethods:', error);
-    toast.error('Failed to load payment methods');
-    return [];
-  }
-}
+    // Get provider name
+    const { data: providerData, error: providerError } = await supabase
+      .from('service_providers')
+      .select('business_name')
+      .eq('id', providerId)
+      .single();
 
-export async function addPaymentMethod(userId: string, method: Omit<PaymentMethod, 'id' | 'userId' | 'createdAt'>): Promise<PaymentMethod | null> {
-  try {
-    // If this is the default method, update other methods
-    if (method.isDefault) {
-      await supabase
-        .from('payment_methods')
-        .update({ is_default: false })
-        .eq('user_id', userId);
+    if (providerError) {
+      console.error('Error fetching provider name:', providerError);
+      toast.error('Failed to fetch provider information');
+      return null;
     }
 
+    // Prepare service data
+    const newServiceData = {
+      title: serviceData.title,
+      description: serviceData.description,
+      price: serviceData.price,
+      pricing_model: serviceData.pricing_model || 'fixed',
+      category: serviceData.category,
+      provider_id: providerId,
+      provider_name: providerData.business_name,
+      image: imageUrl,
+      features: serviceData.features || [],
+      is_active: serviceData.is_active !== undefined ? serviceData.is_active : true,
+      location: serviceData.location || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    // Insert new service
     const { data, error } = await supabase
-      .from('payment_methods')
-      .insert([{
-        user_id: userId,
-        type: method.type,
-        name: method.name,
-        details: method.details as Record<string, any>,
-        is_default: method.isDefault
-      }])
+      .from('services')
+      .insert([newServiceData])
       .select()
       .single();
 
     if (error) {
-      console.error('Error adding payment method:', error);
-      toast.error('Failed to add payment method');
+      console.error('Error creating service:', error);
+      toast.error('Failed to create service');
       return null;
     }
 
-    toast.success('Payment method added successfully');
-    
-    return {
-      id: data.id,
-      userId: data.user_id,
-      type: data.type,
-      name: data.name,
-      details: data.details as Record<string, any>,
-      isDefault: data.is_default,
-      createdAt: data.created_at
-    };
+    toast.success('Service created successfully');
+    return data.id;
   } catch (error) {
-    console.error('Error in addPaymentMethod:', error);
-    toast.error('Failed to add payment method');
+    console.error('Unexpected error in createService:', error);
+    toast.error('Something went wrong while creating your service');
     return null;
   }
 }
 
-export async function deletePaymentMethod(methodId: string): Promise<boolean> {
+// Update an existing service
+export async function updateService(
+  serviceId: string,
+  providerId: string,
+  serviceData: Partial<ServiceData>,
+  imageFile?: File
+): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('payment_methods')
-      .delete()
-      .eq('id', methodId);
-
-    if (error) {
-      console.error('Error deleting payment method:', error);
-      toast.error('Failed to delete payment method');
-      return false;
-    }
-
-    toast.success('Payment method deleted successfully');
-    return true;
-  } catch (error) {
-    console.error('Error in deletePaymentMethod:', error);
-    toast.error('Failed to delete payment method');
-    return false;
-  }
-}
-
-export async function setDefaultPaymentMethod(methodId: string, userId: string): Promise<boolean> {
-  try {
-    // First, set all user's payment methods to non-default
-    await supabase
-      .from('payment_methods')
-      .update({ is_default: false })
-      .eq('user_id', userId);
-    
-    // Then set the selected one as default
-    const { error } = await supabase
-      .from('payment_methods')
-      .update({ is_default: true })
-      .eq('id', methodId);
-
-    if (error) {
-      console.error('Error setting default payment method:', error);
-      toast.error('Failed to update default payment method');
-      return false;
-    }
-
-    toast.success('Default payment method updated successfully');
-    return true;
-  } catch (error) {
-    console.error('Error in setDefaultPaymentMethod:', error);
-    toast.error('Failed to update default payment method');
-    return false;
-  }
-}
-
-// 2FA Functions
-export async function fetchUser2FAStatus(userId: string): Promise<User2FA | null> {
-  try {
-    const { data, error } = await supabase
-      .from('user_2fa')
+    // Verify service belongs to provider
+    const { data: existingService, error: fetchError } = await supabase
+      .from('services')
       .select('*')
-      .eq('user_id', userId)
+      .eq('id', serviceId)
+      .eq('provider_id', providerId)
       .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // No 2FA record found, return default state
-        return {
-          id: '',
-          userId,
-          isEnabled: false,
-          createdAt: new Date().toISOString()
-        };
-      }
-      console.error('Error fetching 2FA status:', error);
-      toast.error('Failed to load 2FA status');
-      return null;
+    if (fetchError) {
+      console.error('Error fetching service:', fetchError);
+      toast.error('Failed to verify service ownership');
+      return false;
     }
 
-    return {
-      id: data.id,
-      userId: data.user_id,
-      isEnabled: data.is_enabled,
-      secret: data.secret,
-      backupCodes: data.backup_codes,
-      createdAt: data.created_at
+    let imageUrl = serviceData.image || existingService.image;
+
+    // Upload new service image if provided
+    if (imageFile) {
+      const uploadResult = await uploadImage(imageFile, `services/${providerId}`);
+      if (uploadResult.success) {
+        imageUrl = uploadResult.url;
+        
+        // Delete old image if it exists and is different
+        if (existingService.image && existingService.image !== imageUrl) {
+          await deleteImage(existingService.image);
+        }
+      } else {
+        toast.error('Failed to upload service image');
+        return false;
+      }
+    }
+
+    // Prepare update data
+    const updateData = {
+      title: serviceData.title !== undefined ? serviceData.title : existingService.title,
+      description: serviceData.description !== undefined ? serviceData.description : existingService.description,
+      price: serviceData.price !== undefined ? serviceData.price : existingService.price,
+      pricing_model: serviceData.pricing_model || existingService.pricing_model,
+      category: serviceData.category || existingService.category,
+      image: imageUrl,
+      features: serviceData.features || existingService.features,
+      is_active: serviceData.is_active !== undefined ? serviceData.is_active : existingService.is_active,
+      location: serviceData.location || existingService.location,
+      updated_at: new Date().toISOString()
     };
+
+    // Update service
+    const { error } = await supabase
+      .from('services')
+      .update(updateData)
+      .eq('id', serviceId)
+      .eq('provider_id', providerId);
+
+    if (error) {
+      console.error('Error updating service:', error);
+      toast.error('Failed to update service');
+      return false;
+    }
+
+    toast.success('Service updated successfully');
+    return true;
   } catch (error) {
-    console.error('Error in fetchUser2FAStatus:', error);
-    toast.error('Failed to load 2FA status');
-    return null;
+    console.error('Unexpected error in updateService:', error);
+    toast.error('Something went wrong while updating your service');
+    return false;
   }
 }
 
-export async function enable2FA(userId: string, secret: string, backupCodes: string[]): Promise<boolean> {
+// Delete a service
+export async function deleteService(serviceId: string, providerId: string): Promise<boolean> {
   try {
-    // Check if user already has 2FA record
-    const { data: existingData, error: fetchError } = await supabase
-      .from('user_2fa')
-      .select('id')
-      .eq('user_id', userId);
+    // Verify service belongs to provider and get image URL
+    const { data: service, error: fetchError } = await supabase
+      .from('services')
+      .select('image')
+      .eq('id', serviceId)
+      .eq('provider_id', providerId)
+      .single();
 
     if (fetchError) {
-      console.error('Error checking existing 2FA:', fetchError);
-      toast.error('Failed to enable 2FA');
+      console.error('Error fetching service:', fetchError);
+      toast.error('Failed to verify service ownership');
       return false;
     }
 
-    let error;
-    if (existingData && existingData.length > 0) {
-      // Update existing record
-      const result = await supabase
-        .from('user_2fa')
-        .update({
-          is_enabled: true,
-          secret,
-          backup_codes: backupCodes
-        })
-        .eq('user_id', userId);
-      
-      error = result.error;
-    } else {
-      // Create new record
-      const result = await supabase
-        .from('user_2fa')
-        .insert([{
-          user_id: userId,
-          is_enabled: true,
-          secret,
-          backup_codes: backupCodes
-        }]);
-      
-      error = result.error;
-    }
-
-    if (error) {
-      console.error('Error enabling 2FA:', error);
-      toast.error('Failed to enable 2FA');
-      return false;
-    }
-
-    toast.success('Two-factor authentication enabled successfully');
-    return true;
-  } catch (error) {
-    console.error('Error in enable2FA:', error);
-    toast.error('Failed to enable 2FA');
-    return false;
-  }
-}
-
-export async function disable2FA(userId: string): Promise<boolean> {
-  try {
+    // Delete service
     const { error } = await supabase
-      .from('user_2fa')
-      .update({
-        is_enabled: false,
-        secret: null,
-        backup_codes: null
-      })
-      .eq('user_id', userId);
+      .from('services')
+      .delete()
+      .eq('id', serviceId)
+      .eq('provider_id', providerId);
 
     if (error) {
-      console.error('Error disabling 2FA:', error);
-      toast.error('Failed to disable 2FA');
+      console.error('Error deleting service:', error);
+      toast.error('Failed to delete service');
       return false;
     }
 
-    toast.success('Two-factor authentication disabled successfully');
+    // Delete service image if it exists
+    if (service.image) {
+      await deleteImage(service.image);
+    }
+
+    toast.success('Service deleted successfully');
     return true;
   } catch (error) {
-    console.error('Error in disable2FA:', error);
-    toast.error('Failed to disable 2FA');
+    console.error('Unexpected error in deleteService:', error);
+    toast.error('Something went wrong while deleting your service');
     return false;
   }
 }
 
-// Messages Functions
-export async function fetchUserMessages(userId: string): Promise<Message[]> {
+// Fetch provider services
+export async function fetchProviderServices(providerId: string): Promise<ServiceData[]> {
   try {
-    // First get all conversations the user is part of
-    const { data: conversationData, error: convError } = await supabase
-      .from('conversation_participants')
-      .select('conversation_id')
-      .eq('user_id', userId);
-
-    if (convError) {
-      console.error('Error fetching conversations:', convError);
-      toast.error('Failed to load messages');
-      return [];
-    }
-
-    if (!conversationData.length) {
-      return []; // No conversations
-    }
-
-    const conversationIds = conversationData.map(cp => cp.conversation_id);
-
-    // Now fetch the messages from these conversations
     const { data, error } = await supabase
-      .from('messages')
+      .from('services')
       .select('*')
-      .in('conversation_id', conversationIds)
+      .eq('provider_id', providerId)
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching messages:', error);
-      toast.error('Failed to load messages');
+      console.error('Error fetching provider services:', error);
+      toast.error('Failed to load services');
       return [];
     }
 
-    return data.map(message => ({
-      id: message.id,
-      conversationId: message.conversation_id,
-      senderId: message.sender_id,
-      text: message.content,
-      content: message.content,
-      timestamp: new Date(message.created_at),
-      sentAt: new Date(message.created_at),
-      isRead: message.read,
-      attachments: message.attachments || [],
-      senderName: "Unknown User",
-      senderAvatar: undefined
+    return data.map(service => ({
+      id: service.id,
+      title: service.title,
+      description: service.description,
+      price: service.price,
+      pricing_model: service.pricing_model,
+      category: service.category,
+      provider_id: service.provider_id,
+      provider_name: service.provider_name,
+      image: service.image,
+      features: service.features,
+      is_active: service.is_active,
+      location: service.location,
+      rating: service.rating,
+      review_count: service.review_count,
+      created_at: service.created_at,
+      updated_at: service.updated_at
     }));
   } catch (error) {
-    console.error('Error in fetchUserMessages:', error);
-    toast.error('Failed to load messages');
+    console.error('Unexpected error in fetchProviderServices:', error);
+    toast.error('Something went wrong while loading services');
     return [];
   }
 }
 
-export async function sendMessage(senderId: string, recipientId: string, content: string, attachments?: string[]): Promise<boolean> {
-  try {
-    // First check if a conversation exists between these users
-    const { data: conversationData, error: convError } = await supabase
-      .from('conversation_participants')
-      .select('conversation_id')
-      .eq('user_id', senderId);
-
-    if (convError) {
-      console.error('Error fetching conversations:', convError);
-      toast.error('Failed to send message');
-      return false;
-    }
-
-    let conversationId;
-    
-    if (conversationData.length) {
-      // Check if there's a conversation with the recipient
-      const { data: recipientConvData, error: recipientConvError } = await supabase
-        .from('conversation_participants')
-        .select('conversation_id')
-        .eq('user_id', recipientId)
-        .in('conversation_id', conversationData.map(cp => cp.conversation_id));
-
-      if (recipientConvError) {
-        console.error('Error checking existing conversation:', recipientConvError);
-        toast.error('Failed to send message');
-        return false;
-      }
-
-      if (recipientConvData.length) {
-        // Found existing conversation
-        conversationId = recipientConvData[0].conversation_id;
-      }
-    }
-
-    // Create new conversation if needed
-    if (!conversationId) {
-      const { data: newConvData, error: newConvError } = await supabase
-        .from('conversations')
-        .insert([{}])
-        .select();
-
-      if (newConvError) {
-        console.error('Error creating conversation:', newConvError);
-        toast.error('Failed to send message');
-        return false;
-      }
-
-      conversationId = newConvData[0].id;
-
-      // Add participants
-      const { error: participantsError } = await supabase
-        .from('conversation_participants')
-        .insert([
-          { conversation_id: conversationId, user_id: senderId },
-          { conversation_id: conversationId, user_id: recipientId }
-        ]);
-
-      if (participantsError) {
-        console.error('Error adding conversation participants:', participantsError);
-        toast.error('Failed to send message');
-        return false;
-      }
-    }
-
-    // Now send the message
-    const { error } = await supabase
-      .from('messages')
-      .insert([{
-        conversation_id: conversationId,
-        sender_id: senderId,
-        content,
-        attachments,
-        read: false
-      }]);
-
-    if (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send message');
-      return false;
-    }
-
-    toast.success('Message sent successfully');
-    return true;
-  } catch (error) {
-    console.error('Error in sendMessage:', error);
-    toast.error('Failed to send message');
-    return false;
-  }
-}
-
-export async function markMessageAsRead(messageId: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('messages')
-      .update({ read: true })
-      .eq('id', messageId);
-
-    if (error) {
-      console.error('Error marking message as read:', error);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error in markMessageAsRead:', error);
-    return false;
-  }
-}
-
-// Favorites Functions
-export async function fetchUserFavorites(userId: string): Promise<FavoriteService[]> {
+// Fetch a single service by ID
+export async function fetchServiceById(serviceId: string): Promise<ServiceData | null> {
   try {
     const { data, error } = await supabase
-      .from('favorite_services')
-      .select('*, service:service_id(*)')
-      .eq('user_id', userId);
+      .from('services')
+      .select('*')
+      .eq('id', serviceId)
+      .single();
 
     if (error) {
-      console.error('Error fetching favorites:', error);
-      toast.error('Failed to load favorites');
+      console.error('Error fetching service:', error);
+      toast.error('Failed to load service details');
+      return null;
+    }
+
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      price: data.price,
+      pricing_model: data.pricing_model,
+      category: data.category,
+      provider_id: data.provider_id,
+      provider_name: data.provider_name,
+      image: data.image,
+      features: data.features,
+      is_active: data.is_active,
+      location: data.location,
+      rating: data.rating,
+      review_count: data.review_count,
+      created_at: data.created_at,
+      updated_at: data.updated_at
+    };
+  } catch (error) {
+    console.error('Unexpected error in fetchServiceById:', error);
+    toast.error('Something went wrong while loading service details');
+    return null;
+  }
+}
+
+// Search services
+export async function searchServices(
+  query: string,
+  category?: string,
+  location?: string,
+  minPrice?: number,
+  maxPrice?: number,
+  sortBy: 'price_asc' | 'price_desc' | 'rating' | 'newest' = 'newest',
+  limit: number = 20
+): Promise<ServiceData[]> {
+  try {
+    let supabaseQuery = supabase
+      .from('services')
+      .select('*')
+      .eq('is_active', true);
+
+    // Apply text search if query is provided
+    if (query) {
+      supabaseQuery = supabaseQuery.or(`title.ilike.%${query}%,description.ilike.%${query}%`);
+    }
+
+    // Apply category filter
+    if (category) {
+      supabaseQuery = supabaseQuery.eq('category', category);
+    }
+
+    // Apply location filter
+    if (location) {
+      supabaseQuery = supabaseQuery.ilike('location', `%${location}%`);
+    }
+
+    // Apply price range filters
+    if (minPrice !== undefined) {
+      supabaseQuery = supabaseQuery.gte('price', minPrice);
+    }
+    if (maxPrice !== undefined) {
+      supabaseQuery = supabaseQuery.lte('price', maxPrice);
+    }
+
+    // Apply sorting
+    if (sortBy === 'price_asc') {
+      supabaseQuery = supabaseQuery.order('price', { ascending: true });
+    } else if (sortBy === 'price_desc') {
+      supabaseQuery = supabaseQuery.order('price', { ascending: false });
+    } else if (sortBy === 'rating') {
+      supabaseQuery = supabaseQuery.order('rating', { ascending: false });
+    } else {
+      // Default to newest
+      supabaseQuery = supabaseQuery.order('created_at', { ascending: false });
+    }
+
+    // Apply limit
+    supabaseQuery = supabaseQuery.limit(limit);
+
+    const { data, error } = await supabaseQuery;
+
+    if (error) {
+      console.error('Error searching services:', error);
+      toast.error('Failed to search services');
       return [];
     }
 
-    return data.map(fav => {
-      // Set default service object
-      const defaultService = {
-        id: fav.service_id,
-        title: 'Unknown Service',
-        description: '',
-        price: 0,
-        providerId: '',
-        providerName: 'Unknown Provider',
-        categoryId: '',
-        imageUrl: undefined,
-        rating: 0,
-        reviewCount: 0
-      };
-
-      // Safely handle serviceData with proper type checking
-      const serviceData = fav.service && typeof fav.service === 'object' ? fav.service : null;
-      
-      // Create the service object with proper null checks and default values
-      const service = serviceData ? {
-        id: fav.service_id,
-        title: typeof serviceData.title === 'string' ? serviceData.title : 'Unknown Service',
-        description: typeof serviceData.description === 'string' ? serviceData.description : '',
-        price: typeof serviceData.price === 'number' ? serviceData.price : 0,
-        providerId: typeof serviceData.provider_id === 'string' ? serviceData.provider_id : '',
-        providerName: typeof serviceData.provider_name === 'string' ? serviceData.provider_name : 'Unknown Provider',
-        categoryId: typeof serviceData.category === 'string' ? serviceData.category : '',
-        imageUrl: typeof serviceData.image === 'string' ? serviceData.image : undefined,
-        rating: typeof serviceData.rating === 'number' ? serviceData.rating : 0,
-        reviewCount: typeof serviceData.review_count === 'number' ? serviceData.review_count : 0
-      } : defaultService;
-
-      return {
-        id: fav.id,
-        userId: fav.user_id,
-        serviceId: fav.service_id,
-        createdAt: new Date(fav.created_at),
-        service
-      };
-    });
+    return data.map(service => ({
+      id: service.id,
+      title: service.title,
+      description: service.description,
+      price: service.price,
+      pricing_model: service.pricing_model,
+      category: service.category,
+      provider_id: service.provider_id,
+      provider_name: service.provider_name,
+      image: service.image,
+      features: service.features,
+      is_active: service.is_active,
+      location: service.location,
+      rating: service.rating,
+      review_count: service.review_count,
+      created_at: service.created_at,
+      updated_at: service.updated_at
+    }));
   } catch (error) {
-    console.error('Error in fetchUserFavorites:', error);
-    toast.error('Failed to load favorites');
+    console.error('Unexpected error in searchServices:', error);
+    toast.error('Something went wrong while searching services');
     return [];
   }
 }
 
-// Add a service to favorites
-export async function addFavorite(userId: string, serviceId: string): Promise<boolean> {
+// Save a service to customer's favorites
+export async function saveService(customerId: string, serviceId: string): Promise<boolean> {
   try {
-    // Check if the favorite already exists
-    const { data: existing, error: checkError } = await supabase
-      .from('favorite_services')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('service_id', serviceId)
-      .maybeSingle();
+    // Get current saved services
+    const { data, error } = await supabase
+      .from('customers')
+      .select('saved_services')
+      .eq('id', customerId)
+      .single();
 
-    if (checkError) {
-      console.error('Error checking existing favorite:', checkError);
-      toast.error('Failed to add to favorites');
+    if (error) {
+      console.error('Error fetching saved services:', error);
+      toast.error('Failed to access your saved services');
       return false;
     }
 
-    // If already favorited, return success
-    if (existing) {
+    // Add service to saved services if not already saved
+    const savedServices = data.saved_services || [];
+    if (!savedServices.includes(serviceId)) {
+      savedServices.push(serviceId);
+
+      // Update saved services
+      const { error: updateError } = await supabase
+        .from('customers')
+        .update({
+          saved_services: savedServices,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', customerId);
+
+      if (updateError) {
+        console.error('Error saving service:', updateError);
+        toast.error('Failed to save service');
+        return false;
+      }
+
+      toast.success('Service saved to favorites');
       return true;
     }
 
-    // Add the favorite
-    const { error } = await supabase
-      .from('favorite_services')
-      .insert([{
-        user_id: userId,
-        service_id: serviceId
-      }]);
-
-    if (error) {
-      console.error('Error adding favorite:', error);
-      toast.error('Failed to add to favorites');
-      return false;
-    }
-
-    toast.success('Added to favorites');
+    // Service already saved
+    toast.info('Service already in favorites');
     return true;
   } catch (error) {
-    console.error('Error in addFavorite:', error);
-    toast.error('Failed to add to favorites');
+    console.error('Unexpected error in saveService:', error);
+    toast.error('Something went wrong while saving the service');
     return false;
   }
 }
 
-// Remove a service from favorites
-export async function removeFavorite(userId: string, serviceId: string): Promise<boolean> {
+// Remove a service from customer's favorites
+export async function unsaveService(customerId: string, serviceId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('favorite_services')
-      .delete()
-      .eq('user_id', userId)
-      .eq('service_id', serviceId);
+    // Get current saved services
+    const { data, error } = await supabase
+      .from('customers')
+      .select('saved_services')
+      .eq('id', customerId)
+      .single();
 
     if (error) {
-      console.error('Error removing favorite:', error);
-      toast.error('Failed to remove from favorites');
+      console.error('Error fetching saved services:', error);
+      toast.error('Failed to access your saved services');
       return false;
     }
 
-    toast.success('Removed from favorites');
+    // Remove service from saved services
+    const savedServices = data.saved_services || [];
+    const updatedSavedServices = savedServices.filter(id => id !== serviceId);
+
+    // Update saved services
+    const { error: updateError } = await supabase
+      .from('customers')
+      .update({
+        saved_services: updatedSavedServices,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', customerId);
+
+    if (updateError) {
+      console.error('Error removing saved service:', updateError);
+      toast.error('Failed to remove service from favorites');
+      return false;
+    }
+
+    toast.success('Service removed from favorites');
     return true;
   } catch (error) {
-    console.error('Error in removeFavorite:', error);
-    toast.error('Failed to remove from favorites');
+    console.error('Unexpected error in unsaveService:', error);
+    toast.error('Something went wrong while removing the service');
     return false;
   }
 }
 
-export function formatFavorites(favorites: any[]) {
-  if (!favorites || !Array.isArray(favorites)) return [];
-  
-  return favorites.map(fav => {
-    // Check if fav.service exists and is an object
-    const serviceData = fav?.service && typeof fav.service === 'object' ? fav.service : null;
-    
-    // If serviceData is null, create a default service object
-    if (!serviceData) {
-      return {
-        id: fav?.id || '',
-        userId: fav?.user_id || '',
-        serviceId: fav?.service_id || '',
-        createdAt: fav?.created_at || '',
-        service: null
-      };
-    }
-    
-    // Create the service object with properly typed properties and null checks
-    const service = {
-      id: serviceData?.id || '',
-      title: typeof serviceData?.title === 'string' ? serviceData.title : '',
-      description: typeof serviceData?.description === 'string' ? serviceData.description : '',
-      price: typeof serviceData?.price === 'number' ? serviceData.price : 0,
-      location: serviceData?.location || '',
-      image: serviceData?.image || '',
-      category: serviceData?.category || '',
-      isActive: Boolean(serviceData?.is_active),
-      providerId: serviceData?.provider_id || '',
-      pricingModel: serviceData?.pricing_model || '',
-      createdAt: serviceData?.created_at || '',
-      updatedAt: serviceData?.updated_at || ''
-    };
-
-    return {
-      id: fav?.id || '',
-      userId: fav?.user_id || '',
-      serviceId: fav?.service_id || '',
-      createdAt: fav?.created_at || '',
-      service
-    };
-  });
-}
-
-export async function getFavoriteServices(userId: string): Promise<any[]> {
+// Fetch customer's saved services
+export async function fetchSavedServices(customerId: string): Promise<ServiceData[]> {
   try {
-    const { data: favorites, error: favoritesError } = await supabase
-      .from('favorite_services')
-      .select(`
-        id,
-        service_id,
-        services:service_id (
-          id,
-          title,
-          description,
-          price,
-          image,
-          category,
-          provider_id
-        )
-      `)
-      .eq('user_id', userId);
+    // Get saved service IDs
+    const { data: customerData, error: customerError } = await supabase
+      .from('customers')
+      .select('saved_services')
+      .eq('id', customerId)
+      .single();
 
-    if (favoritesError) {
-      console.error('Error fetching favorite services:', favoritesError);
+    if (customerError) {
+      console.error('Error fetching saved service IDs:', customerError);
+      toast.error('Failed to access your saved services');
       return [];
     }
 
-    const formattedFavorites = favorites
-      .filter(fav => fav.services !== null) // Filter out any null services
-      .map((fav) => {
-        // Create default values to handle the case where service might be null
-        const defaultData = {
-          id: fav.service_id || '',
-          title: '',
-          description: '',
-          price: 0,
-          image: '',
-          category: '',
-          provider_id: '',
-        };
-        
-        // Use a typed variable to help TypeScript understand the structure
-        // and provide a fallback for null/undefined services
-        const servicesData = (fav.services && typeof fav.services === 'object') 
-          ? fav.services 
-          : defaultData;
-        
-        return {
-          id: fav.id,
-          serviceId: servicesData.id || fav.service_id || '',
-          title: servicesData.title || '',
-          description: servicesData.description || '',
-          price: servicesData.price || 0,
-          image: servicesData.image || '',
-          category: servicesData.category || '',
-          providerId: servicesData.provider_id || '',
-        };
-      });
+    const savedServiceIds = customerData.saved_services || [];
+    
+    if (savedServiceIds.length === 0) {
+      return [];
+    }
 
-    return formattedFavorites;
+    // Fetch the actual services
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .in('id', savedServiceIds)
+      .eq('is_active', true);
+
+    if (error) {
+      console.error('Error fetching saved services:', error);
+      toast.error('Failed to load your saved services');
+      return [];
+    }
+
+    return data.map(service => ({
+      id: service.id,
+      title: service.title,
+      description: service.description,
+      price: service.price,
+      pricing_model: service.pricing_model,
+      category: service.category,
+      provider_id: service.provider_id,
+      provider_name: service.provider_name,
+      image: service.image,
+      features: service.features,
+      is_active: service.is_active,
+      location: service.location,
+      rating: service.rating,
+      review_count: service.review_count,
+      created_at: service.created_at,
+      updated_at: service.updated_at
+    }));
   } catch (error) {
-    console.error('Error in getFavoriteServices:', error);
+    console.error('Unexpected error in fetchSavedServices:', error);
+    toast.error('Something went wrong while loading your saved services');
     return [];
   }
 }
 
-export const fetchServicesByProvider = async (providerId: string): Promise<ServiceData[] | null> => {
+// Check if a service is saved by a customer
+export async function isServiceSaved(customerId: string, serviceId: string): Promise<boolean> {
   try {
-    const { data: servicesData, error } = await supabase
+    const { data, error } = await supabase
+      .from('customers')
+      .select('saved_services')
+      .eq('id', customerId)
+      .single();
+
+    if (error) {
+      console.error('Error checking saved service:', error);
+      return false;
+    }
+
+    const savedServices = data.saved_services || [];
+    return savedServices.includes(serviceId);
+  } catch (error) {
+    console.error('Unexpected error in isServiceSaved:', error);
+    return false;
+  }
+}
+
+// Fetch featured services
+export async function fetchFeaturedServices(limit: number = 6): Promise<ServiceData[]> {
+  try {
+    const { data, error } = await supabase
       .from('services')
       .select('*')
-      .eq('provider_id', providerId);
-      
+      .eq('is_active', true)
+      .order('rating', { ascending: false })
+      .limit(limit);
+
     if (error) {
-      console.error('Error fetching provider services:', error);
-      return null;
-    }
-    
-    if (!servicesData || servicesData.length === 0) {
+      console.error('Error fetching featured services:', error);
+      toast.error('Failed to load featured services');
       return [];
     }
-    
-    // Map data to ServiceData type with proper type safety
-    return servicesData.map(service => ({
-      id: service?.id || '',
-      title: service?.title || '',
-      description: service?.description || null,
-      price: service?.price || 0,
-      provider_id: service?.provider_id || '',
-      provider_name: service?.provider_name || null, 
-      category: service?.category || '',
-      image: service?.image || null,
-      rating: typeof service?.rating === 'number' ? service.rating : null,
-      review_count: typeof service?.review_count === 'number' ? service.review_count : null,
-      location: service?.location || null,
-      is_active: Boolean(service?.is_active),
-      pricing_model: service?.pricing_model || 'hourly',
-      created_at: service?.created_at || null,
-      updated_at: service?.updated_at || null
+
+    return data.map(service => ({
+      id: service.id,
+      title: service.title,
+      description: service.description,
+      price: service.price,
+      pricing_model: service.pricing_model,
+      category: service.category,
+      provider_id: service.provider_id,
+      provider_name: service.provider_name,
+      image: service.image,
+      features: service.features,
+      is_active: service.is_active,
+      location: service.location,
+      rating: service.rating,
+      review_count: service.review_count,
+      created_at: service.created_at,
+      updated_at: service.updated_at
     }));
   } catch (error) {
-    console.error('Error in fetchServicesByProvider:', error);
-    return null;
+    console.error('Unexpected error in fetchFeaturedServices:', error);
+    toast.error('Something went wrong while loading featured services');
+    return [];
   }
-};
+}
 
-export const mapServiceData = (service: any): ServiceData => {
-  if (!service) {
-    return {
-      id: '',
-      title: '',
-      description: null,
-      price: 0,
-      provider_id: '',
-      category: '',
-      image: null,
-      pricing_model: 'hourly'
-    };
+// Fetch services by category
+export async function fetchServicesByCategory(
+  category: string,
+  limit: number = 10
+): Promise<ServiceData[]> {
+  try {
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('category', category)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error(`Error fetching services for category ${category}:`, error);
+      toast.error('Failed to load services for this category');
+      return [];
+    }
+
+    return data.map(service => ({
+      id: service.id,
+      title: service.title,
+      description: service.description,
+      price: service.price,
+      pricing_model: service.pricing_model,
+      category: service.category,
+      provider_id: service.provider_id,
+      provider_name: service.provider_name,
+      image: service.image,
+      features: service.features,
+      is_active: service.is_active,
+      location: service.location,
+      rating: service.rating,
+      review_count: service.review_count,
+      created_at: service.created_at,
+      updated_at: service.updated_at
+    }));
+  } catch (error) {
+    console.error('Unexpected error in fetchServicesByCategory:', error);
+    toast.error('Something went wrong while loading services');
+    return [];
   }
-  
-  return {
-    id: service.id || '',
-    title: service.title || '',
-    description: service.description || null,
-    price: service.price || 0,
-    provider_id: service.provider_id || '',
-    provider_name: service.provider_name || null,
-    category: service.category || '',
-    image: service.image || null,
-    rating: typeof service.rating === 'number' ? service.rating : null,
-    review_count: typeof service.review_count === 'number' ? service.review_count : null,
-    location: service.location || null,
-    is_active: service.is_active !== undefined ? service.is_active : true,
-    pricing_model: service.pricing_model || 'hourly',
-    created_at: service.created_at || null,
-    updated_at: service.updated_at || null
-  };
-};
-
-export const transformServiceObject = (service: any) => {
-  if (!service) return null;
-  
-  return {
-    id: service.id,
-    title: service.title,
-    description: service.description || '',
-    price: service.price,
-    providerId: service.provider_id,
-    providerName: service.provider_name || 'Unknown Provider',
-    category: service.category,
-    pricingModel: service.pricing_model || 'hourly',
-    image: service.image || '',
-    rating: typeof service.rating === 'number' ? service.rating : 0,
-    reviewCount: typeof service.review_count === 'number' ? service.review_count : 0,
-    location: service.location || ''
-  };
-};
+}

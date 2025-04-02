@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { convertJsonToFeatures, convertFeaturesToJson } from '@/types/subscription';
@@ -173,7 +172,7 @@ export async function subscribeToPlan(
     // Check for existing subscription
     const { data: existingData, error: existingError } = await supabase
       .from('user_subscriptions')
-      .select('*')
+      .select('*, plan:subscription_plan_id(*)')
       .eq('user_id', userId)
       .eq('status', 'active');
 

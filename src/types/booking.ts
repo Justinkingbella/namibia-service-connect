@@ -1,6 +1,7 @@
+
 import { PaymentMethod } from './service';
 
-export type BookingStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'disputed';
+export type BookingStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'disputed' | 'rejected';
 export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
 
 export interface Booking {

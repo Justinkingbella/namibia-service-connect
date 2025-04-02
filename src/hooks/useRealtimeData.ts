@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabase } from '@/contexts/SupabaseContext';
@@ -35,8 +36,8 @@ export function useRealtimeData<T>({
     try {
       setLoading(true);
       
-      // Build the query
-      let query = supabase.from(table).select('*');
+      // Build the query - cast the table name to any to avoid TypeScript error
+      let query = supabase.from(table as any).select('*');
       
       // Apply filters if provided
       if (filter) {
