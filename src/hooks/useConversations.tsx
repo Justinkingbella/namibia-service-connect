@@ -54,18 +54,10 @@ export const useConversations = () => {
       // For each conversation, get the other participants
       const enrichedConversations = await Promise.all(
         conversationsData.map(async (conversation) => {
+          // First get the participant user_ids
           const { data: participants, error: participantsError } = await supabase
             .from('conversation_participants')
-            .select(`
-              user_id,
-              user:user_id (
-                id,
-                first_name,
-                last_name,
-                avatar_url,
-                role
-              )
-            `)
+            .select('user_id')
             .eq('conversation_id', conversation.id)
             .neq('user_id', user.id);
 
@@ -74,21 +66,29 @@ export const useConversations = () => {
             return null;
           }
 
-          // Get the first participant (assuming 1:1 conversations for now)
-          const recipient = participants && participants.length > 0 
-            ? participants[0].user 
-            : null;
+          if (!participants || participants.length === 0) {
+            console.warn('No other participants found for conversation:', conversation.id);
+            return null;
+          }
 
-          if (!recipient) {
-            console.warn('No recipient found for conversation:', conversation.id);
+          // Now fetch the profile data for the first participant
+          const otherUserId = participants[0].user_id;
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, avatar_url')
+            .eq('id', otherUserId)
+            .single();
+
+          if (profileError) {
+            console.error('Error fetching user profile:', profileError);
             return null;
           }
 
           return {
             id: conversation.id,
-            recipientId: recipient.id,
-            recipientName: `${recipient.first_name || ''} ${recipient.last_name || ''}`.trim() || 'Unknown User',
-            recipientAvatar: recipient.avatar_url,
+            recipientId: profileData.id,
+            recipientName: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || 'Unknown User',
+            recipientAvatar: profileData.avatar_url,
             lastMessage: conversation.last_message || '',
             lastMessageDate: new Date(conversation.last_message_date),
             unreadCount: conversation.unread_count || 0
