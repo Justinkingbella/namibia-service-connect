@@ -5,13 +5,12 @@ import AdminProfile from '@/components/admin/AdminProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const AdminProfilePage = () => {
   const { user, isLoading } = useAuth();
   const [profileLoading, setProfileLoading] = useState(true);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     // Check if user is loaded and is admin
@@ -45,7 +44,7 @@ const AdminProfilePage = () => {
         navigate('/auth/sign-in');
       }
     }
-  }, [user, isLoading, navigate, toast]);
+  }, [user, isLoading, navigate]);
 
   if (isLoading || profileLoading) {
     return (

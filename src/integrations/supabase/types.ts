@@ -767,7 +767,7 @@ export type Database = {
           avatar_url: string | null
           banner_url: string | null
           business_description: string | null
-          business_name: string
+          business_name: string | null
           city: string | null
           commission_rate: number | null
           completed_bookings: number | null
@@ -791,7 +791,7 @@ export type Database = {
           avatar_url?: string | null
           banner_url?: string | null
           business_description?: string | null
-          business_name: string
+          business_name?: string | null
           city?: string | null
           commission_rate?: number | null
           completed_bookings?: number | null
@@ -815,7 +815,7 @@ export type Database = {
           avatar_url?: string | null
           banner_url?: string | null
           business_description?: string | null
-          business_name?: string
+          business_name?: string | null
           city?: string | null
           commission_rate?: number | null
           completed_bookings?: number | null

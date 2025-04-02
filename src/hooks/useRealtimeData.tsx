@@ -1,152 +1,130 @@
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
-type Table = 'profiles' | 'payment_history' | 'disputes' | 'user_addresses' | 
-             'payment_methods' | 'user_2fa' | 'favorite_services' | 
-             'services' | 'bookings' | 'reviews' | 'messages' |
-             'subscription_plans' | 'user_subscriptions';
+// Define the possible event types for Postgres changes
+type PostgresChangeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
-type Event = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
-
-type RealtimeSubscriptionProps = {
-  table: Table;
-  event?: Event;
-  filter?: string;
-  filterValue?: any;
-  onDataChange?: (payload: any) => void;
-};
-
-interface RealtimeDataReturn<T> {
-  data: T | null;
-  loading: boolean;
-  error: Error | null;
-  refetch: () => Promise<T | null>;
+// Define the parameters for the hook
+interface UseRealtimeDataParams<T> {
+  table: string;
+  column?: string;
+  value?: string | number;
+  orderBy?: { column: string; ascending?: boolean };
+  limit?: number;
+  onDataChange?: (payload: {
+    eventType: PostgresChangeEvent;
+    new: T;
+    old: T | null;
+  }) => void;
 }
 
 /**
- * Hook for subscribing to Supabase realtime updates
+ * A hook to fetch and subscribe to real-time data from a Supabase table.
  */
 export function useRealtimeData<T>({
   table,
-  event = '*',
-  filter,
-  filterValue,
-  onDataChange
-}: RealtimeSubscriptionProps): RealtimeDataReturn<T> {
-  const [data, setData] = useState<T | null>(null);
+  column,
+  value,
+  orderBy,
+  limit,
+  onDataChange,
+}: UseRealtimeDataParams<T>) {
+  const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
   // Function to fetch data
-  const fetchData = async (): Promise<T | null> => {
-    setLoading(true);
+  const fetchData = async () => {
     try {
+      setLoading(true);
+      
       let query = supabase.from(table).select('*');
       
-      if (filter && filterValue !== undefined) {
-        query = query.eq(filter, filterValue);
+      if (column && value !== undefined) {
+        query = query.eq(column, value);
       }
       
-      const { data: resultData, error: queryError } = await query;
-      
-      if (queryError) {
-        throw queryError;
+      if (orderBy) {
+        query = query.order(orderBy.column, { ascending: orderBy.ascending ?? true });
       }
       
-      setData(resultData as T);
-      return resultData as T;
+      if (limit) {
+        query = query.limit(limit);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      setData(data as unknown as T[]);
     } catch (err) {
-      console.error(`Error fetching data from ${table}:`, err);
-      setError(err as Error);
-      return null;
+      console.error(`Error fetching ${table} data:`, err);
+      setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);
     }
   };
 
+  // Initialize data and subscribe to real-time changes
   useEffect(() => {
-    // Initial fetch
     fetchData();
-
-    // Set up realtime subscription
-    let channel: RealtimeChannel | null = null;
     
-    try {
-      channel = supabase.channel(`table-changes-${table}`);
-      
-      // Configure the channel subscription
-      if (channel) {
-        channel
-          .on(
-            'postgres_changes', 
-            {
-              event: event,
-              schema: 'public',
-              table: table,
-              ...(filter && filterValue !== undefined ? { filter: `${filter}=eq.${filterValue}` } : {})
-            },
-            (payload) => {
-              console.log(`Realtime update received for ${table}:`, payload);
-              
-              // Handle different events
-              if (payload.eventType === 'INSERT') {
-                setData((prevData) => {
-                  if (Array.isArray(prevData)) {
-                    return [...prevData, payload.new] as unknown as T;
-                  }
-                  return payload.new as unknown as T;
-                });
-                toast.info(`New ${table.slice(0, -1)} added`);
-              } else if (payload.eventType === 'UPDATE') {
-                setData((prevData) => {
-                  if (Array.isArray(prevData)) {
-                    return prevData.map(item => 
-                      (item as any).id === payload.new.id ? payload.new : item
-                    ) as unknown as T;
-                  }
-                  return payload.new as unknown as T;
-                });
-                toast.info(`${table.slice(0, -1)} updated`);
-              } else if (payload.eventType === 'DELETE') {
-                setData((prevData) => {
-                  if (Array.isArray(prevData)) {
-                    return prevData.filter(item => 
-                      (item as any).id !== payload.old.id
-                    ) as unknown as T;
-                  }
-                  // If it was the object we were watching that got deleted
-                  if ((prevData as any)?.id === payload.old.id) {
-                    return null;
-                  }
-                  return prevData;
-                });
-                toast.info(`${table.slice(0, -1)} removed`);
-              }
-              
-              // Call onDataChange callback if provided
-              if (onDataChange) {
-                onDataChange(payload);
-              }
-            }
-          )
-          .subscribe((status) => {
-            console.log(`Realtime subscription status for ${table}:`, status);
-          });
-      }
-    } catch (error) {
-      console.error(`Error setting up realtime subscription for ${table}:`, error);
-    }
-
-    // Cleanup on unmount
+    // Set up real-time subscription
+    const channel = supabase
+      .channel(`${table}-changes`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: table,
+        },
+        (payload) => {
+          // Update local data based on the change type
+          if (payload.eventType === 'INSERT') {
+            setData((currentData) => [...currentData, payload.new as unknown as T]);
+            if (onDataChange) onDataChange({
+              eventType: payload.eventType,
+              new: payload.new as unknown as T,
+              old: null
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            setData((currentData) => 
+              currentData.map((item: any) => 
+                item.id === (payload.new as any).id ? (payload.new as unknown as T) : item
+              )
+            );
+            if (onDataChange) onDataChange({
+              eventType: payload.eventType,
+              new: payload.new as unknown as T,
+              old: payload.old as unknown as T
+            });
+          } else if (payload.eventType === 'DELETE') {
+            setData((currentData) => 
+              currentData.filter((item: any) => item.id !== (payload.old as any).id)
+            );
+            if (onDataChange) onDataChange({
+              eventType: payload.eventType,
+              new: payload.old as unknown as T,
+              old: payload.old as unknown as T
+            });
+          }
+        }
+      )
+      .subscribe();
+    
+    // Clean up the subscription when the component unmounts
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      supabase.removeChannel(channel);
     };
-  }, [table, event, filter, filterValue, onDataChange]);
+  }, [table, column, value, orderBy?.column, orderBy?.ascending, limit]);
 
-  return { data, loading, error, refetch: fetchData };
+  // Function to manually refetch data
+  const refetch = async () => {
+    await fetchData();
+  };
+
+  return { data, loading, error, refetch };
 }

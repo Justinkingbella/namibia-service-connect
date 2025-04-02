@@ -143,6 +143,16 @@ const App = () => {
                 }
               />
               
+              {/* Add Provider CreateService route */}
+              <Route
+                path="/dashboard/provider/services/create"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <CreateServicePage />
+                  </RoleBasedRoute>
+                }
+              />
+              
               {/* Messages */}
               <Route
                 path="/dashboard/messages"

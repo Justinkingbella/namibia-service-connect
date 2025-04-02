@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Plus, Edit, Trash2, Check, X, Info, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +26,7 @@ const SubscriptionManagement = () => {
     loading: isLoading, 
     error, 
     refetch 
-  } = useRealtimeData<any[]>({
+  } = useRealtimeData<any>({
     table: 'subscription_plans',
     onDataChange: (payload) => {
       console.log('Subscription plan changed:', payload);

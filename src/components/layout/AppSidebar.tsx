@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -19,7 +18,8 @@ import {
   Receipt,
   AlertTriangle,
   LineChart,
-  FileText
+  FileText,
+  PlusCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -78,9 +78,10 @@ const AppSidebar = () => {
     
     const providerLinks = [
       ...commonLinks,
+      { icon: PlusCircle, label: 'Create Service', path: '/dashboard/provider/services/create' },
       { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
       { icon: DollarSign, label: 'Transactions', path: '/dashboard/provider/transactions' },
-      { icon: LineChart, label: 'Revenue Reports', path: '/dashboard/provider/reports' },
+      { icon: LineChart, label: 'Revenue Reports', path: '/dashboard/provider/revenue' },
       { icon: Receipt, label: 'Subscription', path: '/dashboard/provider/subscription' },
       { icon: Wallet, label: 'Wallet Verification', path: '/dashboard/provider/wallet-verification' },
       { icon: CreditCard, label: 'Payment Details', path: '/dashboard/provider/payment-details' },

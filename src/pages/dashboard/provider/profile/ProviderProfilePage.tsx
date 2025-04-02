@@ -5,13 +5,12 @@ import ProviderProfile from '@/components/provider/ProviderProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const ProviderProfilePage = () => {
   const { user, isLoading } = useAuth();
   const [profileLoading, setProfileLoading] = useState(true);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     // Check if user is loaded and is provider
@@ -45,7 +44,7 @@ const ProviderProfilePage = () => {
         navigate('/auth/sign-in');
       }
     }
-  }, [user, isLoading, navigate, toast]);
+  }, [user, isLoading, navigate]);
 
   if (isLoading || profileLoading) {
     return (
@@ -70,7 +69,7 @@ const ProviderProfilePage = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Provider Profile</h1>
-          <p className="text-muted-foreground mt-1">Manage your provider account and business information</p>
+          <p className="text-muted-foreground mt-1">Manage your provider account information and services</p>
         </div>
         
         <ProviderProfile />
