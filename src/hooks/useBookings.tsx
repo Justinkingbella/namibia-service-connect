@@ -122,9 +122,9 @@ export function useBookings(): UseBookingsReturnType {
       // Map the data to our Booking interface
       const formattedBookings: Booking[] = data.map(item => {
         // Safe access to nested properties that might be null
-        const service = item.service || {};
-        const customer = item.customer || {};
-        const provider = item.provider || {};
+        const serviceData = item.service || {};
+        const customerData = item.customer || {};
+        const providerData = item.provider || {};
 
         return {
           id: item.id,
@@ -144,12 +144,12 @@ export function useBookings(): UseBookingsReturnType {
           isUrgent: item.is_urgent,
           createdAt: item.created_at,
           updatedAt: item.updated_at,
-          // Safely access properties with || to provide fallbacks
-          serviceName: service && typeof service === 'object' ? (service.title || 'Unknown Service') : 'Unknown Service',
-          serviceImage: service && typeof service === 'object' ? (service.image || '') : '',
-          providerName: provider && typeof provider === 'object' ? (provider.business_name || 'Unknown Provider') : 'Unknown Provider',
-          customerName: customer && typeof customer === 'object' ? 
-            `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || 'Unknown Customer' : 
+          // Safely access properties with optional chaining and nullish coalescing
+          serviceName: typeof serviceData === 'object' ? (serviceData.title || 'Unknown Service') : 'Unknown Service',
+          serviceImage: typeof serviceData === 'object' ? (serviceData.image || '') : '',
+          providerName: typeof providerData === 'object' ? (providerData.business_name || 'Unknown Provider') : 'Unknown Provider',
+          customerName: typeof customerData === 'object' ? 
+            `${customerData.first_name || ''} ${customerData.last_name || ''}`.trim() || 'Unknown Customer' : 
             'Unknown Customer'
         };
       });
