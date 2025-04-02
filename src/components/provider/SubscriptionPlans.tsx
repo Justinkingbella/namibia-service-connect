@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,149 +7,66 @@ import { Check, X, CreditCard, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { SubscriptionPlan, convertJsonToFeatures } from '@/types/subscription';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { fetchSubscriptionPlans, subscribeUserToPlan } from '@/services/subscriptionService';
+import { SubscriptionPlan } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface SubscriptionPlansProps {
   currentPlan?: string;
   onChangePlan?: (planId: string) => void;
+  onSubscriptionChanged?: () => void;
 }
 
 const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ 
   currentPlan = '',
-  onChangePlan 
+  onChangePlan,
+  onSubscriptionChanged
 }) => {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState('pay_today');
-  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchSubscriptionPlans();
-  }, []);
+  const { data: plans = [], isLoading } = useQuery({
+    queryKey: ['subscriptionPlans'],
+    queryFn: fetchSubscriptionPlans
+  });
 
-  const fetchSubscriptionPlans = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .eq('is_active', true)
-        .order('price', { ascending: true });
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Transform the data to match our SubscriptionPlan type
-      const transformedData: SubscriptionPlan[] = data?.map(plan => ({
-        id: plan.id,
-        name: plan.name,
-        description: plan.description,
-        price: Number(plan.price),
-        billingCycle: plan.billing_cycle as 'monthly' | 'yearly',
-        credits: plan.credits,
-        maxBookings: plan.max_bookings,
-        features: convertJsonToFeatures(plan.features),
-        isPopular: plan.is_popular || false,
-        isActive: plan.is_active || false,
-        createdAt: plan.created_at || new Date().toISOString(),
-        updatedAt: plan.updated_at || new Date().toISOString()
-      })) || [];
-      
-      setPlans(transformedData);
-    } catch (error) {
-      console.error('Error fetching subscription plans:', error);
-      toast.error("Failed to load subscription plans.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleUpgrade = async () => {
-    if (!user) {
-      toast.error("You must be logged in to change your subscription.");
-      return;
-    }
+  const handleSubscribe = async () => {
+    if (!user?.id || !selectedPlan) return;
 
     setIsProcessing(true);
     try {
-      // Find the plan
-      const plan = plans.find(p => p.id === selectedPlan);
-      if (!plan) throw new Error("Selected plan not found");
-
-      // Create a transaction record
-      const transactionData = {
-        user_id: user.id,
-        subscription_plan_id: selectedPlan,
-        amount: plan.price,
-        payment_method: paymentMethod,
-        status: 'completed'
-      };
-      
-      const { error: transactionError } = await supabase
-        .from('subscription_transactions')
-        .insert([transactionData]);
-        
-      if (transactionError) throw transactionError;
-      
-      // Calculate end date based on billing cycle
-      const startDate = new Date();
-      const endDate = new Date(startDate);
-      
-      if (plan.billingCycle === 'monthly') {
-        endDate.setMonth(endDate.getMonth() + 1);
-      } else {
-        endDate.setFullYear(endDate.getFullYear() + 1);
+      const subscription = await subscribeUserToPlan(user.id, selectedPlan, paymentMethod);
+      if (subscription) {
+        if (onChangePlan) {
+          onChangePlan(selectedPlan);
+        }
+        if (onSubscriptionChanged) {
+          onSubscriptionChanged();
+        }
+        setIsUpgradeModalOpen(false);
       }
-      
-      // Update or insert user subscription
-      const subscriptionData = {
-        user_id: user.id,
-        subscription_plan_id: selectedPlan,
-        payment_method: paymentMethod,
-        status: 'active',
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString(),
-      };
-      
-      // First try to update existing subscription
-      const { error: upsertError } = await supabase
-        .from('user_subscriptions')
-        .upsert(subscriptionData);
-      
-      if (upsertError) throw upsertError;
-      
-      if (onChangePlan) {
-        onChangePlan(selectedPlan);
-      }
-      
-      toast.success(`Successfully switched to ${plan.name} plan!`);
-      setIsUpgradeModalOpen(false);
-    } catch (error) {
-      console.error('Error upgrading subscription:', error);
-      toast.error("Failed to process subscription change. Please try again.");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const openUpgradeModal = (planId: string) => {
+  const openSubscribeModal = (planId: string) => {
     setSelectedPlan(planId);
     setIsUpgradeModalOpen(true);
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-10">
-        <div className="space-y-2 text-center">
-          <div className="animate-spin size-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
-          <p className="text-muted-foreground">Loading subscription plans...</p>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Skeleton className="h-[500px] w-full" />
+          <Skeleton className="h-[500px] w-full" />
+          <Skeleton className="h-[500px] w-full" />
         </div>
       </div>
     );
@@ -157,11 +74,6 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold">Subscription Plans</h2>
-        <p className="text-muted-foreground">Choose the plan that works for your business</p>
-      </div>
-      
       {plans.length === 0 ? (
         <div className="text-center py-10 border border-dashed rounded-lg">
           <p className="text-muted-foreground mb-2">No subscription plans available at the moment.</p>
@@ -224,7 +136,7 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
                   <Button 
                     className="w-full" 
                     variant={plan.isPopular ? "default" : "outline"}
-                    onClick={() => openUpgradeModal(plan.id)}
+                    onClick={() => openSubscribeModal(plan.id)}
                   >
                     {Number(plans.find(p => p.id === currentPlan)?.price || 0) > plan.price 
                       ? 'Downgrade' 
@@ -301,7 +213,7 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
             <Button variant="outline" onClick={() => setIsUpgradeModalOpen(false)} disabled={isProcessing}>
               Cancel
             </Button>
-            <Button onClick={handleUpgrade} disabled={isProcessing}>
+            <Button onClick={handleSubscribe} disabled={isProcessing}>
               {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isProcessing ? "Processing..." : 
                 Number(plans.find(p => p.id === currentPlan)?.price || 0) > 

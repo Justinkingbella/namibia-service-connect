@@ -1,20 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, Users, DollarSign, ChevronRight, LineChart, Briefcase, AlertTriangle, CreditCard, Plus, Wallet } from 'lucide-react';
+import { Calendar, Users, DollarSign, ChevronRight, LineChart, Plus, Wallet } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCard from '@/components/dashboard/StatsCard';
 import ServiceManagement from '@/components/provider/ServiceManagement';
 import ProviderEarningsCard from '@/components/provider/ProviderEarningsCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { BookingCard } from '@/components/dashboard/BookingCard';
 import SettingsCard from '@/components/dashboard/SettingsCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { supabase } from '@/integrations/supabase/client';
-import { Tables } from '@/integrations/supabase/types';
-import { BookingStatus, PaymentStatus } from '@/types/booking';
+import { AlertTriangle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { fetchUserSubscription } from '@/services/subscriptionService';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Subscription = Tables<'user_subscriptions'> & {
   subscription_plans: Tables<'subscription_plans'>
@@ -51,38 +52,12 @@ interface DashboardBooking {
 const ProviderDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchSubscription();
-    }
-  }, [user]);
-
-  const fetchSubscription = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('user_subscriptions')
-        .select(`
-          *,
-          subscription_plans:subscription_plan_id (*)
-        `)
-        .eq('user_id', user?.id)
-        .eq('status', 'active')
-        .single();
-      
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching subscription:', error);
-      }
-      
-      setSubscription(data);
-    } catch (error) {
-      console.error('Error fetching subscription:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: subscription, isLoading: isLoadingSubscription } = useQuery({
+    queryKey: ['providerSubscription', user?.id],
+    queryFn: () => fetchUserSubscription(user?.id || ''),
+    enabled: !!user?.id
+  });
 
   const recentBookings: DashboardBooking[] = [
     {
@@ -176,7 +151,7 @@ const ProviderDashboard = () => {
           <p className="text-muted-foreground mt-1">Manage your services and monitor performance</p>
         </div>
         
-        {!isLoading && !subscription && (
+        {!isLoadingSubscription && !subscription && (
           <Alert variant="default" className="mb-6 border-yellow-400 bg-yellow-50">
             <AlertTriangle className="h-4 w-4 text-yellow-600" />
             <AlertTitle className="text-yellow-600">Subscription Required</AlertTitle>
@@ -272,44 +247,46 @@ const ProviderDashboard = () => {
                 thisMonth: 3250,
                 lastMonth: 2980
               }}
-              subscriptionTier="pro"
+              subscriptionTier={subscription?.plan?.name.toLowerCase() || 'free'}
             />
             
-            {!isLoading && subscription && (
+            {isLoadingSubscription ? (
+              <Skeleton className="h-[250px] w-full" />
+            ) : subscription && subscription.plan ? (
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Current Subscription</CardTitle>
+                  <h3 className="text-base font-medium">Current Subscription</h3>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-center mb-2">
-                    <div className="font-medium">{subscription.subscription_plans.name}</div>
-                    <Badge className="bg-primary">{subscription.subscription_plans.billing_cycle}</Badge>
+                    <div className="font-medium">{subscription.plan.name}</div>
+                    <Badge className="bg-primary">{subscription.plan.billingCycle}</Badge>
                   </div>
                   <div className="text-sm text-muted-foreground mb-3">
-                    N${subscription.subscription_plans.price}/{subscription.subscription_plans.billing_cycle}
+                    N${subscription.plan.price}/{subscription.plan.billingCycle}
                   </div>
                   <div className="flex justify-between mb-1">
                     <span className="text-sm">Credits</span>
                     <span className="text-sm font-medium">
-                      250/{subscription.subscription_plans.credits}
+                      250/{subscription.plan.credits}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3">
                     <div 
                       className="bg-primary h-2.5 rounded-full" 
-                      style={{ width: `${Math.min(250 / subscription.subscription_plans.credits * 100, 100)}%` }}
+                      style={{ width: `${Math.min(250 / subscription.plan.credits * 100, 100)}%` }}
                     />
                   </div>
                   <div className="flex justify-between mb-1">
                     <span className="text-sm">Bookings</span>
                     <span className="text-sm font-medium">
-                      12/{subscription.subscription_plans.max_bookings}
+                      12/{subscription.plan.maxBookings}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2.5">
                     <div 
                       className="bg-primary h-2.5 rounded-full" 
-                      style={{ width: `${Math.min(12 / subscription.subscription_plans.max_bookings * 100, 100)}%` }}
+                      style={{ width: `${Math.min(12 / subscription.plan.maxBookings * 100, 100)}%` }}
                     />
                   </div>
                 </CardContent>
@@ -324,7 +301,7 @@ const ProviderDashboard = () => {
                   </Button>
                 </CardFooter>
               </Card>
-            )}
+            ) : null}
           </div>
         </div>
         

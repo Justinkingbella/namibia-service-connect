@@ -39,6 +39,10 @@ import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import FAQPage from './pages/FAQPage';
 import ContentEditorPage from './pages/dashboard/admin/ContentEditorPage';
+import SubscriptionPageProvider from './pages/dashboard/provider/SubscriptionPageProvider';
+import SubscriptionManagementPage from './pages/dashboard/admin/SubscriptionManagementPage';
+import RevenueReportsPage from './pages/dashboard/provider/RevenueReportsPage';
+import PaymentDetailsPage from './pages/dashboard/provider/PaymentDetailsPage';
 
 function App() {
   return (
@@ -78,11 +82,15 @@ function App() {
             <Route path="/dashboard/admin/platform-controls" element={<RoleBasedRoute role="admin"><PlatformControlsPage /></RoleBasedRoute>} />
             <Route path="/dashboard/admin/wallet-verification" element={<RoleBasedRoute role="admin"><WalletVerificationPage /></RoleBasedRoute>} />
             <Route path="/dashboard/settings" element={<RoleBasedRoute role="admin"><SiteSettingsPage /></RoleBasedRoute>} />
+            <Route path="/dashboard/admin/subscriptions" element={<RoleBasedRoute role="admin"><SubscriptionManagementPage /></RoleBasedRoute>} />
             <Route path="/dashboard/admin/content-editor" element={<RoleBasedRoute role="admin"><ContentEditorPage /></RoleBasedRoute>} />
             
             {/* Provider Routes */}
             <Route path="/dashboard/provider/profile" element={<RoleBasedRoute role="provider"><ProviderProfilePage /></RoleBasedRoute>} />
             <Route path="/dashboard/provider/transactions" element={<RoleBasedRoute role="provider"><ProviderTransactionsPage /></RoleBasedRoute>} />
+            <Route path="/dashboard/provider/subscription" element={<RoleBasedRoute role="provider"><SubscriptionPageProvider /></RoleBasedRoute>} />
+            <Route path="/dashboard/provider/reports" element={<RoleBasedRoute role="provider"><RevenueReportsPage /></RoleBasedRoute>} />
+            <Route path="/dashboard/provider/payment-details" element={<RoleBasedRoute role="provider"><PaymentDetailsPage /></RoleBasedRoute>} />
             
             {/* Customer Routes */}
             <Route path="/dashboard/customer/favorites" element={<RoleBasedRoute role="customer"><FavoritesPage /></RoleBasedRoute>} />
