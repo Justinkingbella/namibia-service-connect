@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PaymentHistory, Dispute } from '@/types/payments';
@@ -1078,4 +1077,55 @@ export const fetchServicesByProvider = async (providerId: string): Promise<Servi
     console.error('Error in fetchServicesByProvider:', error);
     return null;
   }
+};
+
+export const mapServiceData = (service: any): ServiceData => {
+  if (!service) {
+    return {
+      id: '',
+      title: '',
+      description: '',
+      price: 0,
+      provider_id: '',
+      category: '',
+      image: ''
+    };
+  }
+  
+  return {
+    id: service.id || '',
+    title: service.title || '',
+    description: service.description || '',
+    price: service.price || 0,
+    provider_id: service.provider_id || '',
+    provider_name: service.provider_name || undefined,
+    category: service.category || '',
+    image: service.image || '',
+    rating: service.rating || 0,
+    review_count: service.review_count || 0,
+    location: service.location || '',
+    is_active: service.is_active !== undefined ? service.is_active : true,
+    pricing_model: service.pricing_model || 'hourly',
+    created_at: service.created_at || new Date().toISOString(),
+    updated_at: service.updated_at || new Date().toISOString()
+  };
+};
+
+export const transformServiceObject = (service: any) => {
+  if (!service) return null;
+  
+  return {
+    id: service.id,
+    title: service.title,
+    description: service.description || '',
+    price: service.price,
+    providerId: service.provider_id,
+    providerName: service.provider_name || 'Unknown Provider',
+    category: service.category,
+    pricingModel: service.pricing_model || 'hourly',
+    image: service.image || '',
+    rating: service.rating || 0,
+    reviewCount: service.review_count || 0,
+    location: service.location || ''
+  };
 };

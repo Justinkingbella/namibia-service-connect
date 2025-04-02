@@ -52,19 +52,19 @@ export interface Service extends ServiceListItem {
   }[];
 }
 
-// Add this interface for use in profileService.ts
+// Interface for database operations in profileService.ts
 export interface ServiceData {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   price: number;
   provider_id: string;
   provider_name?: string;
   category: string;
-  image: string;
-  rating?: number;
-  review_count?: number;
-  location?: string;
+  image: string | null;
+  rating?: number | null;
+  review_count?: number | null;
+  location?: string | null;
   is_active?: boolean;
   pricing_model?: string;
   created_at?: string;
