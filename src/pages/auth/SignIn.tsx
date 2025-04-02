@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,6 +49,10 @@ const SignIn = () => {
       await signIn(email, password);
       // The redirect will be handled by the useEffect above
       console.log('Sign in successful');
+      toast({
+        title: "Sign in successful",
+        description: "Welcome back!",
+      });
     } catch (error: any) {
       console.error('Login failed:', error);
       setError(error.message || 'Authentication failed. Please check your credentials and try again.');
@@ -76,6 +79,11 @@ const SignIn = () => {
     
     // Clear any previous errors when setting new credentials
     setError(null);
+    
+    toast({
+      title: `Demo ${role} credentials set`,
+      description: "Click Sign In to continue",
+    });
   };
 
   return (

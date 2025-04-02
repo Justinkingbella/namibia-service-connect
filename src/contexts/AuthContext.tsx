@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, UserRole, AuthContextType, Provider, Customer, Admin, DbUserProfile, DbProviderProfile, ProviderVerificationStatus } from '@/types/auth';
@@ -12,12 +11,82 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      setIsLoading(true);
+    let mounted = true;
+    
+    // Set up auth state change listener first
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event);
       
+      if (!mounted) return;
+      
+      if (event === 'SIGNED_IN' && session) {
+        try {
+          // Use setTimeout to defer database operations to prevent deadlocks
+          setTimeout(async () => {
+            if (!mounted) return;
+            
+            // Fetch user profile when signed in
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .maybeSingle();
+            
+            if (profileError) {
+              console.error('Error fetching user profile on auth change:', profileError);
+              setUser(null);
+              setIsLoading(false);
+              return;
+            }
+            
+            if (profileData) {
+              await loadUserData(profileData, session.user.id);
+            } else {
+              // Create a basic profile if none exists
+              const baseUser: User = {
+                id: session.user.id,
+                email: session.user.email || '',
+                name: session.user.user_metadata?.first_name || session.user.email?.split('@')[0] || 'User',
+                role: session.user.user_metadata?.role || 'customer',
+                createdAt: new Date(),
+                isVerified: true
+              };
+              
+              setUser(baseUser);
+              setIsLoading(false);
+              
+              // Create profile in background
+              supabase.from('profiles').upsert({
+                id: session.user.id,
+                email: session.user.email,
+                first_name: session.user.user_metadata?.first_name || session.user.email?.split('@')[0],
+                role: session.user.user_metadata?.role || 'customer',
+                is_verified: true,
+                created_at: new Date().toISOString()
+              });
+            }
+          }, 0);
+        } catch (error) {
+          console.error('Error handling auth state change:', error);
+          if (mounted) {
+            setUser(null);
+            setIsLoading(false);
+          }
+        }
+      } else if (event === 'SIGNED_OUT') {
+        if (mounted) {
+          setUser(null);
+          setIsLoading(false);
+        }
+      }
+    });
+
+    // Initial auth check
+    const checkAuth = async () => {
       try {
-        // First, check Supabase session
         const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
         
         if (sessionData?.session) {
           // If we have a session, get user profile from our database
@@ -25,15 +94,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .from('profiles')
             .select('*')
             .eq('id', sessionData.session.user.id)
-            .single();
+            .maybeSingle();
           
-          if (profileError) {
+          if (profileError && profileError.code !== 'PGRST116') {
+            // PGRST116 is "JSON object requested, multiple (or no) rows returned"
+            // We ignore this specific error as it just means the profile doesn't exist yet
             console.error('Error fetching user profile:', profileError);
             setUser(null);
-          } else if (profileData) {
+            setIsLoading(false);
+            return;
+          }
+          
+          if (profileData) {
             await loadUserData(profileData, sessionData.session.user.id);
           } else {
-            setUser(null);
+            // Create a basic user object if no profile exists
+            const baseUser: User = {
+              id: sessionData.session.user.id,
+              email: sessionData.session.user.email || '',
+              name: sessionData.session.user.user_metadata?.first_name || 
+                    sessionData.session.user.email?.split('@')[0] || 'User',
+              role: sessionData.session.user.user_metadata?.role || 'customer',
+              createdAt: new Date(),
+              isVerified: true
+            };
+            
+            setUser(baseUser);
+            
+            // Create profile in background
+            supabase.from('profiles').upsert({
+              id: sessionData.session.user.id,
+              email: sessionData.session.user.email,
+              first_name: sessionData.session.user.user_metadata?.first_name || 
+                          sessionData.session.user.email?.split('@')[0],
+              role: sessionData.session.user.user_metadata?.role || 'customer',
+              is_verified: true,
+              created_at: new Date().toISOString()
+            });
           }
         } else {
           // No session found, user is not logged in
@@ -43,44 +140,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error checking auth:', error);
         setUser(null);
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    // Set up auth state change listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session);
-      
-      if (event === 'SIGNED_IN' && session) {
-        try {
-          // Fetch user profile when signed in
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (profileError) {
-            console.error('Error fetching user profile on auth change:', profileError);
-            setUser(null);
-          } else if (profileData) {
-            await loadUserData(profileData, session.user.id);
-          }
-        } catch (error) {
-          console.error('Error handling auth state change:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setIsLoading(false);
-      }
-    });
-
-    // Initial auth check
     checkAuth();
 
     return () => {
+      mounted = false;
       authListener?.subscription.unsubscribe();
     };
   }, []);
@@ -111,11 +180,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .from('service_providers')
           .select('*')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
         
-        if (providerError) {
+        if (providerError && providerError.code !== 'PGRST116') {
           console.error('Error fetching provider data:', providerError);
           setUser(baseUser);
+          setIsLoading(false);
           return;
         }
         
@@ -181,11 +251,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(customer);
       } else if (profileData.role === 'admin') {
         // Get admin permissions
-        const { data: permissionsData } = await supabase
+        const { data: permissionsData, error: permissionsError } = await supabase
           .from('admin_permissions')
           .select('permissions')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle();
+        
+        if (permissionsError && permissionsError.code !== 'PGRST116') {
+          console.error('Error fetching admin permissions:', permissionsError);
+        }
         
         const admin: Admin = {
           ...baseUser,
@@ -200,6 +274,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Error loading user data:', error);
       setUser(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 

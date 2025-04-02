@@ -14,29 +14,37 @@ const Dashboard = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    let mounted = true;
+    
     const checkAuth = async () => {
       // Wait for auth to finish loading
       if (authLoading) {
         return;
       }
       
-      setIsLoading(true);
+      if (mounted) {
+        setIsLoading(true);
       
-      if (!user) {
-        console.log('No user found, redirecting to sign-in');
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to access your dashboard",
-          variant: "destructive"
-        });
-        navigate('/auth/sign-in');
-        return;
+        if (!user) {
+          console.log('No user found, redirecting to sign-in');
+          toast({
+            title: "Authentication required",
+            description: "Please sign in to access your dashboard",
+            variant: "destructive"
+          });
+          navigate('/auth/sign-in');
+          return;
+        }
+        
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
 
     checkAuth();
+    
+    return () => {
+      mounted = false;
+    };
   }, [navigate, user, authLoading, toast]);
 
   if (isLoading || authLoading) {

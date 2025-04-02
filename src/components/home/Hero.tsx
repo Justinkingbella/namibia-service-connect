@@ -57,18 +57,14 @@ export function Hero({ className }: HeroProps) {
                 />
               </div>
               {user ? (
-                <Button 
-                  asChild
-                >
+                <Button asChild>
                   <Link to="/dashboard" className="w-full sm:w-auto">
                     Find Services
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               ) : (
-                <Button 
-                  asChild
-                >
+                <Button asChild>
                   <Link to="/auth/sign-up" className="w-full sm:w-auto">
                     Get Started
                     <ArrowRight className="ml-2 h-4 w-4" />

@@ -45,10 +45,7 @@ export function CTASection({ className }: CTASectionProps) {
             <FadeIn delay={400} className="mt-10">
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {user ? (
-                  <Button 
-                    asChild
-                    size="lg"
-                  >
+                  <Button asChild size="lg">
                     <Link to="/dashboard">
                       Go to Dashboard
                       <ArrowRight className="ml-2 h-5 w-5" />
@@ -56,10 +53,7 @@ export function CTASection({ className }: CTASectionProps) {
                   </Button>
                 ) : (
                   <>
-                    <Button 
-                      asChild
-                      size="lg"
-                    >
+                    <Button asChild size="lg">
                       <Link to="/auth/sign-up?role=customer">
                         Find a Service
                         <ArrowRight className="ml-2 h-5 w-5" />

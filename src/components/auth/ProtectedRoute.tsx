@@ -26,6 +26,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     });
   }, [user, isLoading, location.pathname, allowedRoles]);
 
+  // While auth is loading, show loading indicator and don't redirect
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -35,18 +36,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
+  // If no user after loading completes, redirect to sign-in
   if (!user) {
     console.log('No user found, redirecting to sign-in');
     // Redirect to sign-in page but save the location they tried to access
     return <Navigate to="/auth/sign-in" state={{ from: location }} replace />;
   }
 
+  // If user doesn't have permission, redirect to dashboard
   if (!allowedRoles.includes(user.role)) {
     console.log(`User role ${user.role} not in allowed roles:`, allowedRoles);
-    // User doesn't have permission to access this route
     return <Navigate to="/dashboard" replace />;
   }
 
+  // User is authenticated and authorized
   return <>{children}</>;
 };
 
