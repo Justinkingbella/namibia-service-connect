@@ -68,8 +68,8 @@ interface PaymentTransactionRow {
   gateway: string;
   method: string;
   status: string;
-  metadata: Record<string, any>;
-  gateway_response?: Record<string, any>;
+  metadata: any;
+  gateway_response?: any;
   created_at: string;
   updated_at: string;
 }
@@ -85,8 +85,8 @@ function mapTransactionRowToType(row: PaymentTransactionRow): PaymentTransaction
     gateway: row.gateway as PaymentGateway,
     method: row.method,
     status: row.status as PaymentStatus,
-    metadata: row.metadata,
-    gatewayResponse: row.gateway_response,
+    metadata: typeof row.metadata === 'string' ? JSON.parse(row.metadata) : (row.metadata || {}),
+    gatewayResponse: typeof row.gateway_response === 'string' ? JSON.parse(row.gateway_response) : (row.gateway_response || undefined),
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -151,7 +151,7 @@ export async function initiateBankTransfer(
         gateway: 'bank_transfer',
         method: details.bankName,
         status: 'pending',
-        metadata: { ...details },
+        metadata: details,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }])
@@ -168,21 +168,7 @@ export async function initiateBankTransfer(
     
     await notifyAdminForVerification(data.id, userId, 'bank_transfer', amount);
     
-    return {
-      id: data.id,
-      userId: data.user_id,
-      amount: data.amount,
-      currency: data.currency,
-      description: data.description,
-      reference: data.reference,
-      gateway: data.gateway as PaymentGateway,
-      method: data.method,
-      status: data.status as PaymentStatus,
-      metadata: data.metadata,
-      gatewayResponse: data.gateway_response,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
-    };
+    return mapTransactionRowToType(data as PaymentTransactionRow);
   } catch (error) {
     console.error('Error in initiateBankTransfer:', error);
     toast.error('Failed to initiate bank transfer');
@@ -198,13 +184,14 @@ export async function verifyBankTransfer(
 ): Promise<PaymentTransaction | null> {
   try {
     const status = verified ? 'completed' : 'failed';
+    
     const { data, error } = await supabase
       .from('payment_transactions')
       .update({
         status,
         updated_at: new Date().toISOString(),
-        metadata: supabase.sql`jsonb_set(metadata, '{verificationNotes}', ${notes ? JSON.stringify(notes) : null}::jsonb)`,
-        gateway_response: supabase.sql`jsonb_set(gateway_response, '{verifiedBy}', ${adminId}::jsonb)`
+        metadata: { verificationNotes: notes || null },
+        gateway_response: { verifiedBy: adminId }
       })
       .eq('id', transactionId)
       .eq('gateway', 'bank_transfer')
@@ -221,21 +208,7 @@ export async function verifyBankTransfer(
     
     await notifyUserForVerificationResult(data.user_id, data.id, verified, notes);
     
-    return {
-      id: data.id,
-      userId: data.user_id,
-      amount: data.amount,
-      currency: data.currency,
-      description: data.description,
-      reference: data.reference,
-      gateway: data.gateway as PaymentGateway,
-      method: data.method,
-      status: data.status as PaymentStatus,
-      metadata: data.metadata,
-      gatewayResponse: data.gateway_response,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
-    };
+    return mapTransactionRowToType(data as PaymentTransactionRow);
   } catch (error) {
     console.error('Error in verifyBankTransfer:', error);
     toast.error('Failed to verify bank transfer');
@@ -280,21 +253,7 @@ export async function initiateEWalletPayment(
     
     await notifyAdminForVerification(data.id, userId, 'ewallet', amount);
     
-    return {
-      id: data.id,
-      userId: data.user_id,
-      amount: data.amount,
-      currency: data.currency,
-      description: data.description,
-      reference: data.reference,
-      gateway: data.gateway as PaymentGateway,
-      method: data.method,
-      status: data.status as PaymentStatus,
-      metadata: data.metadata,
-      gatewayResponse: data.gateway_response,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
-    };
+    return mapTransactionRowToType(data as PaymentTransactionRow);
   } catch (error) {
     console.error('Error in initiateEWalletPayment:', error);
     toast.error('Failed to initiate e-wallet payment');
@@ -312,10 +271,10 @@ export async function submitEWalletVerification(
     const { error } = await supabase
       .from('payment_transactions')
       .update({
-        metadata: supabase.sql`jsonb_set(
-          jsonb_set(metadata, '{proofType}', ${proofType}::jsonb),
-          '{proofData}', ${proofData}::jsonb
-        )`,
+        metadata: {
+          proofType,
+          proofData
+        },
         status: 'pending',
         updated_at: new Date().toISOString()
       })
@@ -542,21 +501,7 @@ export async function initiateEasyWalletPayment(
 
     toast.success('EasyWallet payment initiated successfully');
     
-    return {
-      id: data.id,
-      userId: data.user_id,
-      amount: data.amount,
-      currency: data.currency,
-      description: data.description,
-      reference: data.reference,
-      gateway: data.gateway as PaymentGateway,
-      method: data.method,
-      status: data.status as PaymentStatus,
-      metadata: data.metadata,
-      gatewayResponse: data.gateway_response,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
-    };
+    return mapTransactionRowToType(data as PaymentTransactionRow);
   } catch (error) {
     console.error('Error in initiateEasyWalletPayment:', error);
     toast.error('Failed to initiate EasyWallet payment');
@@ -680,21 +625,7 @@ export async function fetchUserPayments(userId: string): Promise<PaymentTransact
       return [];
     }
 
-    return data.map(item => ({
-      id: item.id,
-      userId: item.user_id,
-      amount: item.amount,
-      currency: item.currency,
-      description: item.description,
-      reference: item.reference,
-      gateway: item.gateway as PaymentGateway,
-      method: item.method,
-      status: item.status as PaymentStatus,
-      metadata: item.metadata,
-      gatewayResponse: item.gateway_response,
-      createdAt: item.created_at,
-      updatedAt: item.updated_at
-    }));
+    return (data || []).map(item => mapTransactionRowToType(item as PaymentTransactionRow));
   } catch (error) {
     console.error('Error in fetchUserPayments:', error);
     toast.error('Failed to load payment history');
@@ -716,21 +647,7 @@ export async function fetchPaymentDetails(paymentId: string): Promise<PaymentTra
       return null;
     }
 
-    return {
-      id: data.id,
-      userId: data.user_id,
-      amount: data.amount,
-      currency: data.currency,
-      description: data.description,
-      reference: data.reference,
-      gateway: data.gateway as PaymentGateway,
-      method: data.method,
-      status: data.status as PaymentStatus,
-      metadata: data.metadata,
-      gatewayResponse: data.gateway_response,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
-    };
+    return mapTransactionRowToType(data as PaymentTransactionRow);
   } catch (error) {
     console.error('Error in fetchPaymentDetails:', error);
     toast.error('Failed to load payment details');
@@ -756,14 +673,18 @@ export async function retryFailedPayment(
       return { success: false };
     }
 
+    const metadata = typeof originalPayment.metadata === 'string' 
+      ? JSON.parse(originalPayment.metadata) 
+      : originalPayment.metadata;
+
     switch (originalPayment.gateway) {
       case 'payfast': {
         const result = await initiatePayFastPayment(
           userId,
           originalPayment.amount,
           originalPayment.description,
-          originalPayment.metadata.returnUrl,
-          originalPayment.metadata.cancelUrl
+          metadata.returnUrl || '',
+          metadata.cancelUrl || ''
         );
         
         if (!result) return { success: false };
@@ -776,12 +697,19 @@ export async function retryFailedPayment(
       }
       
       case 'dpo': {
+        const isRecurring = metadata.isRecurring || false;
+        const paymentDetails = {
+          companyRef: metadata.companyRef,
+          customerEmail: metadata.customerEmail,
+          customerName: metadata.customerName
+        };
+        
         const result = await initiateDPOPayment(
           userId,
           originalPayment.amount,
           originalPayment.description,
-          originalPayment.metadata.isRecurring,
-          originalPayment.metadata
+          isRecurring,
+          paymentDetails
         );
         
         if (!result) return { success: false };
@@ -797,7 +725,7 @@ export async function retryFailedPayment(
         const result = await initiateBankTransfer(
           userId,
           originalPayment.amount,
-          originalPayment.metadata as BankTransferDetails,
+          metadata as BankTransferDetails,
           originalPayment.description
         );
         
@@ -813,7 +741,7 @@ export async function retryFailedPayment(
         const result = await initiateEWalletPayment(
           userId,
           originalPayment.amount,
-          originalPayment.metadata as EWalletDetails,
+          metadata as EWalletDetails,
           originalPayment.description
         );
         
@@ -826,10 +754,12 @@ export async function retryFailedPayment(
       }
       
       case 'easywallet': {
+        const phoneNumber = metadata.phoneNumber || '';
+        
         const result = await initiateEasyWalletPayment(
           userId,
           originalPayment.amount,
-          originalPayment.metadata.phoneNumber,
+          phoneNumber,
           originalPayment.description
         );
         
@@ -905,21 +835,7 @@ export async function fetchAdminPaymentTransactions(
       return [];
     }
 
-    return data.map(item => ({
-      id: item.id,
-      userId: item.user_id,
-      amount: item.amount,
-      currency: item.currency,
-      description: item.description,
-      reference: item.reference,
-      gateway: item.gateway as PaymentGateway,
-      method: item.method,
-      status: item.status as PaymentStatus,
-      metadata: item.metadata,
-      gatewayResponse: item.gateway_response,
-      createdAt: item.created_at,
-      updatedAt: item.updated_at
-    }));
+    return (data || []).map(item => mapTransactionRowToType(item as PaymentTransactionRow));
   } catch (error) {
     console.error('Error in fetchAdminPaymentTransactions:', error);
     toast.error('Failed to load payment transactions');

@@ -911,3 +911,46 @@ export function formatFavorites(favorites: any[]) {
     };
   });
 }
+
+export async function getFavoriteServices(userId: string): Promise<any[]> {
+  try {
+    const { data: favorites, error: favoritesError } = await supabase
+      .from('favorite_services')
+      .select(`
+        id,
+        service:service_id (
+          id,
+          title,
+          description,
+          price,
+          image,
+          category,
+          provider_id
+        )
+      `)
+      .eq('user_id', userId);
+
+    if (favoritesError) {
+      console.error('Error fetching favorite services:', favoritesError);
+      return [];
+    }
+
+    const formattedFavorites = favorites
+      .filter(fav => fav.service !== null) // Filter out any null services
+      .map((fav) => ({
+        id: fav.id,
+        serviceId: fav.service?.id || '',
+        title: fav.service?.title || '',
+        description: fav.service?.description || '',
+        price: fav.service?.price || 0,
+        image: fav.service?.image || '',
+        category: fav.service?.category || '',
+        providerId: fav.service?.provider_id || '',
+      }));
+
+    return formattedFavorites;
+  } catch (error) {
+    console.error('Error in getFavoriteServices:', error);
+    return [];
+  }
+}

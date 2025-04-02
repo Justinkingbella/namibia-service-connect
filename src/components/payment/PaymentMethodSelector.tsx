@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BuildingBank, Wallet, CreditCard, CircleDollarSign, Smartphone } from 'lucide-react';
+import { Building, Wallet, CreditCard, CircleDollarSign, Smartphone } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -191,7 +192,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         <Tabs value={paymentTab} onValueChange={setPaymentTab}>
           <TabsList className="grid grid-cols-5 mb-6">
             <TabsTrigger value="bank" className="flex flex-col items-center gap-1 py-3">
-              <BuildingBank className="h-5 w-5" />
+              <Building className="h-5 w-5" />
               <span className="text-xs">Bank</span>
             </TabsTrigger>
             <TabsTrigger value="ewallet" className="flex flex-col items-center gap-1 py-3">
