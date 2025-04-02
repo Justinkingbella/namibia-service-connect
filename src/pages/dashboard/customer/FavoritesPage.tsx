@@ -1,9 +1,10 @@
+
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ServiceCard } from '@/components/dashboard/ServiceCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ServiceListItem } from '@/types/service';
+import { ServiceListItem, ServiceCategory } from '@/types/service';
 import { Heart, Loader2 } from 'lucide-react';
 import { useFavorites } from '@/hooks/useFavorites';
 
@@ -17,7 +18,8 @@ const FavoritesPage = () => {
       return {
         id: fav.serviceId,
         title: 'Unknown Service',
-        category: 'unknown',
+        description: '',
+        category: 'other' as ServiceCategory,
         pricingModel: 'fixed',
         price: 0,
         providerName: 'Unknown Provider',
@@ -26,23 +28,23 @@ const FavoritesPage = () => {
         reviewCount: 0,
         image: '/placeholder.svg',
         location: '',
-        description: '',
       };
     }
     
+    // Map service data to ServiceListItem
     return {
       id: fav.service.id,
       title: fav.service.title,
-      category: fav.service.categoryId || 'unknown', 
-      pricingModel: 'fixed', // Default since it's missing in the service type
-      price: fav.service.price,
-      providerName: fav.service.providerName,
-      providerId: fav.service.providerId,
-      rating: fav.service.rating,
-      reviewCount: fav.service.reviewCount,
-      image: fav.service.imageUrl || '/placeholder.svg',
-      location: 'Unknown Location', // Default since it's missing in the service type
       description: fav.service.description || '',
+      category: fav.service.category,
+      pricingModel: fav.service.pricingModel,
+      price: fav.service.price,
+      providerName: fav.service.providerName || '',
+      providerId: fav.service.providerId,
+      rating: fav.service.rating || 0,
+      reviewCount: fav.service.reviewCount || 0,
+      image: fav.service.image || '/placeholder.svg',
+      location: fav.service.location || 'Unknown Location',
     };
   });
 
@@ -110,8 +112,8 @@ const FavoritesPage = () => {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <span className="ml-2">Loading favorites...</span>
                 </div>
-              ) : favoriteServices.filter(s => s.category === 'home').length > 0 ? (
-                favoriteServices.filter(s => s.category === 'home').map((service) => (
+              ) : favoriteServices.filter(s => s.category === 'home' || s.category === 'cleaning' || s.category === 'repair').length > 0 ? (
+                favoriteServices.filter(s => s.category === 'home' || s.category === 'cleaning' || s.category === 'repair').map((service) => (
                   <ServiceCard key={service.id} service={service} />
                 ))
               ) : (
@@ -136,8 +138,8 @@ const FavoritesPage = () => {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <span className="ml-2">Loading favorites...</span>
                 </div>
-              ) : favoriteServices.filter(s => s.category === 'errand').length > 0 ? (
-                favoriteServices.filter(s => s.category === 'errand').map((service) => (
+              ) : favoriteServices.filter(s => s.category === 'errand' || s.category === 'moving' || s.category === 'transport').length > 0 ? (
+                favoriteServices.filter(s => s.category === 'errand' || s.category === 'moving' || s.category === 'transport').map((service) => (
                   <ServiceCard key={service.id} service={service} />
                 ))
               ) : (

@@ -1,4 +1,3 @@
-
 // Change dispute status from 'pending' to 'open' to match the Dispute type
 export async function fetchUserDisputes(userId: string): Promise<Dispute[]> {
   // Simulate API delay
@@ -67,4 +66,84 @@ export async function createDispute(disputeData: Partial<Dispute>): Promise<Disp
   
   // Return the created dispute
   return newDispute;
+}
+
+// Mock favorites data
+const mockFavorites = new Map();
+
+// Fetch user favorites
+export async function fetchUserFavorites(userId: string): Promise<FavoriteService[]> {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  if (!mockFavorites.has(userId)) {
+    mockFavorites.set(userId, []);
+  }
+  
+  return mockFavorites.get(userId) || [];
+}
+
+// Add a service to favorites
+export async function addFavorite(userId: string, serviceId: string): Promise<FavoriteService> {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 600));
+  
+  if (!mockFavorites.has(userId)) {
+    mockFavorites.set(userId, []);
+  }
+  
+  const favorites = mockFavorites.get(userId);
+  
+  // Check if already in favorites
+  if (favorites.some(fav => fav.serviceId === serviceId)) {
+    return favorites.find(fav => fav.serviceId === serviceId);
+  }
+  
+  // Create new favorite
+  const newFavorite: FavoriteService = {
+    id: `fav_${Math.random().toString(36).substring(2, 9)}`,
+    userId,
+    serviceId,
+    createdAt: new Date(),
+    service: {
+      id: serviceId,
+      title: `Service ${serviceId}`,
+      description: "Service description",
+      price: 100,
+      pricingModel: "fixed",
+      category: "cleaning",
+      providerId: "provider_1",
+      providerName: "Provider Name",
+      features: [],
+      image: "/placeholder.svg",
+      isActive: true,
+      location: "Windhoek, Namibia",
+      rating: 4.5,
+      reviewCount: 10,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+  };
+  
+  favorites.push(newFavorite);
+  mockFavorites.set(userId, favorites);
+  
+  return newFavorite;
+}
+
+// Remove a service from favorites
+export async function removeFavorite(userId: string, serviceId: string): Promise<boolean> {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 600));
+  
+  if (!mockFavorites.has(userId)) {
+    return false;
+  }
+  
+  const favorites = mockFavorites.get(userId);
+  const updatedFavorites = favorites.filter(fav => fav.serviceId !== serviceId);
+  
+  mockFavorites.set(userId, updatedFavorites);
+  
+  return favorites.length !== updatedFavorites.length;
 }

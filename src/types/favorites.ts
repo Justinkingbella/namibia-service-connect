@@ -6,6 +6,5 @@ export interface FavoriteService {
   userId: string;
   serviceId: string;
   createdAt: Date;
-  // Add the service property for FavoritesPage
   service?: Service;
 }
