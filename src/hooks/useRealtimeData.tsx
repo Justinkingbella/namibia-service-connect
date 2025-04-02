@@ -73,21 +73,17 @@ export function useRealtimeData<T>({
     let channel: RealtimeChannel | null = null;
     
     try {
-      const channelId = `table-changes-${table}`;
-      channel = supabase.channel(channelId);
+      channel = supabase.channel(`table-changes-${table}`);
       
-      // Configure the subscription
-      const subscription = {
-        event: event,
-        schema: 'public',
-        table: table,
-        ...(filter && filterValue !== undefined ? { filter: `${filter}=eq.${filterValue}` } : {})
-      };
-      
-      // Add the event handler for postgres_changes
+      // Configure the channel subscription properly
       channel.on(
         'postgres_changes',
-        subscription,
+        {
+          event: event,
+          schema: 'public',
+          table: table,
+          ...(filter && filterValue !== undefined ? { filter: `${filter}=eq.${filterValue}` } : {})
+        },
         (payload) => {
           console.log(`Realtime update received for ${table}:`, payload);
           
@@ -134,7 +130,9 @@ export function useRealtimeData<T>({
       );
       
       // Subscribe to the channel
-      channel.subscribe();
+      channel.subscribe((status) => {
+        console.log(`Realtime subscription status for ${table}:`, status);
+      });
     } catch (error) {
       console.error(`Error setting up realtime subscription for ${table}:`, error);
     }

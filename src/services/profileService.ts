@@ -948,9 +948,10 @@ export function formatFavorites(favorites: any[]) {
   if (!favorites || !Array.isArray(favorites)) return [];
   
   return favorites.map(fav => {
-    // Safely handle service data with proper null checks
+    // Check if fav.service exists and is an object
     const serviceData = fav.service && typeof fav.service === 'object' ? fav.service : null;
     
+    // Create the service object with safe property access
     const service = serviceData ? {
       id: serviceData.id || '',
       title: serviceData.title || '',
@@ -1055,15 +1056,14 @@ export const fetchServicesByProvider = async (providerId: string): Promise<Servi
       return [];
     }
     
-    // Map data to typed structure with null checks
+    // Map data to ServiceData type with proper type safety
     return servicesData.map(service => ({
       id: service?.id || '',
       title: service?.title || '',
       description: service?.description || '',
       price: service?.price || 0,
       provider_id: service?.provider_id || '',
-      // Use optional chaining for properties that might not exist
-      provider_name: service?.provider_name || '',
+      provider_name: service?.provider_name || undefined, // Make optional
       category: service?.category || '',
       image: service?.image || '',
       rating: service?.rating || 0,

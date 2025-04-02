@@ -1,3 +1,4 @@
+
 export type ServiceCategory = 
   | 'all' 
   | 'home' 
