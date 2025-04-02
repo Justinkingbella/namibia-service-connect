@@ -938,16 +938,21 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
 
     const formattedFavorites = favorites
       .filter(fav => fav.services !== null) // Filter out any null services
-      .map((fav) => ({
-        id: fav.id,
-        serviceId: fav.services?.id || fav.service_id || '',
-        title: fav.services?.title || '',
-        description: fav.services?.description || '',
-        price: fav.services?.price || 0,
-        image: fav.services?.image || '',
-        category: fav.services?.category || '',
-        providerId: fav.services?.provider_id || '',
-      }));
+      .map((fav) => {
+        // Safely access potentially null services properties
+        const service = fav.services || {};
+        
+        return {
+          id: fav.id,
+          serviceId: service.id || fav.service_id || '',
+          title: service.title || '',
+          description: service.description || '',
+          price: service.price || 0,
+          image: service.image || '',
+          category: service.category || '',
+          providerId: service.provider_id || '',
+        };
+      });
 
     return formattedFavorites;
   } catch (error) {
