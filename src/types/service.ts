@@ -59,14 +59,14 @@ export interface ServiceData {
   description: string | null;
   price: number;
   provider_id: string;
-  provider_name?: string;
+  provider_name?: string | null;
   category: string;
   image: string | null;
   rating?: number | null;
   review_count?: number | null;
   location?: string | null;
-  is_active?: boolean;
-  pricing_model?: string;
-  created_at?: string;
-  updated_at?: string;
+  is_active?: boolean | null;
+  pricing_model?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }

@@ -953,8 +953,8 @@ export function formatFavorites(favorites: any[]) {
     // Create the service object with properly typed properties and null checks
     const service = serviceData ? {
       id: serviceData.id || '',
-      title: serviceData.title || '',
-      description: serviceData.description || '',
+      title: typeof serviceData.title === 'string' ? serviceData.title : '',
+      description: typeof serviceData.description === 'string' ? serviceData.description : '',
       price: typeof serviceData.price === 'number' ? serviceData.price : 0,
       location: serviceData.location || '',
       image: serviceData.image || '',
@@ -1101,8 +1101,8 @@ export const mapServiceData = (service: any): ServiceData => {
     provider_name: service.provider_name || undefined,
     category: service.category || '',
     image: service.image || '',
-    rating: service.rating || 0,
-    review_count: service.review_count || 0,
+    rating: typeof service.rating === 'number' ? service.rating : undefined,
+    review_count: typeof service.review_count === 'number' ? service.review_count : undefined,
     location: service.location || '',
     is_active: service.is_active !== undefined ? service.is_active : true,
     pricing_model: service.pricing_model || 'hourly',
@@ -1124,8 +1124,8 @@ export const transformServiceObject = (service: any) => {
     category: service.category,
     pricingModel: service.pricing_model || 'hourly',
     image: service.image || '',
-    rating: service.rating || 0,
-    reviewCount: service.review_count || 0,
+    rating: typeof service.rating === 'number' ? service.rating : 0,
+    reviewCount: typeof service.review_count === 'number' ? service.review_count : 0,
     location: service.location || ''
   };
 };
