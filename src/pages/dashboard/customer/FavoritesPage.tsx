@@ -1,4 +1,3 @@
-
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,16 +33,16 @@ const FavoritesPage = () => {
     return {
       id: fav.service.id,
       title: fav.service.title,
-      category: fav.service.category,
-      pricingModel: fav.service.pricingModel,
+      category: fav.service.categoryId || 'unknown', 
+      pricingModel: 'fixed', // Default since it's missing in the service type
       price: fav.service.price,
       providerName: fav.service.providerName,
       providerId: fav.service.providerId,
       rating: fav.service.rating,
       reviewCount: fav.service.reviewCount,
-      image: fav.service.image,
-      location: fav.service.location,
-      description: fav.service.description,
+      image: fav.service.imageUrl || '/placeholder.svg',
+      location: 'Unknown Location', // Default since it's missing in the service type
+      description: fav.service.description || '',
     };
   });
 

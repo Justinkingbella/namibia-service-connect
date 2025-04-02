@@ -1,12 +1,15 @@
-
 export interface Message {
   id: string;
   conversationId: string;
   senderId: string;
   text: string;
+  content?: string; // Added to match profile service
   timestamp: Date;
   isRead: boolean;
   attachments: string[]; // Array of attachment URLs
+  senderName?: string;
+  senderAvatar?: string;
+  sentAt?: Date;
 }
 
 export interface Conversation {

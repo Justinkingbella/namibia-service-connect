@@ -8,6 +8,7 @@ import { PaymentPaymentMethod } from '@/types';
 
 interface PaymentManagementProps {
   providerId?: string;
+  type?: string;
 }
 
 type WithdrawalStatus = 'pending' | 'processing' | 'completed' | 'failed';
@@ -41,7 +42,7 @@ const mockTransactions: Transaction[] = [
     amount: 500,
     fee: 50,
     net: 450,
-    date: new Date(Date.now() - 86400000 * 2), // 2 days ago
+    date: new Date(Date.now() - 86400000 * 2),
     bookingId: '1',
     serviceName: 'Home Cleaning Service',
     paymentMethod: 'pay_today',
@@ -52,7 +53,7 @@ const mockTransactions: Transaction[] = [
     amount: 350,
     fee: 35,
     net: 315,
-    date: new Date(Date.now() - 86400000 * 5), // 5 days ago
+    date: new Date(Date.now() - 86400000 * 5),
     bookingId: '2',
     serviceName: 'Plumbing Repair',
     paymentMethod: 'e_wallet',
@@ -63,7 +64,7 @@ const mockTransactions: Transaction[] = [
     amount: 300,
     fee: 30,
     net: 270,
-    date: new Date(Date.now() - 86400000 * 7), // 7 days ago
+    date: new Date(Date.now() - 86400000 * 7),
     bookingId: '3',
     serviceName: 'Deep Cleaning',
     paymentMethod: 'pay_today',
@@ -77,7 +78,7 @@ const mockWithdrawals: Withdrawal[] = [
     amount: 800,
     fee: 10,
     net: 790,
-    date: new Date(Date.now() - 86400000 * 3), // 3 days ago
+    date: new Date(Date.now() - 86400000 * 3),
     method: 'Bank Transfer',
     accountDetails: '**** 1234',
     status: 'completed'
@@ -87,7 +88,7 @@ const mockWithdrawals: Withdrawal[] = [
     amount: 500,
     fee: 5,
     net: 495,
-    date: new Date(Date.now() - 86400000 * 10), // 10 days ago
+    date: new Date(Date.now() - 86400000 * 10),
     method: 'E-Wallet',
     accountDetails: '0812345678',
     status: 'completed'
@@ -104,8 +105,8 @@ const mockWithdrawals: Withdrawal[] = [
   }
 ];
 
-export const PaymentManagement: React.FC<PaymentManagementProps> = ({ providerId }) => {
-  const [activeTab, setActiveTab] = useState('earnings');
+export const PaymentManagement: React.FC<PaymentManagementProps> = ({ providerId, type }) => {
+  const [activeTab, setActiveTab] = useState(type || 'earnings');
   const [withdrawalAmount, setWithdrawalAmount] = useState<number>(0);
   const [withdrawalMethod, setWithdrawalMethod] = useState<string>('bank_transfer');
   
@@ -216,11 +217,15 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({ providerId
           </Card>
         </div>
         
-        <Tabs defaultValue="earnings" value={activeTab} onValueChange={setActiveTab}>
+        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="earnings">Earnings</TabsTrigger>
             <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
             <TabsTrigger value="request">Request Withdrawal</TabsTrigger>
+            <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
+            <TabsTrigger value="bank-accounts">Bank Accounts</TabsTrigger>
+            <TabsTrigger value="wallet">Wallet</TabsTrigger>
+            <TabsTrigger value="payment-settings">Payment Settings</TabsTrigger>
           </TabsList>
           
           <TabsContent value="earnings">
@@ -400,6 +405,54 @@ export const PaymentManagement: React.FC<PaymentManagementProps> = ({ providerId
                     </Button>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="payment-methods">
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Methods</CardTitle>
+                <CardDescription>Manage your payment methods</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>You have no payment methods configured yet.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="bank-accounts">
+            <Card>
+              <CardHeader>
+                <CardTitle>Bank Accounts</CardTitle>
+                <CardDescription>Manage your bank accounts</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>You have no bank accounts configured yet.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="wallet">
+            <Card>
+              <CardHeader>
+                <CardTitle>Wallet</CardTitle>
+                <CardDescription>Manage your wallet</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>Your wallet balance: N$0.00</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="payment-settings">
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Settings</CardTitle>
+                <CardDescription>Configure your payment preferences</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>No payment settings available.</p>
               </CardContent>
             </Card>
           </TabsContent>

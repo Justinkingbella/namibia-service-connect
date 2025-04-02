@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PaymentHistory, Dispute } from '@/types/payments';
@@ -367,7 +366,7 @@ export async function fetchUserPaymentMethods(userId: string): Promise<PaymentMe
       userId: method.user_id,
       type: method.type,
       name: method.name,
-      details: method.details,
+      details: method.details as Record<string, any>,
       isDefault: method.is_default,
       createdAt: method.created_at
     }));
@@ -394,7 +393,7 @@ export async function addPaymentMethod(userId: string, method: Omit<PaymentMetho
         user_id: userId,
         type: method.type,
         name: method.name,
-        details: method.details,
+        details: method.details as Record<string, any>,
         is_default: method.isDefault
       }])
       .select()
@@ -413,7 +412,7 @@ export async function addPaymentMethod(userId: string, method: Omit<PaymentMetho
       userId: data.user_id,
       type: data.type,
       name: data.name,
-      details: data.details,
+      details: data.details as Record<string, any>,
       isDefault: data.is_default,
       createdAt: data.created_at
     };
@@ -620,7 +619,7 @@ export async function fetchUserMessages(userId: string): Promise<Message[]> {
     // Now fetch the messages from these conversations
     const { data, error } = await supabase
       .from('messages')
-      .select('*, sender:sender_id(*)')
+      .select('*')
       .in('conversation_id', conversationIds)
       .order('created_at', { ascending: false });
 
@@ -634,12 +633,14 @@ export async function fetchUserMessages(userId: string): Promise<Message[]> {
       id: message.id,
       conversationId: message.conversation_id,
       senderId: message.sender_id,
-      senderName: message.sender?.name || 'Unknown User',
-      senderAvatar: message.sender?.avatar_url,
+      text: message.content,
       content: message.content,
-      attachments: message.attachments || [],
-      isRead: message.is_read,
+      timestamp: new Date(message.created_at),
       sentAt: new Date(message.created_at),
+      isRead: message.read,
+      attachments: message.attachments || [],
+      senderName: "Unknown User",
+      senderAvatar: undefined
     }));
   } catch (error) {
     console.error('Error in fetchUserMessages:', error);
@@ -722,7 +723,7 @@ export async function sendMessage(senderId: string, recipientId: string, content
         sender_id: senderId,
         content,
         attachments,
-        is_read: false
+        read: false
       }]);
 
     if (error) {
@@ -744,7 +745,7 @@ export async function markMessageAsRead(messageId: string): Promise<boolean> {
   try {
     const { error } = await supabase
       .from('messages')
-      .update({ is_read: true })
+      .update({ read: true })
       .eq('id', messageId);
 
     if (error) {
@@ -773,24 +774,43 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteServic
       return [];
     }
 
-    return data.map(fav => ({
-      id: fav.id,
-      userId: fav.user_id,
-      serviceId: fav.service_id,
-      createdAt: new Date(fav.created_at),
-      service: {
-        id: fav.service.id,
-        title: fav.service.title,
-        description: fav.service.description,
-        price: fav.service.price,
-        providerId: fav.service.provider_id,
-        providerName: fav.service.provider_name || 'Unknown Provider',
-        categoryId: fav.service.category_id,
-        imageUrl: fav.service.image_url,
-        rating: fav.service.rating || 0,
-        reviewCount: fav.service.review_count || 0
-      }
-    }));
+    return data.map(fav => {
+      const defaultService = {
+        id: fav.service_id,
+        title: 'Unknown Service',
+        description: '',
+        price: 0,
+        providerId: '',
+        providerName: 'Unknown Provider',
+        categoryId: '',
+        imageUrl: undefined,
+        rating: 0,
+        reviewCount: 0
+      };
+
+      const service = fav.service && typeof fav.service === 'object' && !('error' in fav.service) 
+        ? {
+            id: fav.service_id,
+            title: fav.service.title || 'Unknown Service',
+            description: fav.service.description || '',
+            price: fav.service.price || 0,
+            providerId: fav.service.provider_id || '',
+            providerName: fav.service.provider_name || 'Unknown Provider',
+            categoryId: fav.service.category || '',
+            imageUrl: fav.service.image || undefined,
+            rating: fav.service.rating || 0,
+            reviewCount: fav.service.review_count || 0
+          }
+        : defaultService;
+
+      return {
+        id: fav.id,
+        userId: fav.user_id,
+        serviceId: fav.service_id,
+        createdAt: new Date(fav.created_at),
+        service
+      };
+    });
   } catch (error) {
     console.error('Error in fetchUserFavorites:', error);
     toast.error('Failed to load favorites');
@@ -800,7 +820,6 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteServic
 
 export async function addFavorite(userId: string, serviceId: string): Promise<boolean> {
   try {
-    // Check if already a favorite
     const { count, error: countError } = await supabase
       .from('favorite_services')
       .select('*', { count: 'exact', head: true })
