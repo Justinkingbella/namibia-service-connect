@@ -75,64 +75,63 @@ export function useRealtimeData<T>({
     try {
       channel = supabase.channel(`table-changes-${table}`);
       
-      // Configure the channel subscription properly
-      channel.on(
-        'postgres_changes',
-        {
-          event: event,
-          schema: 'public',
-          table: table,
-          ...(filter && filterValue !== undefined ? { filter: `${filter}=eq.${filterValue}` } : {})
-        },
-        (payload) => {
-          console.log(`Realtime update received for ${table}:`, payload);
-          
-          // Handle different events
-          if (payload.eventType === 'INSERT') {
-            setData((prevData) => {
-              if (Array.isArray(prevData)) {
-                return [...prevData, payload.new] as unknown as T;
-              }
-              return payload.new as unknown as T;
-            });
-            toast.info(`New ${table.slice(0, -1)} added`);
-          } else if (payload.eventType === 'UPDATE') {
-            setData((prevData) => {
-              if (Array.isArray(prevData)) {
-                return prevData.map(item => 
-                  (item as any).id === payload.new.id ? payload.new : item
-                ) as unknown as T;
-              }
-              return payload.new as unknown as T;
-            });
-            toast.info(`${table.slice(0, -1)} updated`);
-          } else if (payload.eventType === 'DELETE') {
-            setData((prevData) => {
-              if (Array.isArray(prevData)) {
-                return prevData.filter(item => 
-                  (item as any).id !== payload.old.id
-                ) as unknown as T;
-              }
-              // If it was the object we were watching that got deleted
-              if ((prevData as any)?.id === payload.old.id) {
-                return null;
-              }
-              return prevData;
-            });
-            toast.info(`${table.slice(0, -1)} removed`);
+      // Configure the channel subscription
+      channel
+        .on(
+          'postgres_changes', 
+          {
+            event: event,
+            schema: 'public',
+            table: table,
+            ...(filter && filterValue !== undefined ? { filter: `${filter}=eq.${filterValue}` } : {})
+          },
+          (payload) => {
+            console.log(`Realtime update received for ${table}:`, payload);
+            
+            // Handle different events
+            if (payload.eventType === 'INSERT') {
+              setData((prevData) => {
+                if (Array.isArray(prevData)) {
+                  return [...prevData, payload.new] as unknown as T;
+                }
+                return payload.new as unknown as T;
+              });
+              toast.info(`New ${table.slice(0, -1)} added`);
+            } else if (payload.eventType === 'UPDATE') {
+              setData((prevData) => {
+                if (Array.isArray(prevData)) {
+                  return prevData.map(item => 
+                    (item as any).id === payload.new.id ? payload.new : item
+                  ) as unknown as T;
+                }
+                return payload.new as unknown as T;
+              });
+              toast.info(`${table.slice(0, -1)} updated`);
+            } else if (payload.eventType === 'DELETE') {
+              setData((prevData) => {
+                if (Array.isArray(prevData)) {
+                  return prevData.filter(item => 
+                    (item as any).id !== payload.old.id
+                  ) as unknown as T;
+                }
+                // If it was the object we were watching that got deleted
+                if ((prevData as any)?.id === payload.old.id) {
+                  return null;
+                }
+                return prevData;
+              });
+              toast.info(`${table.slice(0, -1)} removed`);
+            }
+            
+            // Call onDataChange callback if provided
+            if (onDataChange) {
+              onDataChange(payload);
+            }
           }
-          
-          // Call onDataChange callback if provided
-          if (onDataChange) {
-            onDataChange(payload);
-          }
-        }
-      );
-      
-      // Subscribe to the channel
-      channel.subscribe((status) => {
-        console.log(`Realtime subscription status for ${table}:`, status);
-      });
+        )
+        .subscribe((status) => {
+          console.log(`Realtime subscription status for ${table}:`, status);
+        });
     } catch (error) {
       console.error(`Error setting up realtime subscription for ${table}:`, error);
     }

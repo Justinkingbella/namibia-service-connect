@@ -951,16 +951,16 @@ export function formatFavorites(favorites: any[]) {
     // Check if fav.service exists and is an object
     const serviceData = fav.service && typeof fav.service === 'object' ? fav.service : null;
     
-    // Create the service object with safe property access
+    // Create the service object with properly typed properties and null checks
     const service = serviceData ? {
       id: serviceData.id || '',
       title: serviceData.title || '',
       description: serviceData.description || '',
-      price: serviceData.price || 0,
+      price: typeof serviceData.price === 'number' ? serviceData.price : 0,
       location: serviceData.location || '',
       image: serviceData.image || '',
       category: serviceData.category || '',
-      isActive: serviceData.is_active || false,
+      isActive: Boolean(serviceData.is_active),
       providerId: serviceData.provider_id || '',
       pricingModel: serviceData.pricing_model || '',
       createdAt: serviceData.created_at || '',
@@ -1017,7 +1017,7 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
         
         // Use a typed variable to help TypeScript understand the structure
         // and provide a fallback for null/undefined services
-        const servicesData = fav.services && typeof fav.services === 'object' 
+        const servicesData = (fav.services && typeof fav.services === 'object') 
           ? fav.services 
           : defaultData;
         
@@ -1063,13 +1063,13 @@ export const fetchServicesByProvider = async (providerId: string): Promise<Servi
       description: service?.description || '',
       price: service?.price || 0,
       provider_id: service?.provider_id || '',
-      provider_name: service?.provider_name || undefined, // Make optional
+      provider_name: service?.provider_name || undefined, 
       category: service?.category || '',
       image: service?.image || '',
-      rating: service?.rating || 0,
-      review_count: service?.review_count || 0,
+      rating: typeof service?.rating === 'number' ? service.rating : 0,
+      review_count: typeof service?.review_count === 'number' ? service.review_count : 0,
       location: service?.location || '',
-      is_active: service?.is_active || false,
+      is_active: Boolean(service?.is_active),
       pricing_model: service?.pricing_model || '',
       created_at: service?.created_at || '',
       updated_at: service?.updated_at || ''
