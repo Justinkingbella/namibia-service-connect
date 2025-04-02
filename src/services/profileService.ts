@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PaymentHistory, Dispute } from '@/types/payments';
@@ -790,7 +789,6 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteServic
       };
 
       // Safely handle the case where service might be null or have an error
-      // Make a TypeScript assertion that service is not null before accessing its properties
       // Define service before using it, with proper typechecking
       let service = defaultService;
       
