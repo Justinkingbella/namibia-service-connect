@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { fetchUserDisputes } from '@/services/profileService';
+import { fetchUserDisputes } from '@/services/mockProfileService';
 import { Dispute } from '@/types/payments';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

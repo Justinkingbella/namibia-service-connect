@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PaymentHistory } from '@/types/payments';
-import { fetchPaymentHistory } from '@/services/profileService';
+import { fetchPaymentHistory } from '@/services/mockProfileService';
 
 export function usePaymentHistory() {
   const { user } = useAuth();

@@ -3,7 +3,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { User2FA } from '@/types/auth';
-import { fetchUser2FAStatus, enable2FA, disable2FA } from '@/services/profileService';
+import { 
+  fetchUser2FAStatus, 
+  enable2FA, 
+  disable2FA 
+} from '@/services/mockProfileService';
 
 export function use2FA() {
   const { user } = useAuth();

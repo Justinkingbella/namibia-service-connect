@@ -2591,6 +2591,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_provider_rating: {
+        Args: {
+          provider_id: string
+        }
+        Returns: {
+          avg_rating: number
+          total_reviews: number
+        }[]
+      }
       can_perform_subscription_action: {
         Args: {
           p_user_id: string
@@ -2613,12 +2622,42 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_booking_stats: {
+        Args: {
+          user_id: string
+          user_type: string
+          timeframe?: string
+        }
+        Returns: {
+          total_bookings: number
+          pending_bookings: number
+          confirmed_bookings: number
+          completed_bookings: number
+          cancelled_bookings: number
+          total_earnings: number
+          total_spent: number
+        }[]
+      }
       get_gateway_breakdown: {
         Args: Record<PropertyKey, never>
         Returns: {
           gateway: string
           count: number
           total_amount: number
+        }[]
+      }
+      get_provider_earnings_report: {
+        Args: {
+          provider_id: string
+          timeframe?: string
+        }
+        Returns: {
+          period: string
+          total_earnings: number
+          total_bookings: number
+          completed_bookings: number
+          commission_paid: number
+          net_earnings: number
         }[]
       }
       is_admin: {
@@ -2636,6 +2675,31 @@ export type Database = {
         }
         Returns: boolean
       }
+      search_services: {
+        Args: {
+          search_query: string
+        }
+        Returns: {
+          availability: Json | null
+          category: string
+          created_at: string | null
+          description: string | null
+          faqs: Json | null
+          featured: boolean | null
+          features: string[] | null
+          id: string
+          image: string | null
+          is_active: boolean | null
+          location: string | null
+          price: number
+          pricing_model: string
+          provider_id: string | null
+          slug: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }[]
+      }
       sum_payment_amounts: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2644,7 +2708,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      client_type: "browser" | "native" | "other"
     }
     CompositeTypes: {
       [_ in never]: never

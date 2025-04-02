@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -8,7 +7,7 @@ import {
   addPaymentMethod, 
   deletePaymentMethod, 
   setDefaultPaymentMethod 
-} from '@/services/profileService';
+} from '@/services/mockProfileService';
 
 export function usePaymentMethods() {
   const { user } = useAuth();

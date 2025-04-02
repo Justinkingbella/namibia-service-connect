@@ -229,7 +229,7 @@ export async function subscribeToPlan(
       subscription_id: data.id,
       amount: planData.price,
       transaction_type: existingData && existingData.length > 0 ? 
-        (planData.price > existingData[0].price ? 'upgrade' : 'downgrade') : 
+        (Number(planData.price) > Number(existingData[0].plan?.price || 0) ? 'upgrade' : 'downgrade') : 
         'subscription_payment',
       payment_method: paymentMethod,
       status: 'completed',

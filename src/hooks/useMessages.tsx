@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Message } from '@/types/message';
-import { fetchUserMessages, sendMessage, markMessageAsRead } from '@/services/profileService';
+import { fetchUserMessages, sendMessage, markMessageAsRead } from '@/services/mockProfileService';
 
 export function useMessages() {
   const { user } = useAuth();

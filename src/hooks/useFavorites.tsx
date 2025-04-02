@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { FavoriteService } from '@/types/favorites';
-import { fetchUserFavorites, addFavorite, removeFavorite } from '@/services/profileService';
+import { fetchUserFavorites, addFavorite, removeFavorite } from '@/services/mockProfileService';
 
 export function useFavorites() {
   const { user } = useAuth();

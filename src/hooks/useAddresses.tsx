@@ -8,7 +8,7 @@ import {
   addUserAddress, 
   updateUserAddress, 
   deleteUserAddress 
-} from '@/services/profileService';
+} from '@/services/mockProfileService';
 
 export function useAddresses() {
   const { user } = useAuth();

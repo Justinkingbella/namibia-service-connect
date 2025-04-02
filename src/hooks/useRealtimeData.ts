@@ -36,8 +36,8 @@ export function useRealtimeData<T>({
     try {
       setLoading(true);
       
-      // Build the query - cast the table name to any to avoid TypeScript error
-      let query = supabase.from(table as any).select('*');
+      // Build the query - use the type assertion to handle the table name
+      let query = supabase.from(table).select('*') as any;
       
       // Apply filters if provided
       if (filter) {

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Dispute } from '@/types/payments';
-import { fetchUserDisputes, createDispute } from '@/services/profileService';
+import { fetchUserDisputes, createDispute } from '@/services/mockProfileService';
 
 export function useDisputes() {
   const { user } = useAuth();
