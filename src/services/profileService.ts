@@ -918,7 +918,8 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
       .from('favorite_services')
       .select(`
         id,
-        service:service_id (
+        service_id,
+        services:service_id (
           id,
           title,
           description,
@@ -936,16 +937,16 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
     }
 
     const formattedFavorites = favorites
-      .filter(fav => fav.service !== null) // Filter out any null services
+      .filter(fav => fav.services !== null) // Filter out any null services
       .map((fav) => ({
         id: fav.id,
-        serviceId: fav.service?.id || '',
-        title: fav.service?.title || '',
-        description: fav.service?.description || '',
-        price: fav.service?.price || 0,
-        image: fav.service?.image || '',
-        category: fav.service?.category || '',
-        providerId: fav.service?.provider_id || '',
+        serviceId: fav.services?.id || fav.service_id || '',
+        title: fav.services?.title || '',
+        description: fav.services?.description || '',
+        price: fav.services?.price || 0,
+        image: fav.services?.image || '',
+        category: fav.services?.category || '',
+        providerId: fav.services?.provider_id || '',
       }));
 
     return formattedFavorites;
