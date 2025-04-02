@@ -788,19 +788,19 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteServic
         reviewCount: 0
       };
 
-      // Handle the case where service might be null or have an error
+      // Safely handle the case where service might be null or have an error
       const service = fav.service && typeof fav.service === 'object' && !('error' in fav.service)
         ? {
             id: fav.service_id,
-            title: fav.service?.title ?? 'Unknown Service',
-            description: fav.service?.description ?? '',
-            price: fav.service?.price ?? 0,
-            providerId: fav.service?.provider_id ?? '',
-            providerName: fav.service?.provider_name ?? 'Unknown Provider',
-            categoryId: fav.service?.category ?? '',
-            imageUrl: fav.service?.image ?? undefined,
-            rating: fav.service?.rating ?? 0,
-            reviewCount: fav.service?.review_count ?? 0
+            title: fav.service.title || 'Unknown Service',
+            description: fav.service.description || '',
+            price: fav.service.price || 0,
+            providerId: fav.service.provider_id || '',
+            providerName: fav.service.provider_name || 'Unknown Provider',
+            categoryId: fav.service.category || '',
+            imageUrl: fav.service.image || undefined,
+            rating: fav.service.rating || 0,
+            reviewCount: fav.service.review_count || 0
           }
         : defaultService;
 
