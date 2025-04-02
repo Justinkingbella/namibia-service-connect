@@ -102,12 +102,30 @@ export async function deleteSiteSetting(key: string): Promise<boolean> {
 // For SiteSettingsPage.tsx compatibility
 export { fetchSiteSettings as getSiteSettings };
 
-// Implement uploadImage function (mock for now)
+// Upload image to supabase storage
 export async function uploadImage(file: File, path: string): Promise<string | null> {
   try {
-    // Mock implementation
-    toast.success('Image uploaded successfully');
-    return `https://example.com/${path}/${file.name}`;
+    const fileName = `${Date.now()}-${file.name}`;
+    const filePath = `${path}/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('public')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+      return null;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('public')
+      .getPublicUrl(data.path);
+
+    return publicUrlData.publicUrl;
   } catch (error) {
     console.error('Error uploading image:', error);
     toast.error('Failed to upload image');

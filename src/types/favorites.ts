@@ -1,23 +1,21 @@
 
-import { ServiceCategory, PricingModel } from './service';
+import { Service } from './service';
 
 export interface FavoriteService {
   id: string;
   userId: string;
   serviceId: string;
-  createdAt: string;
+  createdAt: Date;
   service?: {
     id: string;
     title: string;
-    category: ServiceCategory | string;
-    pricingModel: PricingModel | string;
+    description: string;
     price: number;
-    providerName: string;
     providerId: string;
+    providerName: string;
+    categoryId: string;
+    imageUrl?: string;
     rating: number;
     reviewCount: number;
-    image: string;
-    location: string;
-    description: string;
   };
 }

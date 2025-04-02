@@ -1,90 +1,76 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { getSiteSettings, updateSiteSetting, uploadImage } from '@/services/settingsService';
-import { useToast } from '@/hooks/use-toast';
+import { fetchSiteSettings, updateSiteSetting, uploadImage } from '@/services/settingsService';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar } from '@/components/ui/avatar';
+import { toast } from 'sonner';
 
 const SiteSettingsPage = () => {
   const [settings, setSettings] = useState<Record<string, any>>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
-      setIsLoading(true);
-      try {
-        const data = await getSiteSettings();
-        setSettings(data);
-      } catch (error) {
-        console.error('Error loading settings:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load site settings',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
+      setLoading(true);
+      const data = await fetchSiteSettings();
+      setSettings(data);
+      setLoading(false);
     };
 
     loadSettings();
-  }, [toast]);
+  }, []);
 
-  const handleSettingChange = (key: string, value: any) => {
-    setSettings((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+  const handleTextChange = (key: string, value: string) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSaveSettings = async (settingKey: string) => {
-    setIsSaving(true);
-    try {
-      // Handle logo upload if there's a file
-      if (settingKey === 'logo_url' && logoFile) {
-        const path = `settings/logo-${Date.now()}-${logoFile.name}`;
-        const uploadedUrl = await uploadImage(logoFile, path);
-        
-        if (uploadedUrl) {
-          await updateSiteSetting('logo_url', uploadedUrl);
-          setSettings((prev) => ({
-            ...prev,
-            logo_url: uploadedUrl,
-          }));
-        }
-      } else {
-        // Handle other settings
-        await updateSiteSetting(settingKey, settings[settingKey]);
-      }
+  const handleToggleChange = (key: string, value: boolean) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
 
-      toast({
-        title: 'Success',
-        description: 'Setting updated successfully',
-      });
-    } catch (error) {
-      console.error('Error saving setting:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update setting',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSaving(false);
+  const handleSaveSetting = async (key: string) => {
+    setSaving(true);
+    const success = await updateSiteSetting(key, settings[key]);
+    setSaving(false);
+    
+    if (success) {
+      toast.success(`${key} updated successfully`);
+    } else {
+      toast.error(`Failed to update ${key}`);
     }
   };
 
-  if (isLoading) {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    const path = `site_settings/${key}`;
+    
+    setSaving(true);
+    const imageUrl = await uploadImage(file, path);
+    
+    if (imageUrl) {
+      setSettings(prev => ({ ...prev, [key]: imageUrl }));
+      await updateSiteSetting(key, imageUrl);
+      toast.success('Image uploaded successfully');
+    } else {
+      toast.error('Failed to upload image');
+    }
+    setSaving(false);
+  };
+
+  if (loading) {
     return (
       <DashboardLayout>
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
       </DashboardLayout>
     );
@@ -95,239 +81,163 @@ const SiteSettingsPage = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Site Settings</h1>
-          <p className="text-muted-foreground">
-            Customize your website's appearance and content
+          <p className="text-muted-foreground mt-1">
+            Manage global settings for your platform
           </p>
         </div>
 
-        <Tabs defaultValue="general" className="space-y-4">
+        <Tabs defaultValue="general" className="space-y-6">
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="branding">Branding</TabsTrigger>
-            <TabsTrigger value="footer">Footer</TabsTrigger>
+            <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            <TabsTrigger value="booking">Booking</TabsTrigger>
+            <TabsTrigger value="payment">Payment</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="general" className="space-y-4">
+          <TabsContent value="general" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>General Settings</CardTitle>
+                <CardTitle>Platform Information</CardTitle>
                 <CardDescription>
-                  Update your site name and other general settings
+                  Basic information about your platform
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="app_name">Site Name</Label>
-                  <div className="flex space-x-2">
+                  <Label htmlFor="site_name">Platform Name</Label>
+                  <div className="flex gap-2">
                     <Input
-                      id="app_name"
-                      value={settings.app_name || ''}
-                      onChange={(e) => handleSettingChange('app_name', e.target.value)}
+                      id="site_name"
+                      value={settings.site_name || ''}
+                      onChange={(e) => handleTextChange('site_name', e.target.value)}
+                      className="flex-1"
                     />
-                    <Button
-                      onClick={() => handleSaveSettings('app_name')}
-                      disabled={isSaving}
-                    >
-                      Save
+                    <Button onClick={() => handleSaveSetting('site_name')} disabled={saving}>
+                      {saving ? 'Saving...' : 'Save'}
                     </Button>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="copyright">Copyright Text</Label>
-                  <div className="flex space-x-2">
-                    <Input
-                      id="copyright"
-                      value={settings.copyright || ''}
-                      onChange={(e) => handleSettingChange('copyright', e.target.value)}
+                  <Label htmlFor="site_description">Platform Description</Label>
+                  <div className="flex gap-2">
+                    <Textarea
+                      id="site_description"
+                      value={settings.site_description || ''}
+                      onChange={(e) => handleTextChange('site_description', e.target.value)}
+                      className="flex-1"
                     />
-                    <Button
-                      onClick={() => handleSaveSettings('copyright')}
-                      disabled={isSaving}
-                    >
-                      Save
+                    <Button onClick={() => handleSaveSetting('site_description')} disabled={saving}>
+                      {saving ? 'Saving...' : 'Save'}
                     </Button>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="font_family">Font Family</Label>
-                  <div className="flex space-x-2">
+                  <Label htmlFor="contact_email">Contact Email</Label>
+                  <div className="flex gap-2">
                     <Input
-                      id="font_family"
-                      value={settings.font_family || ''}
-                      onChange={(e) => handleSettingChange('font_family', e.target.value)}
+                      id="contact_email"
+                      type="email"
+                      value={settings.contact_email || ''}
+                      onChange={(e) => handleTextChange('contact_email', e.target.value)}
+                      className="flex-1"
                     />
-                    <Button
-                      onClick={() => handleSaveSettings('font_family')}
-                      disabled={isSaving}
-                    >
-                      Save
+                    <Button onClick={() => handleSaveSetting('contact_email')} disabled={saving}>
+                      {saving ? 'Saving...' : 'Save'}
                     </Button>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="site_maintenance_mode" className="flex items-center gap-2">
+                    <Switch
+                      id="site_maintenance_mode"
+                      checked={settings.site_maintenance_mode || false}
+                      onCheckedChange={(checked) => {
+                        handleToggleChange('site_maintenance_mode', checked);
+                        handleSaveSetting('site_maintenance_mode');
+                      }}
+                    />
+                    <span>Maintenance Mode</span>
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    When enabled, the site will display a maintenance page to all non-admin users.
+                  </p>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="branding" className="space-y-4">
+          <TabsContent value="appearance" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Branding Settings</CardTitle>
+                <CardTitle>Branding</CardTitle>
                 <CardDescription>
-                  Customize your brand colors and logo
+                  Customize your platform's branding
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="primary_color">Primary Color</Label>
-                  <div className="flex space-x-2">
-                    <div className="flex-1 flex space-x-2">
-                      <Input
-                        id="primary_color"
-                        value={settings.primary_color || '#000000'}
-                        onChange={(e) => handleSettingChange('primary_color', e.target.value)}
-                      />
-                      <div
-                        className="w-10 h-10 rounded-md border"
-                        style={{ backgroundColor: settings.primary_color || '#000000' }}
-                      ></div>
-                    </div>
-                    <Button
-                      onClick={() => handleSaveSettings('primary_color')}
-                      disabled={isSaving}
-                    >
-                      Save
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="secondary_color">Secondary Color</Label>
-                  <div className="flex space-x-2">
-                    <div className="flex-1 flex space-x-2">
-                      <Input
-                        id="secondary_color"
-                        value={settings.secondary_color || '#000000'}
-                        onChange={(e) => handleSettingChange('secondary_color', e.target.value)}
-                      />
-                      <div
-                        className="w-10 h-10 rounded-md border"
-                        style={{ backgroundColor: settings.secondary_color || '#000000' }}
-                      ></div>
-                    </div>
-                    <Button
-                      onClick={() => handleSaveSettings('secondary_color')}
-                      disabled={isSaving}
-                    >
-                      Save
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Logo</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      {settings.logo_url && (
-                        <img
-                          src={settings.logo_url}
-                          alt="Logo"
-                          className="max-h-[100px] object-contain"
-                        />
+                  <Label>Platform Logo</Label>
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-20 w-20">
+                      {settings.site_logo ? (
+                        <img src={settings.site_logo} alt="Platform Logo" />
+                      ) : (
+                        <div className="bg-primary text-primary-foreground flex items-center justify-center h-full w-full text-xl">
+                          Logo
+                        </div>
                       )}
-                    </div>
-                    <div className="space-y-2">
+                    </Avatar>
+                    <div className="flex-1">
                       <Input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                        onChange={(e) => handleImageUpload(e, 'site_logo')}
                       />
-                      <Button
-                        onClick={() => handleSaveSettings('logo_url')}
-                        disabled={isSaving || !logoFile}
-                        className="w-full"
-                      >
-                        {isSaving ? 'Uploading...' : 'Upload Logo'}
-                      </Button>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Recommended size: 200x200px
+                      </p>
                     </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Primary Color</Label>
+                  <div className="flex gap-2">
+                    <div className="flex gap-2 items-center flex-1">
+                      <Input
+                        type="color"
+                        value={settings.primary_color || '#000000'}
+                        onChange={(e) => handleTextChange('primary_color', e.target.value)}
+                        className="w-12 h-10 p-1"
+                      />
+                      <Input
+                        value={settings.primary_color || '#000000'}
+                        onChange={(e) => handleTextChange('primary_color', e.target.value)}
+                      />
+                    </div>
+                    <Button onClick={() => handleSaveSetting('primary_color')} disabled={saving}>
+                      {saving ? 'Saving...' : 'Save'}
+                    </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="footer" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Footer Settings</CardTitle>
-                <CardDescription>
-                  Manage the links and content in your site footer
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Footer Links</Label>
-                    <div className="border rounded-md p-4 mt-2">
-                      {Array.isArray(settings.footer_links) && settings.footer_links.map((link: any, index: number) => (
-                        <div key={index} className="flex space-x-2 items-center mb-2">
-                          <Input
-                            value={link.label}
-                            onChange={(e) => {
-                              const newLinks = [...settings.footer_links];
-                              newLinks[index].label = e.target.value;
-                              handleSettingChange('footer_links', newLinks);
-                            }}
-                            placeholder="Link Label"
-                            className="flex-1"
-                          />
-                          <Input
-                            value={link.url}
-                            onChange={(e) => {
-                              const newLinks = [...settings.footer_links];
-                              newLinks[index].url = e.target.value;
-                              handleSettingChange('footer_links', newLinks);
-                            }}
-                            placeholder="URL"
-                            className="flex-1"
-                          />
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => {
-                              const newLinks = [...settings.footer_links];
-                              newLinks.splice(index, 1);
-                              handleSettingChange('footer_links', newLinks);
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      ))}
-                      <div className="flex justify-between mt-4">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            const newLinks = [...(settings.footer_links || [])];
-                            newLinks.push({ label: '', url: '' });
-                            handleSettingChange('footer_links', newLinks);
-                          }}
-                        >
-                          Add Link
-                        </Button>
-                        <Button
-                          onClick={() => handleSaveSettings('footer_links')}
-                          disabled={isSaving}
-                        >
-                          Save Footer Links
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="booking" className="space-y-6">
+            {/* Booking settings content */}
+          </TabsContent>
+
+          <TabsContent value="payment" className="space-y-6">
+            {/* Payment settings content */}
+          </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-6">
+            {/* Notification settings content */}
           </TabsContent>
         </Tabs>
       </div>
