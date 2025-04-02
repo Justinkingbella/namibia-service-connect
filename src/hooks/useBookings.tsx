@@ -140,10 +140,10 @@ export function useBookings(): UseBookingsReturnType {
       
       // Map the data to our Booking interface
       const formattedBookings: Booking[] = data.map(item => {
-        // Safely access nested properties
-        const serviceData: ServiceData = item.service || {};
-        const customerData: CustomerData = item.customer || {};
-        const providerData: ProviderData = item.provider || {};
+        // Safely handle potential error objects from supabase by creating default empty objects
+        const serviceData: ServiceData = (typeof item.service === 'object' && item.service !== null) ? item.service : {};
+        const customerData: CustomerData = (typeof item.customer === 'object' && item.customer !== null) ? item.customer : {};
+        const providerData: ProviderData = (typeof item.provider === 'object' && item.provider !== null) ? item.provider : {};
 
         return {
           id: item.id,
@@ -164,10 +164,10 @@ export function useBookings(): UseBookingsReturnType {
           createdAt: item.created_at,
           updatedAt: item.updated_at,
           // Safely access properties with optional chaining and nullish coalescing
-          serviceName: serviceData.title || 'Unknown Service',
-          serviceImage: serviceData.image || '',
-          providerName: providerData.business_name || 'Unknown Provider',
-          customerName: customerData.first_name && customerData.last_name 
+          serviceName: serviceData?.title || 'Unknown Service',
+          serviceImage: serviceData?.image || '',
+          providerName: providerData?.business_name || 'Unknown Provider',
+          customerName: customerData?.first_name && customerData?.last_name 
             ? `${customerData.first_name} ${customerData.last_name}`.trim() 
             : 'Unknown Customer'
         };

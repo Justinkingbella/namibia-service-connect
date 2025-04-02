@@ -873,6 +873,7 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteServic
   }
 }
 
+// Add a service to favorites
 export async function addFavorite(userId: string, serviceId: string): Promise<boolean> {
   try {
     // Check if the favorite already exists
@@ -917,6 +918,7 @@ export async function addFavorite(userId: string, serviceId: string): Promise<bo
   }
 }
 
+// Remove a service from favorites
 export async function removeFavorite(userId: string, serviceId: string): Promise<boolean> {
   try {
     const { error } = await supabase
@@ -948,7 +950,7 @@ export function formatFavorites(favorites: any[]) {
     const serviceData = fav.service && typeof fav.service === 'object' ? fav.service : null;
     
     const service = serviceData ? {
-      id: serviceData.id,
+      id: serviceData.id || '',
       title: serviceData.title || '',
       description: serviceData.description || '',
       price: serviceData.price || 0,
@@ -999,30 +1001,22 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
     const formattedFavorites = favorites
       .filter(fav => fav.services !== null) // Filter out any null services
       .map((fav) => {
-        // Handle the case where service might be null or not an object
-        if (!fav.services || typeof fav.services !== 'object') {
-          return {
-            id: fav.id,
-            serviceId: fav.service_id || '',
-            title: '',
-            description: '',
-            price: 0,
-            image: '',
-            category: '',
-            providerId: '',
-          };
-        }
+        // Create default values to handle the case where service might be null
+        const defaultData = {
+          id: fav.service_id || '',
+          title: '',
+          description: '',
+          price: 0,
+          image: '',
+          category: '',
+          provider_id: '',
+        };
         
         // Use a typed variable to help TypeScript understand the structure
-        const servicesData: {
-          id?: string;
-          title?: string;
-          description?: string;
-          price?: number;
-          image?: string;
-          category?: string;
-          provider_id?: string;
-        } = fav.services;
+        // and provide a fallback for null/undefined services
+        const servicesData = fav.services && typeof fav.services === 'object' 
+          ? fav.services 
+          : defaultData;
         
         return {
           id: fav.id,
@@ -1039,6 +1033,3 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
     return formattedFavorites;
   } catch (error) {
     console.error('Error in getFavoriteServices:', error);
-    return [];
-  }
-}
