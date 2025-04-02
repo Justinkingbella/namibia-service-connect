@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,13 +9,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import SubscriptionPlans from '@/components/provider/SubscriptionPlans';
-import { fetchUserSubscription, cancelSubscription } from '@/services/subscriptionService';
+import { fetchUserSubscription, cancelSubscription, toggleAutoRenew } from '@/services/subscriptionService';
 import { useQuery } from '@tanstack/react-query';
+import { Switch } from '@/components/ui/switch';
 
 const SubscriptionPageProvider = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState('');
 
   const { data: subscription, isLoading, error, refetch } = useQuery({
     queryKey: ['providerSubscription', user?.id],
@@ -28,13 +31,36 @@ const SubscriptionPageProvider = () => {
     
     setIsProcessing(true);
     try {
-      const success = await cancelSubscription(subscription.id);
+      const success = await cancelSubscription(subscription.id, cancellationReason);
+      if (success) {
+        setShowCancelConfirm(false);
+        refetch();
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
+  const handleToggleAutoRenew = async (enabled: boolean) => {
+    if (!subscription) return;
+    
+    setIsProcessing(true);
+    try {
+      const success = await toggleAutoRenew(subscription.id, enabled);
       if (success) {
         refetch();
       }
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const getRemainingDays = () => {
+    if (!subscription) return 0;
+    const endDate = new Date(subscription.endDate);
+    const today = new Date();
+    const diffTime = endDate.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
   return (
@@ -61,7 +87,13 @@ const SubscriptionPageProvider = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Current Subscription</CardTitle>
-                  <Badge>{subscription.status}</Badge>
+                  <Badge className={
+                    subscription.status === 'active' ? 'bg-green-500' :
+                    subscription.status === 'cancelled' ? 'bg-yellow-500' : 
+                    'bg-red-500'
+                  }>
+                    {subscription.status}
+                  </Badge>
                 </div>
                 <CardDescription>Your active subscription details</CardDescription>
               </CardHeader>
@@ -74,25 +106,38 @@ const SubscriptionPageProvider = () => {
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm">Credits</span>
                         <span className="text-sm font-medium">
-                          250/{subscription.plan.credits}
+                          {subscription.creditsUsed}/{subscription.plan.credits}
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3">
                         <div 
                           className="bg-primary h-2.5 rounded-full" 
-                          style={{ width: `${Math.min(250 / subscription.plan.credits * 100, 100)}%` }}
+                          style={{ width: `${Math.min(subscription.creditsUsed! / subscription.plan.credits * 100, 100)}%` }}
                         />
                       </div>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm">Bookings</span>
                         <span className="text-sm font-medium">
-                          12/{subscription.plan.maxBookings}
+                          {subscription.bookingsUsed}/{subscription.plan.maxBookings}
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
                         <div 
                           className="bg-primary h-2.5 rounded-full" 
-                          style={{ width: `${Math.min(12 / subscription.plan.maxBookings * 100, 100)}%` }}
+                          style={{ width: `${Math.min(subscription.bookingsUsed! / subscription.plan.maxBookings * 100, 100)}%` }}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-3 mb-1">
+                        <span className="text-sm">Services</span>
+                        <span className="text-sm font-medium">
+                          0/{subscription.plan.allowedServices}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div 
+                          className="bg-primary h-2.5 rounded-full" 
+                          style={{ width: `${0}%` }}
                         />
                       </div>
                     </div>
@@ -117,8 +162,20 @@ const SubscriptionPageProvider = () => {
                         <span>{new Date(subscription.endDate).toLocaleDateString()}</span>
                       </div>
                       <div className="flex justify-between">
+                        <span className="text-muted-foreground">Days Remaining:</span>
+                        <span>{getRemainingDays()} days</span>
+                      </div>
+                      <div className="flex justify-between">
                         <span className="text-muted-foreground">Payment Method:</span>
                         <span className="capitalize">{subscription.paymentMethod.replace('_', ' ')}</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-2">
+                        <span className="text-muted-foreground">Auto-renew:</span>
+                        <Switch 
+                          checked={subscription.autoRenew} 
+                          onCheckedChange={handleToggleAutoRenew}
+                          disabled={isProcessing || subscription.status === 'cancelled'}
+                        />
                       </div>
                     </div>
                   </div>
@@ -128,15 +185,60 @@ const SubscriptionPageProvider = () => {
                 <Button variant="outline" onClick={() => navigate('/dashboard/provider/payment-details')}>
                   Update Payment Method
                 </Button>
-                <Button 
-                  variant="destructive" 
-                  onClick={handleCancelSubscription}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? 'Processing...' : 'Cancel Subscription'}
-                </Button>
+                {subscription.status === 'active' && (
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => setShowCancelConfirm(true)}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? 'Processing...' : 'Cancel Subscription'}
+                  </Button>
+                )}
               </CardFooter>
             </Card>
+            
+            {showCancelConfirm && (
+              <Card className="border-red-200 bg-red-50">
+                <CardHeader>
+                  <CardTitle className="text-red-600">Cancel Subscription</CardTitle>
+                  <CardDescription>
+                    Are you sure you want to cancel your subscription? This action cannot be undone.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label htmlFor="cancellation-reason" className="block text-sm font-medium">
+                        Please tell us why you're cancelling (optional)
+                      </label>
+                      <textarea
+                        id="cancellation-reason"
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                        rows={3}
+                        value={cancellationReason}
+                        onChange={(e) => setCancellationReason(e.target.value)}
+                      />
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      <p>What happens when you cancel:</p>
+                      <ul className="list-disc pl-5 mt-2 space-y-1">
+                        <li>Your subscription will remain active until the end of your billing period.</li>
+                        <li>You will not be charged for the next billing cycle.</li>
+                        <li>You will lose access to premium features when your subscription expires.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-end space-x-3">
+                  <Button variant="outline" onClick={() => setShowCancelConfirm(false)} disabled={isProcessing}>
+                    Keep Subscription
+                  </Button>
+                  <Button variant="destructive" onClick={handleCancelSubscription} disabled={isProcessing}>
+                    {isProcessing ? 'Processing...' : 'Confirm Cancellation'}
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
           </div>
         )}
         
@@ -150,10 +252,22 @@ const SubscriptionPageProvider = () => {
           </Alert>
         )}
         
-        {!subscription && (
+        {!subscription?.status || subscription?.status === 'cancelled' ? (
           <div className="mt-8">
             <h2 className="text-xl font-semibold mb-6">Available Plans</h2>
             <SubscriptionPlans onSubscriptionChanged={refetch} />
+          </div>
+        ) : (
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold mb-2">Change Plan</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              You can upgrade or downgrade your subscription at any time. Changes will take effect immediately.
+            </p>
+            <SubscriptionPlans 
+              currentPlan={subscription?.subscriptionPlanId}
+              onSubscriptionChanged={refetch}
+              onChangePlan={(planId) => console.log('Plan changed to:', planId)}
+            />
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Check, X, Info, AlertTriangle } from 'lucide-react';
+import { Plus, Edit, Trash2, Check, X, Info, AlertTriangle, Zap, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -64,7 +64,10 @@ const SubscriptionManagement = () => {
         credits: plan.credits,
         max_bookings: plan.maxBookings,
         is_popular: plan.isPopular || false,
-        is_active: plan.isActive
+        is_active: plan.isActive,
+        trial_period_days: plan.trialPeriodDays || 0,
+        allowed_services: plan.allowedServices || 1,
+        sort_order: plan.sortOrder || 0
       };
       
       const { data, error } = await supabase
@@ -112,6 +115,9 @@ const SubscriptionManagement = () => {
         max_bookings: plan.maxBookings,
         is_popular: plan.isPopular || false,
         is_active: plan.isActive,
+        trial_period_days: plan.trialPeriodDays || 0,
+        allowed_services: plan.allowedServices || 1,
+        sort_order: plan.sortOrder || 0,
         updated_at: new Date().toISOString()
       };
       
@@ -249,6 +255,9 @@ const SubscriptionManagement = () => {
     features: convertJsonToFeatures(plan.features),
     isPopular: plan.is_popular || false,
     isActive: plan.is_active || false,
+    trialPeriodDays: plan.trial_period_days || 0,
+    allowedServices: plan.allowed_services || 1,
+    sortOrder: plan.sort_order || 0,
     createdAt: plan.created_at,
     updatedAt: plan.updated_at
   }));
@@ -315,9 +324,16 @@ const SubscriptionManagement = () => {
                   <CardTitle>{plan.name}</CardTitle>
                   <CardDescription className="mt-1">{plan.description}</CardDescription>
                 </div>
-                {plan.isPopular && (
-                  <Badge className="bg-green-600">Popular</Badge>
-                )}
+                <div className="flex flex-col items-end gap-1">
+                  {plan.isPopular && (
+                    <Badge className="bg-green-600">Popular</Badge>
+                  )}
+                  {plan.trialPeriodDays > 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      {plan.trialPeriodDays} Day Trial
+                    </Badge>
+                  )}
+                </div>
               </div>
             </CardHeader>
             
@@ -328,16 +344,24 @@ const SubscriptionManagement = () => {
               </div>
               
               <div className="space-y-4">
-                <div>
-                  <div className="text-sm font-medium">Credits</div>
-                  <div className="text-xl font-bold">{plan.credits}</div>
-                  <div className="text-xs text-muted-foreground">credits per {plan.billingCycle}</div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm font-medium">Credits</div>
+                    <div className="text-xl font-bold">{plan.credits}</div>
+                    <div className="text-xs text-muted-foreground">credits per {plan.billingCycle}</div>
+                  </div>
+                  
+                  <div>
+                    <div className="text-sm font-medium">Max Bookings</div>
+                    <div className="text-xl font-bold">{plan.maxBookings}</div>
+                    <div className="text-xs text-muted-foreground">bookings per {plan.billingCycle}</div>
+                  </div>
                 </div>
                 
                 <div>
-                  <div className="text-sm font-medium">Max Bookings</div>
-                  <div className="text-xl font-bold">{plan.maxBookings}</div>
-                  <div className="text-xs text-muted-foreground">bookings per {plan.billingCycle}</div>
+                  <div className="text-sm font-medium">Allowed Services</div>
+                  <div className="text-xl font-bold">{plan.allowedServices}</div>
+                  <div className="text-xs text-muted-foreground">service listings</div>
                 </div>
                 
                 <div>
@@ -420,6 +444,8 @@ const SubscriptionManagement = () => {
                 <TableHead>Billing</TableHead>
                 <TableHead>Credits</TableHead>
                 <TableHead>Max Bookings</TableHead>
+                <TableHead>Services</TableHead>
+                <TableHead>Trial</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -437,6 +463,8 @@ const SubscriptionManagement = () => {
                   <TableCell>{plan.billingCycle}</TableCell>
                   <TableCell>{plan.credits}</TableCell>
                   <TableCell>{plan.maxBookings}</TableCell>
+                  <TableCell>{plan.allowedServices}</TableCell>
+                  <TableCell>{plan.trialPeriodDays > 0 ? `${plan.trialPeriodDays} days` : '-'}</TableCell>
                   <TableCell>
                     <Badge variant={plan.isActive ? "default" : "outline"}>
                       {plan.isActive ? "Active" : "Inactive"}

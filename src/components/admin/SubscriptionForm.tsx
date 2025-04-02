@@ -28,6 +28,9 @@ const formSchema = z.object({
   billingCycle: z.enum(['monthly', 'yearly']),
   credits: z.coerce.number().int().positive({ message: 'Credits must be a positive integer.' }),
   maxBookings: z.coerce.number().int().positive({ message: 'Maximum bookings must be a positive integer.' }),
+  allowedServices: z.coerce.number().int().positive({ message: 'Allowed services must be a positive integer.' }),
+  trialPeriodDays: z.coerce.number().int().min(0, { message: 'Trial period days must be a non-negative integer.' }),
+  sortOrder: z.coerce.number().int().min(0, { message: 'Sort order must be a non-negative integer.' }),
   isPopular: z.boolean().optional(),
   isActive: z.boolean().default(true),
 });
@@ -58,9 +61,11 @@ export const SubscriptionForm = ({ initialData, onSubmit, isSubmitting = false }
       billingCycle: initialData?.billingCycle || 'monthly',
       credits: initialData?.credits || 100,
       maxBookings: initialData?.maxBookings || 20,
+      allowedServices: initialData?.allowedServices || 1,
+      trialPeriodDays: initialData?.trialPeriodDays || 0,
+      sortOrder: initialData?.sortOrder || 0,
       isPopular: initialData?.isPopular || false,
       isActive: initialData?.isActive !== undefined ? initialData.isActive : true,
-      features: features,
     },
   });
 
@@ -101,6 +106,9 @@ export const SubscriptionForm = ({ initialData, onSubmit, isSubmitting = false }
       billingCycle: data.billingCycle,
       credits: data.credits,
       maxBookings: data.maxBookings,
+      allowedServices: data.allowedServices,
+      trialPeriodDays: data.trialPeriodDays,
+      sortOrder: data.sortOrder,
       features: validFeatures,
       isPopular: data.isPopular || false,
       isActive: data.isActive,
@@ -111,15 +119,24 @@ export const SubscriptionForm = ({ initialData, onSubmit, isSubmitting = false }
     onSubmit(formData);
   };
 
-  // When isPopular changes in the initialData
+  // When initialData changes
   useEffect(() => {
     if (initialData) {
       form.reset({
-        ...form.getValues(),
+        name: initialData.name,
+        description: initialData.description,
+        price: initialData.price,
+        billingCycle: initialData.billingCycle,
+        credits: initialData.credits,
+        maxBookings: initialData.maxBookings,
+        allowedServices: initialData.allowedServices || 1,
+        trialPeriodDays: initialData.trialPeriodDays || 0,
+        sortOrder: initialData.sortOrder || 0,
         isPopular: initialData.isPopular,
+        isActive: initialData.isActive,
       });
     }
-  }, [initialData?.isPopular]);
+  }, [initialData, form]);
 
   return (
     <Form {...form}>
@@ -200,7 +217,7 @@ export const SubscriptionForm = ({ initialData, onSubmit, isSubmitting = false }
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField
               control={form.control}
               name="credits"
@@ -211,7 +228,7 @@ export const SubscriptionForm = ({ initialData, onSubmit, isSubmitting = false }
                     <Input type="number" min="1" {...field} disabled={isSubmitting} />
                   </FormControl>
                   <FormDescription>
-                    Amount of credits included in this plan.
+                    Credits per billing cycle
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -228,7 +245,60 @@ export const SubscriptionForm = ({ initialData, onSubmit, isSubmitting = false }
                     <Input type="number" min="1" {...field} disabled={isSubmitting} />
                   </FormControl>
                   <FormDescription>
-                    Maximum bookings allowed per billing cycle.
+                    Bookings per billing cycle
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="allowedServices"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Allowed Services</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="1" {...field} disabled={isSubmitting} />
+                  </FormControl>
+                  <FormDescription>
+                    Max service listings
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="trialPeriodDays"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Trial Period (Days)</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="0" {...field} disabled={isSubmitting} />
+                  </FormControl>
+                  <FormDescription>
+                    0 means no trial period
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="sortOrder"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sort Order</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="0" {...field} disabled={isSubmitting} />
+                  </FormControl>
+                  <FormDescription>
+                    Lower numbers appear first
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

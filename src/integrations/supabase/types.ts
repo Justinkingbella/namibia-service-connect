@@ -242,6 +242,106 @@ export type Database = {
         }
         Relationships: []
       }
+      coupon_redemptions: {
+        Row: {
+          coupon_id: string
+          created_at: string | null
+          discount_amount: number
+          id: string
+          redeemed_at: string | null
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          coupon_id: string
+          created_at?: string | null
+          discount_amount: number
+          id?: string
+          redeemed_at?: string | null
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          coupon_id?: string
+          created_at?: string | null
+          discount_amount?: number
+          id?: string
+          redeemed_at?: string | null
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_redemptions_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_redemptions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_redemptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupons: {
+        Row: {
+          applicable_plans: string[] | null
+          code: string
+          created_at: string | null
+          current_uses: number | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          expiry_date: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          start_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          applicable_plans?: string[] | null
+          code: string
+          created_at?: string | null
+          current_uses?: number | null
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          applicable_plans?: string[] | null
+          code?: string
+          created_at?: string | null
+          current_uses?: number | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       disputes: {
         Row: {
           admin_notes: string | null
@@ -553,6 +653,51 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      plan_features: {
+        Row: {
+          created_at: string | null
+          custom_properties: Json | null
+          feature_id: string
+          id: string
+          included: boolean | null
+          limit_value: number | null
+          plan_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          custom_properties?: Json | null
+          feature_id: string
+          id?: string
+          included?: boolean | null
+          limit_value?: number | null
+          plan_id: string
+        }
+        Update: {
+          created_at?: string | null
+          custom_properties?: Json | null
+          feature_id?: string
+          id?: string
+          included?: boolean | null
+          limit_value?: number | null
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_features_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_features"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_features_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       platform_analytics: {
         Row: {
@@ -905,8 +1050,213 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_audit_logs: {
+        Row: {
+          admin_id: string | null
+          created_at: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          new_state: Json | null
+          previous_state: Json | null
+          subscription_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          new_state?: Json | null
+          previous_state?: Json | null
+          subscription_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          new_state?: Json | null
+          previous_state?: Json | null
+          subscription_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_audit_logs_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_credits: {
+        Row: {
+          created_at: string | null
+          credits_amount: number
+          description: string | null
+          id: string
+          reference_id: string | null
+          subscription_id: string
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          credits_amount: number
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          subscription_id: string
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          credits_amount?: number
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          subscription_id?: string
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_credits_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_credits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_features: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          feature_key: string
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          feature_key: string
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          feature_key?: string
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      subscription_invoices: {
+        Row: {
+          amount: number
+          billing_period_end: string | null
+          billing_period_start: string | null
+          created_at: string | null
+          currency: string | null
+          due_date: string | null
+          id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          line_items: Json | null
+          paid_date: string | null
+          payment_method: string | null
+          status: string
+          stripe_invoice_id: string | null
+          subscription_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string | null
+          currency?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          line_items?: Json | null
+          paid_date?: string | null
+          payment_method?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+          subscription_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string | null
+          currency?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          line_items?: Json | null
+          paid_date?: string | null
+          payment_method?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+          subscription_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_invoices_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_invoices_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans: {
         Row: {
+          allowed_services: number | null
           billing_cycle: string
           created_at: string | null
           credits: number
@@ -918,9 +1268,14 @@ export type Database = {
           max_bookings: number
           name: string
           price: number
+          sort_order: number | null
+          stripe_price_id: string | null
+          trial_period_days: number | null
           updated_at: string | null
+          visible_to_roles: string[] | null
         }
         Insert: {
+          allowed_services?: number | null
           billing_cycle: string
           created_at?: string | null
           credits: number
@@ -932,9 +1287,14 @@ export type Database = {
           max_bookings: number
           name: string
           price: number
+          sort_order?: number | null
+          stripe_price_id?: string | null
+          trial_period_days?: number | null
           updated_at?: string | null
+          visible_to_roles?: string[] | null
         }
         Update: {
+          allowed_services?: number | null
           billing_cycle?: string
           created_at?: string | null
           credits?: number
@@ -946,7 +1306,11 @@ export type Database = {
           max_bookings?: number
           name?: string
           price?: number
+          sort_order?: number | null
+          stripe_price_id?: string | null
+          trial_period_days?: number | null
           updated_at?: string | null
+          visible_to_roles?: string[] | null
         }
         Relationships: []
       }
@@ -987,6 +1351,54 @@ export type Database = {
             columns: ["subscription_plan_id"]
             isOneToOne: false
             referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_usage: {
+        Row: {
+          created_at: string | null
+          id: string
+          metric_name: string
+          reference_id: string | null
+          subscription_id: string
+          usage_count: number | null
+          usage_date: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metric_name: string
+          reference_id?: string | null
+          subscription_id: string
+          usage_count?: number | null
+          usage_date?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metric_name?: string
+          reference_id?: string | null
+          subscription_id?: string
+          usage_count?: number | null
+          usage_date?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_usage_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1095,38 +1507,68 @@ export type Database = {
       }
       user_subscriptions: {
         Row: {
+          auto_renew: boolean | null
+          bookings_remaining: number | null
+          bookings_used: number | null
+          cancellation_date: string | null
+          cancellation_reason: string | null
           created_at: string | null
+          credits_remaining: number | null
+          credits_used: number | null
           end_date: string
           id: string
           payment_id: string | null
           payment_method: string
           start_date: string
           status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           subscription_plan_id: string
+          trial_end_date: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          auto_renew?: boolean | null
+          bookings_remaining?: number | null
+          bookings_used?: number | null
+          cancellation_date?: string | null
+          cancellation_reason?: string | null
           created_at?: string | null
+          credits_remaining?: number | null
+          credits_used?: number | null
           end_date: string
           id?: string
           payment_id?: string | null
           payment_method: string
           start_date?: string
           status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_plan_id: string
+          trial_end_date?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          auto_renew?: boolean | null
+          bookings_remaining?: number | null
+          bookings_used?: number | null
+          cancellation_date?: string | null
+          cancellation_reason?: string | null
           created_at?: string | null
+          credits_remaining?: number | null
+          credits_used?: number | null
           end_date?: string
           id?: string
           payment_id?: string | null
           payment_method?: string
           start_date?: string
           status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_plan_id?: string
+          trial_end_date?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -1226,6 +1668,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_perform_subscription_action: {
+        Args: {
+          p_user_id: string
+          p_action: string
+          p_quantity?: number
+        }
+        Returns: boolean
+      }
       can_provider_respond_to_review: {
         Args: {
           provider_uuid: string
@@ -1244,6 +1694,15 @@ export type Database = {
       is_admin: {
         Args: {
           uid: string
+        }
+        Returns: boolean
+      }
+      record_subscription_usage: {
+        Args: {
+          p_user_id: string
+          p_metric_name: string
+          p_count?: number
+          p_reference_id?: string
         }
         Returns: boolean
       }

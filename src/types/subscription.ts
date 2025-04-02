@@ -21,12 +21,69 @@ export interface SubscriptionPlan {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  trialPeriodDays?: number;
+  allowedServices?: number;
+  sortOrder?: number;
+  stripePriceId?: string;
+  visibleToRoles?: string[];
 }
 
 export interface SubscriptionState {
   loading: boolean;
   error: string | null;
   plans: SubscriptionPlan[];
+}
+
+export interface UserSubscription {
+  id: string;
+  userId: string;
+  subscriptionPlanId: string;
+  startDate: string;
+  endDate: string;
+  paymentMethod: string;
+  status: 'active' | 'pending' | 'cancelled' | 'expired';
+  creditsUsed?: number;
+  creditsRemaining?: number;
+  bookingsUsed?: number;
+  bookingsRemaining?: number;
+  autoRenew?: boolean;
+  cancellationReason?: string;
+  cancellationDate?: string;
+  trialEndDate?: string;
+  stripeSubscriptionId?: string;
+  stripeCustomerId?: string;
+  plan?: SubscriptionPlan;
+}
+
+export interface SubscriptionUsage {
+  id: string;
+  subscriptionId: string;
+  userId: string;
+  metricName: string;
+  usageCount: number;
+  usageDate: string;
+  referenceId?: string;
+  createdAt: string;
+}
+
+export interface SubscriptionInvoice {
+  id: string;
+  subscriptionId: string;
+  userId: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'paid' | 'failed' | 'cancelled';
+  invoiceDate: string;
+  dueDate?: string;
+  paidDate?: string;
+  billingPeriodStart?: string;
+  billingPeriodEnd?: string;
+  stripeInvoiceId?: string;
+  paymentMethod?: string;
+  invoiceNumber?: string;
+  lineItems?: any[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type SubscriptionTier = 'Basic' | 'Professional' | 'Premium' | string;

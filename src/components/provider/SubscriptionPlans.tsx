@@ -3,16 +3,15 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, X, CreditCard, Loader2 } from 'lucide-react';
+import { Check, X, CreditCard, Loader2, Zap } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRealtimeData } from '@/hooks/useRealtimeData';
-import { subscribeUserToPlan } from '@/services/subscriptionService';
+import { fetchSubscriptionPlans, subscribeUserToPlan } from '@/services/subscriptionService';
 import { SubscriptionPlan } from '@/types/subscription';
 import { Skeleton } from '@/components/ui/skeleton';
-import { convertJsonToFeatures } from '@/types/subscription';
+import { useQuery } from '@tanstack/react-query';
 
 interface SubscriptionPlansProps {
   currentPlan?: string;
@@ -31,36 +30,15 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const { user } = useAuth();
 
-  // Use the useRealtimeData hook to fetch subscription plans and listen for changes
+  // Use React Query to fetch subscription plans
   const { 
-    data: plansData, 
-    loading: isLoading, 
+    data: plans = [], 
+    isLoading, 
     error 
-  } = useRealtimeData<any[]>({
-    table: 'subscription_plans',
-    onDataChange: (payload) => {
-      console.log('Subscription plan changed:', payload);
-    }
+  } = useQuery({
+    queryKey: ['subscriptionPlans'],
+    queryFn: fetchSubscriptionPlans
   });
-
-  // Format the plans from Supabase to match our SubscriptionPlan type
-  const plans: SubscriptionPlan[] = plansData ? plansData
-    .filter((plan: any) => plan.is_active)
-    .map((plan: any) => ({
-      id: plan.id,
-      name: plan.name,
-      description: plan.description,
-      price: Number(plan.price),
-      billingCycle: plan.billing_cycle,
-      credits: plan.credits,
-      maxBookings: plan.max_bookings,
-      features: convertJsonToFeatures(plan.features),
-      isPopular: plan.is_popular || false,
-      isActive: plan.is_active || false,
-      createdAt: plan.created_at,
-      updatedAt: plan.updated_at
-    }))
-    .sort((a: SubscriptionPlan, b: SubscriptionPlan) => a.price - b.price) : [];
 
   const handleSubscribe = async () => {
     if (!user?.id || !selectedPlan) return;
@@ -103,7 +81,7 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
     return (
       <div className="p-4 border border-red-300 bg-red-50 rounded-md text-red-800">
         <h3 className="font-medium">Error loading subscription plans</h3>
-        <p className="text-sm mt-1">{error.message}</p>
+        <p className="text-sm mt-1">{error instanceof Error ? error.message : 'Unknown error'}</p>
       </div>
     );
   }
@@ -131,19 +109,32 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
                   <span className="text-3xl font-bold">N${plan.price}</span>
                   <span className="text-muted-foreground">/{plan.billingCycle}</span>
                 </div>
+                {plan.trialPeriodDays > 0 && (
+                  <Badge variant="outline" className="mt-2">
+                    {plan.trialPeriodDays} Day Free Trial
+                  </Badge>
+                )}
               </CardHeader>
               <CardContent className="flex-grow">
                 <div className="space-y-4">
-                  <div>
-                    <div className="text-sm font-medium">Credits</div>
-                    <div className="text-xl font-bold">{plan.credits}</div>
-                    <div className="text-xs text-muted-foreground">credits per {plan.billingCycle}</div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm font-medium">Credits</div>
+                      <div className="text-xl font-bold">{plan.credits}</div>
+                      <div className="text-xs text-muted-foreground">credits per {plan.billingCycle}</div>
+                    </div>
+                    
+                    <div>
+                      <div className="text-sm font-medium">Max Bookings</div>
+                      <div className="text-xl font-bold">{plan.maxBookings}</div>
+                      <div className="text-xs text-muted-foreground">bookings per {plan.billingCycle}</div>
+                    </div>
                   </div>
                   
                   <div>
-                    <div className="text-sm font-medium">Max Bookings</div>
-                    <div className="text-xl font-bold">{plan.maxBookings}</div>
-                    <div className="text-xs text-muted-foreground">bookings per {plan.billingCycle}</div>
+                    <div className="text-sm font-medium">Allowed Services</div>
+                    <div className="text-xl font-bold">{plan.allowedServices || 1}</div>
+                    <div className="text-xs text-muted-foreground">service listings</div>
                   </div>
                   
                   <div>
@@ -174,7 +165,7 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
                     variant={plan.isPopular ? "default" : "outline"}
                     onClick={() => openSubscribeModal(plan.id)}
                   >
-                    {Number(plans.find(p => p.id === currentPlan)?.price || 0) > plan.price 
+                    {currentPlan && Number(plans.find(p => p.id === currentPlan)?.price || 0) > plan.price 
                       ? 'Downgrade' 
                       : 'Upgrade'}
                   </Button>
@@ -191,7 +182,7 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
             <DialogTitle>
               {selectedPlan && plans.length > 0 ? (
                 <>
-                  {Number(plans.find(p => p.id === currentPlan)?.price || 0) > 
+                  {currentPlan && Number(plans.find(p => p.id === currentPlan)?.price || 0) > 
                    Number(plans.find(p => p.id === selectedPlan)?.price || 0)
                     ? 'Downgrade to ' 
                     : 'Upgrade to '}
@@ -200,7 +191,7 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
               ) : 'Change Subscription Plan'}
             </DialogTitle>
             <DialogDescription>
-              {Number(plans.find(p => p.id === currentPlan)?.price || 0) > 
+              {currentPlan && Number(plans.find(p => p.id === currentPlan)?.price || 0) > 
                Number(plans.find(p => p.id === selectedPlan)?.price || 0)
                 ? 'Are you sure you want to downgrade? You will lose access to premium features.'
                 : 'Choose your payment method to complete the upgrade.'}
@@ -215,6 +206,15 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
                   N${plans.find(p => p.id === selectedPlan)?.price}/{plans.find(p => p.id === selectedPlan)?.billingCycle}
                 </span>
               </div>
+              
+              {plans.find(p => p.id === selectedPlan)?.trialPeriodDays > 0 && (
+                <div className="p-3 bg-blue-50 text-blue-800 rounded-md">
+                  <div className="flex items-center">
+                    <Zap className="h-5 w-5 mr-2 text-blue-500" />
+                    <span>Includes a {plans.find(p => p.id === selectedPlan)?.trialPeriodDays}-day free trial</span>
+                  </div>
+                </div>
+              )}
               
               <RadioGroup
                 value={paymentMethod}
@@ -252,7 +252,7 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
             <Button onClick={handleSubscribe} disabled={isProcessing}>
               {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isProcessing ? "Processing..." : 
-                Number(plans.find(p => p.id === currentPlan)?.price || 0) > 
+                currentPlan && Number(plans.find(p => p.id === currentPlan)?.price || 0) > 
                 Number(plans.find(p => p.id === selectedPlan)?.price || 0) 
                   ? "Confirm Downgrade" 
                   : "Complete Upgrade"
