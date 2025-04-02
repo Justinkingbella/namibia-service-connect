@@ -939,8 +939,8 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
     const formattedFavorites = favorites
       .filter(fav => fav.services !== null) // Filter out any null services
       .map((fav) => {
-        // Safely access potentially null services properties
-        const service = fav.services || {};
+        // Handle the case where services might be null or not an object
+        const service = fav.services && typeof fav.services === 'object' ? fav.services : {};
         
         return {
           id: fav.id,
