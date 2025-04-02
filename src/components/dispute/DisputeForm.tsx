@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Dispute } from '@/types/booking';
+import { Loader2 } from 'lucide-react';
 
 interface DisputeFormProps {
   onSubmit: (dispute: Partial<Dispute>) => Promise<boolean>;
@@ -118,8 +119,15 @@ const DisputeForm: React.FC<DisputeFormProps> = ({ onSubmit, onCancel }) => {
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancel
             </Button>
-            <Button type="submit" loading={loading}>
-              Submit Dispute
+            <Button type="submit" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Dispute"
+              )}
             </Button>
           </div>
         </form>

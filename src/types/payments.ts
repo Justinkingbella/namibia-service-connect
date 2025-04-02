@@ -15,6 +15,10 @@ export interface PaymentTransaction {
   metadata?: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
+  // Additional properties needed
+  transactionType?: string;
+  paymentMethod?: string;
+  referenceId?: string;
 }
 
 export interface ProviderEarnings {
@@ -48,4 +52,16 @@ export interface ProviderPayout {
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface PaymentHistory {
+  id: string;
+  userId: string;
+  bookingId?: string;
+  amount: number;
+  description: string;
+  transactionId?: string;
+  status: string;
+  paymentMethod: string;
+  createdAt: Date;
 }

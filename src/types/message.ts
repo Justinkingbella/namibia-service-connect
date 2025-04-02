@@ -21,4 +21,8 @@ export interface Conversation {
   unreadCount: number;
   createdAt: Date;
   status: 'active' | 'archived' | 'deleted';
+  // Add properties used in ConversationList
+  recipientId?: string;
+  recipientName?: string;
+  recipientAvatar?: string;
 }

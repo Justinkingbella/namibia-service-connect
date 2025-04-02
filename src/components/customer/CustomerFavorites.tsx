@@ -28,7 +28,7 @@ const mockFavorites: FavoriteService[] = [
     title: 'Professional Home Cleaning',
     providerName: 'CleanHome Pro',
     providerId: 'p1',
-    category: 'home',
+    category: 'cleaning',
     rating: 4.8,
     reviewCount: 124,
     price: 250,
@@ -41,7 +41,7 @@ const mockFavorites: FavoriteService[] = [
     title: 'Emergency Plumbing Services',
     providerName: 'Plumb Perfect',
     providerId: 'p2',
-    category: 'home',
+    category: 'plumbing',
     rating: 4.6,
     reviewCount: 89,
     price: 350,
@@ -64,14 +64,22 @@ const mockFavorites: FavoriteService[] = [
   },
 ];
 
-const CATEGORY_LABELS: Record<ServiceCategory, string> = {
-  all: 'All',
-  home: 'Home Services',
+const CATEGORY_LABELS: Record<string, string> = {
+  cleaning: 'Cleaning',
+  plumbing: 'Plumbing',
   errand: 'Errands',
   professional: 'Professional',
   freelance: 'Freelance',
   transport: 'Transport',
-  health: 'Health'
+  health: 'Health',
+  home: 'Home Services',
+  repair: 'Repairs',
+  electrical: 'Electrical',
+  moving: 'Moving',
+  painting: 'Painting',
+  landscaping: 'Landscaping',
+  tutoring: 'Tutoring',
+  all: 'All Categories'
 };
 
 const CustomerFavorites: React.FC = () => {
@@ -126,7 +134,7 @@ const CustomerFavorites: React.FC = () => {
                 <Heart className="h-5 w-5 text-red-500 fill-red-500" />
               </button>
               <Badge className="absolute top-2 left-2 bg-white/80 text-black">
-                {CATEGORY_LABELS[service.category]}
+                {CATEGORY_LABELS[service.category] || service.category}
               </Badge>
             </div>
             

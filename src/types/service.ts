@@ -1,33 +1,50 @@
 
-export type PricingModel = 'fixed' | 'hourly' | 'daily' | 'quote';
-export type PaymentMethod = 
-  'credit_card' | 
-  'mobile_money' | 
-  'bank_transfer' | 
-  'cash' | 
-  'wallet' | 
-  'pay_today' | 
-  'pay_fast' | 
-  'e_wallet' | 
-  'easy_wallet' | 
-  'dop';
-
 export type ServiceCategory = 
-  'cleaning' | 
-  'repair' | 
-  'plumbing' | 
-  'electrical' | 
-  'gardening' | 
-  'moving' | 
-  'painting' | 
-  'other' | 
-  'home' | 
-  'errand' | 
-  'professional' | 
-  'freelance' | 
-  'transport' | 
-  'health' | 
-  'all';
+  | 'cleaning' 
+  | 'repair' 
+  | 'plumbing' 
+  | 'electrical' 
+  | 'moving' 
+  | 'painting' 
+  | 'landscaping' 
+  | 'tutoring' 
+  | 'home'
+  | 'errand'
+  | 'professional'
+  | 'freelance'
+  | 'transport'
+  | 'health'
+  | 'all';
+
+export type PricingModel = 'hourly' | 'fixed' | string;
+
+export type PaymentMethod =
+  | 'credit_card'
+  | 'debit_card'
+  | 'bank_transfer'
+  | 'wallet'
+  | 'cash'
+  | 'pay_today'
+  | 'pay_fast'
+  | 'e_wallet'
+  | 'dop'
+  | 'easy_wallet'
+  | string;
+
+export interface ServiceListItem {
+  id: string;
+  title: string;
+  description: string;
+  category: ServiceCategory;
+  pricingModel: PricingModel;
+  price: number;
+  providerName: string;
+  providerId: string;
+  rating: number;
+  reviewCount: number;
+  image: string;
+  location: string;
+}
 
 export interface Service {
   id: string;
@@ -46,8 +63,6 @@ export interface Service {
   reviewCount?: number;
   createdAt: Date;
   updatedAt: Date;
-  available?: boolean;
-  isFeatured?: boolean;
 }
 
 export interface ServiceData {
@@ -59,28 +74,12 @@ export interface ServiceData {
   category: ServiceCategory;
   provider_id: string;
   provider_name?: string;
-  image?: string | null;
+  image?: string;
   features?: string[];
   is_active: boolean;
-  location?: string | null;
+  location?: string;
   rating?: number;
   review_count?: number;
   created_at: string;
   updated_at: string;
-}
-
-export interface ServiceListItem {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  pricingModel: PricingModel;
-  category: ServiceCategory;
-  providerId: string;
-  providerName?: string;
-  rating?: number;
-  reviewCount?: number;
-  image?: string;
-  location?: string;
-  isFeatured?: boolean;
 }

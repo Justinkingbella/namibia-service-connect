@@ -13,12 +13,13 @@ export interface DbUserProfile {
   created_at: string;
   updated_at: string;
   active?: boolean;
-  role?: string;
+  role?: UserRole;
   loyalty_points?: number;
   birth_date?: string;
   preferred_language?: string;
   favorites?: string[];
   is_verified?: boolean;
+  name?: string; // Added for DashboardLayout
 }
 
 export interface DbProviderProfile {
@@ -34,7 +35,7 @@ export interface DbProviderProfile {
   avatar_url?: string;
   banner_url?: string;
   verification_status: ProviderVerificationStatus;
-  subscription_tier?: string;
+  subscription_tier?: SubscriptionTier;
   rating?: number;
   business_logo?: string;
   business_address?: string;
@@ -45,8 +46,9 @@ export interface DbProviderProfile {
   bank_details?: Record<string, any>;
 }
 
-export type UserRole = 'admin' | 'provider' | 'customer';
-export type ProviderVerificationStatus = 'pending' | 'verified' | 'rejected';
+export type UserRole = 'admin' | 'provider' | 'customer' | string;
+export type ProviderVerificationStatus = 'pending' | 'verified' | 'rejected' | 'unverified';
+export type SubscriptionTier = 'free' | 'basic' | 'premium' | 'professional' | 'pro' | 'enterprise' | string;
 
 export interface UserAddress {
   id: string;
@@ -78,7 +80,6 @@ export interface User2FA {
   backupCodes?: string[];
 }
 
-// Add the missing interfaces required by index.ts
 export interface User {
   id: string;
   email: string;
@@ -88,24 +89,28 @@ export interface User {
   avatarUrl?: string;
   isActive: boolean;
   createdAt: Date;
+  name?: string; // Added for DashboardLayout
+  avatar?: string; // Added for DashboardLayout
 }
 
 export interface Customer extends User {
   loyaltyPoints: number;
   preferences?: Record<string, any>;
+  favorites?: string[]; // Added for AuthContext
 }
 
 export interface Provider extends User {
   businessName: string;
   verificationStatus: ProviderVerificationStatus;
   rating?: number;
+  categories?: string[]; // Added for AuthContext
+  locations?: string[]; // Added for AuthContext
+  bankDetails?: Record<string, any>; // Added for AuthContext
 }
 
 export interface Admin extends User {
   permissions: string[];
 }
-
-export type SubscriptionTier = 'free' | 'basic' | 'premium' | 'professional';
 
 export interface AuthContextType {
   user: User | null;
