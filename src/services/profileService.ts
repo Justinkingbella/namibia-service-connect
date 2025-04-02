@@ -948,29 +948,40 @@ export function formatFavorites(favorites: any[]) {
   
   return favorites.map(fav => {
     // Check if fav.service exists and is an object
-    const serviceData = fav.service && typeof fav.service === 'object' ? fav.service : null;
+    const serviceData = fav?.service && typeof fav.service === 'object' ? fav.service : null;
+    
+    // If serviceData is null, create a default service object
+    if (!serviceData) {
+      return {
+        id: fav?.id || '',
+        userId: fav?.user_id || '',
+        serviceId: fav?.service_id || '',
+        createdAt: fav?.created_at || '',
+        service: null
+      };
+    }
     
     // Create the service object with properly typed properties and null checks
-    const service = serviceData ? {
-      id: serviceData.id || '',
-      title: typeof serviceData.title === 'string' ? serviceData.title : '',
-      description: typeof serviceData.description === 'string' ? serviceData.description : '',
-      price: typeof serviceData.price === 'number' ? serviceData.price : 0,
-      location: serviceData.location || '',
-      image: serviceData.image || '',
-      category: serviceData.category || '',
-      isActive: Boolean(serviceData.is_active),
-      providerId: serviceData.provider_id || '',
-      pricingModel: serviceData.pricing_model || '',
-      createdAt: serviceData.created_at || '',
-      updatedAt: serviceData.updated_at || ''
-    } : null;
+    const service = {
+      id: serviceData?.id || '',
+      title: typeof serviceData?.title === 'string' ? serviceData.title : '',
+      description: typeof serviceData?.description === 'string' ? serviceData.description : '',
+      price: typeof serviceData?.price === 'number' ? serviceData.price : 0,
+      location: serviceData?.location || '',
+      image: serviceData?.image || '',
+      category: serviceData?.category || '',
+      isActive: Boolean(serviceData?.is_active),
+      providerId: serviceData?.provider_id || '',
+      pricingModel: serviceData?.pricing_model || '',
+      createdAt: serviceData?.created_at || '',
+      updatedAt: serviceData?.updated_at || ''
+    };
 
     return {
-      id: fav.id,
-      userId: fav.user_id,
-      serviceId: fav.service_id,
-      createdAt: fav.created_at,
+      id: fav?.id || '',
+      userId: fav?.user_id || '',
+      serviceId: fav?.service_id || '',
+      createdAt: fav?.created_at || '',
       service
     };
   });
@@ -1069,7 +1080,7 @@ export const fetchServicesByProvider = async (providerId: string): Promise<Servi
       review_count: typeof service?.review_count === 'number' ? service.review_count : null,
       location: service?.location || null,
       is_active: Boolean(service?.is_active),
-      pricing_model: service?.pricing_model || '',
+      pricing_model: service?.pricing_model || 'hourly',
       created_at: service?.created_at || null,
       updated_at: service?.updated_at || null
     }));
