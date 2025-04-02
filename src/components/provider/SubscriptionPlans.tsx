@@ -8,10 +8,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
-import { fetchSubscriptionPlans, subscribeUserToPlan } from '@/services/subscriptionService';
-import { SubscriptionPlan } from '@/types';
+import { useRealtimeData } from '@/hooks/useRealtimeData';
+import { subscribeUserToPlan } from '@/services/subscriptionService';
+import { SubscriptionPlan } from '@/types/subscription';
 import { Skeleton } from '@/components/ui/skeleton';
+import { convertJsonToFeatures } from '@/types/subscription';
 
 interface SubscriptionPlansProps {
   currentPlan?: string;
@@ -30,10 +31,36 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const { user } = useAuth();
 
-  const { data: plans = [], isLoading } = useQuery({
-    queryKey: ['subscriptionPlans'],
-    queryFn: fetchSubscriptionPlans
+  // Use the useRealtimeData hook to fetch subscription plans and listen for changes
+  const { 
+    data: plansData, 
+    loading: isLoading, 
+    error 
+  } = useRealtimeData<any[]>({
+    table: 'subscription_plans',
+    onDataChange: (payload) => {
+      console.log('Subscription plan changed:', payload);
+    }
   });
+
+  // Format the plans from Supabase to match our SubscriptionPlan type
+  const plans: SubscriptionPlan[] = plansData ? plansData
+    .filter((plan: any) => plan.is_active)
+    .map((plan: any) => ({
+      id: plan.id,
+      name: plan.name,
+      description: plan.description,
+      price: Number(plan.price),
+      billingCycle: plan.billing_cycle,
+      credits: plan.credits,
+      maxBookings: plan.max_bookings,
+      features: convertJsonToFeatures(plan.features),
+      isPopular: plan.is_popular || false,
+      isActive: plan.is_active || false,
+      createdAt: plan.created_at,
+      updatedAt: plan.updated_at
+    }))
+    .sort((a: SubscriptionPlan, b: SubscriptionPlan) => a.price - b.price) : [];
 
   const handleSubscribe = async () => {
     if (!user?.id || !selectedPlan) return;
@@ -68,6 +95,15 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
           <Skeleton className="h-[500px] w-full" />
           <Skeleton className="h-[500px] w-full" />
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 border border-red-300 bg-red-50 rounded-md text-red-800">
+        <h3 className="font-medium">Error loading subscription plans</h3>
+        <p className="text-sm mt-1">{error.message}</p>
       </div>
     );
   }

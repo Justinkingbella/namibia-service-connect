@@ -12,61 +12,34 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useRealtimeData } from '@/hooks/useRealtimeData';
 
 const SubscriptionManagement = () => {
-  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [activeTab, setActiveTab] = useState('all');
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchSubscriptionPlans();
-  }, []);
-
-  const fetchSubscriptionPlans = async () => {
-    setIsLoading(true);
-    setPermissionError(null);
-    try {
-      const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('*');
-      
-      if (error) {
-        throw error;
+  // Use real-time data hook to get and listen for subscription plan changes
+  const { 
+    data: subscriptionPlans = [], 
+    loading: isLoading, 
+    error, 
+    refetch 
+  } = useRealtimeData<any[]>({
+    table: 'subscription_plans',
+    onDataChange: (payload) => {
+      console.log('Subscription plan changed:', payload);
+      if (payload.eventType === 'INSERT') {
+        toast.success('New subscription plan added');
+      } else if (payload.eventType === 'UPDATE') {
+        toast.success('Subscription plan updated');
+      } else if (payload.eventType === 'DELETE') {
+        toast.success('Subscription plan deleted');
       }
-      
-      // Transform the data to match our SubscriptionPlan type
-      const transformedData: SubscriptionPlan[] = data?.map(plan => ({
-        id: plan.id,
-        name: plan.name,
-        description: plan.description,
-        price: Number(plan.price),
-        billingCycle: plan.billing_cycle as 'monthly' | 'yearly',
-        credits: plan.credits,
-        maxBookings: plan.max_bookings,
-        features: convertJsonToFeatures(plan.features),
-        isPopular: plan.is_popular || false,
-        isActive: plan.is_active || false,
-        createdAt: plan.created_at || new Date().toISOString(),
-        updatedAt: plan.updated_at || new Date().toISOString()
-      })) || [];
-      
-      setSubscriptionPlans(transformedData);
-    } catch (error: any) {
-      console.error('Error fetching subscription plans:', error);
-      
-      if (error.code === '42501') {
-        setPermissionError("Permission denied. You don't have sufficient privileges to access subscription plans.");
-      } else {
-        toast.error("Failed to load subscription plans.");
-      }
-    } finally {
-      setIsLoading(false);
     }
-  };
+  });
 
   const onOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -82,21 +55,33 @@ const SubscriptionManagement = () => {
     setPermissionError(null);
     
     try {
-      // Simulate successful creation since we have permission issues
-      // We'll add the plan to the local state for demo purposes
-      
-      const newPlan: SubscriptionPlan = {
-        ...plan,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+      // Convert features to the correct format
+      const planToInsert = {
+        name: plan.name,
+        description: plan.description,
+        price: plan.price,
+        billing_cycle: plan.billingCycle,
+        features: convertFeaturesToJson(plan.features),
+        credits: plan.credits,
+        max_bookings: plan.maxBookings,
+        is_popular: plan.isPopular || false,
+        is_active: plan.isActive
       };
       
-      setSubscriptionPlans([...subscriptionPlans, newPlan]);
-      setIsOpen(false);
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .insert([planToInsert])
+        .select();
       
+      if (error) {
+        throw error;
+      }
+      
+      setIsOpen(false);
       toast.success(`${plan.name} has been successfully created.`);
-      toast.info("Note: Changes are displayed locally and may not persist due to database permissions.");
+      
+      // The real-time subscription should automatically update the UI
+      await refetch();
     } catch (error: any) {
       console.error('Error creating subscription plan:', error);
       
@@ -117,20 +102,35 @@ const SubscriptionManagement = () => {
     setPermissionError(null);
     
     try {
-      // Simulate successful update since we have permission issues
-      // We'll update the plan in the local state for demo purposes
-      
-      const updatedPlan: SubscriptionPlan = {
-        ...plan,
-        updatedAt: new Date().toISOString()
+      // Convert features to the correct format
+      const planToUpdate = {
+        name: plan.name,
+        description: plan.description,
+        price: plan.price,
+        billing_cycle: plan.billingCycle,
+        features: convertFeaturesToJson(plan.features),
+        credits: plan.credits,
+        max_bookings: plan.maxBookings,
+        is_popular: plan.isPopular || false,
+        is_active: plan.isActive,
+        updated_at: new Date().toISOString()
       };
       
-      setSubscriptionPlans(subscriptionPlans.map(p => p.id === updatedPlan.id ? updatedPlan : p));
+      const { error } = await supabase
+        .from('subscription_plans')
+        .update(planToUpdate)
+        .eq('id', plan.id);
+      
+      if (error) {
+        throw error;
+      }
+      
       setIsOpen(false);
       setEditingPlan(null);
-      
       toast.success(`${plan.name} has been successfully updated.`);
-      toast.info("Note: Changes are displayed locally and may not persist due to database permissions.");
+      
+      // The real-time subscription should automatically update the UI
+      await refetch();
     } catch (error: any) {
       console.error('Error updating subscription plan:', error);
       
@@ -151,15 +151,21 @@ const SubscriptionManagement = () => {
     setPermissionError(null);
     
     try {
-      const planToDelete = subscriptionPlans.find(p => p.id === id);
+      const planToDelete = subscriptionPlans.find((p: any) => p.id === id);
       
-      // Simulate successful deletion since we have permission issues
-      // We'll remove the plan from the local state for demo purposes
+      const { error } = await supabase
+        .from('subscription_plans')
+        .delete()
+        .eq('id', id);
       
-      setSubscriptionPlans(subscriptionPlans.filter(p => p.id !== id));
+      if (error) {
+        throw error;
+      }
       
       toast.success(`${planToDelete?.name} has been successfully deleted.`);
-      toast.info("Note: Changes are displayed locally and may not persist due to database permissions.");
+      
+      // The real-time subscription should automatically update the UI
+      await refetch();
     } catch (error: any) {
       console.error('Error deleting subscription plan:', error);
       
@@ -174,7 +180,20 @@ const SubscriptionManagement = () => {
   };
 
   const handleEditSubscription = (plan: SubscriptionPlan) => {
-    setEditingPlan(plan);
+    // Create a properly formatted plan for editing
+    const formattedPlan: SubscriptionPlan = {
+      ...plan,
+      features: plan.features && Array.isArray(plan.features) 
+        ? plan.features.map((f: any) => ({
+            id: f.id || crypto.randomUUID(),
+            name: f.name || '',
+            description: f.description || '',
+            included: f.included !== undefined ? f.included : true
+          }))
+        : []
+    };
+    
+    setEditingPlan(formattedPlan);
     setIsOpen(true);
   };
 
@@ -185,24 +204,27 @@ const SubscriptionManagement = () => {
     setPermissionError(null);
     
     try {
-      const plan = subscriptionPlans.find(p => p.id === id);
+      const plan = subscriptionPlans.find((p: any) => p.id === id);
       if (!plan) return;
       
-      const updatedStatus = !plan.isActive;
+      const updatedStatus = !plan.is_active;
       
-      // Simulate successful status toggle since we have permission issues
-      // We'll update the plan status in the local state for demo purposes
+      const { error } = await supabase
+        .from('subscription_plans')
+        .update({ 
+          is_active: updatedStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
       
-      const updatedPlan: SubscriptionPlan = {
-        ...plan,
-        isActive: updatedStatus,
-        updatedAt: new Date().toISOString()
-      };
-      
-      setSubscriptionPlans(subscriptionPlans.map(p => p.id === id ? updatedPlan : p));
+      if (error) {
+        throw error;
+      }
       
       toast.success(`${plan.name} has been ${updatedStatus ? 'activated' : 'deactivated'}.`);
-      toast.info("Note: Changes are displayed locally and may not persist due to database permissions.");
+      
+      // The real-time subscription should automatically update the UI
+      await refetch();
     } catch (error: any) {
       console.error('Error toggling plan status:', error);
       
@@ -216,9 +238,25 @@ const SubscriptionManagement = () => {
     }
   };
 
+  // Format plan data from Supabase to match our SubscriptionPlan type
+  const formattedPlans = subscriptionPlans.map((plan: any) => ({
+    id: plan.id,
+    name: plan.name,
+    description: plan.description,
+    price: Number(plan.price),
+    billingCycle: plan.billing_cycle,
+    credits: plan.credits,
+    maxBookings: plan.max_bookings,
+    features: convertJsonToFeatures(plan.features),
+    isPopular: plan.is_popular || false,
+    isActive: plan.is_active || false,
+    createdAt: plan.created_at,
+    updatedAt: plan.updated_at
+  }));
+
   const filteredPlans = activeTab === 'all' 
-    ? subscriptionPlans 
-    : subscriptionPlans.filter(plan => 
+    ? formattedPlans 
+    : formattedPlans.filter(plan => 
         activeTab === 'active' ? plan.isActive : !plan.isActive
       );
 
@@ -240,6 +278,16 @@ const SubscriptionManagement = () => {
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Permission Error</AlertTitle>
           <AlertDescription>{permissionError}</AlertDescription>
+        </Alert>
+      )}
+      
+      {error && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            {error instanceof Error ? error.message : 'Failed to load subscription plans'}
+          </AlertDescription>
         </Alert>
       )}
       

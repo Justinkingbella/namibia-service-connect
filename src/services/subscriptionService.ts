@@ -48,7 +48,7 @@ export async function fetchSubscriptionPlans(): Promise<SubscriptionPlan[]> {
     price: plan.price,
     billingCycle: plan.billing_cycle,
     isActive: plan.is_active,
-    features: Array.isArray(plan.features) ? plan.features : [],
+    features: convertJsonToFeatures(plan.features),
     credits: plan.credits,
     isPopular: plan.is_popular || false,
     maxBookings: plan.max_bookings
@@ -101,7 +101,7 @@ export async function fetchUserSubscription(userId: string): Promise<Subscriptio
       price: data.plan.price,
       billingCycle: data.plan.billing_cycle,
       isActive: data.plan.is_active,
-      features: Array.isArray(data.plan.features) ? data.plan.features : [],
+      features: convertJsonToFeatures(data.plan.features),
       credits: data.plan.credits,
       isPopular: data.plan.is_popular || false,
       maxBookings: data.plan.max_bookings
@@ -214,7 +214,7 @@ export async function subscribeToPlan(
       price: planData.price,
       billingCycle: planData.billing_cycle,
       isActive: planData.is_active,
-      features: Array.isArray(planData.features) ? planData.features : [],
+      features: convertJsonToFeatures(planData.features),
       credits: planData.credits,
       isPopular: planData.is_popular || false,
       maxBookings: planData.max_bookings

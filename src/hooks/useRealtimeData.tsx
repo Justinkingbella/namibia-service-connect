@@ -5,7 +5,8 @@ import { toast } from 'sonner';
 
 type Table = 'profiles' | 'payment_history' | 'disputes' | 'user_addresses' | 
              'payment_methods' | 'user_2fa' | 'favorite_services' | 
-             'services' | 'bookings' | 'reviews' | 'messages';
+             'services' | 'bookings' | 'reviews' | 'messages' |
+             'subscription_plans' | 'user_subscriptions';
 
 type Event = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
