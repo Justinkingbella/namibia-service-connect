@@ -1,9 +1,62 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PaymentHistory, Dispute } from '@/types/payments';
 import { DbUserProfile, UserAddress, PaymentMethod, User2FA } from '@/types/auth';
 import { FavoriteService } from '@/types/favorites';
 import { Message } from '@/types/message';
+
+// Enable real-time updates for the tables we're working with
+const setupRealtimeSubscription = () => {
+  try {
+    return supabase
+      .channel('public-db-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'profiles'
+      }, (payload) => console.log('Profile change received:', payload))
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'payment_history'
+      }, (payload) => console.log('Payment history change received:', payload))
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'disputes'
+      }, (payload) => console.log('Disputes change received:', payload))
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'user_addresses'
+      }, (payload) => console.log('Addresses change received:', payload))
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'payment_methods'
+      }, (payload) => console.log('Payment methods change received:', payload))
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'favorite_services'
+      }, (payload) => console.log('Favorites change received:', payload))
+      .subscribe();
+  } catch (error) {
+    console.error('Error setting up real-time subscription:', error);
+    return null;
+  }
+};
+
+// Initialize the real-time subscription
+const realtimeSubscription = setupRealtimeSubscription();
+
+// Cleanup function to remove subscription when app unmounts
+export const cleanupRealtimeSubscription = () => {
+  if (realtimeSubscription) {
+    supabase.removeChannel(realtimeSubscription);
+  }
+};
 
 // Fetch payment history for a user
 export async function fetchPaymentHistory(userId: string): Promise<PaymentHistory[]> {
@@ -919,7 +972,7 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
       .select(`
         id,
         service_id,
-        services:service_id (
+        service:service_id (
           id,
           title,
           description,
@@ -937,10 +990,10 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
     }
 
     const formattedFavorites = favorites
-      .filter(fav => fav.services !== null) // Filter out any null services
+      .filter(fav => fav.service !== null) // Filter out any null services
       .map((fav) => {
-        // Handle the case where services might be null or not an object
-        const service = fav.services && typeof fav.services === 'object' ? fav.services : {};
+        // Handle the case where service might be null or not an object
+        const service = fav.service && typeof fav.service === 'object' ? fav.service : {};
         
         return {
           id: fav.id,

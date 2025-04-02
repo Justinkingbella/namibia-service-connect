@@ -6,12 +6,15 @@ import ProviderDashboard from './ProviderDashboard';
 import AdminDashboard from './AdminDashboard';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabase } from '@/contexts/SupabaseContext';
+import { enableSupabaseRealtime } from '@/services/enableRealtimeSupabase';
 
 const Dashboard = () => {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { isSubscribed, enableRealtime } = useSupabase();
 
   useEffect(() => {
     let mounted = true;
@@ -37,6 +40,18 @@ const Dashboard = () => {
             return;
           }
           
+          // Ensure realtime is enabled
+          if (!isSubscribed) {
+            enableRealtime();
+            // This would normally need admin permissions to run these SQL commands
+            // So we just log it for demonstration
+            enableSupabaseRealtime().then(success => {
+              if (success) {
+                console.log('Realtime features enabled for the database');
+              }
+            });
+          }
+          
           console.log('User authenticated:', user.role);
         } catch (error) {
           console.error('Dashboard checkAuth error:', error);
@@ -58,7 +73,7 @@ const Dashboard = () => {
     return () => {
       mounted = false;
     };
-  }, [navigate, user, authLoading, toast]);
+  }, [navigate, user, authLoading, toast, isSubscribed, enableRealtime]);
 
   if (isLoading || authLoading) {
     return (
