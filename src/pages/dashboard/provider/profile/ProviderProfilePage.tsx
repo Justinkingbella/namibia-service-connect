@@ -13,7 +13,7 @@ const ProviderProfilePage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is loaded and is provider
+    // Check if user is loaded and is a provider
     if (!isLoading) {
       if (user && user.role === 'provider') {
         // Small delay to ensure profile data is loaded
@@ -23,10 +23,8 @@ const ProviderProfilePage = () => {
         return () => clearTimeout(timer);
       } else if (user && user.role !== 'provider') {
         // Redirect to appropriate profile page based on role
-        toast({
-          title: "Access Restricted",
-          description: "You don't have permission to access this page.",
-          variant: "destructive"
+        toast.error("Access Restricted", {
+          description: "You don't have permission to access this provider page."
         });
         
         if (user.role === 'admin') {
@@ -36,10 +34,8 @@ const ProviderProfilePage = () => {
         }
       } else if (!user) {
         // Redirect to login if no user
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to access this page.",
-          variant: "destructive"
+        toast.error("Authentication Required", {
+          description: "Please sign in to access this page."
         });
         navigate('/auth/sign-in');
       }
@@ -69,7 +65,7 @@ const ProviderProfilePage = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Provider Profile</h1>
-          <p className="text-muted-foreground mt-1">Manage your provider account information and services</p>
+          <p className="text-muted-foreground mt-1">Manage your provider profile information and settings</p>
         </div>
         
         <ProviderProfile />

@@ -66,7 +66,7 @@ export interface ServiceData {
   review_count?: number | null;
   location?: string | null;
   is_active?: boolean | null;
-  pricing_model?: string | null;
+  pricing_model: string;
   created_at?: string | null;
   updated_at?: string | null;
 }

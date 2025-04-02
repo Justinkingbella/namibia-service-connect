@@ -39,6 +39,29 @@ interface UseBookingsReturnType {
   updateBookingStatus: (id: string, status: BookingStatus) => Promise<boolean>;
 }
 
+interface BookingData {
+  id: string;
+  service_id: string;
+  customer_id: string;
+  provider_id: string;
+  status: string;
+  date: string;
+  start_time: string;
+  end_time: string | null;
+  duration: number | null;
+  total_amount: number;
+  commission: number;
+  payment_method: string;
+  payment_status: string;
+  notes: string | null;
+  is_urgent: boolean;
+  created_at: string;
+  updated_at: string;
+  service?: ServiceData;
+  customer?: CustomerData;
+  provider?: ProviderData;
+}
+
 interface ServiceData {
   id?: string;
   title?: string;
@@ -102,18 +125,19 @@ export function useBookings(): UseBookingsReturnType {
 
   // Use our real-time data hook for bookings based on the user's role
   const table = 'bookings';
-  const filter = user?.role === 'customer' ? 'customer_id' : 
+  const column = user?.role === 'customer' ? 'customer_id' : 
                 user?.role === 'provider' ? 'provider_id' : undefined;
-  const filterValue = filter ? user?.id : undefined;
+  const filterValue = column ? user?.id : undefined;
 
-  const { data: realtimeBookings } = useRealtimeData<any[]>({
+  const { data: realtimeBookings } = useRealtimeData<BookingData>({
     table,
-    filter,
-    filterValue,
+    column,
+    value: filterValue,
     onDataChange: (payload) => {
       console.log('Booking changed:', payload);
       // You could show specific toasts based on the event type
-      if (payload.eventType === 'UPDATE' && payload.new.status !== payload.old.status) {
+      if (payload.eventType === 'UPDATE' && payload.new && payload.old && 
+          payload.new.status !== payload.old.status) {
         toast.info(`Booking status updated to: ${payload.new.status}`);
       }
     }
@@ -216,7 +240,7 @@ export function useBookings(): UseBookingsReturnType {
 
   // Update local state if we get real-time updates
   useEffect(() => {
-    if (realtimeBookings) {
+    if (realtimeBookings && realtimeBookings.length > 0) {
       console.log('Received realtime booking update:', realtimeBookings);
       // Process the realtime data
       // This would need additional logic to properly map service/customer/provider data

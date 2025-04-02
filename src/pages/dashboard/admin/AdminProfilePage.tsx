@@ -23,10 +23,8 @@ const AdminProfilePage = () => {
         return () => clearTimeout(timer);
       } else if (user && user.role !== 'admin') {
         // Redirect to appropriate profile page based on role
-        toast({
-          title: "Access Restricted",
-          description: "You don't have permission to access this page.",
-          variant: "destructive"
+        toast.error("Access Restricted", {
+          description: "You don't have permission to access this page."
         });
         
         if (user.role === 'provider') {
@@ -36,10 +34,8 @@ const AdminProfilePage = () => {
         }
       } else if (!user) {
         // Redirect to login if no user
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to access this page.",
-          variant: "destructive"
+        toast.error("Authentication Required", {
+          description: "Please sign in to access this page."
         });
         navigate('/auth/sign-in');
       }

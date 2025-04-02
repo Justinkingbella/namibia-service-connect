@@ -40,7 +40,8 @@ export function useRealtimeData<T>({
     try {
       setLoading(true);
       
-      let query = supabase.from(table).select('*');
+      // Use type assertion to handle dynamic table name
+      let query = supabase.from(table as any).select('*');
       
       if (column && value !== undefined) {
         query = query.eq(column, value);
@@ -81,7 +82,7 @@ export function useRealtimeData<T>({
           schema: 'public',
           table: table,
         },
-        (payload) => {
+        (payload: any) => {
           // Update local data based on the change type
           if (payload.eventType === 'INSERT') {
             setData((currentData) => [...currentData, payload.new as unknown as T]);

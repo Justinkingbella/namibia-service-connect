@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { CreateServiceForm } from './CreateServiceForm';
+import CreateServiceForm from './CreateServiceForm';
 import { ServiceData } from '@/types/service';
 
 const CreateService = () => {
@@ -35,7 +35,7 @@ const CreateService = () => {
 
       const { data, error } = await supabase
         .from('services')
-        .insert([dataToInsert])
+        .insert(dataToInsert)
         .select();
 
       if (error) {
