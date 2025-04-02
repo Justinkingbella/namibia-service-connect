@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_notifications: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          metadata: Json
+          status: string
+          type: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          status?: string
+          type: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          status?: string
+          type?: string
+        }
+        Relationships: []
+      }
       admin_permissions: {
         Row: {
           created_at: string | null
@@ -413,6 +440,39 @@ export type Database = {
           },
         ]
       }
+      payment_method_details: {
+        Row: {
+          created_at: string
+          details: Json
+          id: string
+          is_default: boolean | null
+          name: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          details: Json
+          id?: string
+          is_default?: boolean | null
+          name: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_methods: {
         Row: {
           created_at: string | null
@@ -443,6 +503,54 @@ export type Database = {
           type?: string
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string
+          gateway: string
+          gateway_response: Json | null
+          id: string
+          metadata: Json
+          method: string
+          reference: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          description: string
+          gateway: string
+          gateway_response?: Json | null
+          id?: string
+          metadata?: Json
+          method: string
+          reference: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string
+          gateway?: string
+          gateway_response?: Json | null
+          id?: string
+          metadata?: Json
+          method?: string
+          reference?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -955,6 +1063,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_notifications: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          metadata: Json
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           created_at: string | null
@@ -1095,11 +1233,25 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_gateway_breakdown: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          gateway: string
+          count: number
+          total_amount: number
+        }[]
+      }
       is_admin: {
         Args: {
           uid: string
         }
         Returns: boolean
+      }
+      sum_payment_amounts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          sum: number
+        }[]
       }
     }
     Enums: {

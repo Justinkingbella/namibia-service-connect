@@ -15,7 +15,7 @@ import {
   NamibianEWallet,
   BankTransferDetails,
   EWalletDetails
-} from '@/services/namibiaPaymentService';
+} from '@/hooks/usePaymentSystem';
 
 interface PaymentMethodSelectorProps {
   amount: number;

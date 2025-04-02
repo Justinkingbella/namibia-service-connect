@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PaymentTransaction } from '@/services/namibiaPaymentService';
+import { PaymentTransaction } from '@/hooks/usePaymentSystem';
 import { CheckCircle2, XCircle, Clock, AlertTriangle, ArrowUpCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { usePaymentMethods } from '@/hooks/usePaymentSystem';

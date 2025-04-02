@@ -2,22 +2,73 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import {
-  fetchUserPayments,
-  fetchPaymentDetails,
-  initiateBankTransfer,
-  initiateEWalletPayment,
-  initiatePayFastPayment,
-  initiateDPOPayment,
-  initiateEasyWalletPayment,
-  submitEWalletVerification,
-  retryFailedPayment,
-  PaymentTransaction,
-  BankTransferDetails,
-  EWalletDetails,
-  PaymentGateway,
-  PaymentStatus
-} from '@/services/namibiaPaymentService';
+import { supabase } from '@/integrations/supabase/client';
+
+// Type definitions for our payment system
+export type NamibianBank = 
+  'FNB Namibia' | 
+  'Standard Bank Namibia' | 
+  'Bank Windhoek' | 
+  'Nedbank Namibia' | 
+  'Letshego Bank' | 
+  'Other';
+
+export type NamibianEWallet = 
+  'FNB eWallet' | 
+  'MTC Money' | 
+  'Standard Bank BlueWallet' | 
+  'Nedbank Send-iMali' | 
+  'Bank Windhoek EasyWallet' | 
+  'PayToday' | 
+  'Other';
+
+export type PaymentStatus = 
+  'pending' | 
+  'processing' | 
+  'completed' | 
+  'failed' | 
+  'refunded' | 
+  'cancelled' | 
+  'awaiting_verification';
+
+export type PaymentGateway = 
+  'bank_transfer' | 
+  'ewallet' | 
+  'payfast' | 
+  'dpo' | 
+  'easywallet';
+
+export interface PaymentTransaction {
+  id: string;
+  userId: string;
+  amount: number;
+  currency: string;
+  description: string;
+  reference: string;
+  gateway: PaymentGateway;
+  method: string;
+  status: PaymentStatus;
+  metadata: Record<string, any>;
+  gatewayResponse?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BankTransferDetails {
+  bankName: NamibianBank;
+  accountNumber: string;
+  accountType: 'savings' | 'checking' | 'business';
+  branchCode: string;
+  accountHolder: string;
+  reference: string;
+}
+
+export interface EWalletDetails {
+  provider: NamibianEWallet;
+  phoneNumber: string;
+  accountName?: string;
+  reference: string;
+}
 
 export function useUserPayments() {
   const { user } = useAuth();
@@ -35,8 +86,31 @@ export function useUserPayments() {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchUserPayments(user.id);
-        setPayments(data);
+        const { data, error } = await supabase
+          .from('payment_transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const formattedPayments = data.map(item => ({
+          id: item.id,
+          userId: item.user_id,
+          amount: item.amount,
+          currency: item.currency,
+          description: item.description,
+          reference: item.reference,
+          gateway: item.gateway as PaymentGateway,
+          method: item.method,
+          status: item.status as PaymentStatus,
+          metadata: item.metadata,
+          gatewayResponse: item.gateway_response,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at
+        }));
+
+        setPayments(formattedPayments);
       } catch (err) {
         console.error('Error loading payments:', err);
         setError('Failed to load payment history');
@@ -54,8 +128,31 @@ export function useUserPayments() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchUserPayments(user.id);
-      setPayments(data);
+      const { data, error } = await supabase
+        .from('payment_transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedPayments = data.map(item => ({
+        id: item.id,
+        userId: item.user_id,
+        amount: item.amount,
+        currency: item.currency,
+        description: item.description,
+        reference: item.reference,
+        gateway: item.gateway as PaymentGateway,
+        method: item.method,
+        status: item.status as PaymentStatus,
+        metadata: item.metadata,
+        gatewayResponse: item.gateway_response,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at
+      }));
+
+      setPayments(formattedPayments);
     } catch (err) {
       console.error('Error refreshing payments:', err);
       setError('Failed to refresh payment history');
@@ -87,8 +184,29 @@ export function usePaymentDetails(paymentId: string) {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchPaymentDetails(paymentId);
-        setPayment(data);
+        const { data, error } = await supabase
+          .from('payment_transactions')
+          .select('*')
+          .eq('id', paymentId)
+          .single();
+
+        if (error) throw error;
+
+        setPayment({
+          id: data.id,
+          userId: data.user_id,
+          amount: data.amount,
+          currency: data.currency,
+          description: data.description,
+          reference: data.reference,
+          gateway: data.gateway as PaymentGateway,
+          method: data.method,
+          status: data.status as PaymentStatus,
+          metadata: data.metadata,
+          gatewayResponse: data.gateway_response,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at
+        });
       } catch (err) {
         console.error('Error loading payment details:', err);
         setError('Failed to load payment details');
@@ -121,11 +239,70 @@ export function usePaymentMethods() {
     }
     
     try {
-      const result = await initiateBankTransfer(user.id, amount, details, description);
-      return result;
+      // Generate a unique reference
+      const reference = `BT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      
+      // Create a transaction record
+      const { data, error } = await supabase
+        .from('payment_transactions')
+        .insert([{
+          user_id: user.id,
+          amount,
+          currency: 'NAD',
+          description,
+          reference,
+          gateway: 'bank_transfer',
+          method: details.bankName,
+          status: 'pending',
+          metadata: { ...details },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error initiating bank transfer:', error);
+        toast.error('Failed to initiate bank transfer');
+        return null;
+      }
+
+      toast.success('Bank transfer initiated successfully');
+      
+      // Send notification to admin for verification
+      await supabase
+        .from('admin_notifications')
+        .insert([{
+          type: 'payment_verification',
+          content: `New bank_transfer payment of NAD ${amount} requires verification`,
+          metadata: {
+            transactionId: data.id,
+            userId: user.id,
+            amount,
+            gateway: 'bank_transfer'
+          },
+          status: 'unread',
+          created_at: new Date().toISOString()
+        }]);
+      
+      return {
+        id: data.id,
+        userId: data.user_id,
+        amount: data.amount,
+        currency: data.currency,
+        description: data.description,
+        reference: data.reference,
+        gateway: data.gateway as PaymentGateway,
+        method: data.method,
+        status: data.status as PaymentStatus,
+        metadata: data.metadata,
+        gatewayResponse: data.gateway_response,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
+      };
     } catch (err) {
-      console.error('Error processing bank transfer:', err);
-      toast.error('Failed to process bank transfer');
+      console.error('Error in processBankTransfer:', err);
+      toast.error('Failed to initiate bank transfer');
       return null;
     }
   }, [user?.id]);
@@ -141,11 +318,70 @@ export function usePaymentMethods() {
     }
     
     try {
-      const result = await initiateEWalletPayment(user.id, amount, details, description);
-      return result;
+      // Generate a unique reference
+      const reference = `EW-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      
+      // Create a transaction record
+      const { data, error } = await supabase
+        .from('payment_transactions')
+        .insert([{
+          user_id: user.id,
+          amount,
+          currency: 'NAD',
+          description,
+          reference,
+          gateway: 'ewallet',
+          method: details.provider,
+          status: 'awaiting_verification',
+          metadata: { ...details },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error initiating e-wallet payment:', error);
+        toast.error('Failed to initiate e-wallet payment');
+        return null;
+      }
+
+      toast.success('E-wallet payment initiated successfully');
+      
+      // Send notification to admin for verification
+      await supabase
+        .from('admin_notifications')
+        .insert([{
+          type: 'payment_verification',
+          content: `New ewallet payment of NAD ${amount} requires verification`,
+          metadata: {
+            transactionId: data.id,
+            userId: user.id,
+            amount,
+            gateway: 'ewallet'
+          },
+          status: 'unread',
+          created_at: new Date().toISOString()
+        }]);
+      
+      return {
+        id: data.id,
+        userId: data.user_id,
+        amount: data.amount,
+        currency: data.currency,
+        description: data.description,
+        reference: data.reference,
+        gateway: data.gateway as PaymentGateway,
+        method: data.method,
+        status: data.status as PaymentStatus,
+        metadata: data.metadata,
+        gatewayResponse: data.gateway_response,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
+      };
     } catch (err) {
-      console.error('Error processing e-wallet payment:', err);
-      toast.error('Failed to process e-wallet payment');
+      console.error('Error in processEWalletPayment:', err);
+      toast.error('Failed to initiate e-wallet payment');
       return null;
     }
   }, [user?.id]);
@@ -162,11 +398,45 @@ export function usePaymentMethods() {
     }
     
     try {
-      const result = await initiatePayFastPayment(user.id, amount, description, returnUrl, cancelUrl);
-      return result;
+      // Generate a unique merchant reference
+      const merchantReference = `PF-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      
+      // Create a transaction record
+      const { data, error } = await supabase
+        .from('payment_transactions')
+        .insert([{
+          user_id: user.id,
+          amount,
+          currency: 'NAD',
+          description,
+          reference: merchantReference,
+          gateway: 'payfast',
+          method: 'payfast',
+          status: 'pending',
+          metadata: { returnUrl, cancelUrl },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error initiating PayFast payment:', error);
+        toast.error('Failed to initiate PayFast payment');
+        return null;
+      }
+
+      // In a real implementation, you would construct the actual PayFast URL with parameters
+      // This is a mock implementation
+      const redirectUrl = `https://www.payfast.co.za/eng/process?merchant_id=YOUR_MERCHANT_ID&merchant_key=YOUR_MERCHANT_KEY&amount=${amount}&item_name=${encodeURIComponent(description)}&m_payment_id=${data.id}&return_url=${encodeURIComponent(returnUrl)}&cancel_url=${encodeURIComponent(cancelUrl)}&notify_url=YOUR_WEBHOOK_URL`;
+      
+      return {
+        redirectUrl,
+        transactionId: data.id
+      };
     } catch (err) {
-      console.error('Error processing PayFast payment:', err);
-      toast.error('Failed to process PayFast payment');
+      console.error('Error in processPayFastPayment:', err);
+      toast.error('Failed to initiate PayFast payment');
       return null;
     }
   }, [user?.id]);
@@ -187,11 +457,48 @@ export function usePaymentMethods() {
     }
     
     try {
-      const result = await initiateDPOPayment(user.id, amount, description, isRecurring, paymentDetails);
-      return result;
+      // Generate a unique transaction reference
+      const transactionRef = `DPO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      
+      // Create a transaction record
+      const { data, error } = await supabase
+        .from('payment_transactions')
+        .insert([{
+          user_id: user.id,
+          amount,
+          currency: 'NAD',
+          description,
+          reference: transactionRef,
+          gateway: 'dpo',
+          method: 'dpo',
+          status: 'pending',
+          metadata: { 
+            isRecurring,
+            ...paymentDetails
+          },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error initiating DPO payment:', error);
+        toast.error('Failed to initiate DPO payment');
+        return null;
+      }
+
+      // In a real implementation, you would create a token with the DPO API
+      // This is a mock implementation
+      const redirectUrl = `https://secure.3gdirectpay.com/payv2.php?ID=YOUR_COMPANY_TOKEN&paymentAmount=${amount}&paymentCurrency=NAD&companyRef=${paymentDetails?.companyRef || transactionRef}&customerEmail=${paymentDetails?.customerEmail || ''}&customerName=${paymentDetails?.customerName || ''}&redirectURL=YOUR_REDIRECT_URL`;
+      
+      return {
+        redirectUrl,
+        transactionId: data.id
+      };
     } catch (err) {
-      console.error('Error processing DPO payment:', err);
-      toast.error('Failed to process DPO payment');
+      console.error('Error in processDPOPayment:', err);
+      toast.error('Failed to initiate DPO payment');
       return null;
     }
   }, [user?.id]);
@@ -207,16 +514,61 @@ export function usePaymentMethods() {
     }
     
     try {
-      const result = await initiateEasyWalletPayment(user.id, amount, phoneNumber, description);
-      return result;
+      // Generate a unique reference
+      const reference = `EW-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      
+      // Create a transaction record
+      const { data, error } = await supabase
+        .from('payment_transactions')
+        .insert([{
+          user_id: user.id,
+          amount,
+          currency: 'NAD',
+          description,
+          reference,
+          gateway: 'easywallet',
+          method: 'Bank Windhoek EasyWallet',
+          status: 'awaiting_verification',
+          metadata: { phoneNumber },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error initiating EasyWallet payment:', error);
+        toast.error('Failed to initiate EasyWallet payment');
+        return null;
+      }
+
+      toast.success('EasyWallet payment initiated successfully');
+      
+      // In a real implementation, you would send an SMS or notification to the user with payment instructions
+      
+      return {
+        id: data.id,
+        userId: data.user_id,
+        amount: data.amount,
+        currency: data.currency,
+        description: data.description,
+        reference: data.reference,
+        gateway: data.gateway as PaymentGateway,
+        method: data.method,
+        status: data.status as PaymentStatus,
+        metadata: data.metadata,
+        gatewayResponse: data.gateway_response,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
+      };
     } catch (err) {
-      console.error('Error processing EasyWallet payment:', err);
-      toast.error('Failed to process EasyWallet payment');
+      console.error('Error in processEasyWalletPayment:', err);
+      toast.error('Failed to initiate EasyWallet payment');
       return null;
     }
   }, [user?.id]);
 
-  const submitEWalletProof = useCallback(async (
+  const submitEWalletVerification = useCallback(async (
     transactionId: string,
     proofType: 'screenshot' | 'reference',
     proofData: string
@@ -227,10 +579,30 @@ export function usePaymentMethods() {
     }
     
     try {
-      const result = await submitEWalletVerification(transactionId, user.id, proofType, proofData);
-      return result;
+      const { error } = await supabase
+        .from('payment_transactions')
+        .update({
+          metadata: supabase.sql`jsonb_set(
+            jsonb_set(metadata, '{proofType}', ${proofType}::jsonb),
+            '{proofData}', ${proofData}::jsonb
+          )`,
+          status: 'pending',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', transactionId)
+        .eq('user_id', user.id)
+        .eq('gateway', 'ewallet');
+
+      if (error) {
+        console.error('Error submitting e-wallet verification:', error);
+        toast.error('Failed to submit verification');
+        return false;
+      }
+
+      toast.success('Verification submitted successfully');
+      return true;
     } catch (err) {
-      console.error('Error submitting e-wallet verification:', err);
+      console.error('Error in submitEWalletVerification:', err);
       toast.error('Failed to submit verification');
       return false;
     }
@@ -243,14 +615,116 @@ export function usePaymentMethods() {
     }
     
     try {
-      const result = await retryFailedPayment(paymentId, user.id);
-      return result;
+      // Fetch the original payment details
+      const { data: originalPayment, error } = await supabase
+        .from('payment_transactions')
+        .select('*')
+        .eq('id', paymentId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching original payment:', error);
+        toast.error('Failed to retry payment');
+        return { success: false };
+      }
+
+      // Different retry logic based on payment gateway
+      switch (originalPayment.gateway) {
+        case 'payfast': {
+          // Retry PayFast payment
+          const result = await processPayFastPayment(
+            originalPayment.amount,
+            originalPayment.description,
+            originalPayment.metadata.returnUrl,
+            originalPayment.metadata.cancelUrl
+          );
+          
+          if (!result) return { success: false };
+          
+          return {
+            success: true,
+            redirectUrl: result.redirectUrl,
+            newTransactionId: result.transactionId
+          };
+        }
+        
+        case 'dpo': {
+          // Retry DPO payment
+          const result = await processDPOPayment(
+            originalPayment.amount,
+            originalPayment.description,
+            originalPayment.metadata.isRecurring || false,
+            originalPayment.metadata
+          );
+          
+          if (!result) return { success: false };
+          
+          return {
+            success: true,
+            redirectUrl: result.redirectUrl,
+            newTransactionId: result.transactionId
+          };
+        }
+        
+        case 'bank_transfer': {
+          // Retry bank transfer
+          const result = await processBankTransfer(
+            originalPayment.amount,
+            originalPayment.metadata,
+            originalPayment.description
+          );
+          
+          if (!result) return { success: false };
+          
+          return {
+            success: true,
+            newTransactionId: result.id
+          };
+        }
+        
+        case 'ewallet': {
+          // Retry e-wallet payment
+          const result = await processEWalletPayment(
+            originalPayment.amount,
+            originalPayment.metadata,
+            originalPayment.description
+          );
+          
+          if (!result) return { success: false };
+          
+          return {
+            success: true,
+            newTransactionId: result.id
+          };
+        }
+        
+        case 'easywallet': {
+          // Retry EasyWallet payment
+          const result = await processEasyWalletPayment(
+            originalPayment.amount,
+            originalPayment.metadata.phoneNumber,
+            originalPayment.description
+          );
+          
+          if (!result) return { success: false };
+          
+          return {
+            success: true,
+            newTransactionId: result.id
+          };
+        }
+        
+        default:
+          toast.error('This payment type cannot be retried');
+          return { success: false };
+      }
     } catch (err) {
-      console.error('Error retrying payment:', err);
+      console.error('Error in retryPayment:', err);
       toast.error('Failed to retry payment');
       return { success: false };
     }
-  }, [user?.id]);
+  }, [user?.id, processBankTransfer, processDPOPayment, processEWalletPayment, processEasyWalletPayment, processPayFastPayment]);
 
   return {
     processBankTransfer,
@@ -258,7 +732,7 @@ export function usePaymentMethods() {
     processPayFastPayment,
     processDPOPayment,
     processEasyWalletPayment,
-    submitEWalletProof,
+    submitEWalletVerification,
     retryPayment
   };
 }
