@@ -23,7 +23,7 @@ export const getPageContent = async (pageName: string): Promise<ContentBlock[]> 
       block_name: 'hero',
       title: 'Namibia Service Hub',
       subtitle: 'Find trusted service providers in your area',
-      content: 'Connect with skilled professionals and businesses for all your service needs. From home services to professional help, we've got you covered.',
+      content: 'Connect with skilled professionals and businesses for all your service needs. From home services to professional help, we\'ve got you covered.',
       order_index: 1,
       image_url: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2340&auto=format&fit=crop',
       buttons: [
