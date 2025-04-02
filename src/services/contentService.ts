@@ -72,17 +72,36 @@ export const getContentBlock = async (pageName: string, blockName: string): Prom
 };
 
 // Update content block (mock implementation)
-export const updateContentBlock = async (block: ContentBlock): Promise<ContentBlock> => {
+export const updateContentBlock = async (blockId: string, updates: Partial<ContentBlock>): Promise<ContentBlock> => {
   // In a real implementation, this would update via an API
-  console.log('Updating content block:', block);
-  return block;
+  console.log('Updating content block:', blockId, updates);
+  // Mock return - in a real implementation, this would return the updated block from the API
+  return {
+    id: blockId,
+    page_name: 'updated-page',
+    block_name: 'updated-block',
+    title: updates.title || 'Updated Title',
+    subtitle: updates.subtitle || 'Updated Subtitle',
+    content: updates.content || 'Updated content text',
+    order_index: 1,
+    image_url: updates.image_url || '',
+    buttons: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
 };
 
 // Upload content image (mock implementation)
-export const uploadContentImage = async (file: File): Promise<string> => {
+export const uploadContentImage = async (file: File, path?: string): Promise<string> => {
   // In a real implementation, this would upload to a storage service
-  console.log('Uploading image:', file.name);
+  console.log('Uploading image:', file.name, path || 'default-path');
   return 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2342&auto=format&fit=crop';
+};
+
+// Upload general image (mock implementation)
+export const uploadImage = async (file: File, path?: string): Promise<string> => {
+  // This is just an alias for uploadContentImage for now
+  return uploadContentImage(file, path);
 };
 
 // Save content block (mock implementation)
@@ -105,6 +124,102 @@ export const getSectionsByName = async (pageName: string, sectionName: string): 
     section.page_name === pageName && section.section_name === sectionName
   );
   return sections.length > 0 ? sections[0] : null;
+};
+
+// Update page section (mock implementation)
+export const updatePageSection = async (sectionId: string, updates: Partial<PageSection>): Promise<PageSection> => {
+  // In a real implementation, this would update via an API
+  console.log('Updating page section:', sectionId, updates);
+  // Mock return - in a real implementation, this would return the updated section from the API
+  return {
+    id: sectionId,
+    page_name: 'updated-page',
+    section_name: 'updated-section',
+    title: updates.title || 'Updated Title',
+    subtitle: updates.subtitle || 'Updated Subtitle',
+    content: updates.content || 'Updated content text',
+    image_url: updates.image_url || '',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+};
+
+// Get site settings (mock implementation)
+export const getSiteSettings = async (): Promise<Record<string, any>> => {
+  // Mock site settings
+  return {
+    site_name: 'Namibia Service Hub',
+    site_description: 'Find trusted service providers in Namibia',
+    primary_color: '#3b82f6',
+    secondary_color: '#10b981',
+    contact_email: 'info@namibiaservicehub.com',
+    contact_phone: '+264 61 123 4567',
+    facebook_url: 'https://facebook.com/namibiaservicehub',
+    instagram_url: 'https://instagram.com/namibiaservicehub',
+    twitter_url: 'https://twitter.com/namibiaservices',
+    terms_url: '/terms',
+    privacy_url: '/privacy',
+    logo_url: '/logo.png',
+    favicon_url: '/favicon.ico',
+    currency: 'N$',
+    default_lang: 'en'
+  };
+};
+
+// Get service categories (mock implementation)
+export const getServiceCategories = async (): Promise<any[]> => {
+  // Mock service categories
+  return [
+    {
+      id: '1',
+      name: 'Home Services',
+      slug: 'home-services',
+      description: 'Services for your home including cleaning, repairs, and maintenance',
+      icon: 'home',
+      image_url: 'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?q=80&w=2340&auto=format&fit=crop',
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      subcategories: [
+        { id: '11', name: 'Cleaning', slug: 'cleaning' },
+        { id: '12', name: 'Plumbing', slug: 'plumbing' },
+        { id: '13', name: 'Electrical', slug: 'electrical' }
+      ]
+    },
+    {
+      id: '2',
+      name: 'Transportation',
+      slug: 'transportation',
+      description: 'Transportation services including cab services, moving, and deliveries',
+      icon: 'car',
+      image_url: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=2340&auto=format&fit=crop',
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      subcategories: [
+        { id: '21', name: 'Cab Service', slug: 'cab-service' },
+        { id: '22', name: 'Moving', slug: 'moving' },
+        { id: '23', name: 'Delivery', slug: 'delivery' }
+      ]
+    },
+    {
+      id: '3',
+      name: 'Professional Services',
+      slug: 'professional',
+      description: 'Professional services including tutoring, consulting, and legal assistance',
+      icon: 'briefcase',
+      image_url: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2340&auto=format&fit=crop',
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      subcategories: [
+        { id: '31', name: 'Tutoring', slug: 'tutoring' },
+        { id: '32', name: 'Legal', slug: 'legal' },
+        { id: '33', name: 'Consulting', slug: 'consulting' }
+      ]
+    }
+  ];
 };
 
 // PageSection interface for section-based content
