@@ -48,19 +48,21 @@ export const getSettingsByCategory = async (category: string): Promise<SiteSetti
 
   // Transform the data to match the SiteSetting interface
   return data.map(item => {
-    const valueObj = typeof item.value === 'object' ? item.value : {};
+    // Safely handle the value as an object
+    const valueObj = typeof item.value === 'object' && item.value !== null ? item.value : {};
+    
     return {
       id: item.id,
       key: item.key,
       value: item.value,
       label: valueObj.label || item.key,
       description: valueObj.description || '',
-      category: valueObj.category || category as SettingCategory,
-      isPublic: valueObj.isPublic || false,
+      category: (valueObj.category || category) as SettingCategory,
+      isPublic: Boolean(valueObj.isPublic) || false,
       dataType: valueObj.dataType || 'string',
-      options: valueObj.options || [],
+      options: Array.isArray(valueObj.options) ? valueObj.options : [],
       defaultValue: valueObj.defaultValue,
-      isRequired: valueObj.isRequired || false,
+      isRequired: Boolean(valueObj.isRequired) || false,
       createdAt: item.created_at || new Date().toISOString(),
       updatedAt: item.updated_at || new Date().toISOString()
     } as SiteSetting;
@@ -117,19 +119,21 @@ export const getAllSettingsGrouped = async (): Promise<SettingGroup[]> => {
 
   // Transform data to match SiteSetting interface
   const transformedData = data.map(item => {
-    const valueObj = typeof item.value === 'object' ? item.value : {};
+    // Safely handle the value as an object
+    const valueObj = typeof item.value === 'object' && item.value !== null ? item.value : {};
+    
     return {
       id: item.id,
       key: item.key,
       value: item.value,
       label: valueObj.label || item.key,
       description: valueObj.description || '',
-      category: valueObj.category || 'general' as SettingCategory,
-      isPublic: valueObj.isPublic || false,
+      category: (valueObj.category || 'general') as SettingCategory,
+      isPublic: Boolean(valueObj.isPublic) || false,
       dataType: valueObj.dataType || 'string',
-      options: valueObj.options || [],
+      options: Array.isArray(valueObj.options) ? valueObj.options : [],
       defaultValue: valueObj.defaultValue,
-      isRequired: valueObj.isRequired || false,
+      isRequired: Boolean(valueObj.isRequired) || false,
       createdAt: item.created_at || new Date().toISOString(),
       updatedAt: item.updated_at || new Date().toISOString()
     } as SiteSetting;
@@ -164,7 +168,9 @@ export const getBookingSettings = async (): Promise<BookingSetting[]> => {
 
   // Transform data to match BookingSetting interface
   return data.map(item => {
-    const valueObj = typeof item.value === 'object' ? item.value : {};
+    // Safely handle the value as an object
+    const valueObj = typeof item.value === 'object' && item.value !== null ? item.value : {};
+    
     return {
       id: item.id,
       key: item.key,
@@ -172,7 +178,7 @@ export const getBookingSettings = async (): Promise<BookingSetting[]> => {
       label: valueObj.label || item.key,
       description: item.description || '',
       category: valueObj.category || 'general',
-      isEnabled: valueObj.isEnabled || false,
+      isEnabled: Boolean(valueObj.isEnabled) || false,
       createdAt: item.created_at || new Date().toISOString(),
       updatedAt: item.updated_at || new Date().toISOString()
     } as BookingSetting;
