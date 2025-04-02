@@ -2,10 +2,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Conversation } from '@/types/message';
+import { Conversation, Message } from '@/types/message';
 
 export const useConversations = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [currentConversation, setCurrentConversation] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Record<string, Message[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -56,7 +58,8 @@ export const useConversations = () => {
             .from('conversation_participants')
             .select(`
               user_id,
-              profiles:user_id (
+              user:user_id (
+                id,
                 first_name,
                 last_name,
                 avatar_url,
@@ -68,20 +71,37 @@ export const useConversations = () => {
 
           if (participantsError) {
             console.error('Error fetching conversation participants:', participantsError);
-            return {
-              ...conversation,
-              participants: []
-            };
+            return null;
+          }
+
+          // Get the first participant (assuming 1:1 conversations for now)
+          const recipient = participants && participants.length > 0 
+            ? participants[0].user 
+            : null;
+
+          if (!recipient) {
+            console.warn('No recipient found for conversation:', conversation.id);
+            return null;
           }
 
           return {
-            ...conversation,
-            participants: participants || []
-          };
+            id: conversation.id,
+            recipientId: recipient.id,
+            recipientName: `${recipient.first_name || ''} ${recipient.last_name || ''}`.trim() || 'Unknown User',
+            recipientAvatar: recipient.avatar_url,
+            lastMessage: conversation.last_message || '',
+            lastMessageDate: new Date(conversation.last_message_date),
+            unreadCount: conversation.unread_count || 0
+          } as Conversation;
         })
       );
 
-      setConversations(enrichedConversations);
+      // Filter out any null values from failed participant queries
+      const validConversations = enrichedConversations.filter(
+        conversation => conversation !== null
+      ) as Conversation[];
+
+      setConversations(validConversations);
     } catch (err: any) {
       console.error('Error loading conversations:', err);
       setError(err.message || 'Failed to load conversations');
@@ -89,6 +109,45 @@ export const useConversations = () => {
       setIsLoading(false);
     }
   }, [user]);
+
+  const fetchMessages = useCallback(async (conversationId: string) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (data) {
+        const formattedMessages = data.map(msg => ({
+          id: msg.id,
+          conversationId: msg.conversation_id,
+          senderId: msg.sender_id,
+          text: msg.content,
+          timestamp: new Date(msg.created_at),
+          isRead: msg.read,
+          attachments: msg.attachments || []
+        }));
+
+        setMessages(prev => ({
+          ...prev,
+          [conversationId]: formattedMessages
+        }));
+      }
+    } catch (err: any) {
+      console.error('Error fetching messages:', err);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (currentConversation) {
+      fetchMessages(currentConversation);
+    }
+  }, [currentConversation, fetchMessages]);
 
   useEffect(() => {
     fetchConversations();
@@ -106,6 +165,9 @@ export const useConversations = () => {
         () => {
           // Refresh conversations when messages change
           fetchConversations();
+          if (currentConversation) {
+            fetchMessages(currentConversation);
+          }
         }
       )
       .on(
@@ -125,7 +187,48 @@ export const useConversations = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchConversations]);
+  }, [fetchConversations, fetchMessages, currentConversation]);
 
-  return { conversations, isLoading, error, refreshConversations: fetchConversations };
+  const sendMessage = async (conversationId: string, text: string) => {
+    if (!user) return false;
+
+    try {
+      // First get the recipient id
+      const conversation = conversations.find(c => c.id === conversationId);
+      if (!conversation) return false;
+
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          recipient_id: conversation.recipientId,
+          content: text,
+          read: false,
+          attachments: []
+        });
+
+      if (error) throw error;
+
+      // Update local messages
+      fetchMessages(conversationId);
+      fetchConversations();
+      
+      return true;
+    } catch (err) {
+      console.error('Error sending message:', err);
+      return false;
+    }
+  };
+
+  return {
+    conversations,
+    currentConversation,
+    setCurrentConversation,
+    messages,
+    isLoading,
+    error,
+    refreshConversations: fetchConversations,
+    sendMessage
+  };
 };

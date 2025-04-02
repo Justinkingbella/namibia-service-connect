@@ -8,7 +8,6 @@ import { MessageSquare, Search, Send, User, Loader2 } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import ConversationList from '@/components/messages/ConversationList';
 import MessageThread from '@/components/messages/MessageThread';
-import { toast } from '@/hooks/use-toast';
 import { useConversations } from '@/hooks/useConversations';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -18,7 +17,7 @@ const MessagesPage: React.FC = () => {
     conversations, 
     currentConversation, 
     messages, 
-    loading,
+    isLoading, 
     setCurrentConversation,
     sendMessage
   } = useConversations();
@@ -73,7 +72,7 @@ const MessagesPage: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent className="p-0 overflow-y-auto h-[calc(100vh-280px)]">
-            {loading ? (
+            {isLoading ? (
               <div className="flex items-center justify-center h-32">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
@@ -106,7 +105,7 @@ const MessagesPage: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <div className="flex-grow overflow-y-auto p-4 h-[calc(100vh-360px)]">
-                {loading ? (
+                {isLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
