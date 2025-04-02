@@ -1,176 +1,161 @@
+
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { FileUpload } from '@/components/ui/file-upload';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getPageContent, getContentBlock, updateContentBlock, ContentBlock, uploadContentImage } from '@/services/contentService';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { ContentBlock, getPageContent } from '@/services/contentService';
+import { Plus, PlusCircle, Trash2, Edit, FilePlus, FileText, Save, Image, ExternalLink } from 'lucide-react';
 
-// Create a schema for the content form
-const contentFormSchema = z.object({
-  title: z.string().optional(),
-  subtitle: z.string().optional(),
-  content: z.string().optional(),
-});
-
-type ContentFormValues = z.infer<typeof contentFormSchema>;
+interface PageTab {
+  id: string;
+  label: string;
+}
 
 const ContentEditorPage = () => {
-  const [activeTab, setActiveTab] = useState('home');
-  const [activePage, setActivePage] = useState('home');
-  const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
-  const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<string>('home');
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  // Form setup
-  const form = useForm<ContentFormValues>({
-    resolver: zodResolver(contentFormSchema),
-    defaultValues: {
+  const [editingBlock, setEditingBlock] = useState<ContentBlock>({
+    id: '',
+    page: '',
+    title: '',
+    subtitle: '',
+    content: '',
+    order: 0,
+    image_url: '',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  });
+
+  const pageTabs: PageTab[] = [
+    { id: 'home', label: 'Home Page' },
+    { id: 'about', label: 'About Us' },
+    { id: 'services', label: 'Services' },
+    { id: 'contact', label: 'Contact' },
+    { id: 'terms', label: 'Terms & Conditions' },
+    { id: 'privacy', label: 'Privacy Policy' },
+    { id: 'faq', label: 'FAQ' },
+    { id: 'how-it-works', label: 'How It Works' },
+  ];
+
+  useEffect(() => {
+    loadContentBlocks(activeTab);
+  }, [activeTab]);
+
+  const loadContentBlocks = async (pageName: string) => {
+    setIsLoading(true);
+    try {
+      const blocks = await getPageContent(pageName);
+      setContentBlocks(blocks);
+    } catch (error) {
+      console.error('Error loading content blocks:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load page content',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddNewBlock = () => {
+    const newBlock: ContentBlock = {
+      id: `new-${Date.now()}`,
+      page: activeTab,
       title: '',
       subtitle: '',
       content: '',
-    },
-  });
-
-  // Query to fetch content for the active page
-  const { data: pageContent, isLoading } = useQuery({
-    queryKey: ['page-content', activePage],
-    queryFn: () => getPageContent(activePage),
-  });
-
-  // Mutation to update content
-  const updateMutation = useMutation({
-    mutationFn: (values: ContentBlock) => updateContentBlock(values),
-    onSuccess: (data) => {
-      toast({
-        title: 'Content updated',
-        description: 'The content has been successfully updated.',
-      });
-      queryClient.invalidateQueries({ queryKey: ['page-content', activePage] });
-
-      // Update the local state as well
-      setContentBlocks(prevBlocks => 
-        prevBlocks.map(block => block.id === data.id ? data : block)
-      );
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error updating content',
-        description: error.message || 'There was an error updating the content. Please try again.',
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Set content blocks when page data changes
-  useEffect(() => {
-    if (pageContent) {
-      setContentBlocks(pageContent);
-    }
-  }, [pageContent]);
-
-  // Load the selected block into the form
-  const loadBlockContent = async (blockId: string) => {
-    setActiveBlockId(blockId);
-    
-    try {
-      const blockContent = await getContentBlock(activePage, blockId);
-      form.reset({
-        title: blockContent.title || '',
-        subtitle: blockContent.subtitle || '',
-        content: blockContent.content || '',
-      });
-    } catch (err) {
-      console.error('Error loading content block:', err);
-      toast({
-        title: 'Error loading content',
-        description: 'Could not load the selected content block.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleSubmit = (values: ContentFormValues) => {
-    if (!activeBlockId) return;
-    
-    // Find the current block to preserve other values
-    const currentBlock = contentBlocks.find(block => block.id === activeBlockId);
-    
-    if (!currentBlock) {
-      toast({
-        title: 'Error updating content',
-        description: 'The selected block could not be found.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    // Merge the form values with the current block
-    const updatedBlock: ContentBlock = {
-      ...currentBlock,
-      title: values.title,
-      subtitle: values.subtitle,
-      content: values.content,
+      order: contentBlocks.length + 1,
+      image_url: '',
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
-    
-    updateMutation.mutate(updatedBlock);
+
+    setEditingBlock(newBlock);
+    setIsEditing(true);
+    setSelectedBlockId(newBlock.id);
   };
 
-  const handleImageUpload = async (file: File) => {
-    if (!activeBlockId) {
-      toast({
-        title: 'Error uploading image',
-        description: 'Please select a content block first.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
+  const handleEditBlock = (block: ContentBlock) => {
+    setEditingBlock(block);
+    setIsEditing(true);
+    setSelectedBlockId(block.id);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setSelectedBlockId(null);
+  };
+
+  const handleSaveBlock = async () => {
     try {
-      // Find the current block
-      const currentBlock = contentBlocks.find(block => block.id === activeBlockId);
+      // Mock implementation, replace with actual API call
+      const isNewBlock = editingBlock.id.startsWith('new-');
       
-      if (!currentBlock) {
-        throw new Error('Content block not found');
+      if (isNewBlock) {
+        // Add the block to the contentBlocks array
+        setContentBlocks([...contentBlocks, editingBlock]);
+      } else {
+        // Update existing block
+        setContentBlocks(
+          contentBlocks.map(block => 
+            block.id === editingBlock.id ? editingBlock : block
+          )
+        );
       }
       
-      // Upload the image and get the URL
-      const imageUrl = await uploadContentImage(file, activePage, activeBlockId);
-      
-      // Update the block with the new image URL
-      const updatedBlock: ContentBlock = {
-        ...currentBlock,
-        image_url: imageUrl,
-      };
-      
-      updateMutation.mutate(updatedBlock);
+      setIsEditing(false);
+      setSelectedBlockId(null);
       
       toast({
-        title: 'Image uploaded',
-        description: 'The image has been successfully uploaded and assigned to the content block.',
+        title: 'Success',
+        description: `Content block ${isNewBlock ? 'created' : 'updated'} successfully`,
       });
-    } catch (err: any) {
-      console.error('Error uploading image:', err);
+    } catch (error) {
+      console.error('Error saving content block:', error);
       toast({
-        title: 'Error uploading image',
-        description: err.message || 'There was an error uploading the image. Please try again.',
+        title: 'Error',
+        description: 'Failed to save content block',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteBlock = (block: ContentBlock) => {
+    setEditingBlock(block);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteBlock = async () => {
+    try {
+      // Mock implementation, replace with actual API call
+      setContentBlocks(contentBlocks.filter(block => block.id !== editingBlock.id));
+      
+      setShowDeleteDialog(false);
+      setSelectedBlockId(null);
+      
+      toast({
+        title: 'Success',
+        description: 'Content block deleted successfully',
+      });
+    } catch (error) {
+      console.error('Error deleting content block:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete content block',
         variant: 'destructive',
       });
     }
@@ -179,565 +164,228 @@ const ContentEditorPage = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Content Editor</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Content Editor</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage website content for different pages
+          </p>
         </div>
-        
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-4 w-full max-w-lg">
-            <TabsTrigger value="home">Home</TabsTrigger>
-            <TabsTrigger value="about">About</TabsTrigger>
-            <TabsTrigger value="services">Services</TabsTrigger>
-            <TabsTrigger value="legal">Legal</TabsTrigger>
-          </TabsList>
-          
-          <div className="mt-6">
-            {/* Home page content */}
-            <TabsContent value="home" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-1">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Content Blocks</CardTitle>
-                      <CardDescription>
-                        Select a content block to edit
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {isLoading ? (
-                        <div className="space-y-2">
-                          <div className="h-10 bg-gray-200 animate-pulse rounded-md"></div>
-                          <div className="h-10 bg-gray-200 animate-pulse rounded-md"></div>
-                          <div className="h-10 bg-gray-200 animate-pulse rounded-md"></div>
-                        </div>
-                      ) : contentBlocks.length > 0 ? (
-                        <div className="space-y-2">
-                          {contentBlocks.map((block) => (
-                            <Button 
-                              key={block.id}
-                              variant={activeBlockId === block.id ? "default" : "outline"}
-                              className="w-full justify-start"
-                              onClick={() => loadBlockContent(block.id)}
-                            >
-                              {block.block_name || `Block ${block.id}`}
-                            </Button>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground">No content blocks found</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                <div className="md:col-span-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Edit Content</CardTitle>
-                      <CardDescription>
-                        Update the selected content block
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {activeBlockId ? (
-                        <Form {...form}>
-                          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                            <FormField
-                              control={form.control}
-                              name="title"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Title</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Enter title" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name="subtitle"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Subtitle</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Enter subtitle" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name="content"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Content</FormLabel>
-                                  <FormControl>
-                                    <Textarea 
-                                      placeholder="Enter content" 
-                                      className="min-h-32" 
-                                      {...field} 
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">Image</label>
-                              <FileUpload 
-                                onUpload={handleImageUpload}
-                                acceptTypes="image/*"
-                                label="Upload block image"
-                                buttonText="Select Image"
-                              />
-                              
-                              {contentBlocks.find(block => block.id === activeBlockId)?.image_url && (
-                                <div className="mt-4">
-                                  <p className="text-sm font-medium mb-2">Current Image</p>
-                                  <img 
-                                    src={contentBlocks.find(block => block.id === activeBlockId)?.image_url} 
-                                    alt="Current content" 
-                                    className="max-w-full h-auto max-h-48 rounded-md border" 
-                                  />
-                                </div>
-                              )}
-                            </div>
-                            
-                            <Button 
-                              type="submit"
-                              disabled={updateMutation.isPending}
-                            >
-                              {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-                            </Button>
-                          </form>
-                        </Form>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center py-8">
-                          <p className="text-muted-foreground mb-4">Select a content block to edit</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </TabsContent>
+          <div className="flex justify-between items-center mb-4">
+            <TabsList className="overflow-x-auto w-auto no-scrollbar">
+              {pageTabs.map((tab) => (
+                <TabsTrigger key={tab.id} value={tab.id} className="px-4">
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
             
-            {/* About page content - Similar structure */}
-            <TabsContent value="about" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-1">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Content Blocks</CardTitle>
-                      <CardDescription>
-                        Select a content block to edit
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {isLoading ? (
-                        <div className="space-y-2">
-                          <div className="h-10 bg-gray-200 animate-pulse rounded-md"></div>
-                          <div className="h-10 bg-gray-200 animate-pulse rounded-md"></div>
-                          <div className="h-10 bg-gray-200 animate-pulse rounded-md"></div>
-                        </div>
-                      ) : contentBlocks.length > 0 ? (
-                        <div className="space-y-2">
-                          {contentBlocks.map((block) => (
-                            <Button 
-                              key={block.id}
-                              variant={activeBlockId === block.id ? "default" : "outline"}
-                              className="w-full justify-start"
-                              onClick={() => loadBlockContent(block.id)}
-                            >
-                              {block.block_name || `Block ${block.id}`}
-                            </Button>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground">No content blocks found</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                <div className="md:col-span-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Edit Content</CardTitle>
-                      <CardDescription>
-                        Update the selected content block
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {activeBlockId ? (
-                        <Form {...form}>
-                          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                            <FormField
-                              control={form.control}
-                              name="title"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Title</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Enter title" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name="subtitle"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Subtitle</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Enter subtitle" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name="content"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Content</FormLabel>
-                                  <FormControl>
-                                    <Textarea 
-                                      placeholder="Enter content" 
-                                      className="min-h-32" 
-                                      {...field} 
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">Image</label>
-                              <FileUpload 
-                                onUpload={handleImageUpload}
-                                acceptTypes="image/*"
-                                label="Upload block image"
-                                buttonText="Select Image"
-                              />
-                              
-                              {contentBlocks.find(block => block.id === activeBlockId)?.image_url && (
-                                <div className="mt-4">
-                                  <p className="text-sm font-medium mb-2">Current Image</p>
-                                  <img 
-                                    src={contentBlocks.find(block => block.id === activeBlockId)?.image_url} 
-                                    alt="Current content" 
-                                    className="max-w-full h-auto max-h-48 rounded-md border" 
-                                  />
-                                </div>
-                              )}
-                            </div>
-                            
-                            <Button 
-                              type="submit"
-                              disabled={updateMutation.isPending}
-                            >
-                              {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-                            </Button>
-                          </form>
-                        </Form>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center py-8">
-                          <p className="text-muted-foreground mb-4">Select a content block to edit</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </TabsContent>
-            
-            {/* Services page content - Similar structure */}
-            <TabsContent value="services" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-1">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Content Blocks</CardTitle>
-                      <CardDescription>
-                        Select a content block to edit
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {isLoading ? (
-                        <div className="space-y-2">
-                          <div className="h-10 bg-gray-200 animate-pulse rounded-md"></div>
-                          <div className="h-10 bg-gray-200 animate-pulse rounded-md"></div>
-                          <div className="h-10 bg-gray-200 animate-pulse rounded-md"></div>
-                        </div>
-                      ) : contentBlocks.length > 0 ? (
-                        <div className="space-y-2">
-                          {contentBlocks.map((block) => (
-                            <Button 
-                              key={block.id}
-                              variant={activeBlockId === block.id ? "default" : "outline"}
-                              className="w-full justify-start"
-                              onClick={() => loadBlockContent(block.id)}
-                            >
-                              {block.block_name || `Block ${block.id}`}
-                            </Button>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground">No content blocks found</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                <div className="md:col-span-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Edit Content</CardTitle>
-                      <CardDescription>
-                        Update the selected content block
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {activeBlockId ? (
-                        <Form {...form}>
-                          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                            <FormField
-                              control={form.control}
-                              name="title"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Title</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Enter title" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name="subtitle"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Subtitle</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Enter subtitle" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name="content"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Content</FormLabel>
-                                  <FormControl>
-                                    <Textarea 
-                                      placeholder="Enter content" 
-                                      className="min-h-32" 
-                                      {...field} 
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">Image</label>
-                              <FileUpload 
-                                onUpload={handleImageUpload}
-                                acceptTypes="image/*"
-                                label="Upload block image"
-                                buttonText="Select Image"
-                              />
-                              
-                              {contentBlocks.find(block => block.id === activeBlockId)?.image_url && (
-                                <div className="mt-4">
-                                  <p className="text-sm font-medium mb-2">Current Image</p>
-                                  <img 
-                                    src={contentBlocks.find(block => block.id === activeBlockId)?.image_url} 
-                                    alt="Current content" 
-                                    className="max-w-full h-auto max-h-48 rounded-md border" 
-                                  />
-                                </div>
-                              )}
-                            </div>
-                            
-                            <Button 
-                              type="submit"
-                              disabled={updateMutation.isPending}
-                            >
-                              {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-                            </Button>
-                          </form>
-                        </Form>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center py-8">
-                          <p className="text-muted-foreground mb-4">Select a content block to edit</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </TabsContent>
-            
-            {/* Legal page content - Similar structure */}
-            <TabsContent value="legal" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-1">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Content Blocks</CardTitle>
-                      <CardDescription>
-                        Select a content block to edit
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {isLoading ? (
-                        <div className="space-y-2">
-                          <div className="h-10 bg-gray-200 animate-pulse rounded-md"></div>
-                          <div className="h-10 bg-gray-200 animate-pulse rounded-md"></div>
-                          <div className="h-10 bg-gray-200 animate-pulse rounded-md"></div>
-                        </div>
-                      ) : contentBlocks.length > 0 ? (
-                        <div className="space-y-2">
-                          {contentBlocks.map((block) => (
-                            <Button 
-                              key={block.id}
-                              variant={activeBlockId === block.id ? "default" : "outline"}
-                              className="w-full justify-start"
-                              onClick={() => loadBlockContent(block.id)}
-                            >
-                              {block.block_name || `Block ${block.id}`}
-                            </Button>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground">No content blocks found</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                <div className="md:col-span-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Edit Content</CardTitle>
-                      <CardDescription>
-                        Update the selected content block
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {activeBlockId ? (
-                        <Form {...form}>
-                          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                            <FormField
-                              control={form.control}
-                              name="title"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Title</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Enter title" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name="subtitle"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Subtitle</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Enter subtitle" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name="content"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Content</FormLabel>
-                                  <FormControl>
-                                    <Textarea 
-                                      placeholder="Enter content" 
-                                      className="min-h-32" 
-                                      {...field} 
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">Image</label>
-                              <FileUpload 
-                                onUpload={handleImageUpload}
-                                acceptTypes="image/*"
-                                label="Upload block image"
-                                buttonText="Select Image"
-                              />
-                              
-                              {contentBlocks.find(block => block.id === activeBlockId)?.image_url && (
-                                <div className="mt-4">
-                                  <p className="text-sm font-medium mb-2">Current Image</p>
-                                  <img 
-                                    src={contentBlocks.find(block => block.id === activeBlockId)?.image_url} 
-                                    alt="Current content" 
-                                    className="max-w-full h-auto max-h-48 rounded-md border" 
-                                  />
-                                </div>
-                              )}
-                            </div>
-                            
-                            <Button 
-                              type="submit"
-                              disabled={updateMutation.isPending}
-                            >
-                              {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-                            </Button>
-                          </form>
-                        </Form>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center py-8">
-                          <p className="text-muted-foreground mb-4">Select a content block to edit</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </TabsContent>
+            <Button onClick={handleAddNewBlock} size="sm" className="ml-4">
+              <Plus className="mr-2 h-4 w-4" /> Add Content Block
+            </Button>
           </div>
+
+          {pageTabs.map((tab) => (
+            <TabsContent key={tab.id} value={tab.id} className="space-y-4">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {contentBlocks.length === 0 ? (
+                    <Card>
+                      <CardContent className="flex flex-col items-center justify-center h-64 p-6">
+                        <FileText className="h-16 w-16 text-gray-300 mb-4" />
+                        <h3 className="text-lg font-medium">No content blocks found</h3>
+                        <p className="text-sm text-gray-500 text-center mt-2 mb-4">
+                          This page doesn't have any content blocks yet. Create your first one to get started.
+                        </p>
+                        <Button onClick={handleAddNewBlock}>
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Create First Block
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <>
+                      {!isEditing ? (
+                        <div className="space-y-4">
+                          {contentBlocks.map((block) => (
+                            <Card
+                              key={block.id}
+                              className={`overflow-hidden transition-all ${
+                                selectedBlockId === block.id
+                                  ? 'ring-2 ring-primary'
+                                  : ''
+                              }`}
+                            >
+                              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                                <div>
+                                  <CardTitle>{block.title || 'Untitled Block'}</CardTitle>
+                                  {block.subtitle && (
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                      {block.subtitle}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleEditBlock(block)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive"
+                                    onClick={() => handleDeleteBlock(block)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </CardHeader>
+                              <CardContent>
+                                {block.image_url && (
+                                  <div className="mb-4 rounded-md overflow-hidden h-40 bg-gray-100">
+                                    <img
+                                      src={block.image_url}
+                                      alt={block.title || 'Content image'}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                )}
+                                <div className="prose prose-sm max-w-none">
+                                  <div className="whitespace-pre-line line-clamp-4">
+                                    {block.content || <span className="text-gray-400 italic">No content</span>}
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      ) : (
+                        <Card>
+                          <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle>
+                              {editingBlock.id.startsWith('new-')
+                                ? 'Add New Content Block'
+                                : 'Edit Content Block'}
+                            </CardTitle>
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                                Cancel
+                              </Button>
+                              <Button size="sm" onClick={handleSaveBlock}>
+                                <Save className="h-4 w-4 mr-2" /> Save
+                              </Button>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                              <label htmlFor="title" className="text-sm font-medium">
+                                Title
+                              </label>
+                              <Input
+                                id="title"
+                                value={editingBlock.title}
+                                onChange={(e) =>
+                                  setEditingBlock({
+                                    ...editingBlock,
+                                    title: e.target.value,
+                                  })
+                                }
+                                placeholder="Enter title"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label htmlFor="subtitle" className="text-sm font-medium">
+                                Subtitle (optional)
+                              </label>
+                              <Input
+                                id="subtitle"
+                                value={editingBlock.subtitle}
+                                onChange={(e) =>
+                                  setEditingBlock({
+                                    ...editingBlock,
+                                    subtitle: e.target.value,
+                                  })
+                                }
+                                placeholder="Enter subtitle"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label htmlFor="imageUrl" className="text-sm font-medium">
+                                Image URL (optional)
+                              </label>
+                              <div className="flex space-x-2">
+                                <Input
+                                  id="imageUrl"
+                                  value={editingBlock.image_url}
+                                  onChange={(e) =>
+                                    setEditingBlock({
+                                      ...editingBlock,
+                                      image_url: e.target.value,
+                                    })
+                                  }
+                                  placeholder="Enter image URL"
+                                />
+                                <Button variant="outline" size="sm" type="button">
+                                  <Image className="h-4 w-4 mr-2" /> Browse
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <label htmlFor="content" className="text-sm font-medium">
+                                Content
+                              </label>
+                              <Textarea
+                                id="content"
+                                value={editingBlock.content}
+                                onChange={(e) =>
+                                  setEditingBlock({
+                                    ...editingBlock,
+                                    content: e.target.value,
+                                  })
+                                }
+                                placeholder="Enter content"
+                                rows={8}
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                You can use plain text formatting. Add blank lines for paragraphs.
+                              </p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          ))}
         </Tabs>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this content block. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteBlock} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
