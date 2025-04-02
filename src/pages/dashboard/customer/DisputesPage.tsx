@@ -153,7 +153,8 @@ const CustomerDisputesPage = () => {
         providerId: booking.providerId,
         reason: reason,
         description: description,
-        status: 'open'
+        status: 'open',
+        evidenceUrls: [] // Add the missing property
       });
       
       if (newDispute) {
