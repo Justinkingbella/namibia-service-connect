@@ -1,242 +1,125 @@
 
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { 
+  Home, 
+  Package, 
+  Calendar, 
+  Users, 
+  Settings, 
+  CreditCard, 
+  BarChart3, 
+  Clock,
+  UserCircle,
+  Heart,
+  MessageSquare,
+  HelpCircle
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-  BarChart3, 
-  BookText, 
-  Calendar, 
-  CreditCard, 
-  Globe, 
-  Heart, 
-  Home, 
-  Layers, 
-  MessageCircle, 
-  Settings, 
-  ShieldCheck, 
-  Store, 
-  Users, 
-  Wallet 
-} from 'lucide-react';
-
-export const sidebarItems = (userRole: string) => {
-  const common = [
-    {
-      name: 'Dashboard',
-      icon: <Home className="h-5 w-5" />,
-      path: '/dashboard',
-    },
-    {
-      name: 'Bookings',
-      icon: <Calendar className="h-5 w-5" />,
-      path: '/dashboard/bookings',
-    },
-    {
-      name: 'Messages',
-      icon: <MessageCircle className="h-5 w-5" />,
-      path: '/dashboard/messages',
-    },
-  ];
-
-  const roleBasedItems = {
-    customer: [
-      {
-        name: 'Payment History',
-        icon: <CreditCard className="h-5 w-5" />,
-        path: '/dashboard/payment-history',
-      },
-      {
-        name: 'Favorites',
-        icon: <Heart className="h-5 w-5" />,
-        path: '/dashboard/favorites',
-      },
-      {
-        name: 'Wallet Verifications',
-        icon: <Wallet className="h-5 w-5" />,
-        path: '/dashboard/wallet-verifications',
-      },
-      {
-        name: 'Disputes',
-        icon: <ShieldCheck className="h-5 w-5" />,
-        path: '/dashboard/disputes',
-      },
-    ],
-    provider: [
-      {
-        name: 'Services',
-        icon: <Store className="h-5 w-5" />,
-        path: '/dashboard/services',
-      },
-      {
-        name: 'Revenue',
-        icon: <BarChart3 className="h-5 w-5" />,
-        path: '/dashboard/revenue',
-      },
-      {
-        name: 'Transactions',
-        icon: <CreditCard className="h-5 w-5" />,
-        path: '/dashboard/transactions',
-      },
-      {
-        name: 'Subscription',
-        icon: <BookText className="h-5 w-5" />,
-        path: '/dashboard/subscription',
-      },
-      {
-        name: 'Payment Details',
-        icon: <Wallet className="h-5 w-5" />,
-        path: '/dashboard/payment-details',
-      },
-      {
-        name: 'Wallet Verification',
-        icon: <Wallet className="h-5 w-5" />,
-        path: '/dashboard/wallet-verification',
-      },
-      {
-        name: 'Disputes',
-        icon: <ShieldCheck className="h-5 w-5" />,
-        path: '/dashboard/provider/disputes',
-      },
-    ],
-    admin: [
-      {
-        name: 'Platform Analytics',
-        icon: <BarChart3 className="h-5 w-5" />,
-        path: '/dashboard/admin/analytics',
-      },
-      {
-        name: 'Platform Controls',
-        icon: <Settings className="h-5 w-5" />,
-        path: '/dashboard/admin/controls',
-      },
-      {
-        name: 'Provider Verification',
-        icon: <ShieldCheck className="h-5 w-5" />,
-        path: '/dashboard/admin/provider-verification',
-      },
-      {
-        name: 'Wallet Verification',
-        icon: <Wallet className="h-5 w-5" />,
-        path: '/dashboard/admin/wallet-verification',
-      },
-      {
-        name: 'Subscription Management',
-        icon: <BookText className="h-5 w-5" />,
-        path: '/dashboard/admin/subscriptions',
-      },
-      {
-        name: 'Services',
-        icon: <Store className="h-5 w-5" />,
-        path: '/dashboard/services',
-      },
-      {
-        name: 'Categories',
-        icon: <Layers className="h-5 w-5" />,
-        path: '/dashboard/admin/categories',
-      },
-      {
-        name: 'Booking Settings',
-        icon: <Calendar className="h-5 w-5" />,
-        path: '/dashboard/admin/booking-settings',
-      },
-      {
-        name: 'Site Settings',
-        icon: <Globe className="h-5 w-5" />,
-        path: '/dashboard/admin/site-settings',
-      },
-    ],
-  };
-
-  const commonBottom = [
-    {
-      name: 'Profile',
-      icon: <Users className="h-5 w-5" />,
-      path: userRole === 'admin' 
-        ? '/dashboard/admin/profile' 
-        : userRole === 'provider' 
-          ? '/dashboard/provider/profile' 
-          : '/dashboard/profile',
-    },
-    {
-      name: 'Settings',
-      icon: <Settings className="h-5 w-5" />,
-      path: '/dashboard/settings',
-    },
-  ];
-
-  // Determine which items to show based on user role
-  const roleItems = roleBasedItems[userRole as keyof typeof roleBasedItems] || [];
-
-  return {
-    top: [...common, ...roleItems],
-    bottom: commonBottom,
-  };
-};
+  Sidebar, 
+  SidebarContent,
+  SidebarRail,
+  SidebarHeader,
+  SidebarTrigger
+} from '@/components/ui/sidebar';
 
 const AppSidebar = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
-  const userRole = user?.role || 'customer';
-  
-  const { top: topItems, bottom: bottomItems } = sidebarItems(userRole);
 
   const isActive = (path: string) => {
-    if (path === '/dashboard') {
-      return location.pathname === path;
+    if (path === '/dashboard' && location.pathname === '/dashboard') {
+      return true;
     }
-    return location.pathname.startsWith(path);
+    return location.pathname.startsWith(path) && path !== '/dashboard';
+  };
+
+  const getLinks = () => {
+    const commonLinks = [
+      { icon: Home, label: 'Dashboard', path: '/dashboard' },
+      { icon: Package, label: 'Services', path: '/dashboard/services' },
+      { icon: MessageSquare, label: 'Messages', path: '/dashboard/messages' },
+    ];
+    
+    const adminLinks = [
+      ...commonLinks,
+      { icon: Users, label: 'Users', path: '/dashboard/users' },
+      { icon: Clock, label: 'Verifications', path: '/dashboard/admin/wallet-verification' },
+      { icon: BarChart3, label: 'Analytics', path: '/dashboard/admin/analytics' },
+      { icon: UserCircle, label: 'Profile', path: '/dashboard/admin/profile' },
+      { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
+    ];
+    
+    const providerLinks = [
+      ...commonLinks,
+      { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
+      { icon: CreditCard, label: 'Payments', path: '/dashboard/provider/transactions' },
+      { icon: UserCircle, label: 'Profile', path: '/dashboard/provider/profile' },
+      { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
+    ];
+    
+    const customerLinks = [
+      ...commonLinks,
+      { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
+      { icon: Heart, label: 'Favorites', path: '/dashboard/customer/favorites' },
+      { icon: CreditCard, label: 'Payments', path: '/dashboard/customer/payment-history' },
+      { icon: UserCircle, label: 'Profile', path: '/dashboard/profile' },
+      { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
+    ];
+    
+    if (user?.role === 'admin') return adminLinks;
+    if (user?.role === 'provider') return providerLinks;
+    return customerLinks;
   };
 
   return (
-    <aside className="h-full flex flex-col justify-between bg-white border-r">
-      <div className="overflow-y-auto py-4 px-3">
-        <ul className="space-y-2">
-          {topItems.map((item, index) => (
-            <li key={index}>
-              <NavLink
-                to={item.path}
-                className={({ isActive }) =>
-                  `flex items-center p-2 text-base font-normal rounded-lg ${
-                    isActive
-                      ? "bg-primary text-white"
-                      : "text-gray-900 hover:bg-gray-100"
-                  }`
-                }
-              >
-                <span className={`${isActive(item.path) ? "text-white" : "text-gray-500"}`}>
-                  {item.icon}
-                </span>
-                <span className="ml-3">{item.name}</span>
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </div>
+    <Sidebar className="border-r">
+      <SidebarHeader className="h-14 flex items-center px-4">
+        <SidebarTrigger className="h-8 w-8 p-0" />
+        <span className="ml-2 text-xl font-semibold">Menu</span>
+      </SidebarHeader>
       
-      <div className="p-3 border-t">
-        <ul className="space-y-2">
-          {bottomItems.map((item, index) => (
-            <li key={index}>
-              <NavLink
-                to={item.path}
-                className={({ isActive }) =>
-                  `flex items-center p-2 text-base font-normal rounded-lg ${
-                    isActive
-                      ? "bg-primary text-white"
-                      : "text-gray-900 hover:bg-gray-100"
-                  }`
-                }
-              >
-                <span className={`${isActive(item.path) ? "text-white" : "text-gray-500"}`}>
-                  {item.icon}
-                </span>
-                <span className="ml-3">{item.name}</span>
-              </NavLink>
-            </li>
+      <SidebarContent className="pt-2">
+        <nav className="space-y-1 px-2">
+          {getLinks().map((link) => (
+            <a
+              key={link.path}
+              href={link.path}
+              className={cn(
+                "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                isActive(link.path)
+                  ? "bg-primary/10 text-primary"
+                  : "text-gray-700 hover:bg-gray-100"
+              )}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(link.path);
+              }}
+            >
+              <link.icon className="mr-3 h-5 w-5" />
+              <span>{link.label}</span>
+            </a>
           ))}
-        </ul>
-      </div>
-    </aside>
+        </nav>
+        
+        <div className="mt-auto border-t pt-4 px-2 pb-2">
+          <a
+            href="/help"
+            className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/help');
+            }}
+          >
+            <HelpCircle className="mr-3 h-5 w-5" />
+            <span>Help Center</span>
+          </a>
+        </div>
+      </SidebarContent>
+    </Sidebar>
   );
 };
 

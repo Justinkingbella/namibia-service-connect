@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/common/Button';
@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User, Key, Settings, Shield, Users, FileText, BarChart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { DbUserProfile } from '@/types/auth';
+import { AvatarUpload } from '@/components/ui/avatar-upload';
 
 const AdminProfile: React.FC = () => {
   const { profile, loading, updateProfile } = useProfile();
@@ -21,7 +22,7 @@ const AdminProfile: React.FC = () => {
   const [loadingPermissions, setLoadingPermissions] = useState(true);
 
   // Fetch admin permissions
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchAdminPermissions = async () => {
       if (!profile?.id) return;
       
@@ -50,24 +51,37 @@ const AdminProfile: React.FC = () => {
     fetchAdminPermissions();
   }, [profile?.id, toast]);
 
+  useEffect(() => {
+    if (profile && !isEditing) {
+      setPersonalData({
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        phone_number: profile.phone_number || '',
+        email: profile.email || '',
+        address: profile.address || '',
+        city: profile.city || '',
+        country: profile.country || '',
+      });
+    }
+  }, [profile, isEditing]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPersonalData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleEdit = () => {
-    // Initialize form data with current values
-    setPersonalData({
-      first_name: profile?.first_name || '',
-      last_name: profile?.last_name || '',
-      phone_number: profile?.phone_number || '',
-      email: profile?.email || '',
-      address: profile?.address || '',
-      city: profile?.city || '',
-      country: profile?.country || '',
-    });
-    
     setIsEditing(true);
+  };
+
+  const handleAvatarChange = async (url: string | null) => {
+    if (!profile?.id) return;
+    
+    try {
+      await updateProfile({ avatar_url: url });
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+    }
   };
 
   const handleSave = async () => {
@@ -204,15 +218,11 @@ const AdminProfile: React.FC = () => {
             <div className="space-y-8">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex flex-col items-center">
-                  <Avatar className="w-32 h-32 border-4 border-white shadow-md">
-                    {profile?.avatar_url ? (
-                      <img src={profile.avatar_url} alt="Profile" />
-                    ) : (
-                      <div className="bg-primary text-white w-full h-full flex items-center justify-center text-3xl">
-                        {profile?.first_name?.charAt(0) || 'A'}
-                      </div>
-                    )}
-                  </Avatar>
+                  <AvatarUpload 
+                    userId={profile?.id || ''}
+                    currentAvatarUrl={profile?.avatar_url}
+                    onAvatarChange={handleAvatarChange}
+                  />
                   <div className="mt-4 flex flex-col items-center">
                     <h3 className="font-medium text-lg">
                       {profile?.first_name || ''} {profile?.last_name || ''}
@@ -265,7 +275,7 @@ const AdminProfile: React.FC = () => {
               
               <div>
                 <h3 className="text-lg font-medium mb-4">Admin Permissions</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {adminPermissions.includes('all') && (
                     <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
                       <div className="flex items-center space-x-2">

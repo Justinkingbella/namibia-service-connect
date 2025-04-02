@@ -13,11 +13,19 @@ const AdminProfilePage = () => {
 
   useEffect(() => {
     // Check if user is loaded and is admin
-    if (!isLoading && user) {
-      if (user.role !== 'admin') {
-        navigate('/dashboard');
-      } else {
+    if (!isLoading) {
+      if (user && user.role === 'admin') {
         setProfileLoading(false);
+      } else if (user && user.role !== 'admin') {
+        // Redirect to appropriate profile page based on role
+        if (user.role === 'provider') {
+          navigate('/dashboard/provider/profile');
+        } else {
+          navigate('/dashboard/customer/profile');
+        }
+      } else if (!user) {
+        // Redirect to login if no user
+        navigate('/login');
       }
     }
   }, [user, isLoading, navigate]);

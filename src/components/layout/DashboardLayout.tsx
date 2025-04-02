@@ -84,7 +84,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         { icon: Package, label: 'Services', path: '/dashboard/services' },
         { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
         { icon: CreditCard, label: 'Payments', path: '/dashboard/provider/transactions' },
-        { icon: User, label: 'Profile', path: '/dashboard/profile' },
+        { icon: User, label: 'Profile', path: '/dashboard/provider/profile' },
       ];
     }
     
@@ -147,7 +147,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   >
                     <Avatar className="h-8 w-8 bg-primary/10 text-primary">
-                      <span className="text-sm font-medium">{user?.name?.charAt(0)}</span>
+                      {user?.avatar ? (
+                        <img src={user.avatar} alt="Profile" className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-sm font-medium">{user?.name?.charAt(0) || 'U'}</span>
+                      )}
                     </Avatar>
                     <span className="hidden sm:block text-sm font-medium">{user?.name}</span>
                     <ChevronDown size={16} className="text-gray-400" />
@@ -162,7 +166,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                       <div className="py-1">
                         <button 
                           onClick={() => {
-                            navigate('/dashboard/profile');
+                            if (user?.role === 'admin') {
+                              navigate('/dashboard/admin/profile');
+                            } else if (user?.role === 'provider') {
+                              navigate('/dashboard/provider/profile');
+                            } else {
+                              navigate('/dashboard/profile');
+                            }
                             setIsUserMenuOpen(false);
                           }}
                           className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
