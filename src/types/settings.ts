@@ -5,7 +5,7 @@ export type SettingCategory = 'general' | 'appearance' | 'notifications' | 'paym
 export interface BaseSetting {
   id: string;
   key: string;
-  value: any; // Changed from Record<string, any> to avoid deep instantiation
+  value: any; // Using any to prevent recursive type issues
   created_at?: string;
   updated_at?: string;
 }

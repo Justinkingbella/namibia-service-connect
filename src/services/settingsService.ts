@@ -14,6 +14,14 @@ import {
   SettingCategory
 } from '@/types/settings';
 
+// Helper function to safely access object properties
+const safeGet = (obj: any, key: string, defaultValue: any = undefined) => {
+  if (obj && typeof obj === 'object' && !Array.isArray(obj) && key in obj) {
+    return obj[key];
+  }
+  return defaultValue;
+};
+
 // Fetch all site settings
 export const getSiteSettings = async (): Promise<Record<string, any>> => {
   const { data, error } = await supabase
@@ -48,24 +56,25 @@ export const getSettingsByCategory = async (category: string): Promise<SiteSetti
 
   // Transform the data to match the SiteSetting interface
   return data.map(item => {
-    // Safely handle the value as an object
-    const valueObj = typeof item.value === 'object' && item.value !== null ? item.value : {};
+    // Ensure valueObj is a valid object and not an array or null
+    const rawValue = item.value;
+    const valueObj = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
     
     return {
       id: item.id,
       key: item.key,
-      value: item.value,
-      label: valueObj.label || item.key,
-      description: valueObj.description || '',
-      category: (valueObj.category || category) as SettingCategory,
-      isPublic: Boolean(valueObj.isPublic) || false,
-      dataType: valueObj.dataType || 'string',
-      options: Array.isArray(valueObj.options) ? valueObj.options : [],
-      defaultValue: valueObj.defaultValue,
-      isRequired: Boolean(valueObj.isRequired) || false,
+      value: rawValue,
+      label: safeGet(valueObj, 'label', item.key),
+      description: safeGet(valueObj, 'description', ''),
+      category: (safeGet(valueObj, 'category', category)) as SettingCategory,
+      isPublic: Boolean(safeGet(valueObj, 'isPublic', false)),
+      dataType: safeGet(valueObj, 'dataType', 'string'),
+      options: Array.isArray(safeGet(valueObj, 'options')) ? safeGet(valueObj, 'options') : [],
+      defaultValue: safeGet(valueObj, 'defaultValue'),
+      isRequired: Boolean(safeGet(valueObj, 'isRequired', false)),
       createdAt: item.created_at || new Date().toISOString(),
       updatedAt: item.updated_at || new Date().toISOString()
-    } as SiteSetting;
+    };
   });
 };
 
@@ -119,24 +128,25 @@ export const getAllSettingsGrouped = async (): Promise<SettingGroup[]> => {
 
   // Transform data to match SiteSetting interface
   const transformedData = data.map(item => {
-    // Safely handle the value as an object
-    const valueObj = typeof item.value === 'object' && item.value !== null ? item.value : {};
+    // Ensure valueObj is a valid object and not an array or null
+    const rawValue = item.value;
+    const valueObj = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
     
     return {
       id: item.id,
       key: item.key,
-      value: item.value,
-      label: valueObj.label || item.key,
-      description: valueObj.description || '',
-      category: (valueObj.category || 'general') as SettingCategory,
-      isPublic: Boolean(valueObj.isPublic) || false,
-      dataType: valueObj.dataType || 'string',
-      options: Array.isArray(valueObj.options) ? valueObj.options : [],
-      defaultValue: valueObj.defaultValue,
-      isRequired: Boolean(valueObj.isRequired) || false,
+      value: rawValue,
+      label: safeGet(valueObj, 'label', item.key),
+      description: safeGet(valueObj, 'description', ''),
+      category: (safeGet(valueObj, 'category', 'general')) as SettingCategory,
+      isPublic: Boolean(safeGet(valueObj, 'isPublic', false)),
+      dataType: safeGet(valueObj, 'dataType', 'string'),
+      options: Array.isArray(safeGet(valueObj, 'options')) ? safeGet(valueObj, 'options') : [],
+      defaultValue: safeGet(valueObj, 'defaultValue'),
+      isRequired: Boolean(safeGet(valueObj, 'isRequired', false)),
       createdAt: item.created_at || new Date().toISOString(),
       updatedAt: item.updated_at || new Date().toISOString()
-    } as SiteSetting;
+    };
   });
 
   // Group settings by category
@@ -168,20 +178,21 @@ export const getBookingSettings = async (): Promise<BookingSetting[]> => {
 
   // Transform data to match BookingSetting interface
   return data.map(item => {
-    // Safely handle the value as an object
-    const valueObj = typeof item.value === 'object' && item.value !== null ? item.value : {};
+    // Ensure valueObj is a valid object and not an array or null
+    const rawValue = item.value;
+    const valueObj = rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue) ? rawValue : {};
     
     return {
       id: item.id,
       key: item.key,
       value: item.value,
-      label: valueObj.label || item.key,
+      label: safeGet(valueObj, 'label', item.key),
       description: item.description || '',
-      category: valueObj.category || 'general',
-      isEnabled: Boolean(valueObj.isEnabled) || false,
+      category: safeGet(valueObj, 'category', 'general'),
+      isEnabled: Boolean(safeGet(valueObj, 'isEnabled', false)),
       createdAt: item.created_at || new Date().toISOString(),
       updatedAt: item.updated_at || new Date().toISOString()
-    } as BookingSetting;
+    };
   });
 };
 
