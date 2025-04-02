@@ -1,12 +1,13 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentMethod } from '@/types/auth';
-import { 
-  fetchUserPaymentMethods, 
-  addPaymentMethod, 
-  deletePaymentMethod, 
-  setDefaultPaymentMethod 
+import {
+  fetchUserPaymentMethods,
+  addPaymentMethod,
+  deletePaymentMethod,
+  setDefaultPaymentMethod
 } from '@/services/mockProfileService';
 
 export function usePaymentMethods() {
@@ -31,27 +32,30 @@ export function usePaymentMethods() {
     loadPaymentMethods();
   }, [user?.id]);
 
-  const addMethod = async (method: Omit<PaymentMethod, 'id' | 'userId' | 'createdAt'>) => {
+  const addMethod = async (methodData: Omit<PaymentMethod, 'id' | 'userId' | 'createdAt'>) => {
     if (!user?.id) return null;
 
     setLoading(true);
-    const newMethod = await addPaymentMethod(user.id, method);
+    const newMethod = await addPaymentMethod(user.id, methodData);
     
     if (newMethod) {
-      // If the new method is default, update existing methods
+      // If the new method is default, update all other methods
       if (newMethod.isDefault) {
-        setPaymentMethods(prev => prev.map(m => ({
-          ...m,
-          isDefault: m.id === newMethod.id
-        })));
+        setPaymentMethods(prev => 
+          prev.map(method => ({
+            ...method,
+            isDefault: method.id === newMethod.id
+          }))
+        );
       } else {
         setPaymentMethods(prev => [...prev, newMethod]);
       }
       
       toast({
         title: "Payment method added",
-        description: "Your payment method has been successfully added."
+        description: "Your new payment method has been added successfully."
       });
+      
       setLoading(false);
       return newMethod;
     }
@@ -71,12 +75,14 @@ export function usePaymentMethods() {
     const success = await deletePaymentMethod(methodId);
     
     if (success) {
-      setPaymentMethods(prev => prev.filter(m => m.id !== methodId));
+      // Remove the method from state
+      setPaymentMethods(prev => prev.filter(method => method.id !== methodId));
       
       toast({
         title: "Payment method removed",
-        description: "Your payment method has been successfully removed."
+        description: "Your payment method has been removed successfully."
       });
+      
       setLoading(false);
       return true;
     }
@@ -91,29 +97,31 @@ export function usePaymentMethods() {
     return false;
   };
 
-  const setDefault = async (methodId: string) => {
-    if (!user?.id) return false;
-
+  const setDefaultMethod = async (methodId: string) => {
     setLoading(true);
-    const success = await setDefaultPaymentMethod(methodId, user.id);
+    const success = await setDefaultPaymentMethod(methodId);
     
     if (success) {
-      setPaymentMethods(prev => prev.map(m => ({
-        ...m,
-        isDefault: m.id === methodId
-      })));
+      // Update the payment methods in state
+      setPaymentMethods(prev => 
+        prev.map(method => ({
+          ...method,
+          isDefault: method.id === methodId
+        }))
+      );
       
       toast({
-        title: "Default payment method updated",
-        description: "Your default payment method has been updated."
+        title: "Default payment method set",
+        description: "Your default payment method has been updated successfully."
       });
+      
       setLoading(false);
       return true;
     }
     
     toast({
       variant: "destructive",
-      title: "Failed to update default payment method",
+      title: "Failed to set default payment method",
       description: "There was an error updating your default payment method. Please try again."
     });
     
@@ -124,8 +132,8 @@ export function usePaymentMethods() {
   return {
     paymentMethods,
     loading,
-    addMethod,
-    removeMethod,
-    setDefault
+    addPaymentMethod: addMethod,
+    removePaymentMethod: removeMethod,
+    setDefaultPaymentMethod: setDefaultMethod
   };
 }

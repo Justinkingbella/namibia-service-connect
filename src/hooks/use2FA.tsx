@@ -1,18 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 import { User2FA } from '@/types/auth';
-import { 
-  fetchUser2FAStatus, 
-  enable2FA, 
-  disable2FA 
-} from '@/services/mockProfileService';
+import { fetchUser2FAStatus, enable2FA, disable2FA } from '@/services/mockProfileService';
 
 export function use2FA() {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [twoFAStatus, setTwoFAStatus] = useState<User2FA | null>(null);
+  const [twoFactorStatus, setTwoFactorStatus] = useState<User2FA | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,72 +17,58 @@ export function use2FA() {
       }
 
       setLoading(true);
-      const data = await fetchUser2FAStatus(user.id);
-      setTwoFAStatus(data);
+      const status = await fetchUser2FAStatus(user.id);
+      setTwoFactorStatus(status);
       setLoading(false);
     };
 
     load2FAStatus();
   }, [user?.id]);
 
-  const enableTwoFA = async (secret: string, backupCodes: string[]) => {
-    if (!user?.id) return false;
-
-    setLoading(true);
-    const success = await enable2FA(user.id, secret, backupCodes);
+  const enableTwoFactor = async () => {
+    if (!user?.id) return null;
     
-    if (success) {
-      setTwoFAStatus(prev => prev ? { ...prev, isEnabled: true, secret, backupCodes } : null);
-      
-      toast({
-        title: "2FA Enabled",
-        description: "Two-factor authentication has been enabled for your account."
+    setLoading(true);
+    const result = await enable2FA(user.id);
+    
+    if (result) {
+      setTwoFactorStatus({
+        userId: user.id,
+        isEnabled: true,
+        secret: result.secret,
+        backupCodes: result.backupCodes
       });
       setLoading(false);
-      return true;
+      return result;
     }
     
-    toast({
-      variant: "destructive",
-      title: "Failed to enable 2FA",
-      description: "There was an error enabling two-factor authentication. Please try again."
-    });
-    
     setLoading(false);
-    return false;
+    return null;
   };
 
-  const disableTwoFA = async () => {
+  const disableTwoFactor = async () => {
     if (!user?.id) return false;
-
+    
     setLoading(true);
     const success = await disable2FA(user.id);
     
     if (success) {
-      setTwoFAStatus(prev => prev ? { ...prev, isEnabled: false, secret: undefined, backupCodes: undefined } : null);
-      
-      toast({
-        title: "2FA Disabled",
-        description: "Two-factor authentication has been disabled for your account."
+      setTwoFactorStatus({
+        userId: user.id,
+        isEnabled: false
       });
       setLoading(false);
       return true;
     }
-    
-    toast({
-      variant: "destructive",
-      title: "Failed to disable 2FA",
-      description: "There was an error disabling two-factor authentication. Please try again."
-    });
     
     setLoading(false);
     return false;
   };
 
   return {
-    twoFAStatus,
+    twoFactorStatus,
     loading,
-    enableTwoFA,
-    disableTwoFA
+    enableTwoFactor,
+    disableTwoFactor
   };
 }

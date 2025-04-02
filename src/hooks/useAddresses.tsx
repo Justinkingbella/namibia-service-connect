@@ -3,11 +3,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { UserAddress } from '@/types/auth';
-import { 
-  fetchUserAddresses, 
-  addUserAddress, 
-  updateUserAddress, 
-  deleteUserAddress 
+import {
+  fetchUserAddresses,
+  addUserAddress,
+  updateUserAddress,
+  deleteUserAddress
 } from '@/services/mockProfileService';
 
 export function useAddresses() {
@@ -32,27 +32,30 @@ export function useAddresses() {
     loadAddresses();
   }, [user?.id]);
 
-  const addAddress = async (address: Omit<UserAddress, 'id' | 'userId' | 'createdAt'>) => {
+  const addAddress = async (addressData: Omit<UserAddress, 'id' | 'userId' | 'createdAt'>) => {
     if (!user?.id) return null;
 
     setLoading(true);
-    const newAddress = await addUserAddress(user.id, address);
+    const newAddress = await addUserAddress(user.id, addressData);
     
     if (newAddress) {
-      // If the new address is default, update existing addresses
+      // If the new address is default, update all other addresses
       if (newAddress.isDefault) {
-        setAddresses(prev => prev.map(addr => ({
-          ...addr,
-          isDefault: addr.id === newAddress.id
-        })));
+        setAddresses(prev => 
+          prev.map(addr => ({
+            ...addr,
+            isDefault: addr.id === newAddress.id
+          }))
+        );
       } else {
         setAddresses(prev => [...prev, newAddress]);
       }
       
       toast({
         title: "Address added",
-        description: "Your address has been successfully added."
+        description: "Your new address has been added successfully."
       });
+      
       setLoading(false);
       return newAddress;
     }
@@ -67,21 +70,27 @@ export function useAddresses() {
     return null;
   };
 
-  const updateAddress = async (addressId: string, addressData: Partial<Omit<UserAddress, 'id' | 'userId' | 'createdAt'>>) => {
+  const updateAddress = async (addressId: string, addressData: Partial<UserAddress>) => {
     setLoading(true);
     const success = await updateUserAddress(addressId, addressData);
     
     if (success) {
-      // Refresh the address list
-      if (user?.id) {
-        const updatedAddresses = await fetchUserAddresses(user.id);
-        setAddresses(updatedAddresses);
-      }
+      // Update the address in state
+      setAddresses(prev => 
+        prev.map(addr => 
+          addr.id === addressId 
+            ? { ...addr, ...addressData } 
+            : addressData.isDefault && addressData.isDefault === true
+              ? { ...addr, isDefault: false }
+              : addr
+        )
+      );
       
       toast({
         title: "Address updated",
-        description: "Your address has been successfully updated."
+        description: "Your address has been updated successfully."
       });
+      
       setLoading(false);
       return true;
     }
@@ -101,12 +110,14 @@ export function useAddresses() {
     const success = await deleteUserAddress(addressId);
     
     if (success) {
+      // Remove the address from state
       setAddresses(prev => prev.filter(addr => addr.id !== addressId));
       
       toast({
         title: "Address removed",
-        description: "Your address has been successfully removed."
+        description: "Your address has been removed successfully."
       });
+      
       setLoading(false);
       return true;
     }

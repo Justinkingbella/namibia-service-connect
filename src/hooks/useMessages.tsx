@@ -27,23 +27,28 @@ export function useMessages() {
     loadMessages();
   }, [user?.id]);
 
-  const send = async (recipientId: string, content: string, attachments?: string[]) => {
-    if (!user?.id) return false;
+  const sendNewMessage = async (recipientId: string, content: string, attachments?: string[]) => {
+    if (!user?.id) return null;
 
     setLoading(true);
-    const success = await sendMessage(user.id, recipientId, content, attachments);
+    const newMessage = await sendMessage({
+      senderId: user.id,
+      recipientId,
+      content,
+      attachments,
+      isRead: false
+    });
     
-    if (success) {
-      // Refresh messages list
-      const updatedMessages = await fetchUserMessages(user.id);
-      setMessages(updatedMessages);
+    if (newMessage) {
+      setMessages(prev => [...prev, newMessage]);
       
       toast({
         title: "Message sent",
         description: "Your message has been sent successfully."
       });
+      
       setLoading(false);
-      return true;
+      return newMessage;
     }
     
     toast({
@@ -53,7 +58,7 @@ export function useMessages() {
     });
     
     setLoading(false);
-    return false;
+    return null;
   };
 
   const markAsRead = async (messageId: string) => {
@@ -61,9 +66,14 @@ export function useMessages() {
     const success = await markMessageAsRead(messageId);
     
     if (success) {
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId ? { ...msg, isRead: true } : msg
-      ));
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === messageId 
+            ? { ...msg, isRead: true } 
+            : msg
+        )
+      );
+      
       setLoading(false);
       return true;
     }
@@ -75,7 +85,7 @@ export function useMessages() {
   return {
     messages,
     loading,
-    send,
+    sendMessage: sendNewMessage,
     markAsRead
   };
 }

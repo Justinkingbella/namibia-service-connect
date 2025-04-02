@@ -23,3 +23,38 @@ export interface Service {
   available?: boolean;
   isFeatured?: boolean;
 }
+
+export interface ServiceData {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  pricing_model: PricingModel;
+  category: ServiceCategory;
+  provider_id: string;
+  provider_name?: string;
+  image?: string | null;
+  features?: string[];
+  is_active: boolean;
+  location?: string | null;
+  rating?: number;
+  review_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ServiceListItem {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  pricingModel: PricingModel;
+  category: ServiceCategory;
+  providerId: string;
+  providerName?: string;
+  rating?: number;
+  reviewCount?: number;
+  image?: string;
+  location?: string;
+  isFeatured?: boolean;
+}
