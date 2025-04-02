@@ -884,3 +884,30 @@ export async function removeFavorite(userId: string, serviceId: string): Promise
     return false;
   }
 }
+
+export function formatFavorites(favorites: any[]) {
+  if (!favorites || !Array.isArray(favorites)) return [];
+  
+  return favorites.map(fav => {
+    return {
+      id: fav.id,
+      userId: fav.user_id,
+      serviceId: fav.service_id,
+      createdAt: fav.created_at,
+      service: fav.service ? {
+        id: fav.service?.id,
+        title: fav.service?.title,
+        description: fav.service?.description,
+        price: fav.service?.price,
+        location: fav.service?.location,
+        image: fav.service?.image,
+        category: fav.service?.category,
+        isActive: fav.service?.is_active,
+        providerId: fav.service?.provider_id,
+        pricingModel: fav.service?.pricing_model,
+        createdAt: fav.service?.created_at,
+        updatedAt: fav.service?.updated_at
+      } : null
+    };
+  });
+}

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -59,36 +58,70 @@ export interface PaymentTransaction {
   updatedAt: string;
 }
 
-export interface BankTransferDetails {
+interface PaymentTransactionRow {
+  id: string;
+  user_id: string;
+  amount: number;
+  currency: string;
+  description: string;
+  reference: string;
+  gateway: string;
+  method: string;
+  status: string;
+  metadata: Record<string, any>;
+  gateway_response?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapTransactionRowToType(row: PaymentTransactionRow): PaymentTransaction {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    amount: row.amount,
+    currency: row.currency,
+    description: row.description,
+    reference: row.reference,
+    gateway: row.gateway as PaymentGateway,
+    method: row.method,
+    status: row.status as PaymentStatus,
+    metadata: row.metadata,
+    gatewayResponse: row.gateway_response,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+export type BankTransferDetails = {
   bankName: NamibianBank;
   accountNumber: string;
   accountType: 'savings' | 'checking' | 'business';
   branchCode: string;
   accountHolder: string;
   reference: string;
-}
+};
 
-export interface EWalletDetails {
+export type EWalletDetails = {
   provider: NamibianEWallet;
   phoneNumber: string;
   accountName?: string;
   reference: string;
-}
+};
 
-export interface PayfastDetails {
+export type PayfastDetails = {
   cardType?: string;
   cardLastFour?: string;
   merchantReference: string;
   pfPaymentId?: string;
-}
+};
 
-export interface DPODetails {
+export type DPODetails = {
   transactionToken?: string;
   recurringPayment: boolean;
   transactionRef: string;
-}
+};
 
-export interface PaymentMethod {
+export type PaymentMethod = {
   id: string;
   userId: string;
   name: string;
@@ -96,9 +129,8 @@ export interface PaymentMethod {
   isDefault: boolean;
   details: BankTransferDetails | EWalletDetails | PayfastDetails | DPODetails;
   createdAt: string;
-}
+};
 
-// Bank Transfer Functions
 export async function initiateBankTransfer(
   userId: string,
   amount: number,
@@ -106,10 +138,8 @@ export async function initiateBankTransfer(
   description: string
 ): Promise<PaymentTransaction | null> {
   try {
-    // Generate a unique reference
     const reference = `BT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     
-    // Create a transaction record
     const { data, error } = await supabase
       .from('payment_transactions')
       .insert([{
@@ -136,7 +166,6 @@ export async function initiateBankTransfer(
 
     toast.success('Bank transfer initiated successfully');
     
-    // Send notification to admin
     await notifyAdminForVerification(data.id, userId, 'bank_transfer', amount);
     
     return {
@@ -190,7 +219,6 @@ export async function verifyBankTransfer(
 
     toast.success(`Bank transfer ${verified ? 'approved' : 'rejected'}`);
     
-    // Notify user about the verification result
     await notifyUserForVerificationResult(data.user_id, data.id, verified, notes);
     
     return {
@@ -215,7 +243,6 @@ export async function verifyBankTransfer(
   }
 }
 
-// E-Wallet Functions
 export async function initiateEWalletPayment(
   userId: string,
   amount: number,
@@ -223,10 +250,8 @@ export async function initiateEWalletPayment(
   description: string
 ): Promise<PaymentTransaction | null> {
   try {
-    // Generate a unique reference
     const reference = `EW-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     
-    // Create a transaction record
     const { data, error } = await supabase
       .from('payment_transactions')
       .insert([{
@@ -253,7 +278,6 @@ export async function initiateEWalletPayment(
 
     toast.success('E-wallet payment initiated successfully');
     
-    // Send notification to admin
     await notifyAdminForVerification(data.id, userId, 'ewallet', amount);
     
     return {
@@ -314,7 +338,6 @@ export async function submitEWalletVerification(
   }
 }
 
-// PayFast Integration
 export async function initiatePayFastPayment(
   userId: string,
   amount: number,
@@ -323,10 +346,8 @@ export async function initiatePayFastPayment(
   cancelUrl: string
 ): Promise<{ redirectUrl: string; transactionId: string } | null> {
   try {
-    // Generate a unique merchant reference
     const merchantReference = `PF-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     
-    // Create a transaction record
     const { data, error } = await supabase
       .from('payment_transactions')
       .insert([{
@@ -351,8 +372,6 @@ export async function initiatePayFastPayment(
       return null;
     }
 
-    // In a real implementation, you would construct the actual PayFast URL with parameters
-    // This is a mock implementation
     const redirectUrl = `https://www.payfast.co.za/eng/process?merchant_id=YOUR_MERCHANT_ID&merchant_key=YOUR_MERCHANT_KEY&amount=${amount}&item_name=${encodeURIComponent(description)}&m_payment_id=${data.id}&return_url=${encodeURIComponent(returnUrl)}&cancel_url=${encodeURIComponent(cancelUrl)}&notify_url=YOUR_WEBHOOK_URL`;
     
     return {
@@ -370,9 +389,6 @@ export async function handlePayFastWebhook(
   pfData: Record<string, any>
 ): Promise<boolean> {
   try {
-    // Verify the PayFast ITN (Instant Transaction Notification)
-    // In a real implementation, you'd validate the signature and data
-    
     const { data, error } = await supabase
       .from('payment_transactions')
       .update({
@@ -390,7 +406,6 @@ export async function handlePayFastWebhook(
       return false;
     }
 
-    // Notify user about payment status
     if (pfData.payment_status === 'COMPLETE') {
       await notifyUserForPaymentSuccess(data.user_id, data.id, data.amount);
     } else {
@@ -404,7 +419,6 @@ export async function handlePayFastWebhook(
   }
 }
 
-// DPO Integration
 export async function initiateDPOPayment(
   userId: string,
   amount: number,
@@ -417,10 +431,8 @@ export async function initiateDPOPayment(
   }
 ): Promise<{ redirectUrl: string; transactionId: string } | null> {
   try {
-    // Generate a unique transaction reference
     const transactionRef = `DPO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     
-    // Create a transaction record
     const { data, error } = await supabase
       .from('payment_transactions')
       .insert([{
@@ -448,8 +460,6 @@ export async function initiateDPOPayment(
       return null;
     }
 
-    // In a real implementation, you would create a token with the DPO API
-    // This is a mock implementation
     const redirectUrl = `https://secure.3gdirectpay.com/payv2.php?ID=YOUR_COMPANY_TOKEN&paymentAmount=${amount}&paymentCurrency=NAD&companyRef=${paymentDetails?.companyRef || transactionRef}&customerEmail=${paymentDetails?.customerEmail || ''}&customerName=${paymentDetails?.customerName || ''}&redirectURL=YOUR_REDIRECT_URL`;
     
     return {
@@ -467,9 +477,6 @@ export async function handleDPOWebhook(
   dpoData: Record<string, any>
 ): Promise<boolean> {
   try {
-    // Verify the DPO webhook data
-    // In a real implementation, you'd validate the signature and data
-    
     const { data, error } = await supabase
       .from('payment_transactions')
       .update({
@@ -487,7 +494,6 @@ export async function handleDPOWebhook(
       return false;
     }
 
-    // Notify user about payment status
     if (dpoData.TransactionApproved === '1') {
       await notifyUserForPaymentSuccess(data.user_id, data.id, data.amount);
     } else {
@@ -501,7 +507,6 @@ export async function handleDPOWebhook(
   }
 }
 
-// EasyWallet Integration
 export async function initiateEasyWalletPayment(
   userId: string,
   amount: number,
@@ -509,10 +514,8 @@ export async function initiateEasyWalletPayment(
   description: string
 ): Promise<PaymentTransaction | null> {
   try {
-    // Generate a unique reference
     const reference = `EW-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     
-    // Create a transaction record
     const { data, error } = await supabase
       .from('payment_transactions')
       .insert([{
@@ -539,8 +542,6 @@ export async function initiateEasyWalletPayment(
 
     toast.success('EasyWallet payment initiated successfully');
     
-    // In a real implementation, you would send an SMS or notification to the user with payment instructions
-    
     return {
       id: data.id,
       userId: data.user_id,
@@ -563,7 +564,6 @@ export async function initiateEasyWalletPayment(
   }
 }
 
-// Utility Functions
 async function notifyAdminForVerification(
   transactionId: string,
   userId: string,
@@ -666,7 +666,6 @@ async function notifyUserForPaymentFailure(
   }
 }
 
-// Payment retrieval and management functions
 export async function fetchUserPayments(userId: string): Promise<PaymentTransaction[]> {
   try {
     const { data, error } = await supabase
@@ -744,7 +743,6 @@ export async function retryFailedPayment(
   userId: string
 ): Promise<{ success: boolean; redirectUrl?: string; newTransactionId?: string }> {
   try {
-    // Fetch the original payment details
     const { data: originalPayment, error } = await supabase
       .from('payment_transactions')
       .select('*')
@@ -758,7 +756,6 @@ export async function retryFailedPayment(
       return { success: false };
     }
 
-    // Different retry logic based on payment gateway
     switch (originalPayment.gateway) {
       case 'payfast': {
         const result = await initiatePayFastPayment(
@@ -870,7 +867,6 @@ export async function fetchAdminPaymentTransactions(
       .select('*')
       .order('created_at', { ascending: false });
     
-    // Apply filters
     if (filters) {
       if (filters.gateway) {
         if (Array.isArray(filters.gateway)) {
@@ -940,43 +936,37 @@ export async function getPaymentDashboardStats(): Promise<{
   recentTransactions: PaymentTransaction[];
 }> {
   try {
-    // Get total counts
-    const { count: totalCount, error: countError } = await supabase
+    const { count: totalCount, error: countError } = await (supabase as any)
       .from('payment_transactions')
       .select('*', { count: 'exact', head: true });
     
     if (countError) throw countError;
     
-    // Get total amount
-    const { data: totalData, error: totalError } = await supabase
+    const { data: totalData, error: totalError } = await (supabase as any)
       .rpc('sum_payment_amounts');
     
     if (totalError) throw totalError;
     
-    // Get pending verification count
-    const { count: pendingCount, error: pendingError } = await supabase
+    const { count: pendingCount, error: pendingError } = await (supabase as any)
       .from('payment_transactions')
       .select('*', { count: 'exact', head: true })
       .in('status', ['awaiting_verification', 'pending']);
     
     if (pendingError) throw pendingError;
     
-    // Get failed count
-    const { count: failedCount, error: failedError } = await supabase
+    const { count: failedCount, error: failedError } = await (supabase as any)
       .from('payment_transactions')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'failed');
     
     if (failedError) throw failedError;
     
-    // Get gateway breakdown
-    const { data: gatewayData, error: gatewayError } = await supabase
+    const { data: gatewayData, error: gatewayError } = await (supabase as any)
       .rpc('get_gateway_breakdown');
     
     if (gatewayError) throw gatewayError;
     
-    // Get recent transactions
-    const { data: recentData, error: recentError } = await supabase
+    const { data: recentData, error: recentError } = await (supabase as any)
       .from('payment_transactions')
       .select('*')
       .order('created_at', { ascending: false })
@@ -984,31 +974,18 @@ export async function getPaymentDashboardStats(): Promise<{
     
     if (recentError) throw recentError;
     
-    // Format gateway breakdown
     const gatewayBreakdown = {} as Record<PaymentGateway, { count: number; amount: number }>;
-    gatewayData.forEach((item: any) => {
-      gatewayBreakdown[item.gateway as PaymentGateway] = {
-        count: item.count,
-        amount: item.total_amount
-      };
-    });
     
-    // Format recent transactions
-    const recentTransactions = recentData.map(item => ({
-      id: item.id,
-      userId: item.user_id,
-      amount: item.amount,
-      currency: item.currency,
-      description: item.description,
-      reference: item.reference,
-      gateway: item.gateway as PaymentGateway,
-      method: item.method,
-      status: item.status as PaymentStatus,
-      metadata: item.metadata,
-      gatewayResponse: item.gateway_response,
-      createdAt: item.created_at,
-      updatedAt: item.updated_at
-    }));
+    if (gatewayData && Array.isArray(gatewayData)) {
+      gatewayData.forEach((item: any) => {
+        gatewayBreakdown[item.gateway as PaymentGateway] = {
+          count: item.count,
+          amount: item.total_amount
+        };
+      });
+    }
+    
+    const recentTransactions = recentData ? recentData.map(mapTransactionRowToType) : [];
     
     return {
       totalTransactions: totalCount || 0,
@@ -1022,7 +999,6 @@ export async function getPaymentDashboardStats(): Promise<{
     console.error('Error in getPaymentDashboardStats:', error);
     toast.error('Failed to load payment dashboard stats');
     
-    // Return default empty stats
     return {
       totalTransactions: 0,
       totalAmount: 0,

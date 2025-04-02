@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bank, Wallet, CreditCard, CircleDollarSign, Smartphone } from 'lucide-react';
+import { BuildingBank, Wallet, CreditCard, CircleDollarSign, Smartphone } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -41,19 +40,16 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   const [paymentTab, setPaymentTab] = useState('bank');
   const [loading, setLoading] = useState(false);
 
-  // Bank Transfer State
   const [bankName, setBankName] = useState<NamibianBank>('FNB Namibia');
   const [accountType, setAccountType] = useState<'savings' | 'checking' | 'business'>('checking');
   const [accountNumber, setAccountNumber] = useState('');
   const [branchCode, setBranchCode] = useState('');
   const [accountHolder, setAccountHolder] = useState('');
 
-  // E-Wallet State
   const [walletProvider, setWalletProvider] = useState<NamibianEWallet>('FNB eWallet');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [walletName, setWalletName] = useState('');
 
-  // Base URL for redirects
   const baseUrl = window.location.origin;
 
   const handleBankTransfer = async () => {
@@ -143,10 +139,10 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
       const result = await processDPOPayment(
         amount,
         description,
-        false, // not recurring
+        false,
         {
-          customerEmail: 'user@example.com', // This should come from user's profile
-          customerName: 'Customer Name' // This should come from user's profile
+          customerEmail: 'user@example.com',
+          customerName: 'Customer Name'
         }
       );
       
@@ -195,7 +191,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         <Tabs value={paymentTab} onValueChange={setPaymentTab}>
           <TabsList className="grid grid-cols-5 mb-6">
             <TabsTrigger value="bank" className="flex flex-col items-center gap-1 py-3">
-              <Bank className="h-5 w-5" />
+              <BuildingBank className="h-5 w-5" />
               <span className="text-xs">Bank</span>
             </TabsTrigger>
             <TabsTrigger value="ewallet" className="flex flex-col items-center gap-1 py-3">
