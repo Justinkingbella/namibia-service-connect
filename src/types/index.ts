@@ -13,6 +13,9 @@ export type {
   WalletVerificationRequest
 } from './booking';
 
+// Export payment types
+export * from './payments';
+
 // Re-export Auth but exclude SubscriptionTier to avoid name conflicts
 export type { User, UserRole, ProviderVerificationStatus, Customer, Provider, Admin, AuthContextType } from './auth';
 

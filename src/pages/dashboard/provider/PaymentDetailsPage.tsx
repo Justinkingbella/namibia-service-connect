@@ -1,9 +1,8 @@
-
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, CreditCard, Wallet, Bank } from 'lucide-react';
+import { PlusCircle, CreditCard, Wallet, BankIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -145,7 +144,7 @@ const PaymentDetailsPage = () => {
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-center">
                         <CardTitle className="text-base flex items-center">
-                          <Bank className="h-5 w-5 mr-2" />
+                          <BankIcon className="h-5 w-5 mr-2" />
                           {account.name}
                         </CardTitle>
                         {account.isDefault && <Badge variant="outline">Default</Badge>}

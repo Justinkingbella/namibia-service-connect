@@ -1,30 +1,51 @@
 
 import { PaymentMethod } from '@/types/payment';
 
-export interface PaymentHistory {
+export interface PaymentTransaction {
   id: string;
   userId: string;
-  bookingId?: string;
   amount: number;
-  description: string;
+  fee: number;
+  netAmount: number;
+  transactionType: 'subscription' | 'booking' | 'payout' | string;
   paymentMethod: string;
-  status: 'completed' | 'pending' | 'failed' | 'refunded' | string;
-  transactionId?: string;
-  createdAt: string;
-}
-
-export interface Dispute {
-  id: string;
-  bookingId: string;
-  customerId: string;
-  providerId: string;
-  subject: string;
-  description: string;
-  status: 'pending' | 'in_progress' | 'resolved' | 'rejected' | string;
-  resolution?: string;
-  adminNotes?: string;
+  referenceId?: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
+  description?: string;
+  metadata?: Record<string, any>;
   createdAt: string;
   updatedAt: string;
 }
 
-export type PaymentMethodType = 'credit_card' | 'e_wallet' | 'bank_transfer' | string;
+export interface ProviderEarnings {
+  id: string;
+  providerId: string;
+  periodStart: string;
+  periodEnd: string;
+  totalEarnings: number;
+  totalBookings: number;
+  commissionPaid: number;
+  netEarnings: number;
+  payoutStatus: 'pending' | 'processing' | 'completed' | 'failed';
+  payoutDate?: string;
+  payoutReference?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProviderPayout {
+  id: string;
+  providerId: string;
+  amount: number;
+  fee: number;
+  netAmount: number;
+  paymentMethod: string;
+  bankAccountDetails?: Record<string, any>;
+  mobilePaymentDetails?: Record<string, any>;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  processedAt?: string;
+  referenceNumber?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}

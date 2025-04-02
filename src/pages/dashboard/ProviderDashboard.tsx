@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, Users, DollarSign, ChevronRight, LineChart, Plus, Wallet } from 'lucide-react';
+import { Calendar, Users, DollarSign, ChevronRight, LineChart, Plus, Wallet, CreditCard as CreditCardIcon } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCard from '@/components/dashboard/StatsCard';
 import ServiceManagement from '@/components/provider/ServiceManagement';
@@ -17,9 +18,29 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchUserSubscription } from '@/services/subscriptionService';
 import { Skeleton } from '@/components/ui/skeleton';
 
-type Subscription = Tables<'user_subscriptions'> & {
-  subscription_plans: Tables<'subscription_plans'>
-};
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  billingCycle: string;
+  isActive: boolean;
+  features: any[];
+  credits: number;
+  isPopular: boolean;
+  maxBookings: number;
+}
+
+interface Subscription {
+  id: string;
+  userId: string;
+  subscriptionPlanId: string;
+  startDate: string;
+  endDate: string;
+  paymentMethod: string;
+  status: 'active' | 'pending' | 'cancelled' | 'expired';
+  plan?: SubscriptionPlan;
+}
 
 interface DashboardBooking {
   id: string;
@@ -27,7 +48,7 @@ interface DashboardBooking {
   service: string;
   date: string;
   amount: number;
-  status: BookingStatus;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'in_progress';
   serviceId: string;
   customerId: string;
   providerId: string;
@@ -38,7 +59,7 @@ interface DashboardBooking {
   totalPrice: number;
   location: string;
   notes: string;
-  paymentStatus: PaymentStatus;
+  paymentStatus: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
   createdAt: string;
   updatedAt: string;
   duration: number;
@@ -326,7 +347,7 @@ const ProviderDashboard = () => {
             <SettingsCard
               title="Manage Subscription"
               description="Change or upgrade your plan"
-              icon={<CreditCard className="h-5 w-5" />}
+              icon={<CreditCardIcon className="h-5 w-5" />}
               onClick={() => navigate('/dashboard/provider/subscription')}
             />
             

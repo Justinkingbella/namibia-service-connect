@@ -1,252 +1,100 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  BaseSetting,
-  SiteSetting,
-  AppearanceSettings,
-  GeneralSettings,
-  NotificationSettings,
-  PaymentSettings, 
-  SecuritySettings,
-  IntegrationSettings,
-  BookingSetting,
-  SettingGroup,
-  SettingCategory
-} from '@/types/settings';
-import { Json } from '@/integrations/supabase/types';
+import { toast } from 'sonner';
 
-// Helper function to safely access object properties
-const safeGet = (obj: any, key: string, defaultValue: any = undefined) => {
-  if (obj && typeof obj === 'object' && !Array.isArray(obj) && key in obj) {
-    return obj[key];
-  }
-  return defaultValue;
-};
+interface SiteSetting {
+  id: string;
+  key: string;
+  value: any;
+}
 
 // Fetch all site settings
-export const getSiteSettings = async (): Promise<Record<string, any>> => {
+export async function fetchSiteSettings(): Promise<Record<string, any>> {
   const { data, error } = await supabase
     .from('site_settings')
     .select('*');
 
   if (error) {
     console.error('Error fetching site settings:', error);
-    throw new Error('Failed to fetch site settings');
+    toast.error('Failed to load site settings');
+    return {};
   }
 
-  // Convert array of settings to an object where keys are setting keys
-  const settingsObj: Record<string, any> = {};
-  data.forEach((setting) => {
-    settingsObj[setting.key] = setting.value;
-  });
+  // Convert array of settings to an object
+  return data.reduce((acc: Record<string, any>, setting: SiteSetting) => {
+    acc[setting.key] = setting.value;
+    return acc;
+  }, {});
+}
 
-  return settingsObj;
-};
-
-// Get settings by category
-export const getSettingsByCategory = async (category: string): Promise<SiteSetting[]> => {
+// Fetch a specific site setting
+export async function fetchSiteSetting(key: string): Promise<any> {
   const { data, error } = await supabase
     .from('site_settings')
-    .select('*')
-    .eq('category', category);
+    .select('value')
+    .eq('key', key)
+    .single();
 
   if (error) {
-    console.error(`Error fetching ${category} settings:`, error);
-    throw new Error(`Failed to fetch ${category} settings`);
+    console.error(`Error fetching site setting (${key}):`, error);
+    return null;
   }
 
-  // Transform the data to match the SiteSetting interface
-  return data.map(item => {
-    const rawValue = item.value;
-    let valueObj: Record<string, any> = {};
-    
-    if (rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue)) {
-      valueObj = rawValue as Record<string, any>;
-    }
+  return data.value;
+}
 
-    return {
-      id: item.id,
-      key: item.key,
-      value: rawValue,
-      label: safeGet(valueObj, 'label', item.key),
-      description: safeGet(valueObj, 'description', ''),
-      category: (safeGet(valueObj, 'category', category)) as SettingCategory,
-      isPublic: Boolean(safeGet(valueObj, 'isPublic', false)),
-      dataType: safeGet(valueObj, 'dataType', 'string'),
-      options: Array.isArray(safeGet(valueObj, 'options')) ? safeGet(valueObj, 'options') : [],
-      defaultValue: safeGet(valueObj, 'defaultValue'),
-      isRequired: Boolean(safeGet(valueObj, 'isRequired', false)),
-      createdAt: item.created_at || new Date().toISOString(),
-      updatedAt: item.updated_at || new Date().toISOString()
-    };
-  });
-};
+// Update a site setting
+export async function updateSiteSetting(key: string, value: any): Promise<boolean> {
+  // Check if setting exists
+  const { count, error: countError } = await supabase
+    .from('site_settings')
+    .select('*', { count: 'exact', head: true })
+    .eq('key', key);
 
-// Update a single setting
-export const updateSiteSetting = async (key: string, value: any): Promise<void> => {
+  if (countError) {
+    console.error(`Error checking if setting exists (${key}):`, countError);
+    toast.error('Failed to update setting');
+    return false;
+  }
+
+  let result;
+
+  if (count && count > 0) {
+    // Update existing setting
+    result = await supabase
+      .from('site_settings')
+      .update({ value, updated_at: new Date().toISOString() })
+      .eq('key', key);
+  } else {
+    // Insert new setting
+    result = await supabase
+      .from('site_settings')
+      .insert([{ key, value }]);
+  }
+
+  if (result.error) {
+    console.error(`Error updating site setting (${key}):`, result.error);
+    toast.error('Failed to update setting');
+    return false;
+  }
+
+  toast.success('Setting updated successfully');
+  return true;
+}
+
+// Delete a site setting
+export async function deleteSiteSetting(key: string): Promise<boolean> {
   const { error } = await supabase
     .from('site_settings')
-    .update({ value })
+    .delete()
     .eq('key', key);
 
   if (error) {
-    console.error('Error updating site setting:', error);
-    throw new Error('Failed to update site setting');
-  }
-};
-
-// Upload an image for site settings (like logo, favicon)
-export const uploadImage = async (file: File, path: string): Promise<string | null> => {
-  const { data, error } = await supabase
-    .storage
-    .from('site-assets')
-    .upload(path, file, {
-      cacheControl: '3600',
-      upsert: true
-    });
-
-  if (error) {
-    console.error('Error uploading image:', error);
-    throw new Error('Failed to upload image');
+    console.error(`Error deleting site setting (${key}):`, error);
+    toast.error('Failed to delete setting');
+    return false;
   }
 
-  // Get public URL
-  const { data: urlData } = supabase
-    .storage
-    .from('site-assets')
-    .getPublicUrl(data.path);
-
-  return urlData.publicUrl;
-};
-
-// Get all settings grouped by category
-export const getAllSettingsGrouped = async (): Promise<SettingGroup[]> => {
-  const { data, error } = await supabase
-    .from('site_settings')
-    .select('*');
-
-  if (error) {
-    console.error('Error fetching all settings:', error);
-    throw new Error('Failed to fetch settings');
-  }
-
-  // Transform data to match SiteSetting interface
-  const transformedData = data.map(item => {
-    const rawValue = item.value;
-    let valueObj: Record<string, any> = {};
-    
-    if (rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue)) {
-      valueObj = rawValue as Record<string, any>;
-    }
-    
-    return {
-      id: item.id,
-      key: item.key,
-      value: rawValue,
-      label: safeGet(valueObj, 'label', item.key),
-      description: safeGet(valueObj, 'description', ''),
-      category: (safeGet(valueObj, 'category', 'general')) as SettingCategory,
-      isPublic: Boolean(safeGet(valueObj, 'isPublic', false)),
-      dataType: safeGet(valueObj, 'dataType', 'string'),
-      options: Array.isArray(safeGet(valueObj, 'options')) ? safeGet(valueObj, 'options') : [],
-      defaultValue: safeGet(valueObj, 'defaultValue'),
-      isRequired: Boolean(safeGet(valueObj, 'isRequired', false)),
-      createdAt: item.created_at || new Date().toISOString(),
-      updatedAt: item.updated_at || new Date().toISOString()
-    };
-  });
-
-  // Group settings by category
-  const groupedSettings: Record<string, SiteSetting[]> = {};
-  transformedData.forEach(setting => {
-    if (!groupedSettings[setting.category]) {
-      groupedSettings[setting.category] = [];
-    }
-    groupedSettings[setting.category].push(setting);
-  });
-
-  // Convert to array of SettingGroup
-  return Object.entries(groupedSettings).map(([category, settings]) => ({
-    category: category as SettingCategory,
-    settings
-  }));
-};
-
-// Get booking settings
-export const getBookingSettings = async (): Promise<BookingSetting[]> => {
-  const { data, error } = await supabase
-    .from('booking_settings')
-    .select('*');
-
-  if (error) {
-    console.error('Error fetching booking settings:', error);
-    throw new Error('Failed to fetch booking settings');
-  }
-
-  // Transform data to match BookingSetting interface
-  return data.map(item => {
-    const rawValue = item.value;
-    let valueObj: Record<string, any> = {};
-    
-    if (rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue)) {
-      valueObj = rawValue as Record<string, any>;
-    }
-    
-    return {
-      id: item.id,
-      key: item.key,
-      value: item.value,
-      label: safeGet(valueObj, 'label', item.key),
-      description: item.description || '',
-      category: safeGet(valueObj, 'category', 'general'),
-      isEnabled: Boolean(safeGet(valueObj, 'isEnabled', false)),
-      createdAt: item.created_at || new Date().toISOString(),
-      updatedAt: item.updated_at || new Date().toISOString()
-    };
-  });
-};
-
-// Update booking setting
-export const updateBookingSetting = async (id: string, updates: Partial<BookingSetting>): Promise<void> => {
-  const { error } = await supabase
-    .from('booking_settings')
-    .update(updates)
-    .eq('id', id);
-
-  if (error) {
-    console.error('Error updating booking setting:', error);
-    throw new Error('Failed to update booking setting');
-  }
-};
-
-// Get appearance settings (for theme, colors, etc.)
-export const getAppearanceSettings = async (): Promise<AppearanceSettings> => {
-  const settings = await getSiteSettings();
-  
-  return {
-    theme: settings.theme || 'light',
-    primaryColor: settings.primary_color || '#4f46e5',
-    accentColor: settings.accent_color || '#10b981',
-    logo: settings.logo_url || '/placeholder.svg',
-    favicon: settings.favicon_url || '/favicon.ico',
-    showBranding: settings.show_branding !== false
-  };
-};
-
-// Get general settings
-export const getGeneralSettings = async (): Promise<GeneralSettings> => {
-  const settings = await getSiteSettings();
-  
-  return {
-    siteName: settings.app_name || 'Namibia Service Hub',
-    siteDescription: settings.app_description || 'Find and book services in Namibia',
-    contactEmail: settings.contact_email || 'contact@example.com',
-    supportPhone: settings.support_phone || '',
-    defaultLanguage: settings.default_language || 'en',
-    timeZone: settings.time_zone || 'Africa/Windhoek',
-    currency: settings.currency || 'N$',
-    dateFormat: settings.date_format || 'DD/MM/YYYY',
-    defaultPaginationLimit: settings.pagination_limit ||
-      Number(settings.pagination_limit) || 10
-  };
-};
+  toast.success('Setting deleted successfully');
+  return true;
+}
