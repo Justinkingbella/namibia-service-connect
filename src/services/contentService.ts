@@ -13,6 +13,21 @@ export interface ContentBlock {
   updated_at: string;
 }
 
+// ServiceCategory interface needed for CategoryManagementPage
+export interface ServiceCategory {
+  id: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  icon?: string;
+  image_url?: string;
+  is_active: boolean;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+  subcategories?: Array<{id: string, name: string, slug: string}>;
+}
+
 // Mock data getter function - would be replaced with API call in production
 export const getPageContent = async (pageName: string): Promise<ContentBlock[]> => {
   // This is mock data. In a real implementation, this would be fetched from an API
@@ -163,12 +178,28 @@ export const getSiteSettings = async (): Promise<Record<string, any>> => {
     logo_url: '/logo.png',
     favicon_url: '/favicon.ico',
     currency: 'N$',
-    default_lang: 'en'
+    default_lang: 'en',
+    app_name: 'Namibia Service Hub',
+    copyright: '© 2023 Namibia Service Hub. All rights reserved.',
+    font_family: 'Inter, sans-serif',
+    footer_links: [
+      { label: 'About Us', url: '/about' },
+      { label: 'Contact', url: '/contact' },
+      { label: 'Terms of Service', url: '/terms' },
+      { label: 'Privacy Policy', url: '/privacy' }
+    ]
   };
 };
 
+// Update site setting (mock implementation)
+export const updateSiteSetting = async (key: string, value: any): Promise<boolean> => {
+  // In a real implementation, this would update via an API
+  console.log('Updating site setting:', key, value);
+  return true;
+};
+
 // Get service categories (mock implementation)
-export const getServiceCategories = async (): Promise<any[]> => {
+export const getServiceCategories = async (): Promise<ServiceCategory[]> => {
   // Mock service categories
   return [
     {
@@ -179,6 +210,7 @@ export const getServiceCategories = async (): Promise<any[]> => {
       icon: 'home',
       image_url: 'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?q=80&w=2340&auto=format&fit=crop',
       is_active: true,
+      order_index: 1,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       subcategories: [
@@ -195,6 +227,7 @@ export const getServiceCategories = async (): Promise<any[]> => {
       icon: 'car',
       image_url: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=2340&auto=format&fit=crop',
       is_active: true,
+      order_index: 2,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       subcategories: [
@@ -211,6 +244,7 @@ export const getServiceCategories = async (): Promise<any[]> => {
       icon: 'briefcase',
       image_url: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2340&auto=format&fit=crop',
       is_active: true,
+      order_index: 3,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       subcategories: [
@@ -220,6 +254,112 @@ export const getServiceCategories = async (): Promise<any[]> => {
       ]
     }
   ];
+};
+
+// Create service category (mock implementation)
+export const createServiceCategory = async (categoryData: Partial<ServiceCategory>): Promise<ServiceCategory> => {
+  // In a real implementation, this would create via an API
+  console.log('Creating service category:', categoryData);
+  return {
+    id: 'new-' + Date.now(),
+    name: categoryData.name || 'New Category',
+    slug: categoryData.slug || 'new-category',
+    description: categoryData.description || '',
+    icon: categoryData.icon || '',
+    image_url: categoryData.image_url || '',
+    is_active: categoryData.is_active !== undefined ? categoryData.is_active : true,
+    order_index: categoryData.order_index !== undefined ? categoryData.order_index : 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    subcategories: []
+  };
+};
+
+// Update service category (mock implementation)
+export const updateServiceCategory = async (categoryId: string, categoryData: Partial<ServiceCategory>): Promise<ServiceCategory> => {
+  // In a real implementation, this would update via an API
+  console.log('Updating service category:', categoryId, categoryData);
+  return {
+    id: categoryId,
+    name: categoryData.name || 'Updated Category',
+    slug: categoryData.slug || 'updated-category',
+    description: categoryData.description || '',
+    icon: categoryData.icon || '',
+    image_url: categoryData.image_url || '',
+    is_active: categoryData.is_active !== undefined ? categoryData.is_active : true,
+    order_index: categoryData.order_index !== undefined ? categoryData.order_index : 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    subcategories: []
+  };
+};
+
+// Delete service category (mock implementation)
+export const deleteServiceCategory = async (categoryId: string): Promise<boolean> => {
+  // In a real implementation, this would delete via an API
+  console.log('Deleting service category:', categoryId);
+  return true;
+};
+
+// Get booking settings (mock implementation)
+export const getBookingSettings = async (): Promise<Record<string, any>> => {
+  // Mock booking settings
+  return {
+    booking_fee_percentage: {
+      value: 10,
+      description: 'Platform fee percentage for each booking'
+    },
+    min_booking_amount: {
+      value: 50,
+      description: 'Minimum amount allowed for booking a service'
+    },
+    max_booking_amount: {
+      value: 10000,
+      description: 'Maximum amount allowed for booking a service'
+    },
+    cancellation_window: {
+      value: 24,
+      description: 'Hours before appointment when customer can cancel without penalty'
+    },
+    allowed_payment_methods: {
+      value: ['pay_fast', 'e_wallet', 'bank_transfer', 'cash'],
+      description: 'Accepted payment methods for bookings'
+    },
+    late_cancellation_fee: {
+      value: 15,
+      description: 'Fee percentage charged for late cancellations'
+    },
+    no_show_fee: {
+      value: 50,
+      description: 'Fee percentage charged for customer no-shows'
+    },
+    provider_auto_payout: {
+      value: true,
+      description: 'Whether provider is automatically paid after job completion'
+    },
+    payout_delay_days: {
+      value: 3,
+      description: 'Days to wait before releasing payment to provider'
+    },
+    rating_required: {
+      value: false,
+      description: 'Whether customer must leave rating to mark booking complete'
+    }
+  };
+};
+
+// Update booking setting (mock implementation)
+export const updateBookingSetting = async (key: string, data: { value: any, description?: string }): Promise<boolean> => {
+  // In a real implementation, this would update via an API
+  console.log('Updating booking setting:', key, data);
+  return true;
+};
+
+// Create booking setting (mock implementation)
+export const createBookingSetting = async (data: { key: string, value: any, description?: string }): Promise<boolean> => {
+  // In a real implementation, this would create via an API
+  console.log('Creating booking setting:', data);
+  return true;
 };
 
 // PageSection interface for section-based content
