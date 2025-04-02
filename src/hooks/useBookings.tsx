@@ -40,6 +40,25 @@ interface UseBookingsReturnType {
   updateBookingStatus: (id: string, status: BookingStatus) => Promise<boolean>;
 }
 
+interface ServiceData {
+  id?: string;
+  title?: string;
+  image?: string;
+  provider_id?: string;
+  price?: number;
+}
+
+interface CustomerData {
+  id?: string;
+  first_name?: string;
+  last_name?: string;
+}
+
+interface ProviderData {
+  id?: string;
+  business_name?: string;
+}
+
 export function useBookings(): UseBookingsReturnType {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -121,10 +140,10 @@ export function useBookings(): UseBookingsReturnType {
       
       // Map the data to our Booking interface
       const formattedBookings: Booking[] = data.map(item => {
-        // Safe access to nested properties that might be null
-        const serviceData = item.service || {};
-        const customerData = item.customer || {};
-        const providerData = item.provider || {};
+        // Safely access nested properties
+        const serviceData: ServiceData = item.service || {};
+        const customerData: CustomerData = item.customer || {};
+        const providerData: ProviderData = item.provider || {};
 
         return {
           id: item.id,
@@ -145,12 +164,12 @@ export function useBookings(): UseBookingsReturnType {
           createdAt: item.created_at,
           updatedAt: item.updated_at,
           // Safely access properties with optional chaining and nullish coalescing
-          serviceName: typeof serviceData === 'object' ? (serviceData.title || 'Unknown Service') : 'Unknown Service',
-          serviceImage: typeof serviceData === 'object' ? (serviceData.image || '') : '',
-          providerName: typeof providerData === 'object' ? (providerData.business_name || 'Unknown Provider') : 'Unknown Provider',
-          customerName: typeof customerData === 'object' ? 
-            `${customerData.first_name || ''} ${customerData.last_name || ''}`.trim() || 'Unknown Customer' : 
-            'Unknown Customer'
+          serviceName: serviceData.title || 'Unknown Service',
+          serviceImage: serviceData.image || '',
+          providerName: providerData.business_name || 'Unknown Provider',
+          customerName: customerData.first_name && customerData.last_name 
+            ? `${customerData.first_name} ${customerData.last_name}`.trim() 
+            : 'Unknown Customer'
         };
       });
       

@@ -827,6 +827,7 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteServic
     }
 
     return data.map(fav => {
+      // Set default service object
       const defaultService = {
         id: fav.service_id,
         title: 'Unknown Service',
@@ -840,20 +841,21 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteServic
         reviewCount: 0
       };
 
-      // Fix nullish property access with non-nullish assertions after type checking
+      // Safely handle serviceData with proper type checking
       const serviceData = fav.service && typeof fav.service === 'object' ? fav.service : null;
       
+      // Create the service object with proper null checks and default values
       const service = serviceData ? {
         id: fav.service_id,
-        title: serviceData.title || 'Unknown Service',
-        description: serviceData.description || '',
-        price: serviceData.price || 0,
-        providerId: serviceData.provider_id || '',
-        providerName: serviceData.provider_name || 'Unknown Provider',
-        categoryId: serviceData.category || '',
-        imageUrl: serviceData.image || undefined,
-        rating: serviceData.rating || 0,
-        reviewCount: serviceData.review_count || 0
+        title: typeof serviceData.title === 'string' ? serviceData.title : 'Unknown Service',
+        description: typeof serviceData.description === 'string' ? serviceData.description : '',
+        price: typeof serviceData.price === 'number' ? serviceData.price : 0,
+        providerId: typeof serviceData.provider_id === 'string' ? serviceData.provider_id : '',
+        providerName: typeof serviceData.provider_name === 'string' ? serviceData.provider_name : 'Unknown Provider',
+        categoryId: typeof serviceData.category === 'string' ? serviceData.category : '',
+        imageUrl: typeof serviceData.image === 'string' ? serviceData.image : undefined,
+        rating: typeof serviceData.rating === 'number' ? serviceData.rating : 0,
+        reviewCount: typeof serviceData.review_count === 'number' ? serviceData.review_count : 0
       } : defaultService;
 
       return {
@@ -947,17 +949,17 @@ export function formatFavorites(favorites: any[]) {
     
     const service = serviceData ? {
       id: serviceData.id,
-      title: serviceData.title,
-      description: serviceData.description,
-      price: serviceData.price,
-      location: serviceData.location,
-      image: serviceData.image,
-      category: serviceData.category,
-      isActive: serviceData.is_active,
-      providerId: serviceData.provider_id,
-      pricingModel: serviceData.pricing_model,
-      createdAt: serviceData.created_at,
-      updatedAt: serviceData.updated_at
+      title: serviceData.title || '',
+      description: serviceData.description || '',
+      price: serviceData.price || 0,
+      location: serviceData.location || '',
+      image: serviceData.image || '',
+      category: serviceData.category || '',
+      isActive: serviceData.is_active || false,
+      providerId: serviceData.provider_id || '',
+      pricingModel: serviceData.pricing_model || '',
+      createdAt: serviceData.created_at || '',
+      updatedAt: serviceData.updated_at || ''
     } : null;
 
     return {
@@ -1011,18 +1013,26 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
           };
         }
         
-        // Safely access properties with optional chaining and nullish coalescing
-        const servicesData = fav.services;
+        // Use a typed variable to help TypeScript understand the structure
+        const servicesData: {
+          id?: string;
+          title?: string;
+          description?: string;
+          price?: number;
+          image?: string;
+          category?: string;
+          provider_id?: string;
+        } = fav.services;
         
         return {
           id: fav.id,
-          serviceId: servicesData?.id || fav.service_id || '',
-          title: servicesData?.title || '',
-          description: servicesData?.description || '',
-          price: servicesData?.price || 0,
-          image: servicesData?.image || '',
-          category: servicesData?.category || '',
-          providerId: servicesData?.provider_id || '',
+          serviceId: servicesData.id || fav.service_id || '',
+          title: servicesData.title || '',
+          description: servicesData.description || '',
+          price: servicesData.price || 0,
+          image: servicesData.image || '',
+          category: servicesData.category || '',
+          providerId: servicesData.provider_id || '',
         };
       });
 

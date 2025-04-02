@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 type Table = 'profiles' | 'payment_history' | 'disputes' | 'user_addresses' | 
              'payment_methods' | 'user_2fa' | 'favorite_services' | 
@@ -16,7 +16,7 @@ type RealtimeSubscriptionProps = {
   event?: Event;
   filter?: string;
   filterValue?: any;
-  onDataChange?: (payload: any) => void;
+  onDataChange?: (payload: RealtimePostgresChangesPayload<any>) => void;
 };
 
 /**
@@ -75,14 +75,15 @@ export function useRealtimeData<T>({
     try {
       channel = supabase
         .channel(`table-changes-${table}`)
-        .on('postgres_changes', 
+        .on(
+          'postgres_changes',
           {
             event: event,
             schema: 'public',
             table: table,
             ...(filter && filterValue !== undefined ? { filter: `${filter}=eq.${filterValue}` } : {})
           },
-          (payload) => {
+          (payload: RealtimePostgresChangesPayload<any>) => {
             console.log(`Realtime update received for ${table}:`, payload);
             
             // Handle different events
