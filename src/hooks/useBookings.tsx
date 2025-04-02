@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -5,6 +6,7 @@ import { toast } from 'sonner';
 import { useRealtimeData } from './useRealtimeData';
 
 export type BookingStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'disputed';
+export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
 
 export interface Booking {
   id: string;
@@ -19,7 +21,7 @@ export interface Booking {
   totalAmount: number;
   commission: number;
   paymentMethod: string;
-  paymentStatus: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
+  paymentStatus: PaymentStatus;
   notes: string | null;
   isUrgent: boolean;
   createdAt: Date | string;
@@ -118,31 +120,38 @@ export function useBookings(): UseBookingsReturnType {
       }
       
       // Map the data to our Booking interface
-      const formattedBookings: Booking[] = data.map(item => ({
-        id: item.id,
-        serviceId: item.service_id,
-        customerId: item.customer_id,
-        providerId: item.provider_id,
-        status: item.status as BookingStatus,
-        date: item.date,
-        startTime: item.start_time,
-        endTime: item.end_time,
-        duration: item.duration,
-        totalAmount: item.total_amount,
-        commission: item.commission,
-        paymentMethod: item.payment_method,
-        paymentStatus: item.payment_status,
-        notes: item.notes,
-        isUrgent: item.is_urgent,
-        createdAt: item.created_at,
-        updatedAt: item.updated_at,
-        serviceName: item.service?.title || 'Unknown Service',
-        serviceImage: item.service?.image || '',
-        providerName: item.provider?.business_name || 'Unknown Provider',
-        customerName: item.customer ? 
-          `${item.customer.first_name || ''} ${item.customer.last_name || ''}`.trim() : 
-          'Unknown Customer'
-      }));
+      const formattedBookings: Booking[] = data.map(item => {
+        // Safe access to nested properties that might be null
+        const service = item.service || {};
+        const customer = item.customer || {};
+        const provider = item.provider || {};
+
+        return {
+          id: item.id,
+          serviceId: item.service_id,
+          customerId: item.customer_id,
+          providerId: item.provider_id,
+          status: item.status as BookingStatus,
+          date: item.date,
+          startTime: item.start_time,
+          endTime: item.end_time,
+          duration: item.duration,
+          totalAmount: item.total_amount,
+          commission: item.commission,
+          paymentMethod: item.payment_method,
+          paymentStatus: item.payment_status as PaymentStatus,
+          notes: item.notes,
+          isUrgent: item.is_urgent,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+          serviceName: service.title || 'Unknown Service',
+          serviceImage: service.image || '',
+          providerName: provider.business_name || 'Unknown Provider',
+          customerName: customer ? 
+            `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || 'Unknown Customer' : 
+            'Unknown Customer'
+        };
+      });
       
       setBookings(formattedBookings);
     } catch (err) {
@@ -158,7 +167,7 @@ export function useBookings(): UseBookingsReturnType {
     try {
       const { error } = await supabase
         .from('bookings')
-        .update({ status, updated_at: new Date() })
+        .update({ status, updated_at: new Date().toISOString() })
         .eq('id', id);
 
       if (error) {

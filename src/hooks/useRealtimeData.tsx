@@ -46,14 +46,14 @@ export function useRealtimeData<T>({
         query = query.eq(filter, filterValue);
       }
       
-      const { data, error } = await query;
+      const { data: resultData, error: queryError } = await query;
       
-      if (error) {
-        throw error;
+      if (queryError) {
+        throw queryError;
       }
       
-      setData(data as unknown as T);
-      return data as unknown as T;
+      setData(resultData as unknown as T);
+      return resultData as unknown as T;
     } catch (err) {
       console.error(`Error fetching data from ${table}:`, err);
       setError(err as Error);
@@ -69,7 +69,7 @@ export function useRealtimeData<T>({
 
     // Set up realtime subscription
     const channel = supabase
-      .channel('table-db-changes')
+      .channel(`table-changes-${table}`)
       .on(
         'postgres_changes',
         {

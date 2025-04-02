@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PaymentHistory, Dispute } from '@/types/payments';
@@ -972,7 +971,7 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
       .select(`
         id,
         service_id,
-        service:service_id (
+        services:service_id (
           id,
           title,
           description,
@@ -990,10 +989,10 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
     }
 
     const formattedFavorites = favorites
-      .filter(fav => fav.service !== null) // Filter out any null services
+      .filter(fav => fav.services !== null) // Filter out any null services
       .map((fav) => {
         // Handle the case where service might be null or not an object
-        const service = fav.service && typeof fav.service === 'object' ? fav.service : {};
+        const service = fav.services && typeof fav.services === 'object' ? fav.services : {};
         
         return {
           id: fav.id,

@@ -7,19 +7,19 @@ import ProtectedRoute from './ProtectedRoute';
 
 interface RoleBasedRouteProps {
   children: React.ReactNode;
-  role: UserRole | UserRole[];
+  allowedRoles: UserRole | UserRole[];
 }
 
-const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, role }) => {
+const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles }) => {
   const { user } = useAuth();
   
   // Convert role prop to array for easier checking
-  const allowedRoles = Array.isArray(role) ? role : [role];
+  const rolesToCheck = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
   
   // First ensure the user is authenticated with ProtectedRoute
   return (
     <ProtectedRoute>
-      {user && allowedRoles.includes(user.role) ? (
+      {user && rolesToCheck.includes(user.role) ? (
         // User has the required role, show the component
         <>{children}</>
       ) : (
