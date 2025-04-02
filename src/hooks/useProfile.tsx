@@ -18,64 +18,82 @@ export function useProfile() {
         return;
       }
 
-      setLoading(true);
-      const data = await fetchUserProfile(user.id);
-      setProfile(data);
-      setLoading(false);
+      try {
+        setLoading(true);
+        const data = await fetchUserProfile(user.id);
+        setProfile(data);
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        toast({
+          variant: "destructive",
+          title: "Profile loading failed",
+          description: "There was an error loading your profile."
+        });
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadProfile();
-  }, [user?.id]);
+  }, [user?.id, toast]);
 
   const updateProfile = async (data: Partial<DbUserProfile>) => {
     if (!user?.id || !profile) return false;
 
-    setLoading(true);
-    const updatedProfile = await updateUserProfile(user.id, data);
-    
-    if (updatedProfile) {
-      setProfile(updatedProfile);
+    try {
+      setLoading(true);
+      const updatedProfile = await updateUserProfile(user.id, data);
+      
+      if (updatedProfile) {
+        setProfile(updatedProfile);
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been successfully updated."
+        });
+        return true;
+      } 
+      
+      throw new Error("Failed to update profile");
+    } catch (error) {
+      console.error('Error updating profile:', error);
       toast({
-        title: "Profile updated",
-        description: "Your profile has been successfully updated."
+        variant: "destructive",
+        title: "Update failed",
+        description: "Failed to update your profile. Please try again."
       });
+      return false;
+    } finally {
       setLoading(false);
-      return true;
-    } 
-    
-    toast({
-      variant: "destructive",
-      title: "Update failed",
-      description: "Failed to update your profile. Please try again."
-    });
-    
-    setLoading(false);
-    return false;
+    }
   };
 
   const changePassword = async (currentPassword: string, newPassword: string) => {
     if (!user?.id) return false;
 
-    setLoading(true);
-    const success = await updateUserPassword(newPassword);
-    
-    if (success) {
+    try {
+      setLoading(true);
+      const success = await updateUserPassword(newPassword);
+      
+      if (success) {
+        toast({
+          title: "Password updated",
+          description: "Your password has been successfully changed."
+        });
+        return true;
+      }
+      
+      throw new Error("Failed to change password");
+    } catch (error) {
+      console.error('Error changing password:', error);
       toast({
-        title: "Password updated",
-        description: "Your password has been successfully changed."
+        variant: "destructive",
+        title: "Password change failed",
+        description: "Failed to change your password. Please check your current password and try again."
       });
+      return false;
+    } finally {
       setLoading(false);
-      return true;
     }
-    
-    toast({
-      variant: "destructive",
-      title: "Password change failed",
-      description: "Failed to change your password. Please check your current password and try again."
-    });
-    
-    setLoading(false);
-    return false;
   };
 
   return {

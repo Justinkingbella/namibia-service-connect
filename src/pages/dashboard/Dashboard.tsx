@@ -23,20 +23,33 @@ const Dashboard = () => {
       }
       
       if (mounted) {
-        setIsLoading(true);
-      
-        if (!user) {
-          console.log('No user found, redirecting to sign-in');
+        try {
+          setIsLoading(true);
+        
+          if (!user) {
+            console.log('No user found, redirecting to sign-in');
+            toast({
+              title: "Authentication required",
+              description: "Please sign in to access your dashboard",
+              variant: "destructive"
+            });
+            navigate('/auth/sign-in');
+            return;
+          }
+          
+          console.log('User authenticated:', user.role);
+        } catch (error) {
+          console.error('Dashboard checkAuth error:', error);
           toast({
-            title: "Authentication required",
-            description: "Please sign in to access your dashboard",
+            title: "Error",
+            description: "There was a problem loading your dashboard",
             variant: "destructive"
           });
-          navigate('/auth/sign-in');
-          return;
+        } finally {
+          if (mounted) {
+            setIsLoading(false);
+          }
         }
-        
-        setIsLoading(false);
       }
     };
 

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { DbUserProfile, UserAddress, PaymentMethod, User2FA } from '@/types/auth';
 import { FavoriteService } from '@/types/favorites';
@@ -7,37 +6,47 @@ import { Message } from '@/types/message';
 
 // Fetch user profile
 export const fetchUserProfile = async (userId: string): Promise<DbUserProfile | null> => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
-  if (error) {
-    console.error('Error fetching user profile:', error);
+    if (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+
+    // Cast to DbUserProfile to handle the role type
+    return data as DbUserProfile;
+  } catch (error) {
+    console.error('Unexpected error fetching user profile:', error);
     return null;
   }
-
-  // Cast to DbUserProfile to handle the role type
-  return data as DbUserProfile;
 };
 
 // Update user profile
 export const updateUserProfile = async (userId: string, profile: Partial<DbUserProfile>): Promise<DbUserProfile | null> => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .update(profile)
-    .eq('id', userId)
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(profile)
+      .eq('id', userId)
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Error updating user profile:', error);
+    if (error) {
+      console.error('Error updating user profile:', error);
+      return null;
+    }
+
+    // Cast to DbUserProfile to handle the role type
+    return data as DbUserProfile;
+  } catch (error) {
+    console.error('Unexpected error updating user profile:', error);
     return null;
   }
-
-  // Cast to DbUserProfile to handle the role type
-  return data as DbUserProfile;
 };
 
 // Update user password
