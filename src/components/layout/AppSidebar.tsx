@@ -13,7 +13,13 @@ import {
   UserCircle,
   Heart,
   MessageSquare,
-  HelpCircle
+  HelpCircle,
+  Wallet,
+  DollarSign,
+  Receipt,
+  AlertTriangle,
+  LineChart,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -62,15 +68,22 @@ const AppSidebar = () => {
       ...commonLinks,
       { icon: Users, label: 'Users', path: '/dashboard/users' },
       { icon: Clock, label: 'Verifications', path: '/dashboard/admin/wallet-verification' },
+      { icon: AlertTriangle, label: 'Disputes', path: '/dashboard/admin/disputes' },
       { icon: BarChart3, label: 'Analytics', path: '/dashboard/admin/analytics' },
+      { icon: Receipt, label: 'Subscriptions', path: '/dashboard/admin/subscriptions' },
+      { icon: FileText, label: 'Content Editor', path: '/dashboard/admin/content-editor' },
+      { icon: Settings, label: 'Site Settings', path: '/dashboard/settings' },
       { icon: UserCircle, label: 'Profile', path: '/dashboard/admin/profile' },
-      { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
     ];
     
     const providerLinks = [
       ...commonLinks,
       { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
-      { icon: CreditCard, label: 'Payments', path: '/dashboard/provider/transactions' },
+      { icon: DollarSign, label: 'Transactions', path: '/dashboard/provider/transactions' },
+      { icon: LineChart, label: 'Revenue Reports', path: '/dashboard/provider/reports' },
+      { icon: Receipt, label: 'Subscription', path: '/dashboard/provider/subscription' },
+      { icon: Wallet, label: 'Wallet Verification', path: '/dashboard/provider/wallet-verification' },
+      { icon: CreditCard, label: 'Payment Details', path: '/dashboard/provider/payment-details' },
       { icon: UserCircle, label: 'Profile', path: '/dashboard/provider/profile' },
     ];
     
@@ -78,7 +91,8 @@ const AppSidebar = () => {
       ...commonLinks,
       { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
       { icon: Heart, label: 'Favorites', path: '/dashboard/customer/favorites' },
-      { icon: CreditCard, label: 'Payments', path: '/dashboard/customer/payment-history' },
+      { icon: CreditCard, label: 'Payment History', path: '/dashboard/customer/payment-history' },
+      { icon: AlertTriangle, label: 'Disputes', path: '/dashboard/customer/disputes' },
       { icon: UserCircle, label: 'Profile', path: '/dashboard/profile' },
     ];
     
