@@ -32,7 +32,7 @@ const AdminProfilePage = () => {
         
         if (user.role === 'provider') {
           navigate('/dashboard/provider/profile');
-        } else {
+        } else if (user.role === 'customer') {
           navigate('/dashboard/profile');
         }
       } else if (!user) {

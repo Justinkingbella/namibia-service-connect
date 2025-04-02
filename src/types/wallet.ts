@@ -1,4 +1,3 @@
-
 export type VerificationStatus = 'pending' | 'approved' | 'rejected' | 'expired';
 export type WalletProvider = 'eWallet' | 'BlueWallet' | 'PayToday' | 'DOP' | 'EasyWallet' | 'OtherWallet';
 export type UserType = 'customer' | 'provider';
@@ -80,4 +79,77 @@ export interface WalletProviderSettings {
   apiEndpoint?: string;
   apiKey?: string;
   webhookUrl?: string;
+}
+
+export interface WalletVerificationDashboard {
+  stats: {
+    pending: number;
+    approved: number;
+    rejected: number;
+    total: number;
+    totalAmount: number;
+    pendingAmount: number;
+  };
+  recentVerifications: WalletVerificationRequest[];
+  processingTime: {
+    average: number;
+    min: number;
+    max: number;
+  };
+  byProvider: {
+    provider: WalletProvider;
+    count: number;
+    amount: number;
+  }[];
+  byUserType: {
+    userType: UserType;
+    count: number;
+    amount: number;
+  }[];
+}
+
+export interface WalletVerificationSummary {
+  totalVerifications: number;
+  pendingVerifications: number;
+  approvedVerifications: number;
+  rejectedVerifications: number;
+  totalAmount: number;
+  pendingAmount: number;
+  averageProcessingTime: number;
+  recentVerifications: WalletVerificationRequest[];
+}
+
+export interface VerificationAction {
+  id: string;
+  verificationId: string;
+  action: 'approve' | 'reject' | 'request_info' | 'resubmit';
+  performedBy: string;
+  performedByName: string;
+  performedByRole: string;
+  reason?: string;
+  createdAt: string;
+  additionalData?: Record<string, any>;
+}
+
+export interface WalletVerificationReport {
+  period: 'daily' | 'weekly' | 'monthly';
+  startDate: string;
+  endDate: string;
+  totalVerifications: number;
+  approvedVerifications: number;
+  rejectedVerifications: number;
+  totalAmount: number;
+  byProvider: {
+    provider: WalletProvider;
+    count: number;
+    amount: number;
+    percentageOfTotal: number;
+  }[];
+  byUserType: {
+    userType: UserType;
+    count: number;
+    amount: number;
+    percentageOfTotal: number;
+  }[];
+  averageProcessingTime: number;
 }
