@@ -52,9 +52,8 @@ export function useRealtimeData<T>({
         throw queryError;
       }
       
-      // Use type assertion without chained unknown
-      setData(resultData as T);
-      return resultData as T;
+      setData(resultData as unknown as T);
+      return resultData as unknown as T;
     } catch (err) {
       console.error(`Error fetching data from ${table}:`, err);
       setError(err as Error);
@@ -69,7 +68,6 @@ export function useRealtimeData<T>({
     fetchData();
 
     // Set up realtime subscription
-    // Fix the channel subscription by using the correct syntax for Supabase's realtime API
     const channel = supabase
       .channel(`table-changes-${table}`)
       .on(

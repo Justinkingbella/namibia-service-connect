@@ -144,11 +144,11 @@ export function useBookings(): UseBookingsReturnType {
           isUrgent: item.is_urgent,
           createdAt: item.created_at,
           updatedAt: item.updated_at,
-          // Handle possibly undefined properties with safe access
-          serviceName: typeof service === 'object' ? (service.title || 'Unknown Service') : 'Unknown Service',
-          serviceImage: typeof service === 'object' ? service.image || '' : '',
-          providerName: typeof provider === 'object' ? (provider.business_name || 'Unknown Provider') : 'Unknown Provider',
-          customerName: typeof customer === 'object' ? 
+          // Safely access properties with || to provide fallbacks
+          serviceName: service && typeof service === 'object' ? (service.title || 'Unknown Service') : 'Unknown Service',
+          serviceImage: service && typeof service === 'object' ? (service.image || '') : '',
+          providerName: provider && typeof provider === 'object' ? (provider.business_name || 'Unknown Provider') : 'Unknown Provider',
+          customerName: customer && typeof customer === 'object' ? 
             `${customer.first_name || ''} ${customer.last_name || ''}`.trim() || 'Unknown Customer' : 
             'Unknown Customer'
         };

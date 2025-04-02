@@ -871,6 +871,73 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteServic
   }
 }
 
+export async function addFavorite(userId: string, serviceId: string): Promise<boolean> {
+  try {
+    // Check if the favorite already exists
+    const { data: existing, error: checkError } = await supabase
+      .from('favorite_services')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('service_id', serviceId)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('Error checking existing favorite:', checkError);
+      toast.error('Failed to add to favorites');
+      return false;
+    }
+
+    // If already favorited, return success
+    if (existing) {
+      return true;
+    }
+
+    // Add the favorite
+    const { error } = await supabase
+      .from('favorite_services')
+      .insert([{
+        user_id: userId,
+        service_id: serviceId
+      }]);
+
+    if (error) {
+      console.error('Error adding favorite:', error);
+      toast.error('Failed to add to favorites');
+      return false;
+    }
+
+    toast.success('Added to favorites');
+    return true;
+  } catch (error) {
+    console.error('Error in addFavorite:', error);
+    toast.error('Failed to add to favorites');
+    return false;
+  }
+}
+
+export async function removeFavorite(userId: string, serviceId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('favorite_services')
+      .delete()
+      .eq('user_id', userId)
+      .eq('service_id', serviceId);
+
+    if (error) {
+      console.error('Error removing favorite:', error);
+      toast.error('Failed to remove from favorites');
+      return false;
+    }
+
+    toast.success('Removed from favorites');
+    return true;
+  } catch (error) {
+    console.error('Error in removeFavorite:', error);
+    toast.error('Failed to remove from favorites');
+    return false;
+  }
+}
+
 export function formatFavorites(favorites: any[]) {
   if (!favorites || !Array.isArray(favorites)) return [];
   
