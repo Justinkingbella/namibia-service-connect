@@ -147,3 +147,15 @@ export async function removeFavorite(userId: string, serviceId: string): Promise
   
   return favorites.length !== updatedFavorites.length;
 }
+
+// Add the updateUserPassword function
+export async function updateUserPassword(newPassword: string): Promise<boolean> {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Mock successful password update
+  console.log('Password updated to:', newPassword);
+  
+  // Return success
+  return true;
+}
