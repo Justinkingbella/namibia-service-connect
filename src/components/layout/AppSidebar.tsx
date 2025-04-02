@@ -20,7 +20,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
   Sidebar, 
   SidebarContent,
-  SidebarRail,
   SidebarHeader,
   SidebarTrigger
 } from '@/components/ui/sidebar';
@@ -58,7 +57,6 @@ const AppSidebar = () => {
       { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
       { icon: CreditCard, label: 'Payments', path: '/dashboard/provider/transactions' },
       { icon: UserCircle, label: 'Profile', path: '/dashboard/provider/profile' },
-      { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
     ];
     
     const customerLinks = [
@@ -67,7 +65,6 @@ const AppSidebar = () => {
       { icon: Heart, label: 'Favorites', path: '/dashboard/customer/favorites' },
       { icon: CreditCard, label: 'Payments', path: '/dashboard/customer/payment-history' },
       { icon: UserCircle, label: 'Profile', path: '/dashboard/profile' },
-      { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
     ];
     
     if (user?.role === 'admin') return adminLinks;
@@ -76,7 +73,7 @@ const AppSidebar = () => {
   };
 
   return (
-    <Sidebar className="border-r">
+    <Sidebar className="border-r h-[calc(100vh-60px)] z-20 mt-[60px]">
       <SidebarHeader className="h-14 flex items-center px-4">
         <SidebarTrigger className="h-8 w-8 p-0" />
         <span className="ml-2 text-xl font-semibold">Menu</span>

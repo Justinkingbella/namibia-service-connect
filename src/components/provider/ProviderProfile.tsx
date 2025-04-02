@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -86,13 +87,39 @@ const ProviderProfile: React.FC = () => {
     setPersonalData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleProviderInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setProviderData(prev => prev ? { ...prev, [name]: value } : { [name]: value });
+  };
+
   const handleAvatarChange = async (url: string | null) => {
     if (!profile?.id) return;
     
     try {
       await updateProfile({ avatar_url: url });
+      // Also update provider avatar if it exists
+      if (providerData) {
+        const { error } = await supabase
+          .from('service_providers')
+          .update({ avatar_url: url })
+          .eq('id', profile.id);
+          
+        if (error) throw error;
+        
+        setProviderData(prev => prev ? { ...prev, avatar_url: url } : { avatar_url: url });
+      }
+      
+      toast({
+        title: "Avatar updated",
+        description: "Your profile picture has been updated successfully."
+      });
     } catch (error) {
       console.error('Error updating avatar:', error);
+      toast({
+        variant: "destructive",
+        title: "Update failed",
+        description: "There was an error updating your avatar."
+      });
     }
   };
 
@@ -104,7 +131,27 @@ const ProviderProfile: React.FC = () => {
     setIsSaving(true);
     
     try {
+      // Update profile data
       await updateProfile(personalData);
+      
+      // Update provider data if needed
+      if (providerData && profile?.id) {
+        const { error } = await supabase
+          .from('service_providers')
+          .update({
+            business_name: providerData.business_name,
+            business_description: providerData.business_description,
+            email: providerData.email,
+            phone_number: providerData.phone_number,
+            address: providerData.address,
+            city: providerData.city,
+            country: providerData.country,
+            website: providerData.website
+          })
+          .eq('id', profile.id);
+          
+        if (error) throw error;
+      }
       
       toast({
         title: "Profile updated",
@@ -121,6 +168,31 @@ const ProviderProfile: React.FC = () => {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handlePasswordChange = async (currentPassword: string, newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ 
+        password: newPassword 
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Password updated",
+        description: "Your password has been changed successfully."
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error changing password:', error);
+      toast({
+        variant: "destructive",
+        title: "Password update failed",
+        description: "There was an error changing your password."
+      });
+      return false;
     }
   };
 
@@ -214,6 +286,55 @@ const ProviderProfile: React.FC = () => {
                   </div>
                 </div>
               </div>
+              
+              {providerData && (
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Business Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Business Name</label>
+                      <Input 
+                        name="business_name"
+                        value={providerData.business_name || ''}
+                        onChange={handleProviderInputChange}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Business Email</label>
+                      <Input 
+                        name="email"
+                        value={providerData.email || ''}
+                        onChange={handleProviderInputChange}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Business Phone</label>
+                      <Input 
+                        name="phone_number"
+                        value={providerData.phone_number || ''}
+                        onChange={handleProviderInputChange}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Website</label>
+                      <Input 
+                        name="website"
+                        value={providerData.website || ''}
+                        onChange={handleProviderInputChange}
+                      />
+                    </div>
+                    <div className="space-y-2 col-span-2">
+                      <label className="text-sm font-medium">Business Description</label>
+                      <Textarea 
+                        name="business_description"
+                        value={providerData.business_description || ''}
+                        onChange={handleProviderInputChange}
+                        rows={4}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="flex justify-end space-x-2 pt-4">
                 <Button 
@@ -379,7 +500,22 @@ const ProviderProfile: React.FC = () => {
                   <p className="text-sm text-muted-foreground">Update your account password</p>
                 </div>
               </div>
-              <Button variant="outline" size="sm">Change Password</Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  // Show a password change modal or navigate to a password change page
+                  const currentPassword = prompt("Enter your current password:");
+                  if (currentPassword) {
+                    const newPassword = prompt("Enter your new password:");
+                    if (newPassword) {
+                      handlePasswordChange(currentPassword, newPassword);
+                    }
+                  }
+                }}
+              >
+                Change Password
+              </Button>
             </div>
           </div>
         </CardContent>

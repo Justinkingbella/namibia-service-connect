@@ -1,340 +1,99 @@
 
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { SiteProvider } from './contexts/SiteContext';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import Index from './pages/Index';
-import About from './pages/About';
-import Contact from './pages/Contact';
-import Services from './pages/Services';
-import HowItWorks from './pages/HowItWorks';
-import SignIn from './pages/auth/SignIn';
-import SignUp from './pages/auth/SignUp';
-import CreateAdmin from './pages/auth/CreateAdmin';
-import Dashboard from './pages/dashboard/Dashboard';
-import CustomerDashboard from './pages/dashboard/CustomerDashboard';
-import ProviderDashboard from './pages/dashboard/ProviderDashboard';
-import AdminDashboard from './pages/dashboard/AdminDashboard';
-import BookingsPage from './pages/dashboard/bookings/BookingsPage';
-import BookingDetail from './pages/dashboard/bookings/BookingDetail';
-import MessagesPage from './pages/dashboard/messages/MessagesPage';
-import ServicesPage from './pages/dashboard/services/ServicesPage';
-import ServiceDetail from './pages/dashboard/services/ServiceDetail';
-import CreateServicePage from './pages/dashboard/services/CreateServicePage';
-import PaymentHistoryPage from './pages/dashboard/customer/PaymentHistoryPage';
-import FavoritesPage from './pages/dashboard/customer/FavoritesPage';
-import ProfilePage from './pages/dashboard/customer/ProfilePage';
-import DisputesPage from './pages/dashboard/customer/DisputesPage';
-import SettingsPage from './pages/dashboard/settings/SettingsPage';
-import ProviderProfilePage from './pages/dashboard/provider/ProviderProfilePage';
-import RevenueReportsPage from './pages/dashboard/provider/RevenueReportsPage';
-import SubscriptionPageProvider from './pages/dashboard/provider/SubscriptionPageProvider';
-import TransactionsPage from './pages/dashboard/provider/TransactionsPage';
-import ProviderDisputesPage from './pages/dashboard/provider/DisputesPage';
-import PaymentDetailsPage from './pages/dashboard/provider/PaymentDetailsPage';
-import WalletVerificationPage from './pages/dashboard/provider/WalletVerificationPage';
-import WalletVerificationsPage from './pages/dashboard/customer/WalletVerificationsPage';
-import AdminProfilePage from './pages/dashboard/admin/AdminProfilePage';
-import PlatformAnalyticsPage from './pages/dashboard/admin/PlatformAnalyticsPage';
-import PlatformControlsPage from './pages/dashboard/admin/PlatformControlsPage';
-import ProviderVerificationPage from './pages/dashboard/admin/ProviderVerificationPage';
-import AdminWalletVerificationPage from './pages/dashboard/admin/WalletVerificationPage';
-import SubscriptionManagementPage from './pages/dashboard/admin/SubscriptionManagementPage';
-import SiteSettingsPage from './pages/dashboard/admin/SiteSettingsPage';
-import CategoryManagementPage from './pages/dashboard/admin/CategoryManagementPage';
-import BookingSettingsPage from './pages/dashboard/admin/BookingSettingsPage';
-import NotFound from './pages/NotFound';
-import './App.css';
 import { Toaster } from './components/ui/toaster';
+import DashboardPage from './pages/dashboard/DashboardPage';
+import ProfilePage from './pages/dashboard/ProfilePage';
+import ServicesPage from './pages/dashboard/services/ServicesPage';
+import ServiceDetailPage from './pages/dashboard/services/ServiceDetailPage';
+import BookingsPage from './pages/dashboard/bookings/BookingsPage';
+import BookingDetailPage from './pages/dashboard/bookings/BookingDetailPage';
+import FavoritesPage from './pages/dashboard/customer/FavoritesPage';
+import PaymentHistoryPage from './pages/dashboard/customer/PaymentHistoryPage';
+import ProviderTransactionsPage from './pages/dashboard/provider/TransactionsPage';
+import ProviderProfilePage from './pages/dashboard/provider/ProviderProfilePage';
+import UsersPage from './pages/dashboard/admin/UsersPage';
+import AnalyticsPage from './pages/dashboard/admin/AnalyticsPage';
+import WalletVerificationPage from './pages/dashboard/admin/WalletVerificationPage';
+import SiteSettingsPage from './pages/dashboard/admin/SiteSettingsPage';
+import AdminProfilePage from './pages/dashboard/admin/AdminProfilePage';
+import HomePage from './pages/HomePage';
+import SignInPage from './pages/auth/SignInPage';
+import SignUpPage from './pages/auth/SignUpPage';
+import ServicesListPage from './pages/ServicesListPage';
+import ServiceDetailsPage from './pages/ServiceDetailsPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
+import HowItWorksPage from './pages/HowItWorksPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import NotFoundPage from './pages/NotFoundPage';
+import MessagesPage from './pages/dashboard/messages/MessagesPage';
+import SettingsPage from './pages/dashboard/SettingsPage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import RoleBasedRoute from './components/auth/RoleBasedRoute';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
+import FAQPage from './pages/FAQPage';
+import ContentEditorPage from './pages/dashboard/admin/ContentEditorPage';
 
 function App() {
   return (
-    <SiteProvider>
+    <Router>
       <AuthProvider>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Index />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/how-it-works" element={<HowItWorks />} />
+        <SiteProvider>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/auth/sign-in" element={<SignInPage />} />
+            <Route path="/auth/sign-up" element={<SignUpPage />} />
+            <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/services" element={<ServicesListPage />} />
+            <Route path="/services/:id" element={<ServiceDetailsPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/how-it-works" element={<HowItWorksPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            
+            {/* Dashboard Routes - Protected */}
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+            <Route path="/dashboard/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/dashboard/services" element={<ProtectedRoute><ServicesPage /></ProtectedRoute>} />
+            <Route path="/dashboard/services/:id" element={<ProtectedRoute><ServiceDetailPage /></ProtectedRoute>} />
+            <Route path="/dashboard/bookings" element={<ProtectedRoute><BookingsPage /></ProtectedRoute>} />
+            <Route path="/dashboard/bookings/:id" element={<ProtectedRoute><BookingDetailPage /></ProtectedRoute>} />
+            <Route path="/dashboard/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+            
+            {/* Admin Routes */}
+            <Route path="/dashboard/admin/profile" element={<RoleBasedRoute role="admin"><AdminProfilePage /></RoleBasedRoute>} />
+            <Route path="/dashboard/users" element={<RoleBasedRoute role="admin"><UsersPage /></RoleBasedRoute>} />
+            <Route path="/dashboard/admin/analytics" element={<RoleBasedRoute role="admin"><AnalyticsPage /></RoleBasedRoute>} />
+            <Route path="/dashboard/admin/wallet-verification" element={<RoleBasedRoute role="admin"><WalletVerificationPage /></RoleBasedRoute>} />
+            <Route path="/dashboard/settings" element={<RoleBasedRoute role="admin"><SiteSettingsPage /></RoleBasedRoute>} />
+            <Route path="/dashboard/admin/content-editor" element={<RoleBasedRoute role="admin"><ContentEditorPage /></RoleBasedRoute>} />
+            
+            {/* Provider Routes */}
+            <Route path="/dashboard/provider/profile" element={<RoleBasedRoute role="provider"><ProviderProfilePage /></RoleBasedRoute>} />
+            <Route path="/dashboard/provider/transactions" element={<RoleBasedRoute role="provider"><ProviderTransactionsPage /></RoleBasedRoute>} />
+            
+            {/* Customer Routes */}
+            <Route path="/dashboard/customer/favorites" element={<RoleBasedRoute role="customer"><FavoritesPage /></RoleBasedRoute>} />
+            <Route path="/dashboard/customer/payment-history" element={<RoleBasedRoute role="customer"><PaymentHistoryPage /></RoleBasedRoute>} />
+            
+            {/* Catch all */}
+            <Route path="/404" element={<NotFoundPage />} />
+            <Route path="*" element={<Navigate to="/404" />} />
+          </Routes>
           
-          {/* Auth Routes */}
-          <Route path="/auth/sign-in" element={<SignIn />} />
-          <Route path="/auth/sign-up" element={<SignUp />} />
-          <Route path="/auth/create-admin" element={<CreateAdmin />} />
-          
-          {/* Dashboard Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          
-          {/* Customer Dashboard Routes */}
-          <Route
-            path="/dashboard/customer"
-            element={
-              <ProtectedRoute allowedRoles={['customer']}>
-                <CustomerDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/profile"
-            element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/bookings"
-            element={
-              <ProtectedRoute>
-                <BookingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/bookings/:id"
-            element={
-              <ProtectedRoute>
-                <BookingDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/messages"
-            element={
-              <ProtectedRoute>
-                <MessagesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/payment-history"
-            element={
-              <ProtectedRoute allowedRoles={['customer']}>
-                <PaymentHistoryPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/favorites"
-            element={
-              <ProtectedRoute allowedRoles={['customer']}>
-                <FavoritesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/disputes"
-            element={
-              <ProtectedRoute>
-                <DisputesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/settings"
-            element={
-              <ProtectedRoute>
-                <SettingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/wallet-verifications"
-            element={
-              <ProtectedRoute allowedRoles={['customer']}>
-                <WalletVerificationsPage />
-              </ProtectedRoute>
-            }
-          />
-          
-          {/* Provider Dashboard Routes */}
-          <Route
-            path="/dashboard/provider"
-            element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <ProviderDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/provider/profile"
-            element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <ProviderProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/services"
-            element={
-              <ProtectedRoute allowedRoles={['provider', 'admin']}>
-                <ServicesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/services/:id"
-            element={
-              <ProtectedRoute allowedRoles={['provider', 'admin']}>
-                <ServiceDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/services/create"
-            element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <CreateServicePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/revenue"
-            element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <RevenueReportsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/subscription"
-            element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <SubscriptionPageProvider />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/transactions"
-            element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <TransactionsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/provider/disputes"
-            element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <ProviderDisputesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/payment-details"
-            element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <PaymentDetailsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/wallet-verification"
-            element={
-              <ProtectedRoute allowedRoles={['provider']}>
-                <WalletVerificationPage />
-              </ProtectedRoute>
-            }
-          />
-          
-          {/* Admin Dashboard Routes */}
-          <Route
-            path="/dashboard/admin"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/admin/profile"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/admin/analytics"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <PlatformAnalyticsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/admin/controls"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <PlatformControlsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/admin/provider-verification"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <ProviderVerificationPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/admin/wallet-verification"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminWalletVerificationPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/admin/subscriptions"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <SubscriptionManagementPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/admin/site-settings"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <SiteSettingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/admin/categories"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <CategoryManagementPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/admin/booking-settings"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <BookingSettingsPage />
-              </ProtectedRoute>
-            }
-          />
-          
-          {/* 404 Route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Toaster />
+          <Toaster />
+        </SiteProvider>
       </AuthProvider>
-    </SiteProvider>
+    </Router>
   );
 }
 

@@ -7,7 +7,6 @@ import Container from '@/components/common/Container';
 import { 
   Bell, 
   Search,
-  MessageSquare,
   ChevronDown,
   LogOut,
   User,
@@ -21,14 +20,12 @@ import {
   CreditCard,
   Package,
   PieChart,
-  Users,
-  Briefcase,
-  Clock
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { SidebarProvider, SidebarRail, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import AppSidebar from './AppSidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -73,8 +70,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         { icon: Home, label: 'Dashboard', path: '/dashboard' },
         { icon: Users, label: 'Users', path: '/dashboard/users' },
         { icon: Package, label: 'Services', path: '/dashboard/services' },
-        { icon: Clock, label: 'Verifications', path: '/dashboard/admin/wallet-verification' },
         { icon: PieChart, label: 'Analytics', path: '/dashboard/admin/analytics' },
+        { icon: User, label: 'Profile', path: '/dashboard/admin/profile' },
       ];
     }
     
@@ -93,7 +90,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       { icon: Package, label: 'Services', path: '/dashboard/services' },
       { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
       { icon: Heart, label: 'Favorites', path: '/dashboard/customer/favorites' },
-      { icon: CreditCard, label: 'Payments', path: '/dashboard/customer/payment-history' },
+      { icon: User, label: 'Profile', path: '/dashboard/profile' },
     ];
   };
 
@@ -104,13 +101,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       <div className="min-h-screen bg-gray-50 flex flex-col w-full">
         {/* Fixed Header */}
         <header className={cn(
-          "bg-white border-b sticky top-0 z-30 transition-all duration-300",
+          "bg-white border-b sticky top-0 z-40 transition-all duration-300 h-[60px]",
           isScrolled ? "shadow-md" : ""
         )}>
-          <Container className="py-3">
-            <div className="flex items-center justify-between">
+          <Container className="h-full">
+            <div className="flex items-center justify-between h-full">
               <div className="flex items-center gap-3">
-                <SidebarTrigger className="p-2 text-gray-600 hover:text-primary rounded-full hover:bg-gray-100 hidden md:flex" />
                 <button 
                   className="p-2 text-gray-600 hover:text-primary rounded-full hover:bg-gray-100 md:hidden"
                   onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -147,20 +143,26 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   >
                     <Avatar className="h-8 w-8 bg-primary/10 text-primary">
-                      {user?.avatar ? (
-                        <img src={user.avatar} alt="Profile" className="h-full w-full object-cover" />
+                      {user?.avatar_url ? (
+                        <img src={user.avatar_url} alt="Profile" className="h-full w-full object-cover" />
                       ) : (
-                        <span className="text-sm font-medium">{user?.name?.charAt(0) || 'U'}</span>
+                        <span className="text-sm font-medium">
+                          {user?.first_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                        </span>
                       )}
                     </Avatar>
-                    <span className="hidden sm:block text-sm font-medium">{user?.name}</span>
+                    <span className="hidden sm:block text-sm font-medium">
+                      {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.email}
+                    </span>
                     <ChevronDown size={16} className="text-gray-400" />
                   </button>
                   
                   {isUserMenuOpen && (
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg py-1 z-50 border animate-fade-in">
                       <div className="px-4 py-3 border-b">
-                        <p className="text-sm font-medium">{user?.name}</p>
+                        <p className="text-sm font-medium">
+                          {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : ''}
+                        </p>
                         <p className="text-xs text-gray-500">{user?.email}</p>
                       </div>
                       <div className="py-1">
@@ -180,16 +182,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                           <User size={16} />
                           Your Profile
                         </button>
-                        <button 
-                          onClick={() => {
-                            navigate('/dashboard/settings');
-                            setIsUserMenuOpen(false);
-                          }}
-                          className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          <Settings size={16} />
-                          Settings
-                        </button>
+                        {user?.role === 'admin' && (
+                          <button 
+                            onClick={() => {
+                              navigate('/dashboard/settings');
+                              setIsUserMenuOpen(false);
+                            }}
+                            className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            <Settings size={16} />
+                            Settings
+                          </button>
+                        )}
                         <button 
                           onClick={() => {
                             navigate('/help');
@@ -220,7 +224,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
         {/* Mobile menu */}
         {showMobileMenu && (
-          <div className="fixed inset-0 top-[60px] bg-white z-20 md:hidden animate-fade-in">
+          <div className="fixed inset-0 top-[60px] bg-white z-30 md:hidden animate-fade-in">
             <ScrollArea className="h-[calc(100vh-60px)]">
               <div className="p-4 space-y-4">
                 <div className="relative">
@@ -265,7 +269,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           
           {/* Main content */}
           <main className="flex-1 overflow-x-hidden p-4 md:p-8 pb-20 md:pb-8">
-            <ScrollArea className="h-[calc(100vh-145px)] md:h-auto">
+            <ScrollArea className="h-[calc(100vh-160px)] md:h-[calc(100vh-130px)]">
               <Container>
                 {children}
               </Container>
@@ -276,7 +280,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         {/* Modern Mobile bottom navigation */}
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-30 shadow-lg">
           <div className="flex justify-between items-center px-1">
-            {mobileNavItems.map((item, index) => (
+            {mobileNavItems.slice(0, 5).map((item, index) => (
               <Link
                 key={item.label}
                 to={item.path}
