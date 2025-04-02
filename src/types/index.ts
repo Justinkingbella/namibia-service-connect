@@ -1,5 +1,4 @@
 
-
 // Export base types but exclude those with name conflicts
 export * from './subscription';
 
@@ -17,8 +16,19 @@ export type {
 // Export payment types
 export * from './payments';
 
-// Re-export Auth but exclude SubscriptionTier to avoid name conflicts
-export type { User, UserRole, ProviderVerificationStatus, Customer, Provider, Admin, AuthContextType } from './auth';
+// Re-export Auth types
+export type { 
+  DbUserProfile, 
+  DbProviderProfile,
+  UserRole, 
+  ProviderVerificationStatus, 
+  User,
+  Customer,
+  Provider,
+  Admin,
+  AuthContextType,
+  SubscriptionTier
+} from './auth';
 
 // Explicitly re-export types with different names to resolve ambiguities
 export type { PaymentMethod as ServicePaymentMethod } from './service';
@@ -40,4 +50,3 @@ export interface IResponse<T> {
   error?: string;
   message?: string;
 }
-

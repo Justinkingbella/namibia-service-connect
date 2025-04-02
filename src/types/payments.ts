@@ -1,23 +1,51 @@
 
-import { PaymentMethod } from './service';
-import { Dispute as BaseDispute } from './booking';
-
-export interface PaymentHistory {
+export interface PaymentTransaction {
   id: string;
   userId: string;
   bookingId?: string;
   amount: number;
-  status: 'completed' | 'pending' | 'failed' | 'refunded';
-  paymentMethod: PaymentMethod;
+  fee: number;
+  netAmount: number;
+  currency: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
+  method: string;
+  gateway: string;
+  reference: string;
   description: string;
-  transactionId?: string;
+  metadata?: Record<string, any>;
   createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface Dispute extends BaseDispute {
-  subject?: string;
-  priority?: 'low' | 'medium' | 'high';
-  adminNotes?: string;
-  adminAssignedTo?: string;
-  refundAmount?: number;
+export interface ProviderEarnings {
+  id: string;
+  providerId: string;
+  periodStart: Date;
+  periodEnd: Date;
+  totalEarnings: number;
+  commissionPaid: number;
+  netEarnings: number;
+  totalBookings: number;
+  payoutStatus: 'pending' | 'processing' | 'completed';
+  payoutDate?: Date;
+  payoutReference?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ProviderPayout {
+  id: string;
+  providerId: string;
+  amount: number;
+  fee: number;
+  netAmount: number;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  paymentMethod: string;
+  referenceNumber?: string;
+  bankAccountDetails?: Record<string, any>;
+  mobilePaymentDetails?: Record<string, any>;
+  processedAt?: Date;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }

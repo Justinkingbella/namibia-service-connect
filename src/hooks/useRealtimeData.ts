@@ -1,123 +1,108 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSupabase } from '@/contexts/SupabaseContext';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { useToast } from '@/hooks/use-toast';
 
-// Define the possible event types for Postgres changes
-type PostgresChangeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+type RealtimeTable = 
+  | 'profiles'
+  | 'conversations'
+  | 'bookings'
+  | 'services'
+  | 'user_subscriptions'
+  | 'service_providers'
+  | 'reviews'
+  | 'messages';
 
-interface UseRealtimeDataOptions<T> {
-  table: string;
-  filter?: Record<string, any>;
-  order?: { column: string; ascending?: boolean };
-  limit?: number;
-  onDataChange?: (payload: {
-    eventType: PostgresChangeEvent;
-    new: T;
-    old: T | null;
-  }) => void;
+interface RealtimeOptions {
+  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+  filter?: string;
 }
 
-export function useRealtimeData<T>({
-  table,
-  filter,
-  order,
-  limit,
-  onDataChange,
-}: UseRealtimeDataOptions<T>) {
+export function useRealtimeData<T>(
+  table: RealtimeTable, 
+  options: RealtimeOptions = { event: '*' },
+  callback?: (payload: T) => void
+) {
   const [data, setData] = useState<T[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-  const { isSubscribed, enableRealtime } = useSupabase();
+  const { toast } = useToast();
 
-  // Function to fetch data
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      
-      // Build the query - use the type assertion to handle the table name
-      let query = supabase.from(table).select('*') as any;
-      
-      // Apply filters if provided
-      if (filter) {
-        Object.entries(filter).forEach(([key, value]) => {
-          if (value !== undefined) {
-            query = query.eq(key, value);
-          }
-        });
-      }
-      
-      // Apply ordering if provided
-      if (order) {
-        query = query.order(order.column, { ascending: order.ascending ?? true });
-      }
-      
-      // Apply limit if provided
-      if (limit) {
-        query = query.limit(limit);
-      }
-      
-      const { data: fetchedData, error: fetchError } = await query;
-      
-      if (fetchError) throw fetchError;
-      
-      setData(fetchedData as T[]);
-      setError(null);
-    } catch (err) {
-      console.error(`Error fetching data from ${table}:`, err);
-      setError(err instanceof Error ? err : new Error('Unknown error occurred'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Function to manually refetch data
-  const refetch = async () => {
-    await fetchData();
-  };
-  
-  // Initialize data and set up real-time subscription
   useEffect(() => {
-    if (!isSubscribed) {
-      enableRealtime();
-    }
-    
-    fetchData();
-    
-    // Set up real-time subscription
-    const channel = supabase
-      .channel(`${table}-changes`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: table,
-        },
-        (payload: any) => {
-          console.log(`Real-time update for ${table}:`, payload);
+    // Initial data fetch
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        let query = supabase
+          .from(table)
+          .select('*');
           
-          // If a custom handler is provided, call it
-          if (onDataChange) {
-            onDataChange({
-              eventType: payload.eventType as PostgresChangeEvent,
-              new: payload.new as T,
-              old: payload.old as T
-            });
-          } else {
-            // Otherwise, refetch data to update the state
-            fetchData();
-          }
+        // Apply filter if provided
+        if (options.filter) {
+          const [column, value] = options.filter.split('=');
+          query = query.eq(column, value);
         }
-      )
-      .subscribe();
-    
-    // Clean up the subscription when the component unmounts
-    return () => {
-      supabase.removeChannel(channel);
+        
+        const { data: initialData, error: fetchError } = await query;
+        
+        if (fetchError) {
+          throw fetchError;
+        }
+        
+        setData(initialData as T[]);
+      } catch (err) {
+        console.error(`Error fetching ${table}:`, err);
+        setError((err as Error).message);
+        toast({
+          variant: "destructive",
+          title: `Error loading ${table}`,
+          description: `Could not fetch data: ${(err as Error).message}`
+        });
+      } finally {
+        setLoading(false);
+      }
     };
-  }, [table, JSON.stringify(filter), order?.column, order?.ascending, limit]);
 
-  return { data, loading, error, refetch };
+    fetchData();
+
+    // Set up realtime subscription
+    const subscription = supabase
+      .channel(`${table}-changes`)
+      .on('postgres_changes', {
+        event: options.event === '*' ? undefined : options.event,
+        schema: 'public',
+        table: table,
+      }, (payload) => {
+        const newRecord = payload.new as T;
+        
+        // Call the callback function if provided
+        if (callback) {
+          callback(newRecord);
+        }
+        
+        // Update state based on event type
+        if (payload.eventType === 'INSERT') {
+          setData(currentData => [...currentData, newRecord]);
+        } else if (payload.eventType === 'UPDATE') {
+          setData(currentData => 
+            currentData.map(item => 
+              (item as any).id === (newRecord as any).id ? newRecord : item
+            )
+          );
+        } else if (payload.eventType === 'DELETE') {
+          setData(currentData => 
+            currentData.filter(item => (item as any).id !== (payload.old as any).id)
+          );
+        }
+      })
+      .subscribe();
+
+    // Cleanup
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [table, options.event, options.filter, toast, callback]);
+
+  return { data, error, loading };
 }

@@ -1,7 +1,33 @@
 
 export type PricingModel = 'fixed' | 'hourly' | 'daily' | 'quote';
-export type PaymentMethod = 'credit_card' | 'mobile_money' | 'bank_transfer' | 'cash' | 'wallet';
-export type ServiceCategory = 'cleaning' | 'repair' | 'plumbing' | 'electrical' | 'gardening' | 'moving' | 'painting' | 'other';
+export type PaymentMethod = 
+  'credit_card' | 
+  'mobile_money' | 
+  'bank_transfer' | 
+  'cash' | 
+  'wallet' | 
+  'pay_today' | 
+  'pay_fast' | 
+  'e_wallet' | 
+  'easy_wallet' | 
+  'dop';
+
+export type ServiceCategory = 
+  'cleaning' | 
+  'repair' | 
+  'plumbing' | 
+  'electrical' | 
+  'gardening' | 
+  'moving' | 
+  'painting' | 
+  'other' | 
+  'home' | 
+  'errand' | 
+  'professional' | 
+  'freelance' | 
+  'transport' | 
+  'health' | 
+  'all';
 
 export interface Service {
   id: string;

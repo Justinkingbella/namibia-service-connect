@@ -81,7 +81,7 @@ export interface Dispute {
   bookingId: string;
   customerId: string;
   providerId: string;
-  status: 'open' | 'under_review' | 'resolved' | 'declined';
+  status: 'open' | 'under_review' | 'resolved' | 'declined' | 'pending';
   reason: string;
   description: string;
   evidenceUrls: string[];

@@ -1,66 +1,64 @@
 
-import { ServiceData, Service, ServiceListItem } from '@/types/service';
+import { Service, ServiceData, ServiceListItem } from '@/types/service';
 
-/**
- * Transforms a database service object to a frontend Service model
- * with proper type handling
- */
-export const transformServiceData = (serviceData: ServiceData | null): Service | null => {
-  if (!serviceData) return null;
-  
+export function transformServiceListResponse(data: any[]): ServiceListItem[] {
+  return data.map(item => ({
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    category: item.category,
+    pricingModel: item.pricing_model,
+    price: item.price,
+    providerName: item.provider_name || '',
+    providerId: item.provider_id,
+    rating: item.rating || 0,
+    reviewCount: item.review_count || 0,
+    image: item.image || '',
+    location: item.location || '',
+    isFeatured: item.featured || false
+  }));
+}
+
+export function transformServiceResponse(data: any): Service {
   return {
-    id: serviceData.id,
-    title: serviceData.title || '',
-    description: serviceData.description || '',
-    category: serviceData.category || 'other',
-    pricingModel: serviceData.pricing_model || 'hourly',
-    price: typeof serviceData.price === 'number' ? serviceData.price : 0,
-    providerName: serviceData.provider_name || 'Anonymous Provider',
-    providerId: serviceData.provider_id,
-    rating: typeof serviceData.rating === 'number' ? serviceData.rating : 0,
-    reviewCount: typeof serviceData.review_count === 'number' ? serviceData.review_count : 0,
-    image: serviceData.image || '',
-    location: serviceData.location || 'Unknown Location'
+    id: data.id,
+    title: data.title,
+    description: data.description,
+    price: data.price,
+    pricingModel: data.pricing_model,
+    category: data.category,
+    providerId: data.provider_id,
+    providerName: data.provider_name,
+    features: data.features || [],
+    image: data.image,
+    isActive: data.is_active,
+    location: data.location,
+    rating: data.rating,
+    reviewCount: data.review_count,
+    createdAt: new Date(data.created_at),
+    updatedAt: new Date(data.updated_at),
+    available: true,
+    isFeatured: data.featured || false
   };
-};
+}
 
-/**
- * Transforms database service data to frontend ServiceListItem
- */
-export const transformToServiceListItem = (serviceData: ServiceData): ServiceListItem => {
-  return {
-    id: serviceData.id,
-    title: serviceData.title || '',
-    category: serviceData.category || 'other',
-    pricingModel: serviceData.pricing_model || 'hourly',
-    price: typeof serviceData.price === 'number' ? serviceData.price : 0,
-    providerName: serviceData.provider_name || 'Anonymous Provider',
-    providerId: serviceData.provider_id,
-    rating: typeof serviceData.rating === 'number' ? serviceData.rating : 0,
-    reviewCount: typeof serviceData.review_count === 'number' ? serviceData.review_count : 0,
-    image: serviceData.image || '',
-    location: serviceData.location || 'Unknown Location',
-    description: serviceData.description || undefined
-  };
-};
-
-/**
- * Transforms a frontend Service model to database ServiceData
- */
-export const transformToServiceData = (service: Service): ServiceData => {
+export function transformServiceToApiFormat(service: Partial<Service>): Partial<ServiceData> {
   return {
     id: service.id,
     title: service.title,
-    description: service.description || null,
+    description: service.description,
     price: service.price,
     provider_id: service.providerId,
-    provider_name: service.providerName || null,
+    provider_name: service.providerName,
     category: service.category,
-    image: service.image || null,
-    rating: typeof service.rating === 'number' ? service.rating : null,
-    review_count: typeof service.reviewCount === 'number' ? service.reviewCount : null,
-    location: service.location || null,
+    image: service.image,
+    rating: service.rating,
+    review_count: service.reviewCount,
+    location: service.location,
     is_active: true,
-    pricing_model: service.pricingModel || 'hourly'
+    pricing_model: service.pricingModel,
+    features: service.features,
+    created_at: service.createdAt ? service.createdAt.toISOString() : new Date().toISOString(),
+    updated_at: service.updatedAt ? service.updatedAt.toISOString() : new Date().toISOString()
   };
-};
+}

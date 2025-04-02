@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Dispute } from '@/types/payments';
+import { Dispute } from '@/types/booking';
 import { fetchUserDisputes, createDispute } from '@/services/mockProfileService';
 
 export function useDisputes() {
@@ -27,24 +27,29 @@ export function useDisputes() {
     loadDisputes();
   }, [user?.id]);
 
-  const submitDispute = async (disputeData: Omit<Dispute, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (!user?.id) return null;
+  const submitDispute = async (disputeData: Partial<Dispute>) => {
+    if (!user?.id) return false;
 
     setLoading(true);
-    const newDispute = await createDispute({
-      ...disputeData,
-      customerId: user.id, // Assuming the user submitting is the customer
-    });
     
-    if (newDispute) {
-      setDisputes(prev => [...prev, newDispute]);
+    // Add user ID to the dispute data
+    const completeDisputeData = {
+      ...disputeData,
+      customerId: user.id
+    };
+    
+    const dispute = await createDispute(completeDisputeData);
+    
+    if (dispute) {
+      setDisputes(prev => [...prev, dispute]);
       
       toast({
         title: "Dispute submitted",
-        description: "Your dispute has been successfully submitted."
+        description: "Your dispute has been submitted successfully."
       });
+      
       setLoading(false);
-      return newDispute;
+      return true;
     }
     
     toast({
@@ -54,7 +59,7 @@ export function useDisputes() {
     });
     
     setLoading(false);
-    return null;
+    return false;
   };
 
   return {
