@@ -93,6 +93,16 @@ const ContentEditorPage = () => {
   
   const filteredBlocks = blocks.filter(block => block.pageName === activeTab);
 
+  // Custom content rendering function for ContentBlock
+  const renderCustomContent = (block: ContentBlock) => {
+    return (
+      <div>
+        {block.title && <h2 className="text-2xl font-bold mb-4">{block.title}</h2>}
+        {block.content && <div className="prose">{block.content}</div>}
+      </div>
+    );
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -132,15 +142,12 @@ const ContentEditorPage = () => {
                         <Card key={block.id} className="relative">
                           <CardContent className="pt-6">
                             <ContentBlock 
-                              id={block.id}
-                              title={block.title}
-                              content={block.content}
                               pageName={block.pageName}
-                              position={block.position}
-                              isPublished={block.isPublished}
-                              createdAt={block.createdAt}
-                              updatedAt={block.updatedAt}
-                            />
+                              blockName={block.id}
+                              showEditButton={false}
+                            >
+                              {(content) => renderCustomContent(block)}
+                            </ContentBlock>
                             <div className="flex justify-end gap-2 mt-4">
                               <Button 
                                 variant="outline" 
@@ -181,10 +188,26 @@ const ContentEditorPage = () => {
       
       {isModalOpen && editingBlock && (
         <EditContentModal
-          block={editingBlock}
-          onSave={handleSaveBlock}
-          onCancel={() => setIsModalOpen(false)}
+          content={{
+            id: editingBlock.id,
+            page_name: editingBlock.pageName,
+            block_name: editingBlock.id,
+            title: editingBlock.title,
+            content: editingBlock.content,
+            image_url: '',
+            subtitle: ''
+          }}
           isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onUpdate={(updatedContent) => {
+            const updatedBlock: ContentBlock = {
+              ...editingBlock,
+              title: updatedContent.title || '',
+              content: updatedContent.content || '',
+              updatedAt: new Date().toISOString()
+            };
+            handleSaveBlock(updatedBlock);
+          }}
         />
       )}
     </DashboardLayout>
