@@ -140,10 +140,18 @@ export function useBookings(): UseBookingsReturnType {
       
       // Map the data to our Booking interface
       const formattedBookings: Booking[] = data.map(item => {
-        // Safely handle potential error objects from supabase by creating default empty objects
-        const serviceData: ServiceData = (typeof item.service === 'object' && item.service !== null) ? item.service : {};
-        const customerData: CustomerData = (typeof item.customer === 'object' && item.customer !== null) ? item.customer : {};
-        const providerData: ProviderData = (typeof item.provider === 'object' && item.provider !== null) ? item.provider : {};
+        // Create default empty objects for type safety
+        const serviceData: ServiceData = typeof item.service === 'object' && item.service !== null 
+          ? item.service as ServiceData 
+          : {};
+        
+        const customerData: CustomerData = typeof item.customer === 'object' && item.customer !== null 
+          ? item.customer as CustomerData 
+          : {};
+        
+        const providerData: ProviderData = typeof item.provider === 'object' && item.provider !== null 
+          ? item.provider as ProviderData 
+          : {};
 
         return {
           id: item.id,
@@ -163,7 +171,6 @@ export function useBookings(): UseBookingsReturnType {
           isUrgent: item.is_urgent,
           createdAt: item.created_at,
           updatedAt: item.updated_at,
-          // Safely access properties with optional chaining and nullish coalescing
           serviceName: serviceData?.title || 'Unknown Service',
           serviceImage: serviceData?.image || '',
           providerName: providerData?.business_name || 'Unknown Provider',

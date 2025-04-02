@@ -45,7 +45,7 @@ import CustomerDisputesPage from './pages/dashboard/customer/DisputesPage';
 import CustomerWalletVerificationsPage from './pages/dashboard/customer/WalletVerificationsPage';
 
 // Provider Pages
-import ProviderProfilePage from './pages/dashboard/provider/ProviderProfilePage';
+import ProviderProfilePage from './pages/dashboard/provider/profile/ProviderProfilePage';
 import ProviderRevenueReportsPage from './pages/dashboard/provider/RevenueReportsPage';
 import ProviderPaymentDetailsPage from './pages/dashboard/provider/PaymentDetailsPage';
 import ProviderTransactionsPage from './pages/dashboard/provider/TransactionsPage';
@@ -54,7 +54,7 @@ import ProviderWalletVerificationPage from './pages/dashboard/provider/WalletVer
 import SubscriptionPageProvider from './pages/dashboard/provider/SubscriptionPageProvider';
 
 // Admin Pages
-import AdminProfilePage from './pages/dashboard/admin/AdminProfilePage';
+import AdminProfilePage from './pages/dashboard/admin/profile/AdminProfilePage';
 import AdminPlatformAnalyticsPage from './pages/dashboard/admin/PlatformAnalyticsPage';
 import AdminPlatformControlsPage from './pages/dashboard/admin/PlatformControlsPage';
 import AdminContentEditorPage from './pages/dashboard/admin/ContentEditorPage';

@@ -70,7 +70,7 @@ const AppSidebar = () => {
       { icon: Clock, label: 'Verifications', path: '/dashboard/admin/wallet-verification' },
       { icon: AlertTriangle, label: 'Disputes', path: '/dashboard/admin/disputes' },
       { icon: BarChart3, label: 'Analytics', path: '/dashboard/admin/analytics' },
-      { icon: Receipt, label: 'Subscriptions', path: '/dashboard/admin/subscriptions' },
+      { icon: Receipt, label: 'Subscriptions', path: '/dashboard/admin/subscription-management' },
       { icon: FileText, label: 'Content Editor', path: '/dashboard/admin/content-editor' },
       { icon: Settings, label: 'Site Settings', path: '/dashboard/settings' },
       { icon: UserCircle, label: 'Profile', path: '/dashboard/admin/profile' },

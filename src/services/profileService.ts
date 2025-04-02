@@ -1033,3 +1033,41 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
     return formattedFavorites;
   } catch (error) {
     console.error('Error in getFavoriteServices:', error);
+    return [];
+  }
+}
+
+export const fetchServicesByProvider = async (providerId: string): Promise<ServiceData[] | null> => {
+  try {
+    const { data: servicesData, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('provider_id', providerId);
+      
+    if (error) {
+      console.error('Error fetching provider services:', error);
+      return null;
+    }
+    
+    if (!servicesData || servicesData.length === 0) {
+      return [];
+    }
+    
+    // Map data to typed structure with null checks
+    return servicesData.map(service => ({
+      id: service?.id || '',
+      title: service?.title || '',
+      description: service?.description || '',
+      price: service?.price || 0,
+      provider_id: service?.provider_id || '',
+      provider_name: service?.provider_name || '',
+      category: service?.category || '',
+      image: service?.image || '',
+      rating: service?.rating || 0,
+      review_count: service?.review_count || 0
+    }));
+  } catch (error) {
+    console.error('Error in fetchServicesByProvider:', error);
+    return null;
+  }
+};
