@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PaymentHistory, Dispute } from '@/types/payments';
@@ -789,20 +790,24 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteServic
       };
 
       // Safely handle the case where service might be null or have an error
-      const service = fav.service && typeof fav.service === 'object' && !('error' in fav.service)
-        ? {
-            id: fav.service_id,
-            title: fav.service.title || 'Unknown Service',
-            description: fav.service.description || '',
-            price: fav.service.price || 0,
-            providerId: fav.service.provider_id || '',
-            providerName: fav.service.provider_name || 'Unknown Provider',
-            categoryId: fav.service.category || '',
-            imageUrl: fav.service.image || undefined,
-            rating: fav.service.rating || 0,
-            reviewCount: fav.service.review_count || 0
-          }
-        : defaultService;
+      // Make a TypeScript assertion that service is not null before accessing its properties
+      // Define service before using it, with proper typechecking
+      let service = defaultService;
+      
+      if (fav.service && typeof fav.service === 'object' && !('error' in fav.service)) {
+        service = {
+          id: fav.service_id,
+          title: fav.service.title || 'Unknown Service',
+          description: fav.service.description || '',
+          price: fav.service.price || 0,
+          providerId: fav.service.provider_id || '',
+          providerName: fav.service.provider_name || 'Unknown Provider',
+          categoryId: fav.service.category || '',
+          imageUrl: fav.service.image || undefined,
+          rating: fav.service.rating || 0,
+          reviewCount: fav.service.review_count || 0
+        };
+      }
 
       return {
         id: fav.id,
