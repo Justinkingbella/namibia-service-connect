@@ -5,30 +5,47 @@ import ProviderProfile from '@/components/provider/ProviderProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 const ProviderProfilePage = () => {
   const { user, isLoading } = useAuth();
   const [profileLoading, setProfileLoading] = useState(true);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Check if user is loaded and is provider
     if (!isLoading) {
       if (user && user.role === 'provider') {
-        setProfileLoading(false);
+        // Small delay to ensure profile data is loaded
+        const timer = setTimeout(() => {
+          setProfileLoading(false);
+        }, 500);
+        return () => clearTimeout(timer);
       } else if (user && user.role !== 'provider') {
         // Redirect to appropriate profile page based on role
+        toast({
+          title: "Access Restricted",
+          description: "You don't have permission to access this page.",
+          variant: "destructive"
+        });
+        
         if (user.role === 'admin') {
           navigate('/dashboard/admin/profile');
         } else {
-          navigate('/dashboard/customer/profile');
+          navigate('/dashboard/profile');
         }
       } else if (!user) {
         // Redirect to login if no user
-        navigate('/login');
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to access this page.",
+          variant: "destructive"
+        });
+        navigate('/auth/sign-in');
       }
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, toast]);
 
   if (isLoading || profileLoading) {
     return (

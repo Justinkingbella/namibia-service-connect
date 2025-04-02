@@ -36,6 +36,21 @@ const AppSidebar = () => {
     return location.pathname.startsWith(path) && path !== '/dashboard';
   };
 
+  const getRoleTitle = () => {
+    if (!user) return 'Dashboard';
+    
+    switch (user.role) {
+      case 'admin':
+        return 'Admin Dashboard';
+      case 'provider':
+        return 'Provider Dashboard';
+      case 'customer':
+        return 'Customer Dashboard';
+      default:
+        return 'Dashboard';
+    }
+  };
+
   const getLinks = () => {
     const commonLinks = [
       { icon: Home, label: 'Dashboard', path: '/dashboard' },
@@ -76,7 +91,7 @@ const AppSidebar = () => {
     <Sidebar className="border-r h-[calc(100vh-60px)] z-20 mt-[60px]">
       <SidebarHeader className="h-14 flex items-center px-4">
         <SidebarTrigger className="h-8 w-8 p-0" />
-        <span className="ml-2 text-xl font-semibold">Menu</span>
+        <span className="ml-2 text-xl font-semibold">{getRoleTitle()}</span>
       </SidebarHeader>
       
       <SidebarContent className="pt-2">
