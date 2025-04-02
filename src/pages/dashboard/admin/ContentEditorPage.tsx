@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -35,7 +34,6 @@ const ContentEditorPage = () => {
     order_index: 0,
     image_url: '',
     buttons: [],
-    is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   });
@@ -83,7 +81,6 @@ const ContentEditorPage = () => {
       order_index: contentBlocks.length + 1,
       image_url: '',
       buttons: [],
-      is_active: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -106,14 +103,11 @@ const ContentEditorPage = () => {
 
   const handleSaveBlock = async () => {
     try {
-      // Mock implementation, replace with actual API call
       const isNewBlock = editingBlock.id.startsWith('new-');
       
       if (isNewBlock) {
-        // Add the block to the contentBlocks array
         setContentBlocks([...contentBlocks, editingBlock]);
       } else {
-        // Update existing block
         setContentBlocks(
           contentBlocks.map(block => 
             block.id === editingBlock.id ? editingBlock : block
@@ -145,7 +139,6 @@ const ContentEditorPage = () => {
 
   const confirmDeleteBlock = async () => {
     try {
-      // Mock implementation, replace with actual API call
       setContentBlocks(contentBlocks.filter(block => block.id !== editingBlock.id));
       
       setShowDeleteDialog(false);
