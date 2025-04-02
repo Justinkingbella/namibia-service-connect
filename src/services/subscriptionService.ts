@@ -237,11 +237,16 @@ export async function subscribeToPlan(
       description: `Subscription to ${planData.name} plan`
     };
 
-    // Insert into subscription_transactions
+    // Insert into subscription_transactions table
     await supabase
       .from('subscription_transactions')
-      .insert(transactionData)
-      .select();
+      .insert({
+        user_id: userId,
+        subscription_plan_id: planId,
+        amount: planData.price,
+        payment_method: paymentMethod,
+        status: 'completed'
+      });
 
     // Update provider subscription tier if applicable
     try {

@@ -1,40 +1,49 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabase } from '@/contexts/SupabaseContext';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
-interface RealtimeDataOptions<T> {
+// Define the possible event types for Postgres changes
+type PostgresChangeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+
+interface UseRealtimeDataOptions<T> {
   table: string;
-  schema?: string;
-  select?: string;
   filter?: Record<string, any>;
   order?: { column: string; ascending?: boolean };
   limit?: number;
-  onDataChange?: (payload: any) => void;
+  onDataChange?: (payload: {
+    eventType: PostgresChangeEvent;
+    new: T;
+    old: T | null;
+  }) => void;
 }
 
 export function useRealtimeData<T>({
   table,
-  schema = 'public',
-  select = '*',
   filter,
   order,
   limit,
-  onDataChange
-}: RealtimeDataOptions<T>) {
+  onDataChange,
+}: UseRealtimeDataOptions<T>) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const { isSubscribed, enableRealtime } = useSupabase();
 
+  // Function to fetch data
   const fetchData = async () => {
     try {
       setLoading(true);
-      let query = supabase.from(table).select(select);
+      
+      // Build the query
+      let query = supabase.from(table).select('*');
       
       // Apply filters if provided
       if (filter) {
         Object.entries(filter).forEach(([key, value]) => {
-          query = query.eq(key, value);
+          if (value !== undefined) {
+            query = query.eq(key, value);
+          }
         });
       }
       
@@ -62,47 +71,52 @@ export function useRealtimeData<T>({
     }
   };
 
-  const refetch = () => fetchData();
+  // Function to manually refetch data
+  const refetch = async () => {
+    await fetchData();
+  };
   
-  // Initial data fetch
-  useEffect(() => {
-    fetchData();
-  }, [table, JSON.stringify(filter), order?.column, order?.ascending, limit]);
-  
-  // Set up real-time subscription
+  // Initialize data and set up real-time subscription
   useEffect(() => {
     if (!isSubscribed) {
       enableRealtime();
     }
     
+    fetchData();
+    
+    // Set up real-time subscription
     const channel = supabase
-      .channel(`table-changes-${table}`)
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema, 
-          table 
-        }, 
-        (payload) => {
+      .channel(`${table}-changes`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: table,
+        },
+        (payload: any) => {
           console.log(`Real-time update for ${table}:`, payload);
           
           // If a custom handler is provided, call it
           if (onDataChange) {
-            onDataChange(payload);
-          }
-          
-          // Otherwise, update the data automatically
-          else {
+            onDataChange({
+              eventType: payload.eventType as PostgresChangeEvent,
+              new: payload.new as T,
+              old: payload.old as T
+            });
+          } else {
+            // Otherwise, refetch data to update the state
             fetchData();
           }
         }
       )
       .subscribe();
     
+    // Clean up the subscription when the component unmounts
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [table, schema, isSubscribed]);
+  }, [table, JSON.stringify(filter), order?.column, order?.ascending, limit]);
 
   return { data, loading, error, refetch };
 }

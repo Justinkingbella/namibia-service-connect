@@ -1,9 +1,35 @@
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { BookingData, BookingStatus } from '@/types/booking';
+import { BookingStatus } from '@/types/booking';
 import { toast } from 'sonner';
 import { useRealtimeData } from './useRealtimeData';
+
+export interface BookingData {
+  id: string;
+  service_id: string;
+  customer_id: string;
+  provider_id: string;
+  status: BookingStatus;
+  date: string;
+  start_time: string;
+  end_time?: string;
+  duration?: number;
+  total_amount: number;
+  commission: number;
+  payment_method: string;
+  payment_status: string;
+  notes?: string;
+  is_urgent?: boolean;
+  created_at: string;
+  updated_at: string;
+  cancelled_by?: string;
+  cancellation_date?: string;
+  cancellation_reason?: string;
+  provider_notes?: string;
+  customer_notes?: string;
+  feedback?: string;
+}
 
 interface UseBookingsOptions {
   userId?: string;
@@ -70,7 +96,7 @@ export function useBookings({
         updateData.cancelled_by = userId;
       } else if (newStatus === 'completed' && notes) {
         updateData.feedback = notes;
-      } else if ((newStatus === 'accepted' || newStatus === 'rejected') && notes) {
+      } else if ((newStatus === 'confirmed' || newStatus === 'rejected') && notes) {
         updateData.provider_notes = notes;
       }
       
