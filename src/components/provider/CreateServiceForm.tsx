@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
@@ -103,7 +102,9 @@ const CreateServiceForm: React.FC = () => {
 
   const handleImageUpload = (file: File) => {
     setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    if (file) {
+      setImagePreview(URL.createObjectURL(file));
+    }
   };
 
   const handleAddFeature = () => {
@@ -141,7 +142,6 @@ const CreateServiceForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Upload image if available
       let imageUrl = '';
       if (imageFile) {
         const fileName = `${user.id}/${Date.now()}-${imageFile.name}`;
@@ -158,7 +158,6 @@ const CreateServiceForm: React.FC = () => {
         imageUrl = urlData.publicUrl;
       }
       
-      // Prepare the service data
       const serviceData = {
         title: values.title,
         description: values.description,
@@ -173,7 +172,6 @@ const CreateServiceForm: React.FC = () => {
         is_active: true
       };
       
-      // Insert the service into the database
       const { data, error } = await supabase
         .from('services')
         .insert(serviceData)
@@ -187,7 +185,6 @@ const CreateServiceForm: React.FC = () => {
         description: "Your service has been created successfully."
       });
       
-      // Navigate to the service details page
       navigate(`/dashboard/services/${data.id}`);
     } catch (error) {
       console.error('Error creating service:', error);
@@ -465,7 +462,7 @@ const CreateServiceForm: React.FC = () => {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <ImageUpload onFileSelected={handleImageUpload} />
+                        <ImageUpload onChange={handleImageUpload} currentImage={imagePreview} />
                       </div>
                       
                       {imagePreview && (

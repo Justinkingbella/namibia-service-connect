@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 
-interface ImageUploadProps {
+export interface ImageUploadProps {
   currentImage?: string | null;
   onChange: (file: File | null) => void;
 }
@@ -56,6 +56,18 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ currentImage, onChange
           onChange={handleChange}
         />
       )}
+    </div>
+  );
+};
+
+export const ImageUploadPreview: React.FC<{ src: string }> = ({ src }) => {
+  return (
+    <div className="w-full">
+      <img 
+        src={src} 
+        alt="Image preview" 
+        className="max-h-[200px] object-cover rounded-md"
+      />
     </div>
   );
 };

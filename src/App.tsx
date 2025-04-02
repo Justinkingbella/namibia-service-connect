@@ -20,6 +20,7 @@ import WalletVerificationPage from './pages/dashboard/admin/WalletVerificationPa
 import SiteSettingsPage from './pages/dashboard/admin/SiteSettingsPage';
 import AdminProfilePage from './pages/dashboard/admin/AdminProfilePage';
 import PlatformControlsPage from './pages/dashboard/admin/PlatformControlsPage';
+import CreateServicePage from './pages/dashboard/services/CreateServicePage';
 import HomePage from './pages/Index';
 import SignInPage from './pages/auth/SignIn';
 import SignUpPage from './pages/auth/SignUp';

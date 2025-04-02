@@ -3,7 +3,7 @@ import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import CreateServiceForm from '@/components/provider/CreateServiceForm';
 
-const CreateServicePage = () => {
+const CreateServicePage: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
