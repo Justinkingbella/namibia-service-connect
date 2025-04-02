@@ -57,6 +57,27 @@ export interface PaymentSettings {
   supportedCurrencies: string[];
 }
 
+export interface SecuritySettings {
+  requireEmailVerification: boolean;
+  enableTwoFactorAuth: boolean;
+  passwordMinLength: number;
+  passwordRequireSpecialChars: boolean;
+  sessionTimeout: number;
+  maxLoginAttempts: number;
+  ipBlacklist: string[];
+}
+
+export interface IntegrationSettings {
+  enabledIntegrations: string[];
+  apiKeys: Record<string, string>;
+  webhookUrls: Record<string, string>;
+  thirdPartyServices: {
+    name: string;
+    isEnabled: boolean;
+    configData: Record<string, any>;
+  }[];
+}
+
 export interface BookingSetting {
   id: string;
   key: string;
@@ -67,4 +88,9 @@ export interface BookingSetting {
   isEnabled: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SettingGroup {
+  category: SettingCategory;
+  settings: SiteSetting[];
 }
