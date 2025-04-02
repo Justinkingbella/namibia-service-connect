@@ -52,6 +52,7 @@ export function useRealtimeData<T>({
         throw queryError;
       }
       
+      // Use type assertion without chained unknown
       setData(resultData as T);
       return resultData as T;
     } catch (err) {
@@ -68,10 +69,11 @@ export function useRealtimeData<T>({
     fetchData();
 
     // Set up realtime subscription
+    // Fix the channel subscription by using the correct syntax for Supabase's realtime API
     const channel = supabase
       .channel(`table-changes-${table}`)
       .on(
-        'postgres_changes', // This is the correct event type for Supabase channels
+        'postgres_changes', 
         {
           event: event,
           schema: 'public',

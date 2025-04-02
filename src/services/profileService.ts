@@ -840,18 +840,20 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteServic
         reviewCount: 0
       };
 
-      // Safely handle the case where service might be null or have an error
-      const service = fav.service && typeof fav.service === 'object' ? {
+      // Fix nullish property access with non-nullish assertions after type checking
+      const serviceData = fav.service && typeof fav.service === 'object' ? fav.service : null;
+      
+      const service = serviceData ? {
         id: fav.service_id,
-        title: fav.service.title || 'Unknown Service',
-        description: fav.service.description || '',
-        price: fav.service.price || 0,
-        providerId: fav.service.provider_id || '',
-        providerName: fav.service.provider_name || 'Unknown Provider',
-        categoryId: fav.service.category || '',
-        imageUrl: fav.service.image || undefined,
-        rating: fav.service.rating || 0,
-        reviewCount: fav.service.review_count || 0
+        title: serviceData.title || 'Unknown Service',
+        description: serviceData.description || '',
+        price: serviceData.price || 0,
+        providerId: serviceData.provider_id || '',
+        providerName: serviceData.provider_name || 'Unknown Provider',
+        categoryId: serviceData.category || '',
+        imageUrl: serviceData.image || undefined,
+        rating: serviceData.rating || 0,
+        reviewCount: serviceData.review_count || 0
       } : defaultService;
 
       return {
@@ -869,87 +871,26 @@ export async function fetchUserFavorites(userId: string): Promise<FavoriteServic
   }
 }
 
-export async function addFavorite(userId: string, serviceId: string): Promise<boolean> {
-  try {
-    const { count, error: countError } = await supabase
-      .from('favorite_services')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('service_id', serviceId);
-
-    if (countError) {
-      console.error('Error checking existing favorite:', countError);
-      toast.error('Failed to add to favorites');
-      return false;
-    }
-
-    if (count && count > 0) {
-      toast.info('Service is already in your favorites');
-      return true;
-    }
-
-    const { error } = await supabase
-      .from('favorite_services')
-      .insert([{
-        user_id: userId,
-        service_id: serviceId
-      }]);
-
-    if (error) {
-      console.error('Error adding favorite:', error);
-      toast.error('Failed to add to favorites');
-      return false;
-    }
-
-    toast.success('Added to favorites');
-    return true;
-  } catch (error) {
-    console.error('Error in addFavorite:', error);
-    toast.error('Failed to add to favorites');
-    return false;
-  }
-}
-
-export async function removeFavorite(userId: string, serviceId: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('favorite_services')
-      .delete()
-      .eq('user_id', userId)
-      .eq('service_id', serviceId);
-
-    if (error) {
-      console.error('Error removing favorite:', error);
-      toast.error('Failed to remove from favorites');
-      return false;
-    }
-
-    toast.success('Removed from favorites');
-    return true;
-  } catch (error) {
-    console.error('Error in removeFavorite:', error);
-    toast.error('Failed to remove from favorites');
-    return false;
-  }
-}
-
 export function formatFavorites(favorites: any[]) {
   if (!favorites || !Array.isArray(favorites)) return [];
   
   return favorites.map(fav => {
-    const service = fav.service && typeof fav.service === 'object' ? {
-      id: fav.service.id,
-      title: fav.service.title,
-      description: fav.service.description,
-      price: fav.service.price,
-      location: fav.service.location,
-      image: fav.service.image,
-      category: fav.service.category,
-      isActive: fav.service.is_active,
-      providerId: fav.service.provider_id,
-      pricingModel: fav.service.pricing_model,
-      createdAt: fav.service.created_at,
-      updatedAt: fav.service.updated_at
+    // Safely handle service data with proper null checks
+    const serviceData = fav.service && typeof fav.service === 'object' ? fav.service : null;
+    
+    const service = serviceData ? {
+      id: serviceData.id,
+      title: serviceData.title,
+      description: serviceData.description,
+      price: serviceData.price,
+      location: serviceData.location,
+      image: serviceData.image,
+      category: serviceData.category,
+      isActive: serviceData.is_active,
+      providerId: serviceData.provider_id,
+      pricingModel: serviceData.pricing_model,
+      createdAt: serviceData.created_at,
+      updatedAt: serviceData.updated_at
     } : null;
 
     return {
@@ -1003,15 +944,18 @@ export async function getFavoriteServices(userId: string): Promise<any[]> {
           };
         }
         
+        // Safely access properties with optional chaining and nullish coalescing
+        const servicesData = fav.services;
+        
         return {
           id: fav.id,
-          serviceId: fav.services.id || fav.service_id || '',
-          title: fav.services.title || '',
-          description: fav.services.description || '',
-          price: fav.services.price || 0,
-          image: fav.services.image || '',
-          category: fav.services.category || '',
-          providerId: fav.services.provider_id || '',
+          serviceId: servicesData?.id || fav.service_id || '',
+          title: servicesData?.title || '',
+          description: servicesData?.description || '',
+          price: servicesData?.price || 0,
+          image: servicesData?.image || '',
+          category: servicesData?.category || '',
+          providerId: servicesData?.provider_id || '',
         };
       });
 
