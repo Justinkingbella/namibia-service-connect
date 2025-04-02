@@ -1059,19 +1059,19 @@ export const fetchServicesByProvider = async (providerId: string): Promise<Servi
     return servicesData.map(service => ({
       id: service?.id || '',
       title: service?.title || '',
-      description: service?.description || '',
+      description: service?.description || null,
       price: service?.price || 0,
       provider_id: service?.provider_id || '',
-      provider_name: service?.provider_name || undefined, 
+      provider_name: service?.provider_name || null, 
       category: service?.category || '',
-      image: service?.image || '',
-      rating: typeof service?.rating === 'number' ? service.rating : 0,
-      review_count: typeof service?.review_count === 'number' ? service.review_count : 0,
-      location: service?.location || '',
+      image: service?.image || null,
+      rating: typeof service?.rating === 'number' ? service.rating : null,
+      review_count: typeof service?.review_count === 'number' ? service.review_count : null,
+      location: service?.location || null,
       is_active: Boolean(service?.is_active),
       pricing_model: service?.pricing_model || '',
-      created_at: service?.created_at || '',
-      updated_at: service?.updated_at || ''
+      created_at: service?.created_at || null,
+      updated_at: service?.updated_at || null
     }));
   } catch (error) {
     console.error('Error in fetchServicesByProvider:', error);
@@ -1084,30 +1084,31 @@ export const mapServiceData = (service: any): ServiceData => {
     return {
       id: '',
       title: '',
-      description: '',
+      description: null,
       price: 0,
       provider_id: '',
       category: '',
-      image: ''
+      image: null,
+      pricing_model: 'hourly'
     };
   }
   
   return {
     id: service.id || '',
     title: service.title || '',
-    description: service.description || '',
+    description: service.description || null,
     price: service.price || 0,
     provider_id: service.provider_id || '',
-    provider_name: service.provider_name || undefined,
+    provider_name: service.provider_name || null,
     category: service.category || '',
-    image: service.image || '',
-    rating: typeof service.rating === 'number' ? service.rating : undefined,
-    review_count: typeof service.review_count === 'number' ? service.review_count : undefined,
-    location: service.location || '',
+    image: service.image || null,
+    rating: typeof service.rating === 'number' ? service.rating : null,
+    review_count: typeof service.review_count === 'number' ? service.review_count : null,
+    location: service.location || null,
     is_active: service.is_active !== undefined ? service.is_active : true,
     pricing_model: service.pricing_model || 'hourly',
-    created_at: service.created_at || new Date().toISOString(),
-    updated_at: service.updated_at || new Date().toISOString()
+    created_at: service.created_at || null,
+    updated_at: service.updated_at || null
   };
 };
 

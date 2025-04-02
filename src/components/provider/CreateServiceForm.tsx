@@ -38,7 +38,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { ServiceCategory, PricingModel } from '@/types/service';
+import { ServiceCategory, PricingModel, ServiceData } from '@/types/service';
 
 const formSchema = z.object({
   title: z.string().min(5, { message: "Title must be at least 5 characters" }).max(100),
@@ -57,6 +57,11 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+interface CreateServiceFormProps {
+  onSubmit?: (serviceData: ServiceData) => Promise<void>;
+  isSubmitting?: boolean;
+}
+
 const categories = [
   { value: 'home', label: 'Home Services' },
   { value: 'errand', label: 'Errands' },
@@ -72,11 +77,11 @@ const pricingModels = [
   { value: 'varying', label: 'Varying (Quote Required)' }
 ];
 
-const CreateServiceForm: React.FC = () => {
+const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmitting = false }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLocalSubmitting, setIsLocalSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
@@ -129,7 +134,7 @@ const CreateServiceForm: React.FC = () => {
     setFaqs(faqs.filter((_, i) => i !== index));
   };
 
-  const onSubmit = async (values: FormValues) => {
+  const handleFormSubmit = async (values: FormValues) => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -139,7 +144,7 @@ const CreateServiceForm: React.FC = () => {
       return;
     }
 
-    setIsSubmitting(true);
+    setIsLocalSubmitting(true);
     
     try {
       let imageUrl = '';
@@ -158,34 +163,37 @@ const CreateServiceForm: React.FC = () => {
         imageUrl = urlData.publicUrl;
       }
       
-      const serviceData = {
+      const serviceData: ServiceData = {
+        id: '',
         title: values.title,
-        description: values.description,
+        description: values.description || '',
         category: values.category,
         price: values.price,
         pricing_model: values.pricingModel,
-        location: values.location,
-        image: imageUrl || null,
-        features: features.length > 0 ? features : null,
-        faqs: faqs.length > 0 ? faqs : null,
         provider_id: user.id,
+        image: imageUrl || null,
+        location: values.location || null,
         is_active: true
       };
-      
-      const { data, error } = await supabase
-        .from('services')
-        .insert(serviceData)
-        .select()
-        .single();
+
+      if (onSubmit) {
+        await onSubmit(serviceData);
+      } else {
+        const { data, error } = await supabase
+          .from('services')
+          .insert(serviceData)
+          .select()
+          .single();
+          
+        if (error) throw error;
         
-      if (error) throw error;
-      
-      toast({
-        title: "Service created",
-        description: "Your service has been created successfully."
-      });
-      
-      navigate(`/dashboard/services/${data.id}`);
+        toast({
+          title: "Service created",
+          description: "Your service has been created successfully."
+        });
+        
+        navigate(`/dashboard/services/${data.id}`);
+      }
     } catch (error) {
       console.error('Error creating service:', error);
       toast({
@@ -194,14 +202,16 @@ const CreateServiceForm: React.FC = () => {
         variant: "destructive"
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLocalSubmitting(false);
     }
   };
+
+  const submittingState = isSubmitting || isLocalSubmitting;
 
   return (
     <div className="max-w-4xl mx-auto">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid grid-cols-3 w-full mb-6">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
@@ -535,9 +545,9 @@ const CreateServiceForm: React.FC = () => {
                   </Button>
                   <Button 
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={submittingState}
                   >
-                    {isSubmitting ? 'Creating...' : 'Create Service'}
+                    {submittingState ? 'Creating...' : 'Create Service'}
                   </Button>
                 </CardFooter>
               </Card>
