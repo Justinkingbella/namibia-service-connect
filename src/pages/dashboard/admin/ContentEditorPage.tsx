@@ -11,6 +11,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { PlusCircle, Edit, Trash2, Save } from 'lucide-react';
 import ContentBlock from '@/components/content/ContentBlock';
 import EditContentModal from '@/components/content/EditContentModal';
+import { supabase } from '@/integrations/supabase/client';
 
 type ContentBlock = {
   id: string;
@@ -25,70 +26,186 @@ type ContentBlock = {
 
 const ContentEditorPage = () => {
   const [activeTab, setActiveTab] = useState('homepage');
-  const [blocks, setBlocks] = useState<ContentBlock[]>([
-    {
-      id: '1',
-      title: 'Welcome to Namibia Service Hub',
-      content: 'Find trusted service providers in your area...',
-      pageName: 'homepage',
-      position: 1,
-      isPublished: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: '2',
-      title: 'About Us',
-      content: 'Learn more about our mission and values...',
-      pageName: 'about',
-      position: 1,
-      isPublished: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-  ]);
+  const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [editingBlock, setEditingBlock] = useState<ContentBlock | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  // Fetch content blocks from database
+  useEffect(() => {
+    const fetchContentBlocks = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('content_blocks')
+          .select('*')
+          .order('order_index');
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          // Map the data from DB format to our component format
+          const formattedBlocks: ContentBlock[] = data.map(block => ({
+            id: block.id,
+            title: block.title || '',
+            content: block.content || '',
+            pageName: block.page_name,
+            position: block.order_index,
+            isPublished: true,
+            createdAt: block.created_at,
+            updatedAt: block.updated_at
+          }));
+          setBlocks(formattedBlocks);
+        }
+      } catch (error) {
+        console.error('Error fetching content blocks:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load content blocks',
+          variant: 'destructive'
+        });
+        
+        // Fallback to default blocks if fetch fails
+        setBlocks([
+          {
+            id: '1',
+            title: 'Welcome to Namibia Service Hub',
+            content: 'Find trusted service providers in your area...',
+            pageName: 'homepage',
+            position: 1,
+            isPublished: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            id: '2',
+            title: 'About Us',
+            content: 'Learn more about our mission and values...',
+            pageName: 'about',
+            position: 1,
+            isPublished: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchContentBlocks();
+  }, [toast]);
 
   const handleEditBlock = (block: ContentBlock) => {
     setEditingBlock(block);
     setIsModalOpen(true);
   };
 
-  const handleSaveBlock = (updatedBlock: ContentBlock) => {
-    setBlocks(blocks.map(block => 
-      block.id === updatedBlock.id ? updatedBlock : block
-    ));
-    setIsModalOpen(false);
-    toast({
-      title: "Content updated",
-      description: "The content block has been updated successfully."
-    });
+  const handleSaveBlock = async (updatedBlock: ContentBlock) => {
+    try {
+      // Update the block in the database
+      const { error } = await supabase
+        .from('content_blocks')
+        .update({
+          title: updatedBlock.title,
+          content: updatedBlock.content,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', updatedBlock.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setBlocks(blocks.map(block => 
+        block.id === updatedBlock.id ? updatedBlock : block
+      ));
+      
+      setIsModalOpen(false);
+      toast({
+        title: "Content updated",
+        description: "The content block has been updated successfully."
+      });
+    } catch (error) {
+      console.error('Error saving content block:', error);
+      toast({
+        title: "Update failed",
+        description: "Failed to update content. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleAddBlock = () => {
-    const newBlock: ContentBlock = {
-      id: Date.now().toString(),
-      title: 'New Content Block',
-      content: 'Add your content here...',
-      pageName: activeTab,
-      position: blocks.filter(block => block.pageName === activeTab).length + 1,
-      isPublished: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    setBlocks([...blocks, newBlock]);
-    handleEditBlock(newBlock);
+  const handleAddBlock = async () => {
+    try {
+      const position = blocks.filter(block => block.pageName === activeTab).length + 1;
+      
+      // Create new block in the database
+      const { data, error } = await supabase
+        .from('content_blocks')
+        .insert({
+          title: 'New Content Block',
+          content: 'Add your content here...',
+          page_name: activeTab,
+          block_name: `block-${Date.now()}`,
+          order_index: position
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      if (data) {
+        const newBlock: ContentBlock = {
+          id: data.id,
+          title: data.title || 'New Content Block',
+          content: data.content || 'Add your content here...',
+          pageName: data.page_name,
+          position: data.order_index,
+          isPublished: true,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at
+        };
+        
+        setBlocks([...blocks, newBlock]);
+        handleEditBlock(newBlock);
+      }
+    } catch (error) {
+      console.error('Error creating new content block:', error);
+      toast({
+        title: "Creation failed",
+        description: "Failed to create new content block. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDeleteBlock = (id: string) => {
-    setBlocks(blocks.filter(block => block.id !== id));
-    toast({
-      title: "Content deleted",
-      description: "The content block has been deleted successfully."
-    });
+  const handleDeleteBlock = async (id: string) => {
+    try {
+      // Delete the block from the database
+      const { error } = await supabase
+        .from('content_blocks')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state
+      setBlocks(blocks.filter(block => block.id !== id));
+      toast({
+        title: "Content deleted",
+        description: "The content block has been deleted successfully."
+      });
+    } catch (error) {
+      console.error('Error deleting content block:', error);
+      toast({
+        title: "Deletion failed",
+        description: "Failed to delete content block. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   const filteredBlocks = blocks.filter(block => block.pageName === activeTab);
@@ -137,7 +254,11 @@ const ContentEditorPage = () => {
                   </div>
                   
                   <div className="space-y-4">
-                    {filteredBlocks.length > 0 ? (
+                    {isLoading ? (
+                      <div className="flex items-center justify-center p-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      </div>
+                    ) : filteredBlocks.length > 0 ? (
                       filteredBlocks.map(block => (
                         <Card key={block.id} className="relative">
                           <CardContent className="pt-6">
@@ -146,7 +267,7 @@ const ContentEditorPage = () => {
                               blockName={block.id}
                               showEditButton={false}
                             >
-                              {(content) => renderCustomContent(block)}
+                              {() => renderCustomContent(block)}
                             </ContentBlock>
                             <div className="flex justify-end gap-2 mt-4">
                               <Button 

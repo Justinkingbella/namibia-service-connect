@@ -18,6 +18,8 @@ import UsersPage from './components/admin/UserManagement';
 import AnalyticsPage from './pages/dashboard/admin/PlatformAnalyticsPage';
 import WalletVerificationPage from './pages/dashboard/admin/WalletVerificationPage';
 import SiteSettingsPage from './pages/dashboard/admin/SiteSettingsPage';
+import ContentEditorPage from './pages/dashboard/admin/ContentEditorPage';
+import AppEditorPage from './pages/dashboard/admin/AppEditorPage';
 import AdminProfilePage from './pages/dashboard/admin/AdminProfilePage';
 import HomePage from './pages/Index';
 import SignInPage from './pages/auth/SignIn';
@@ -36,7 +38,6 @@ import RoleBasedRoute from './components/auth/RoleBasedRoute';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import FAQPage from './pages/FAQPage';
-import ContentEditorPage from './pages/dashboard/admin/ContentEditorPage';
 
 function App() {
   return (
@@ -74,6 +75,7 @@ function App() {
           <Route path="/dashboard/admin/wallet-verification" element={<RoleBasedRoute role="admin"><WalletVerificationPage /></RoleBasedRoute>} />
           <Route path="/dashboard/settings" element={<RoleBasedRoute role="admin"><SiteSettingsPage /></RoleBasedRoute>} />
           <Route path="/dashboard/admin/content-editor" element={<RoleBasedRoute role="admin"><ContentEditorPage /></RoleBasedRoute>} />
+          <Route path="/dashboard/admin/app-editor" element={<RoleBasedRoute role="admin"><AppEditorPage /></RoleBasedRoute>} />
           
           {/* Provider Routes */}
           <Route path="/dashboard/provider/profile" element={<RoleBasedRoute role="provider"><ProviderProfilePage /></RoleBasedRoute>} />

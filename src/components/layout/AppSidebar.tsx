@@ -13,7 +13,9 @@ import {
   UserCircle,
   Heart,
   MessageSquare,
-  HelpCircle
+  HelpCircle,
+  Edit,
+  Layout
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,6 +50,8 @@ const AppSidebar = () => {
       { icon: Users, label: 'Users', path: '/dashboard/users' },
       { icon: Clock, label: 'Verifications', path: '/dashboard/admin/wallet-verification' },
       { icon: BarChart3, label: 'Analytics', path: '/dashboard/admin/analytics' },
+      { icon: Edit, label: 'Content Editor', path: '/dashboard/admin/content-editor' },
+      { icon: Layout, label: 'App Editor', path: '/dashboard/admin/app-editor' },
       { icon: UserCircle, label: 'Profile', path: '/dashboard/admin/profile' },
       { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
     ];
