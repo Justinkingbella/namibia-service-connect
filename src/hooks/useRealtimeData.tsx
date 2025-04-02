@@ -76,7 +76,7 @@ export function useRealtimeData<T>({
       const channelId = `table-changes-${table}`;
       channel = supabase.channel(channelId);
       
-      // Fix: Using the correct channel API for postgres_changes
+      // Configure the subscription
       const subscription = {
         event: event,
         schema: 'public',
@@ -84,7 +84,8 @@ export function useRealtimeData<T>({
         ...(filter && filterValue !== undefined ? { filter: `${filter}=eq.${filterValue}` } : {})
       };
       
-      channel = channel.on(
+      // Add the event handler for postgres_changes
+      channel.on(
         'postgres_changes',
         subscription,
         (payload) => {
@@ -130,7 +131,10 @@ export function useRealtimeData<T>({
             onDataChange(payload);
           }
         }
-      ).subscribe();
+      );
+      
+      // Subscribe to the channel
+      channel.subscribe();
     } catch (error) {
       console.error(`Error setting up realtime subscription for ${table}:`, error);
     }

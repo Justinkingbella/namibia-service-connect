@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -141,17 +140,14 @@ export function useBookings(): UseBookingsReturnType {
       // Map the data to our Booking interface
       const formattedBookings: Booking[] = data.map(item => {
         // Create default empty objects for type safety
-        const serviceData: ServiceData = typeof item.service === 'object' && item.service !== null 
-          ? item.service as ServiceData 
-          : {};
+        const serviceData: ServiceData = item.service && typeof item.service === 'object' ? 
+          item.service as ServiceData : {};
         
-        const customerData: CustomerData = typeof item.customer === 'object' && item.customer !== null 
-          ? item.customer as CustomerData 
-          : {};
+        const customerData: CustomerData = item.customer && typeof item.customer === 'object' ? 
+          item.customer as CustomerData : {};
         
-        const providerData: ProviderData = typeof item.provider === 'object' && item.provider !== null 
-          ? item.provider as ProviderData 
-          : {};
+        const providerData: ProviderData = item.provider && typeof item.provider === 'object' ? 
+          item.provider as ProviderData : {};
 
         return {
           id: item.id,

@@ -1,4 +1,3 @@
-
 export type ServiceCategory = 
   | 'all' 
   | 'home' 
@@ -50,4 +49,23 @@ export interface Service extends ServiceListItem {
     question: string;
     answer: string;
   }[];
+}
+
+// Add this interface for use in profileService.ts
+export interface ServiceData {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  provider_id: string;
+  provider_name?: string;
+  category: string;
+  image: string;
+  rating?: number;
+  review_count?: number;
+  location?: string;
+  is_active?: boolean;
+  pricing_model?: string;
+  created_at?: string;
+  updated_at?: string;
 }

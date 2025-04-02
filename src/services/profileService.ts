@@ -1,9 +1,11 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PaymentHistory, Dispute } from '@/types/payments';
 import { DbUserProfile, UserAddress, PaymentMethod, User2FA } from '@/types/auth';
 import { FavoriteService } from '@/types/favorites';
 import { Message } from '@/types/message';
+import { ServiceData } from '@/types/service';
 
 // Enable real-time updates for the tables we're working with
 const setupRealtimeSubscription = () => {
@@ -1060,11 +1062,17 @@ export const fetchServicesByProvider = async (providerId: string): Promise<Servi
       description: service?.description || '',
       price: service?.price || 0,
       provider_id: service?.provider_id || '',
+      // Use optional chaining for properties that might not exist
       provider_name: service?.provider_name || '',
       category: service?.category || '',
       image: service?.image || '',
       rating: service?.rating || 0,
-      review_count: service?.review_count || 0
+      review_count: service?.review_count || 0,
+      location: service?.location || '',
+      is_active: service?.is_active || false,
+      pricing_model: service?.pricing_model || '',
+      created_at: service?.created_at || '',
+      updated_at: service?.updated_at || ''
     }));
   } catch (error) {
     console.error('Error in fetchServicesByProvider:', error);
