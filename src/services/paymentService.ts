@@ -28,7 +28,7 @@ export async function fetchUserTransactions(userId: string): Promise<PaymentTran
       transactionType: record.booking_id ? 'booking' : 'subscription',
       paymentMethod: record.payment_method,
       referenceId: record.booking_id || record.transaction_id,
-      status: record.status,
+      status: record.status as 'pending' | 'processing' | 'completed' | 'failed' | 'refunded',
       description: record.description,
       metadata: {},
       createdAt: record.created_at,
@@ -140,7 +140,7 @@ export async function recordPaymentTransaction(
       transactionType: data.booking_id ? 'booking' : 'subscription',
       paymentMethod: data.payment_method,
       referenceId: data.booking_id || data.transaction_id,
-      status: data.status,
+      status: data.status as 'pending' | 'processing' | 'completed' | 'failed' | 'refunded',
       description: data.description,
       metadata: {},
       createdAt: data.created_at,
@@ -281,3 +281,6 @@ export async function generateEarningsReport(
     return null;
   }
 }
+
+// Export the ProviderEarnings type for use in components
+export type { ProviderEarnings, ProviderPayout, PaymentTransaction };

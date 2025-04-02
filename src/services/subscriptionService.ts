@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { convertJsonToFeatures } from '@/types/subscription';
 
 export interface SubscriptionPlan {
   id: string;
@@ -47,7 +48,7 @@ export async function fetchSubscriptionPlans(): Promise<SubscriptionPlan[]> {
     price: plan.price,
     billingCycle: plan.billing_cycle,
     isActive: plan.is_active,
-    features: plan.features || [],
+    features: Array.isArray(plan.features) ? plan.features : [],
     credits: plan.credits,
     isPopular: plan.is_popular || false,
     maxBookings: plan.max_bookings
@@ -100,7 +101,7 @@ export async function fetchUserSubscription(userId: string): Promise<Subscriptio
       price: data.plan.price,
       billingCycle: data.plan.billing_cycle,
       isActive: data.plan.is_active,
-      features: data.plan.features || [],
+      features: Array.isArray(data.plan.features) ? data.plan.features : [],
       credits: data.plan.credits,
       isPopular: data.plan.is_popular || false,
       maxBookings: data.plan.max_bookings
@@ -171,7 +172,7 @@ export async function subscribeToPlan(
       start_date: startDate.toISOString(),
       end_date: endDate.toISOString(),
       payment_method: paymentMethod,
-      status: 'active'
+      status: 'active' as 'active' | 'pending' | 'cancelled' | 'expired'
     }])
     .select()
     .single();
@@ -213,7 +214,7 @@ export async function subscribeToPlan(
       price: planData.price,
       billingCycle: planData.billing_cycle,
       isActive: planData.is_active,
-      features: planData.features || [],
+      features: Array.isArray(planData.features) ? planData.features : [],
       credits: planData.credits,
       isPopular: planData.is_popular || false,
       maxBookings: planData.max_bookings
@@ -226,7 +227,7 @@ export async function cancelSubscription(subscriptionId: string): Promise<boolea
   const { error } = await supabase
     .from('user_subscriptions')
     .update({
-      status: 'cancelled',
+      status: 'cancelled' as 'active' | 'pending' | 'cancelled' | 'expired',
       updated_at: new Date().toISOString()
     })
     .eq('id', subscriptionId);
@@ -240,3 +241,6 @@ export async function cancelSubscription(subscriptionId: string): Promise<boolea
   toast.success('Subscription cancelled successfully');
   return true;
 }
+
+// For component importing
+export { subscribeToPlan as subscribeUserToPlan };

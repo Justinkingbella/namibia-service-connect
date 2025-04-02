@@ -1,4 +1,5 @@
 
+
 // Export base types but exclude those with name conflicts
 export * from './subscription';
 
@@ -39,3 +40,4 @@ export interface IResponse<T> {
   error?: string;
   message?: string;
 }
+

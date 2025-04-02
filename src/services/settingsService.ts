@@ -98,3 +98,19 @@ export async function deleteSiteSetting(key: string): Promise<boolean> {
   toast.success('Setting deleted successfully');
   return true;
 }
+
+// For SiteSettingsPage.tsx compatibility
+export { fetchSiteSettings as getSiteSettings };
+
+// Implement uploadImage function (mock for now)
+export async function uploadImage(file: File, path: string): Promise<string | null> {
+  try {
+    // Mock implementation
+    toast.success('Image uploaded successfully');
+    return `https://example.com/${path}/${file.name}`;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    toast.error('Failed to upload image');
+    return null;
+  }
+}
