@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { convertJsonToFeatures, convertFeaturesToJson } from '@/types/subscription';
+import { canPerformSubscriptionAction, recordSubscriptionUsage } from './supabaseRpcService';
 
 export interface SubscriptionPlan {
   id: string;
@@ -55,7 +56,7 @@ export async function fetchSubscriptionPlans(): Promise<SubscriptionPlan[]> {
       id: plan.id,
       name: plan.name,
       description: plan.description,
-      price: plan.price,
+      price: Number(plan.price),
       billingCycle: plan.billing_cycle,
       isActive: plan.is_active,
       features: convertJsonToFeatures(plan.features),
@@ -80,20 +81,7 @@ export async function fetchUserSubscription(userId: string): Promise<Subscriptio
       .from('user_subscriptions')
       .select(`
         *,
-        plan:subscription_plan_id (
-          id,
-          name,
-          description,
-          price,
-          billing_cycle,
-          is_active,
-          features,
-          credits,
-          is_popular,
-          max_bookings,
-          trial_period_days,
-          allowed_services
-        )
+        plan:subscription_plan_id (*)
       `)
       .eq('user_id', userId)
       .eq('status', 'active')
@@ -104,6 +92,11 @@ export async function fetchUserSubscription(userId: string): Promise<Subscriptio
         console.error('Error fetching user subscription:', error);
         toast.error('Failed to load subscription data');
       }
+      return null;
+    }
+
+    if (!data.plan) {
+      toast.error('Subscription plan information not found');
       return null;
     }
 
@@ -120,11 +113,11 @@ export async function fetchUserSubscription(userId: string): Promise<Subscriptio
       bookingsUsed: data.bookings_used || 0,
       bookingsRemaining: data.bookings_remaining || 0,
       autoRenew: data.auto_renew !== undefined ? data.auto_renew : true,
-      plan: data.plan ? {
+      plan: {
         id: data.plan.id,
         name: data.plan.name,
         description: data.plan.description,
-        price: data.plan.price,
+        price: Number(data.plan.price),
         billingCycle: data.plan.billing_cycle,
         isActive: data.plan.is_active,
         features: convertJsonToFeatures(data.plan.features),
@@ -133,7 +126,7 @@ export async function fetchUserSubscription(userId: string): Promise<Subscriptio
         maxBookings: data.plan.max_bookings,
         trialPeriodDays: data.plan.trial_period_days || 0,
         allowedServices: data.plan.allowed_services || 1
-      } : undefined
+      }
     };
   } catch (error) {
     console.error('Unexpected error in fetchUserSubscription:', error);
@@ -142,58 +135,8 @@ export async function fetchUserSubscription(userId: string): Promise<Subscriptio
   }
 }
 
-// Check if a user can perform a subscription-based action
-export async function canPerformAction(userId: string, action: string, quantity: number = 1): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .rpc('can_perform_subscription_action', {
-        p_user_id: userId,
-        p_action: action,
-        p_quantity: quantity
-      });
-
-    if (error) {
-      console.error('Error checking subscription capability:', error);
-      toast.error('Failed to verify subscription capabilities');
-      return false;
-    }
-
-    return data || false;
-  } catch (error) {
-    console.error('Unexpected error in canPerformAction:', error);
-    return false;
-  }
-}
-
-// Record subscription resource usage (credits or bookings)
-export async function recordUsage(userId: string, metricName: string, count: number = 1, referenceId?: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .rpc('record_subscription_usage', {
-        p_user_id: userId,
-        p_metric_name: metricName,
-        p_count: count,
-        p_reference_id: referenceId
-      });
-
-    if (error) {
-      console.error('Error recording subscription usage:', error);
-      if (metricName === 'credits') {
-        toast.error('Not enough credits available');
-      } else if (metricName === 'bookings') {
-        toast.error('Booking limit reached for your subscription plan');
-      } else {
-        toast.error('Failed to record usage');
-      }
-      return false;
-    }
-
-    return data || false;
-  } catch (error) {
-    console.error('Unexpected error in recordUsage:', error);
-    return false;
-  }
-}
+// Export the RPC functions
+export { canPerformSubscriptionAction, recordSubscriptionUsage };
 
 // Subscribe a user to a plan
 export async function subscribeToPlan(
@@ -270,9 +213,7 @@ export async function subscribeToPlan(
         start_date: startDate.toISOString(),
         end_date: endDate.toISOString(),
         payment_method: paymentMethod,
-        status: 'active' as 'active' | 'pending' | 'cancelled' | 'expired',
-        // Credits and bookings will be initialized by the database trigger
-        auto_renew: true
+        status: 'active'
       }])
       .select()
       .single();
@@ -284,37 +225,36 @@ export async function subscribeToPlan(
     }
 
     // Record the payment transaction
-    const { error: transactionError } = await supabase
-      .from('subscription_transactions')
-      .insert([{
-        user_id: userId,
-        subscription_id: data.id,
-        amount: planData.price,
-        transaction_type: existingData && existingData.length > 0 ? 
-          (planData.price > existingData[0].plan?.price ? 'upgrade' : 'downgrade') : 
-          'subscription_payment',
-        payment_method: paymentMethod,
-        status: 'completed',
-        description: `Subscription to ${planData.name} plan`
-      }]);
+    const transactionData = {
+      user_id: userId,
+      subscription_id: data.id,
+      amount: planData.price,
+      transaction_type: existingData && existingData.length > 0 ? 
+        (planData.price > existingData[0].price ? 'upgrade' : 'downgrade') : 
+        'subscription_payment',
+      payment_method: paymentMethod,
+      status: 'completed',
+      description: `Subscription to ${planData.name} plan`
+    };
 
-    if (transactionError) {
-      console.error('Error recording payment transaction:', transactionError);
-      // Proceed anyway, this is not critical
-    }
+    // Insert into subscription_transactions
+    await supabase
+      .from('subscription_transactions')
+      .insert(transactionData)
+      .select();
 
     // Update provider subscription tier if applicable
-    const { error: providerError } = await supabase
-      .from('service_providers')
-      .update({
-        subscription_tier: planData.name.toLowerCase(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', userId);
-
-    if (providerError) {
+    try {
+      await supabase
+        .from('service_providers')
+        .update({
+          subscription_tier: planData.name.toLowerCase(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+    } catch (providerError) {
       console.error('Error updating provider profile:', providerError);
-      toast.error('Subscription created, but provider profile update failed');
+      // Continue anyway, this is not critical
     }
 
     toast.success(`Successfully subscribed to ${planData.name} plan`);
@@ -337,7 +277,7 @@ export async function subscribeToPlan(
         id: planData.id,
         name: planData.name,
         description: planData.description,
-        price: planData.price,
+        price: Number(planData.price),
         billingCycle: planData.billing_cycle,
         isActive: planData.is_active,
         features: convertJsonToFeatures(planData.features),
@@ -378,25 +318,30 @@ export async function cancelSubscription(subscriptionId: string, reason?: string
     }
 
     // Log the cancellation in the audit trail
-    const { data: subData } = await supabase
-      .from('user_subscriptions')
-      .select('user_id, subscription_plan_id')
-      .eq('id', subscriptionId)
-      .single();
+    try {
+      const { data: subData } = await supabase
+        .from('user_subscriptions')
+        .select('user_id, subscription_plan_id')
+        .eq('id', subscriptionId)
+        .single();
 
-    if (subData) {
-      await supabase
-        .from('subscription_audit_logs')
-        .insert([{
-          user_id: subData.user_id,
-          subscription_id: subscriptionId,
-          event_type: 'subscription_cancelled',
-          new_state: {
-            status: 'cancelled',
-            cancellation_date: now,
-            cancellation_reason: reason
-          }
-        }]);
+      if (subData) {
+        await supabase
+          .from('subscription_audit_logs')
+          .insert([{
+            user_id: subData.user_id,
+            subscription_id: subscriptionId,
+            event_type: 'subscription_cancelled',
+            new_state: {
+              status: 'cancelled',
+              cancellation_date: now,
+              cancellation_reason: reason
+            }
+          }]);
+      }
+    } catch (auditError) {
+      console.error('Error logging subscription cancellation:', auditError);
+      // Continue anyway, this is not critical
     }
 
     toast.success('Subscription cancelled successfully');

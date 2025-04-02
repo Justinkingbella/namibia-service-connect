@@ -31,6 +31,10 @@ export const SupabaseProvider = ({ children }: { children: ReactNode }) => {
         (payload) => console.log('Booking change:', payload))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, 
         (payload) => console.log('Service change:', payload))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'subscription_plans' }, 
+        (payload) => console.log('Subscription plan change:', payload))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_subscriptions' }, 
+        (payload) => console.log('User subscription change:', payload))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'favorite_services' }, 
         (payload) => console.log('Favorite change:', payload))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'user_addresses' }, 

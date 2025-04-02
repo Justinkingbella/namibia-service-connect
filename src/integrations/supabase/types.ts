@@ -60,6 +60,62 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_posts: {
+        Row: {
+          author_id: string | null
+          categories: string[] | null
+          content: string
+          created_at: string | null
+          excerpt: string | null
+          featured_image: string | null
+          id: string
+          published_at: string | null
+          slug: string
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          categories?: string[] | null
+          content: string
+          created_at?: string | null
+          excerpt?: string | null
+          featured_image?: string | null
+          id?: string
+          published_at?: string | null
+          slug: string
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          categories?: string[] | null
+          content?: string
+          created_at?: string | null
+          excerpt?: string | null
+          featured_image?: string | null
+          id?: string
+          published_at?: string | null
+          slug?: string
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_settings: {
         Row: {
           created_at: string | null
@@ -89,18 +145,27 @@ export type Database = {
       }
       bookings: {
         Row: {
+          cancellation_date: string | null
+          cancellation_reason: string | null
+          cancelled_by: string | null
           commission: number
           created_at: string | null
           customer_id: string
+          customer_notes: string | null
           date: string
           duration: number | null
           end_time: string | null
+          feedback: string | null
           id: string
           is_urgent: boolean | null
           notes: string | null
           payment_method: string
+          payment_receipt: string | null
           payment_status: string
           provider_id: string
+          provider_notes: string | null
+          rating: number | null
+          refund_amount: number | null
           service_id: string
           start_time: string
           status: string
@@ -108,18 +173,27 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          cancellation_date?: string | null
+          cancellation_reason?: string | null
+          cancelled_by?: string | null
           commission: number
           created_at?: string | null
           customer_id: string
+          customer_notes?: string | null
           date: string
           duration?: number | null
           end_time?: string | null
+          feedback?: string | null
           id?: string
           is_urgent?: boolean | null
           notes?: string | null
           payment_method: string
+          payment_receipt?: string | null
           payment_status?: string
           provider_id: string
+          provider_notes?: string | null
+          rating?: number | null
+          refund_amount?: number | null
           service_id: string
           start_time: string
           status?: string
@@ -127,18 +201,27 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          cancellation_date?: string | null
+          cancellation_reason?: string | null
+          cancelled_by?: string | null
           commission?: number
           created_at?: string | null
           customer_id?: string
+          customer_notes?: string | null
           date?: string
           duration?: number | null
           end_time?: string | null
+          feedback?: string | null
           id?: string
           is_urgent?: boolean | null
           notes?: string | null
           payment_method?: string
+          payment_receipt?: string | null
           payment_status?: string
           provider_id?: string
+          provider_notes?: string | null
+          rating?: number | null
+          refund_amount?: number | null
           service_id?: string
           start_time?: string
           status?: string
@@ -155,6 +238,8 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          is_active: boolean | null
+          metadata: Json | null
           order_index: number
           page_name: string
           subtitle: string | null
@@ -168,6 +253,8 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          is_active?: boolean | null
+          metadata?: Json | null
           order_index?: number
           page_name: string
           subtitle?: string | null
@@ -181,6 +268,8 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          is_active?: boolean | null
+          metadata?: Json | null
           order_index?: number
           page_name?: string
           subtitle?: string | null
@@ -220,27 +309,51 @@ export type Database = {
       }
       conversations: {
         Row: {
+          booking_id: string | null
           created_at: string | null
           id: string
           last_message: string | null
           last_message_date: string | null
+          service_id: string | null
+          status: string | null
           unread_count: number | null
         }
         Insert: {
+          booking_id?: string | null
           created_at?: string | null
           id?: string
           last_message?: string | null
           last_message_date?: string | null
+          service_id?: string | null
+          status?: string | null
           unread_count?: number | null
         }
         Update: {
+          booking_id?: string | null
           created_at?: string | null
           id?: string
           last_message?: string | null
           last_message_date?: string | null
+          service_id?: string | null
+          status?: string | null
           unread_count?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "conversations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       coupon_redemptions: {
         Row: {
@@ -344,40 +457,55 @@ export type Database = {
       }
       disputes: {
         Row: {
+          admin_assigned_to: string | null
           admin_notes: string | null
           booking_id: string | null
           created_at: string | null
           customer_id: string | null
           description: string
+          evidence_urls: string[] | null
           id: string
+          priority: string | null
           provider_id: string | null
+          refund_amount: number | null
           resolution: string | null
+          resolution_date: string | null
           status: string | null
           subject: string
           updated_at: string | null
         }
         Insert: {
+          admin_assigned_to?: string | null
           admin_notes?: string | null
           booking_id?: string | null
           created_at?: string | null
           customer_id?: string | null
           description: string
+          evidence_urls?: string[] | null
           id?: string
+          priority?: string | null
           provider_id?: string | null
+          refund_amount?: number | null
           resolution?: string | null
+          resolution_date?: string | null
           status?: string | null
           subject: string
           updated_at?: string | null
         }
         Update: {
+          admin_assigned_to?: string | null
           admin_notes?: string | null
           booking_id?: string | null
           created_at?: string | null
           customer_id?: string | null
           description?: string
+          evidence_urls?: string[] | null
           id?: string
+          priority?: string | null
           provider_id?: string | null
+          refund_amount?: number | null
           resolution?: string | null
+          resolution_date?: string | null
           status?: string | null
           subject?: string
           updated_at?: string | null
@@ -413,6 +541,44 @@ export type Database = {
         }
         Relationships: []
       }
+      loyalty_points_transactions: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          points: number
+          reference_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points: number
+          reference_id?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points?: number
+          reference_id?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_points_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           attachments: string[] | null
@@ -420,6 +586,9 @@ export type Database = {
           conversation_id: string | null
           created_at: string | null
           id: string
+          is_system_message: boolean | null
+          message_type: string | null
+          metadata: Json | null
           read: boolean | null
           recipient_id: string | null
           sender_id: string | null
@@ -430,6 +599,9 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string | null
           id?: string
+          is_system_message?: boolean | null
+          message_type?: string | null
+          metadata?: Json | null
           read?: boolean | null
           recipient_id?: string | null
           sender_id?: string | null
@@ -440,6 +612,9 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string | null
           id?: string
+          is_system_message?: boolean | null
+          message_type?: string | null
+          metadata?: Json | null
           read?: boolean | null
           recipient_id?: string | null
           sender_id?: string | null
@@ -454,6 +629,53 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action_url: string | null
+          content: string
+          created_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          content: string
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          read?: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          content?: string
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       page_sections: {
         Row: {
           buttons: Json | null
@@ -461,6 +683,8 @@ export type Database = {
           created_at: string | null
           id: string
           image_url: string | null
+          is_active: boolean | null
+          metadata: Json | null
           order_index: number
           page_name: string
           section_name: string
@@ -474,6 +698,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           image_url?: string | null
+          is_active?: boolean | null
+          metadata?: Json | null
           order_index?: number
           page_name: string
           section_name: string
@@ -487,6 +713,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           image_url?: string | null
+          is_active?: boolean | null
+          metadata?: Json | null
           order_index?: number
           page_name?: string
           section_name?: string
@@ -609,50 +837,73 @@ export type Database = {
       payment_transactions: {
         Row: {
           amount: number
+          booking_id: string | null
           created_at: string
           currency: string
           description: string
+          fee: number | null
           gateway: string
           gateway_response: Json | null
           id: string
           metadata: Json
           method: string
+          net_amount: number | null
+          payment_provider: string | null
           reference: string
           status: string
+          transaction_type: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           amount: number
+          booking_id?: string | null
           created_at?: string
           currency?: string
           description: string
+          fee?: number | null
           gateway: string
           gateway_response?: Json | null
           id?: string
           metadata?: Json
           method: string
+          net_amount?: number | null
+          payment_provider?: string | null
           reference: string
           status: string
+          transaction_type?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           amount?: number
+          booking_id?: string | null
           created_at?: string
           currency?: string
           description?: string
+          fee?: number | null
           gateway?: string
           gateway_response?: Json | null
           id?: string
           metadata?: Json
           method?: string
+          net_amount?: number | null
+          payment_provider?: string | null
           reference?: string
           status?: string
+          transaction_type?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plan_features: {
         Row: {
@@ -781,15 +1032,21 @@ export type Database = {
           city: string | null
           country: string | null
           created_at: string | null
+          email: string | null
+          email_verified: boolean | null
           favorites: string[] | null
           first_name: string | null
           id: string
+          last_active: string | null
           last_name: string | null
           loyalty_points: number | null
           phone_number: string | null
           preferred_language: string | null
+          registration_completed: boolean | null
           role: string | null
+          total_spent: number | null
           updated_at: string | null
+          user_preferences: Json | null
         }
         Insert: {
           active?: boolean | null
@@ -800,15 +1057,21 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string | null
+          email?: string | null
+          email_verified?: boolean | null
           favorites?: string[] | null
           first_name?: string | null
           id: string
+          last_active?: string | null
           last_name?: string | null
           loyalty_points?: number | null
           phone_number?: string | null
           preferred_language?: string | null
+          registration_completed?: boolean | null
           role?: string | null
+          total_spent?: number | null
           updated_at?: string | null
+          user_preferences?: Json | null
         }
         Update: {
           active?: boolean | null
@@ -819,17 +1082,224 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string | null
+          email?: string | null
+          email_verified?: boolean | null
           favorites?: string[] | null
           first_name?: string | null
           id?: string
+          last_active?: string | null
           last_name?: string | null
           loyalty_points?: number | null
           phone_number?: string | null
           preferred_language?: string | null
+          registration_completed?: boolean | null
           role?: string | null
+          total_spent?: number | null
           updated_at?: string | null
+          user_preferences?: Json | null
         }
         Relationships: []
+      }
+      provider_analytics: {
+        Row: {
+          avg_rating: number | null
+          bookings_completed: number | null
+          bookings_received: number | null
+          created_at: string | null
+          date: string
+          id: string
+          new_reviews: number | null
+          profile_views: number | null
+          provider_id: string
+          total_earnings: number | null
+        }
+        Insert: {
+          avg_rating?: number | null
+          bookings_completed?: number | null
+          bookings_received?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          new_reviews?: number | null
+          profile_views?: number | null
+          provider_id: string
+          total_earnings?: number | null
+        }
+        Update: {
+          avg_rating?: number | null
+          bookings_completed?: number | null
+          bookings_received?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          new_reviews?: number | null
+          profile_views?: number | null
+          provider_id?: string
+          total_earnings?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_analytics_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_earnings: {
+        Row: {
+          commission_paid: number
+          created_at: string | null
+          id: string
+          net_earnings: number
+          payout_date: string | null
+          payout_reference: string | null
+          payout_status: string
+          period_end: string
+          period_start: string
+          provider_id: string
+          total_bookings: number
+          total_earnings: number
+          updated_at: string | null
+        }
+        Insert: {
+          commission_paid?: number
+          created_at?: string | null
+          id?: string
+          net_earnings?: number
+          payout_date?: string | null
+          payout_reference?: string | null
+          payout_status?: string
+          period_end: string
+          period_start: string
+          provider_id: string
+          total_bookings?: number
+          total_earnings?: number
+          updated_at?: string | null
+        }
+        Update: {
+          commission_paid?: number
+          created_at?: string | null
+          id?: string
+          net_earnings?: number
+          payout_date?: string | null
+          payout_reference?: string | null
+          payout_status?: string
+          period_end?: string
+          period_start?: string
+          provider_id?: string
+          total_bookings?: number
+          total_earnings?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_earnings_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_payouts: {
+        Row: {
+          amount: number
+          bank_account_details: Json | null
+          created_at: string | null
+          fee: number | null
+          id: string
+          mobile_payment_details: Json | null
+          net_amount: number
+          notes: string | null
+          payment_method: string
+          processed_at: string | null
+          provider_id: string
+          reference_number: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          bank_account_details?: Json | null
+          created_at?: string | null
+          fee?: number | null
+          id?: string
+          mobile_payment_details?: Json | null
+          net_amount: number
+          notes?: string | null
+          payment_method: string
+          processed_at?: string | null
+          provider_id: string
+          reference_number?: string | null
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          bank_account_details?: Json | null
+          created_at?: string | null
+          fee?: number | null
+          id?: string
+          mobile_payment_details?: Json | null
+          net_amount?: number
+          notes?: string | null
+          payment_method?: string
+          processed_at?: string | null
+          provider_id?: string
+          reference_number?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_payouts_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_helpful: boolean
+          review_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_helpful: boolean
+          review_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_helpful?: boolean
+          review_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_votes_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {
@@ -837,12 +1307,16 @@ export type Database = {
           comment: string | null
           created_at: string | null
           customer_id: string
+          helpfulness: number | null
           id: string
           is_published: boolean | null
           provider_id: string
           rating: number
+          ratings: Json | null
           response: string | null
+          response_date: string | null
           service_id: string
+          title: string | null
           updated_at: string | null
         }
         Insert: {
@@ -850,12 +1324,16 @@ export type Database = {
           comment?: string | null
           created_at?: string | null
           customer_id: string
+          helpfulness?: number | null
           id?: string
           is_published?: boolean | null
           provider_id: string
           rating: number
+          ratings?: Json | null
           response?: string | null
+          response_date?: string | null
           service_id: string
+          title?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -863,48 +1341,248 @@ export type Database = {
           comment?: string | null
           created_at?: string | null
           customer_id?: string
+          helpfulness?: number | null
           id?: string
           is_published?: boolean | null
           provider_id?: string
           rating?: number
+          ratings?: Json | null
           response?: string | null
+          response_date?: string | null
           service_id?: string
+          title?: string | null
           updated_at?: string | null
         }
         Relationships: []
+      }
+      reward_redemptions: {
+        Row: {
+          created_at: string | null
+          expiry_date: string | null
+          id: string
+          points_used: number
+          redemption_date: string | null
+          reward_id: string
+          status: string
+          used: boolean | null
+          used_date: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          points_used: number
+          redemption_date?: string | null
+          reward_id: string
+          status?: string
+          used?: boolean | null
+          used_date?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          points_used?: number
+          redemption_date?: string | null
+          reward_id?: string
+          status?: string
+          used?: boolean | null
+          used_date?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_redemptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rewards: {
+        Row: {
+          created_at: string | null
+          current_redemptions: number | null
+          description: string
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          max_redemptions: number | null
+          name: string
+          points_required: number
+          reward_type: string
+          reward_value: Json
+          start_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_redemptions?: number | null
+          description: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_redemptions?: number | null
+          name: string
+          points_required: number
+          reward_type: string
+          reward_value: Json
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_redemptions?: number | null
+          description?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_redemptions?: number | null
+          name?: string
+          points_required?: number
+          reward_type?: string
+          reward_value?: Json
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      seo_metadata: {
+        Row: {
+          canonical_url: string | null
+          created_at: string | null
+          description: string
+          id: string
+          keywords: string[] | null
+          og_image: string | null
+          page_path: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          canonical_url?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          keywords?: string[] | null
+          og_image?: string | null
+          page_path: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          canonical_url?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          keywords?: string[] | null
+          og_image?: string | null
+          page_path?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      service_analytics: {
+        Row: {
+          bookings: number | null
+          conversion_rate: number | null
+          created_at: string | null
+          date: string
+          favorites: number | null
+          id: string
+          service_id: string
+          views: number | null
+        }
+        Insert: {
+          bookings?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          date: string
+          favorites?: number | null
+          id?: string
+          service_id: string
+          views?: number | null
+        }
+        Update: {
+          bookings?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          date?: string
+          favorites?: number | null
+          id?: string
+          service_id?: string
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_analytics_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_categories: {
         Row: {
           created_at: string | null
           description: string | null
+          featured: boolean | null
           icon: string | null
           id: string
           is_active: boolean | null
           name: string
           order_index: number | null
+          parent_category_id: string | null
+          slug: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           description?: string | null
+          featured?: boolean | null
           icon?: string | null
           id?: string
           is_active?: boolean | null
           name: string
           order_index?: number | null
+          parent_category_id?: string | null
+          slug?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string | null
+          featured?: boolean | null
           icon?: string | null
           id?: string
           is_active?: boolean | null
           name?: string
           order_index?: number | null
+          parent_category_id?: string | null
+          slug?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "service_categories_parent_category_id_fkey"
+            columns: ["parent_category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_providers: {
         Row: {
@@ -983,9 +1661,13 @@ export type Database = {
       }
       services: {
         Row: {
+          availability: Json | null
           category: string
           created_at: string | null
           description: string | null
+          faqs: Json | null
+          featured: boolean | null
+          features: string[] | null
           id: string
           image: string | null
           is_active: boolean | null
@@ -993,13 +1675,19 @@ export type Database = {
           price: number
           pricing_model: string
           provider_id: string | null
+          slug: string | null
+          tags: string[] | null
           title: string
           updated_at: string | null
         }
         Insert: {
+          availability?: Json | null
           category: string
           created_at?: string | null
           description?: string | null
+          faqs?: Json | null
+          featured?: boolean | null
+          features?: string[] | null
           id?: string
           image?: string | null
           is_active?: boolean | null
@@ -1007,13 +1695,19 @@ export type Database = {
           price: number
           pricing_model: string
           provider_id?: string | null
+          slug?: string | null
+          tags?: string[] | null
           title: string
           updated_at?: string | null
         }
         Update: {
+          availability?: Json | null
           category?: string
           created_at?: string | null
           description?: string | null
+          faqs?: Json | null
+          featured?: boolean | null
+          features?: string[] | null
           id?: string
           image?: string | null
           is_active?: boolean | null
@@ -1021,6 +1715,8 @@ export type Database = {
           price?: number
           pricing_model?: string
           provider_id?: string | null
+          slug?: string | null
+          tags?: string[] | null
           title?: string
           updated_at?: string | null
         }
@@ -1403,6 +2099,104 @@ export type Database = {
           },
         ]
       }
+      support_messages: {
+        Row: {
+          attachments: string[] | null
+          created_at: string | null
+          id: string
+          is_internal: boolean | null
+          message: string
+          sender_id: string
+          ticket_id: string
+        }
+        Insert: {
+          attachments?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_internal?: boolean | null
+          message: string
+          sender_id: string
+          ticket_id: string
+        }
+        Update: {
+          attachments?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_internal?: boolean | null
+          message?: string
+          sender_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          created_at: string | null
+          description: string
+          id: string
+          priority: string
+          resolution: string | null
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category: string
+          created_at?: string | null
+          description: string
+          id?: string
+          priority?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          priority?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_2fa: {
         Row: {
           backup_codes: string[] | null
@@ -1505,6 +2299,47 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          language_preference: string | null
+          notification_preferences: Json | null
+          privacy_settings: Json | null
+          theme_preference: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          language_preference?: string | null
+          notification_preferences?: Json | null
+          privacy_settings?: Json | null
+          theme_preference?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          language_preference?: string | null
+          notification_preferences?: Json | null
+          privacy_settings?: Json | null
+          theme_preference?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_subscriptions: {
         Row: {
           auto_renew: boolean | null
@@ -1582,8 +2417,94 @@ export type Database = {
           },
         ]
       }
+      user_wallets: {
+        Row: {
+          balance: number | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          is_verified: boolean | null
+          updated_at: string | null
+          user_id: string
+          verification_status: string | null
+        }
+        Insert: {
+          balance?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          is_verified?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          verification_status?: string | null
+        }
+        Update: {
+          balance?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          is_verified?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          verification_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          reference_id: string | null
+          status: string
+          transaction_type: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          reference_id?: string | null
+          status?: string
+          transaction_type: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          reference_id?: string | null
+          status?: string
+          transaction_type?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "user_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wallet_verification_requests: {
         Row: {
+          admin_comments: Json | null
           admin_verified: boolean
           amount: number
           bank_used: string | null
@@ -1610,6 +2531,7 @@ export type Database = {
           verified_by: string | null
         }
         Insert: {
+          admin_comments?: Json | null
           admin_verified?: boolean
           amount: number
           bank_used?: string | null
@@ -1636,6 +2558,7 @@ export type Database = {
           verified_by?: string | null
         }
         Update: {
+          admin_comments?: Json | null
           admin_verified?: boolean
           amount?: number
           bank_used?: string | null
@@ -1680,6 +2603,13 @@ export type Database = {
         Args: {
           provider_uuid: string
           review_id: string
+        }
+        Returns: boolean
+      }
+      filter_by_timeframe: {
+        Args: {
+          date_column: string
+          timeframe: string
         }
         Returns: boolean
       }
