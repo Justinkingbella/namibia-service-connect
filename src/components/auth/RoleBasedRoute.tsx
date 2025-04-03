@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/auth';
 import ProtectedRoute from './ProtectedRoute';
@@ -11,33 +11,37 @@ interface RoleBasedRouteProps {
 }
 
 const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles }) => {
-  const { user, userRole, loading } = useAuth();
+  const { user, loading } = useAuth();
+  const location = useLocation();
   
-  // Convert role prop to array for easier checking
+  // Convert allowedRoles to array for easier checking
   const rolesToCheck = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
-  
-  // First ensure the user is authenticated with ProtectedRoute
-  return (
-    <ProtectedRoute>
-      {/* Only show if loading is complete and user has required role */}
-      {!loading && user && userRole && rolesToCheck.includes(userRole) ? (
-        // User has the required role, show the component
-        <>{children}</>
-      ) : !loading && user && userRole === 'provider' ? (
-        // Provider trying to access non-provider route
-        <Navigate to="/provider/dashboard" replace />
-      ) : !loading && user && userRole === 'customer' ? (
-        // Customer trying to access non-customer route
-        <Navigate to="/customer/dashboard" replace />
-      ) : !loading && user && userRole === 'admin' ? (
-        // Admin trying to access non-admin route
-        <Navigate to="/admin/dashboard" replace />
-      ) : (
-        // Default fallback - redirect to sign-in
-        <Navigate to="/auth/sign-in" replace />
-      )}
-    </ProtectedRoute>
-  );
+
+  useEffect(() => {
+    console.log('RoleBasedRoute - Current state:', {
+      user,
+      loading,
+      allowedRoles: rolesToCheck,
+      currentPath: location.pathname
+    });
+  }, [user, loading, rolesToCheck, location]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/auth/sign-in" state={{ from: location }} replace />;
+  }
+
+  if (!rolesToCheck.includes(user.role)) {
+    // Redirect to appropriate dashboard based on user's role
+    const redirectPath = `/${user.role}/dashboard`;
+    console.log(`Unauthorized access, redirecting to: ${redirectPath}`);
+    return <Navigate to={redirectPath} replace />;
+  }
+
+  return <>{children}</>;
 };
 
 export default RoleBasedRoute;
