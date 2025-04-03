@@ -25,7 +25,7 @@ const SignIn = () => {
   useEffect(() => {
     if (user) {
       console.log('User already signed in, navigating to dashboard');
-      const from = location.state?.from?.pathname || `/${user?.role}/dashboard`;
+      const from = location.state?.from?.pathname || `/${user?.UserRole}/dashboard`;
       // Use setTimeout to delay the navigation slightly, preventing immediate state changes
       setTimeout(() => {
         navigate(from);
