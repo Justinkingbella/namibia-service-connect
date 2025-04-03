@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
-import ProviderProfilePage from '@/pages/dashboard/provider/ProviderProfilePage';
 import { AuthProvider } from './contexts/AuthContext';
 import { SiteProvider } from './contexts/SiteContext';
 import { SupabaseProvider } from './contexts/SupabaseContext';
@@ -45,7 +44,7 @@ import CustomerWalletVerificationsPage from './pages/dashboard/customer/WalletVe
 
 // Provider Pages
 import ProviderDashboard from './pages/dashboard/ProviderDashboard';
-import ProviderProfilePage from './pages/dashboard/provider/ProviderProfilePage';
+import ProviderProfilePage from './pages/dashboard/provider/profile/ProviderProfilePage';
 import ProviderRevenueReportsPage from './pages/dashboard/provider/RevenueReportsPage';
 import ProviderPaymentDetailsPage from './pages/dashboard/provider/PaymentDetailsPage';
 import ProviderTransactionsPage from './pages/dashboard/provider/TransactionsPage';
