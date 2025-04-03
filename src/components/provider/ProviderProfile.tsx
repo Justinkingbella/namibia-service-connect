@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useProfile } from '@/hooks/useProfile';
 import { useProviderProfile } from '@/hooks/useProviderProfile';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth'; // Added import for useAuth
+import { useAuth } from '@/contexts/AuthContext';
 import { Avatar } from '@/components/ui/avatar';
 import { User, Key, MapPin, Phone, Mail, Briefcase, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
