@@ -83,9 +83,11 @@ const SignUp = () => {
       
       // Navigate to the correct dashboard based on role
       if (role === 'provider') {
-        navigate('/dashboard/provider/profile');
-      } else {
-        navigate('/dashboard/customer/profile');
+        navigate('/dashboard/provider');
+      } else if (role === 'customer') {
+        navigate('/dashboard/customer');
+      } else if (role === 'admin') {
+        navigate('/dashboard/admin');
       }
     } catch (error: any) {
       console.error('Registration failed:', error);

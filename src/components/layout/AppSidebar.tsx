@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -36,10 +37,15 @@ const AppSidebar = () => {
   const location = useLocation();
 
   const isActive = (path: string) => {
-    if (path === '/dashboard' && location.pathname === '/dashboard') {
+    if ((path === '/dashboard/admin' && location.pathname === '/dashboard/admin') ||
+        (path === '/dashboard/provider' && location.pathname === '/dashboard/provider') ||
+        (path === '/dashboard/customer' && location.pathname === '/dashboard/customer')) {
       return true;
     }
-    return location.pathname.startsWith(path) && path !== '/dashboard';
+    return location.pathname.startsWith(path) && 
+           path !== '/dashboard/admin' && 
+           path !== '/dashboard/provider' && 
+           path !== '/dashboard/customer';
   };
 
   const getRoleTitle = () => {
@@ -58,28 +64,28 @@ const AppSidebar = () => {
   };
 
   const getLinks = () => {
-    const commonLinks = [
-      { icon: Home, label: 'Dashboard', path: '/dashboard' },
-      { icon: Package, label: 'Services', path: '/dashboard/services' },
-      { icon: MessageSquare, label: 'Messages', path: '/dashboard/messages' },
-    ];
+    const prefix = user?.role ? `/dashboard/${user.role}` : '/dashboard';
     
     const adminLinks = [
-      ...commonLinks,
-      { icon: Users, label: 'Users', path: '/dashboard/users' },
+      { icon: Home, label: 'Dashboard', path: '/dashboard/admin' },
+      { icon: Package, label: 'Services', path: '/dashboard/admin/services' },
+      { icon: MessageSquare, label: 'Messages', path: '/dashboard/admin/messages' },
+      { icon: Users, label: 'Users', path: '/dashboard/admin/users' },
       { icon: Clock, label: 'Verifications', path: '/dashboard/admin/wallet-verification' },
       { icon: AlertTriangle, label: 'Disputes', path: '/dashboard/admin/disputes' },
       { icon: BarChart3, label: 'Analytics', path: '/dashboard/admin/analytics' },
       { icon: Receipt, label: 'Subscriptions', path: '/dashboard/admin/subscription-management' },
       { icon: FileText, label: 'Content Editor', path: '/dashboard/admin/content-editor' },
-      { icon: Settings, label: 'Site Settings', path: '/dashboard/settings' },
+      { icon: Settings, label: 'Site Settings', path: '/dashboard/admin/site-settings' },
       { icon: UserCircle, label: 'Profile', path: '/dashboard/admin/profile' },
     ];
     
     const providerLinks = [
-      ...commonLinks,
+      { icon: Home, label: 'Dashboard', path: '/dashboard/provider' },
+      { icon: Package, label: 'Services', path: '/dashboard/provider/services' },
       { icon: PlusCircle, label: 'Create Service', path: '/dashboard/provider/services/create' },
-      { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
+      { icon: Calendar, label: 'Bookings', path: '/dashboard/provider/bookings' },
+      { icon: MessageSquare, label: 'Messages', path: '/dashboard/provider/messages' },
       { icon: DollarSign, label: 'Transactions', path: '/dashboard/provider/transactions' },
       { icon: LineChart, label: 'Revenue Reports', path: '/dashboard/provider/revenue' },
       { icon: Receipt, label: 'Subscription', path: '/dashboard/provider/subscription' },
@@ -89,12 +95,14 @@ const AppSidebar = () => {
     ];
     
     const customerLinks = [
-      ...commonLinks,
-      { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
+      { icon: Home, label: 'Dashboard', path: '/dashboard/customer' },
+      { icon: Package, label: 'Services', path: '/dashboard/customer/services' },
+      { icon: Calendar, label: 'Bookings', path: '/dashboard/customer/bookings' },
+      { icon: MessageSquare, label: 'Messages', path: '/dashboard/customer/messages' },
       { icon: Heart, label: 'Favorites', path: '/dashboard/customer/favorites' },
       { icon: CreditCard, label: 'Payment History', path: '/dashboard/customer/payment-history' },
       { icon: AlertTriangle, label: 'Disputes', path: '/dashboard/customer/disputes' },
-      { icon: UserCircle, label: 'Profile', path: '/dashboard/profile' },
+      { icon: UserCircle, label: 'Profile', path: '/dashboard/customer/profile' },
     ];
     
     if (user?.role === 'admin') return adminLinks;
