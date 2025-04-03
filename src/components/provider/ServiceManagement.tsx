@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchProviderServices } from '@/services/profileService';
@@ -10,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { ServiceCategory, PricingModel, Service } from '@/types/service';
-import { PlusCircle, Grid, Home, ShoppingBag, Briefcase, Code, Car, Heart, Trash, Tool, Droplet, Zap, Truck, Palette, Flower, BookOpen } from 'lucide-react';
+import { PlusCircle, Grid, Home, ShoppingBag, Briefcase, Code, Car, Heart, Trash, Wrench, Droplet, Zap, Truck, Palette, Flower, BookOpen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const ServiceManagement = () => {
@@ -33,11 +32,10 @@ const ServiceManagement = () => {
     return category.charAt(0).toUpperCase() + category.slice(1);
   };
 
-  // Update the categoryIcons object to include all ServiceCategory options
   const categoryIcons: Record<string, string> = {
     'all': 'grid',
     'cleaning': 'trash',
-    'repair': 'tool',
+    'repair': 'wrench',
     'plumbing': 'droplet',
     'electrical': 'zap',
     'moving': 'truck',
@@ -55,7 +53,7 @@ const ServiceManagement = () => {
   const getCategoryIcon = (category: string) => {
     switch(category) {
       case 'cleaning': return <Trash className="h-4 w-4" />;
-      case 'repair': return <Tool className="h-4 w-4" />;
+      case 'repair': return <Wrench className="h-4 w-4" />;
       case 'plumbing': return <Droplet className="h-4 w-4" />;
       case 'electrical': return <Zap className="h-4 w-4" />;
       case 'moving': return <Truck className="h-4 w-4" />;

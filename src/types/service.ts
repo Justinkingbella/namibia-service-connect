@@ -18,7 +18,7 @@ export type ServiceCategory =
 
 export type PricingModel = 'fixed' | 'hourly' | 'quote';
 
-export type PaymentMethod = 'credit_card' | 'paypal' | 'bank_transfer' | 'cash';
+export type PaymentMethod = 'credit_card' | 'paypal' | 'bank_transfer' | 'cash' | 'pay_today' | 'pay_fast' | 'e_wallet' | 'dop' | 'easy_wallet';
 
 export interface ServiceListItem {
   id: string;
@@ -52,4 +52,24 @@ export interface Service {
   providerName?: string;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+// Adding ServiceData interface to fix missing type errors
+export interface ServiceData {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  pricing_model: PricingModel;
+  category: ServiceCategory;
+  provider_id: string;
+  provider_name?: string;
+  image?: string;
+  features?: string[];
+  is_active: boolean;
+  location?: string;
+  rating?: number;
+  review_count?: number;
+  created_at?: string;
+  updated_at?: string;
 }
