@@ -45,6 +45,7 @@ import CustomerWalletVerificationsPage from './pages/dashboard/customer/WalletVe
 
 // Provider Pages
 import ProviderDashboard from './pages/dashboard/ProviderDashboard';
+import ProviderProfilePage from './pages/dashboard/provider/ProviderProfilePage';
 import ProviderRevenueReportsPage from './pages/dashboard/provider/RevenueReportsPage';
 import ProviderPaymentDetailsPage from './pages/dashboard/provider/PaymentDetailsPage';
 import ProviderTransactionsPage from './pages/dashboard/provider/TransactionsPage';
