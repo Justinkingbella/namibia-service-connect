@@ -19,6 +19,21 @@ const SubscriptionPageProvider = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
+  const [availablePlans, setAvailablePlans] = useState<SubscriptionPlan[]>([]);
+
+  // Fetch available plans
+  useEffect(() => {
+    const loadPlans = async () => {
+      try {
+        const plans = await fetchSubscriptionPlans();
+        setAvailablePlans(plans.filter(plan => plan.isActive));
+      } catch (error) {
+        console.error('Error loading subscription plans:', error);
+        toast.error('Failed to load subscription plans');
+      }
+    };
+    loadPlans();
+  }, []);
 
   const { data: subscription, isLoading, error, refetch } = useQuery({
     queryKey: ['providerSubscription', user?.id],

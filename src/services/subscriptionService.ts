@@ -41,9 +41,22 @@ export async function fetchSubscriptionPlans(): Promise<SubscriptionPlan[]> {
     const { data, error } = await supabase
       .from('subscription_plans')
       .select('*')
-      .eq('is_active', true)
       .order('sort_order', { ascending: true })
       .order('price', { ascending: true });
+
+    // Enable real-time subscription
+    supabase
+      .channel('subscription_plans_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'subscription_plans' }, 
+        (payload) => {
+          // Handle real-time updates here
+          window.dispatchEvent(new CustomEvent('subscription_plans_update', { 
+            detail: payload 
+          }));
+        }
+      )
+      .subscribe();
 
     if (error) {
       console.error('Error fetching subscription plans:', error);

@@ -128,9 +128,40 @@ const mockTransactions = [
 ];
 
 const SubscriptionManagement = () => {
-  const [plans, setPlans] = useState(mockSubscriptionPlans);
-  const [subscriptions, setSubscriptions] = useState(mockSubscriptions);
-  const [transactions, setTransactions] = useState(mockTransactions);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedPlans = await fetchSubscriptionPlans();
+        setPlans(fetchedPlans);
+        
+        // Fetch active subscriptions
+        const { data: subs } = await supabase
+          .from('user_subscriptions')
+          .select('*, user:user_id(*)');
+        setSubscriptions(subs || []);
+
+        // Fetch transactions
+        const { data: trans } = await supabase
+          .from('subscription_transactions')
+          .select('*')
+          .order('created_at', { ascending: false });
+        setTransactions(trans || []);
+      } catch (error) {
+        console.error('Error fetching subscription data:', error);
+        toast.error('Failed to load subscription data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [activeTab, setActiveTab] = useState("plans");
   const [searchTerm, setSearchTerm] = useState("");
