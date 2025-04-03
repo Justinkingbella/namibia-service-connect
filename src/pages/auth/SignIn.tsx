@@ -24,8 +24,26 @@ const SignIn = () => {
   // Redirect if already authenticated - using useEffect to handle navigation
   useEffect(() => {
     if (user) {
-      console.log('User already signed in, navigating to dashboard');
-      const from = location.state?.from?.pathname || `/${user?.role}/dashboard`;
+      console.log('User signed in, role:', user.role);
+      let dashboardPath;
+      
+      switch (user.role) {
+        case 'admin':
+          dashboardPath = '/admin/dashboard';
+          break;
+        case 'provider':
+          dashboardPath = '/provider/dashboard';
+          break;
+        case 'customer':
+          dashboardPath = '/customer/dashboard';
+          break;
+        default:
+          dashboardPath = '/customer/dashboard';
+      }
+      
+      const from = location.state?.from?.pathname || dashboardPath;
+      console.log('Navigating to:', from);
+      
       // Use setTimeout to delay the navigation slightly, preventing immediate state changes
       setTimeout(() => {
         navigate(from);

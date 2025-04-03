@@ -23,7 +23,20 @@ const Dashboard = () => {
           }
 
           // Determine the correct dashboard path based on user role
-          const dashboardPath = `/${user.role}/dashboard`;
+          let dashboardPath;
+          switch (user.role) {
+            case 'admin':
+              dashboardPath = '/admin/dashboard';
+              break;
+            case 'provider':
+              dashboardPath = '/provider/dashboard';
+              break;
+            case 'customer':
+              dashboardPath = '/customer/dashboard';
+              break;
+            default:
+              dashboardPath = '/auth/sign-in';
+          }
           console.log(`Redirecting to role-specific dashboard: ${dashboardPath}`);
           navigate(dashboardPath, { replace: true });
         } else {

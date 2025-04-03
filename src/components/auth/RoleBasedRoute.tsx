@@ -36,7 +36,20 @@ const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles 
 
   if (!rolesToCheck.includes(user.role)) {
     // Redirect to appropriate dashboard based on user's role
-    const redirectPath = `/${user.role}/dashboard`;
+    let redirectPath;
+    switch (user.role) {
+      case 'admin':
+        redirectPath = '/admin/dashboard';
+        break;
+      case 'provider':
+        redirectPath = '/provider/dashboard';
+        break;
+      case 'customer':
+        redirectPath = '/customer/dashboard';
+        break;
+      default:
+        redirectPath = '/auth/sign-in';
+    }
     console.log(`Unauthorized access, redirecting to: ${redirectPath}`);
     return <Navigate to={redirectPath} replace />;
   }
