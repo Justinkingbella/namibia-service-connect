@@ -7,7 +7,7 @@ import ProviderProfile from '@/components/provider/ProviderProfile';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 
-const ProviderProfileDetailPage = () => {
+const ProviderProfilePage = () => {
   const { user, isLoading } = useAuth();
   const [profileLoading, setProfileLoading] = useState(true);
   const navigate = useNavigate();
@@ -74,4 +74,4 @@ const ProviderProfileDetailPage = () => {
   );
 };
 
-export default ProviderProfileDetailPage;
+export default ProviderProfilePage;

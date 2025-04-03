@@ -128,9 +128,30 @@ const ProviderProfile: React.FC = () => {
     if (!user?.id) return;
 
     try {
+      // Define updateProfile function locally if it's not available
+      const updateProfile = async (data: Partial<DbUserProfile>) => {
+        if (!user?.id) return false;
+        
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              ...data,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id);
+            
+          if (error) throw error;
+          return true;
+        } catch (error) {
+          console.error('Error updating profile:', error);
+          return false;
+        }
+      };
+      
       await updateProfile({ avatar_url: url });
       // Also update provider avatar if it exists
-      if (providerProfileData) {
+      if (localProviderData) {
         const { error } = await supabase
           .from('service_providers')
           .update({ avatar_url: url })
@@ -164,21 +185,41 @@ const ProviderProfile: React.FC = () => {
 
     try {
       // Update profile data
+      const updateProfile = async (data: Partial<DbUserProfile>) => {
+        if (!user?.id) return false;
+        
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              ...data,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id);
+            
+          if (error) throw error;
+          return true;
+        } catch (error) {
+          console.error('Error updating profile:', error);
+          return false;
+        }
+      };
+      
       await updateProfile(personalData);
 
       // Update provider data if needed
-      if (providerData && user?.id) {
+      if (localProviderData && user?.id) {
         const { error } = await supabase
           .from('service_providers')
           .update({
-            business_name: providerData.business_name,
-            business_description: providerData.business_description,
-            email: providerData.email,
-            phone_number: providerData.phone_number,
-            address: providerData.address,
-            city: providerData.city,
-            country: providerData.country,
-            website: providerData.website
+            business_name: localProviderData.business_name,
+            business_description: localProviderData.business_description,
+            email: localProviderData.email,
+            phone_number: localProviderData.phone_number,
+            address: localProviderData.address,
+            city: localProviderData.city,
+            country: localProviderData.country,
+            website: localProviderData.website
           })
           .eq('id', user.id);
 
