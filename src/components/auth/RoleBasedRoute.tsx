@@ -24,16 +24,16 @@ const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles 
         <>{children}</>
       ) : user && userRole === 'provider' ? (
         // Provider trying to access non-provider route
-        <Navigate to="/dashboard/provider" replace />
+        <Navigate to="/provider/dashboard" replace />
       ) : user && userRole === 'customer' ? (
         // Customer trying to access non-customer route
-        <Navigate to="/dashboard/customer" replace />
+        <Navigate to="/customer/dashboard" replace />
       ) : user && userRole === 'admin' ? (
         // Admin trying to access non-admin route
-        <Navigate to="/dashboard/admin" replace />
+        <Navigate to="/admin/dashboard" replace />
       ) : (
         // Default fallback - redirect to appropriate dashboard based on role
-        <Navigate to={user?.role ? `/dashboard/${user.role}` : "/dashboard"} replace />
+        <Navigate to={user?.role ? `/${user.role}/dashboard` : "/dashboard"} replace />
       )}
     </ProtectedRoute>
   );

@@ -25,6 +25,7 @@ import ResetPassword from './pages/auth/ResetPassword';
 import CreateAdmin from './pages/auth/CreateAdmin';
 
 // Dashboard Pages - Overview
+import Dashboard from './pages/dashboard/Dashboard';
 import BookingsPage from './pages/dashboard/bookings/BookingsPage';
 import BookingDetail from './pages/dashboard/bookings/BookingDetail';
 import ServicesPage from './pages/dashboard/services/ServicesPage';
@@ -92,16 +93,12 @@ const App = () => {
               {/* Main Dashboard Route - Redirects based on role */}
               <Route
                 path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Navigate to="/dashboard/customer" replace />
-                  </ProtectedRoute>
-                }
+                element={<Dashboard />}
               />
               
               {/* ADMIN ROUTES */}
               <Route
-                path="/dashboard/admin"
+                path="/admin/dashboard"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminDashboard />
@@ -109,7 +106,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/profile"
+                path="/admin/profile"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminProfilePage />
@@ -117,7 +114,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/analytics"
+                path="/admin/analytics"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminPlatformAnalyticsPage />
@@ -125,7 +122,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/platform-controls"
+                path="/admin/platform-controls"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminPlatformControlsPage />
@@ -133,7 +130,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/content-editor"
+                path="/admin/content-editor"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminContentEditorPage />
@@ -141,7 +138,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/site-settings"
+                path="/admin/site-settings"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminSiteSettingsPage />
@@ -149,7 +146,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/booking-settings"
+                path="/admin/booking-settings"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminBookingSettingsPage />
@@ -157,7 +154,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/category-management"
+                path="/admin/category-management"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminCategoryManagementPage />
@@ -165,7 +162,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/subscription-management"
+                path="/admin/subscription-management"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminSubscriptionManagementPage />
@@ -173,7 +170,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/disputes"
+                path="/admin/disputes"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminDisputesPage />
@@ -181,7 +178,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/provider-verification"
+                path="/admin/provider-verification"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminProviderVerificationPage />
@@ -189,7 +186,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/wallet-verification"
+                path="/admin/wallet-verification"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminWalletVerificationPage />
@@ -199,7 +196,7 @@ const App = () => {
               
               {/* PROVIDER ROUTES */}
               <Route
-                path="/dashboard/provider"
+                path="/provider/dashboard"
                 element={
                   <RoleBasedRoute allowedRoles={['provider']}>
                     <ProviderDashboard />
@@ -207,7 +204,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/provider/profile"
+                path="/provider/profile"
                 element={
                   <RoleBasedRoute allowedRoles={['provider']}>
                     <ProviderProfilePage />
@@ -215,7 +212,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/provider/revenue"
+                path="/provider/revenue"
                 element={
                   <RoleBasedRoute allowedRoles={['provider']}>
                     <ProviderRevenueReportsPage />
@@ -223,7 +220,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/provider/payment-details"
+                path="/provider/payment-details"
                 element={
                   <RoleBasedRoute allowedRoles={['provider']}>
                     <ProviderPaymentDetailsPage />
@@ -231,7 +228,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/provider/transactions"
+                path="/provider/transactions"
                 element={
                   <RoleBasedRoute allowedRoles={['provider']}>
                     <ProviderTransactionsPage />
@@ -239,7 +236,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/provider/disputes"
+                path="/provider/disputes"
                 element={
                   <RoleBasedRoute allowedRoles={['provider']}>
                     <ProviderDisputesPage />
@@ -247,7 +244,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/provider/wallet-verification"
+                path="/provider/wallet-verification"
                 element={
                   <RoleBasedRoute allowedRoles={['provider']}>
                     <ProviderWalletVerificationPage />
@@ -255,7 +252,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/provider/subscription"
+                path="/provider/subscription"
                 element={
                   <RoleBasedRoute allowedRoles={['provider']}>
                     <SubscriptionPageProvider />
@@ -263,7 +260,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/provider/services/create"
+                path="/provider/services/create"
                 element={
                   <RoleBasedRoute allowedRoles={['provider']}>
                     <CreateServicePage />
@@ -271,7 +268,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/provider/services"
+                path="/provider/services"
                 element={
                   <RoleBasedRoute allowedRoles={['provider']}>
                     <ServicesPage />
@@ -279,7 +276,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/provider/services/:id"
+                path="/provider/services/:id"
                 element={
                   <RoleBasedRoute allowedRoles={['provider']}>
                     <ServiceDetail />
@@ -287,7 +284,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/provider/bookings"
+                path="/provider/bookings"
                 element={
                   <RoleBasedRoute allowedRoles={['provider']}>
                     <BookingsPage />
@@ -295,7 +292,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/provider/bookings/:id"
+                path="/provider/bookings/:id"
                 element={
                   <RoleBasedRoute allowedRoles={['provider']}>
                     <BookingDetail />
@@ -303,7 +300,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/provider/messages"
+                path="/provider/messages"
                 element={
                   <RoleBasedRoute allowedRoles={['provider']}>
                     <MessagesPage />
@@ -313,7 +310,7 @@ const App = () => {
               
               {/* CUSTOMER ROUTES */}
               <Route
-                path="/dashboard/customer"
+                path="/customer/dashboard"
                 element={
                   <RoleBasedRoute allowedRoles={['customer']}>
                     <CustomerDashboard />
@@ -321,7 +318,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/customer/favorites"
+                path="/customer/favorites"
                 element={
                   <RoleBasedRoute allowedRoles={['customer']}>
                     <CustomerFavoritesPage />
@@ -329,7 +326,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/customer/profile"
+                path="/customer/profile"
                 element={
                   <RoleBasedRoute allowedRoles={['customer']}>
                     <CustomerProfilePage />
@@ -337,7 +334,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/customer/payment-history"
+                path="/customer/payment-history"
                 element={
                   <RoleBasedRoute allowedRoles={['customer']}>
                     <CustomerPaymentHistoryPage />
@@ -345,7 +342,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/customer/payment"
+                path="/customer/payment"
                 element={
                   <RoleBasedRoute allowedRoles={['customer']}>
                     <CustomerPaymentPage />
@@ -353,7 +350,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/customer/disputes"
+                path="/customer/disputes"
                 element={
                   <RoleBasedRoute allowedRoles={['customer']}>
                     <CustomerDisputesPage />
@@ -361,7 +358,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/customer/wallet-verifications"
+                path="/customer/wallet-verifications"
                 element={
                   <RoleBasedRoute allowedRoles={['customer']}>
                     <CustomerWalletVerificationsPage />
@@ -369,7 +366,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/customer/services"
+                path="/customer/services"
                 element={
                   <RoleBasedRoute allowedRoles={['customer']}>
                     <ServicesPage />
@@ -377,7 +374,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/customer/services/:id"
+                path="/customer/services/:id"
                 element={
                   <RoleBasedRoute allowedRoles={['customer']}>
                     <ServiceDetail />
@@ -385,7 +382,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/customer/bookings"
+                path="/customer/bookings"
                 element={
                   <RoleBasedRoute allowedRoles={['customer']}>
                     <BookingsPage />
@@ -393,7 +390,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/customer/bookings/:id"
+                path="/customer/bookings/:id"
                 element={
                   <RoleBasedRoute allowedRoles={['customer']}>
                     <BookingDetail />
@@ -401,7 +398,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/customer/messages"
+                path="/customer/messages"
                 element={
                   <RoleBasedRoute allowedRoles={['customer']}>
                     <MessagesPage />

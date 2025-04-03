@@ -101,7 +101,7 @@ const ProviderDashboard = () => {
                 <div className="flex flex-col items-center justify-center py-8">
                   <p className="text-muted-foreground mb-4">You don't have any services listed yet</p>
                   <Button asChild>
-                    <Link to="/dashboard/provider/services/create">Create a Service</Link>
+                    <Link to="/provider/services/create">Create a Service</Link>
                   </Button>
                 </div>
               </CardContent>

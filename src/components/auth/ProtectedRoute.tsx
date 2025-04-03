@@ -47,7 +47,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Redirect the user to their role-specific dashboard if they're at the generic /dashboard
   if (location.pathname === '/dashboard') {
-    const roleDashboard = `/dashboard/${user.role}`;
+    const roleDashboard = `/${user.role}/dashboard`;
     console.log(`Redirecting to role-specific dashboard: ${roleDashboard}`);
     return <Navigate to={roleDashboard} replace />;
   }
@@ -55,7 +55,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // If user doesn't have permission, redirect to their role-specific dashboard
   if (!allowedRoles.includes(user.role)) {
     console.log(`User role ${user.role} not in allowed roles:`, allowedRoles);
-    return <Navigate to={`/dashboard/${user.role}`} replace />;
+    return <Navigate to={`/${user.role}/dashboard`} replace />;
   }
 
   // User is authenticated and authorized
