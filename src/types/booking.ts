@@ -14,7 +14,9 @@ export type PaymentStatus =
   | 'paid' 
   | 'refunded' 
   | 'failed'
-  | 'partial';
+  | 'partial'
+  | 'processing'
+  | 'completed';
 
 export interface Booking {
   id: string;
@@ -33,6 +35,7 @@ export interface Booking {
   notes?: string;
   rating?: number;
   isUrgent?: boolean;
+  duration?: number; // Added duration field
 }
 
 export interface BookingWithDetails extends Booking {
@@ -57,6 +60,7 @@ export interface Dispute {
   priority: 'low' | 'medium' | 'high';
   evidenceUrls?: string[];
   refundAmount?: number;
+  reason?: string; // Adding reason field that's used in multiple components
 }
 
 // Re-export from types/index.ts

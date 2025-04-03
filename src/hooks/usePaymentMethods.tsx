@@ -2,8 +2,18 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { PaymentMethod } from '@/types/auth';
 import { supabase } from '@/integrations/supabase/client';
+
+// Define the PaymentMethod type
+interface PaymentMethod {
+  id: string;
+  userId: string;
+  name: string;
+  type: string;
+  details: Record<string, any>;
+  isDefault: boolean;
+  createdAt: Date;
+}
 
 // Define the actual implementations to replace the imports
 const fetchUserPaymentMethods = async (userId: string): Promise<PaymentMethod[]> => {

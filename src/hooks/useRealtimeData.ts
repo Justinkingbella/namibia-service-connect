@@ -1,161 +1,121 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface RealtimeTable {
+type PostgresChannelPayload<T = any> = {
+  schema: string;
   table: string;
-  filter?: Record<string, any>;
-  order?: { column: string; ascending: boolean };
-  limit?: number;
-  onDataChange: (payload: any) => void;
+  commit_timestamp: string;
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+  new: T;
+  old: T;
+};
+
+interface UseRealtimeDataParams {
+  table: string;
+  schema?: string;
+  filter?: string;
+  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+  initialData?: any[];
+  fetchInitialData?: boolean;
+  userId?: string;
 }
 
-export interface RealtimeQueryResult<T> {
-  data: T[];
-  error: string;
-  loading: boolean;
-  refetch: () => Promise<void>;
-}
+export function useRealtimeData<T = any>({
+  table,
+  schema = 'public',
+  filter,
+  event = '*',
+  initialData = [],
+  fetchInitialData = true,
+  userId
+}: UseRealtimeDataParams) {
+  const [data, setData] = useState<T[]>(initialData);
+  const [loading, setLoading] = useState(fetchInitialData);
+  const { toast } = useToast();
 
-export function useRealtimeQuery<T>(tableName: string, options: any = {}): RealtimeQueryResult<T> {
-  const [data, setData] = useState<T[]>([]);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      // @ts-ignore - Suppressing type error for the dynamic table name
-      let query = supabase.from(tableName).select('*');
-
-      // Apply filters
-      if (options.filter) {
-        Object.entries(options.filter).forEach(([key, value]) => {
-          // @ts-ignore - Suppressing to allow dynamic column name
-          query = query.eq(key, value);
-        });
-      }
-
-      // Apply order
-      if (options.order) {
-        // @ts-ignore - Suppressing to allow dynamic column name
-        query = query.order(options.order.column, {
-          ascending: options.order.ascending,
-        });
-      }
-
-      // Apply limit
-      if (options.limit) {
-        query = query.limit(options.limit);
-      }
-
-      const { data: result, error: queryError } = await query;
-
-      if (queryError) {
-        throw queryError;
-      }
-
-      setData(result as T[]);
-      setError('');
-    } catch (err: any) {
-      console.error('Error fetching data:', err);
-      setError(err.message || 'An error occurred while fetching data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Initial data fetch
   useEffect(() => {
-    fetchData();
-  }, [tableName, JSON.stringify(options)]);
+    if (!fetchInitialData) return;
 
-  const refetch = async () => {
-    await fetchData();
-  };
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Use any query parameter to avoid type errors
+        const query: any = supabase.from(table).select('*');
+        
+        // Apply filter if provided
+        if (filter) {
+          query.eq(filter, userId);
+        }
 
-  return { data, error, loading, refetch };
-}
+        const { data: result, error } = await query;
 
-export function useRealtimeData<T>(realtimeConfig: RealtimeTable): RealtimeQueryResult<T> {
-  const [data, setData] = useState<T[]>([]);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
-  const channel = useRef<any>(null);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      // @ts-ignore - Suppressing type error for the dynamic table name
-      let query = supabase.from(realtimeConfig.table).select('*');
-
-      // Apply filters
-      if (realtimeConfig.filter) {
-        Object.entries(realtimeConfig.filter).forEach(([key, value]) => {
-          // @ts-ignore - Suppressing to allow dynamic column name
-          query = query.eq(key, value);
-        });
-      }
-
-      // Apply order
-      if (realtimeConfig.order) {
-        // @ts-ignore - Suppressing to allow dynamic column name
-        query = query.order(realtimeConfig.order.column, {
-          ascending: realtimeConfig.order.ascending,
-        });
-      }
-
-      // Apply limit
-      if (realtimeConfig.limit) {
-        query = query.limit(realtimeConfig.limit);
-      }
-
-      const { data: result, error: queryError } = await query;
-
-      if (queryError) {
-        throw queryError;
-      }
-
-      setData(result as T[]);
-      setError('');
-    } catch (err: any) {
-      console.error('Error fetching data:', err);
-      setError(err.message || 'An error occurred while fetching data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-
-    // Set up realtime subscription
-    try {
-      channel.current = supabase
-        .channel(`custom-all-channel`)
-        .on(
-          'postgres_changes', 
-          { event: '*', schema: 'public', table: realtimeConfig.table }, 
-          (payload: any) => {
-            realtimeConfig.onDataChange(payload);
-            fetchData();
-          }
-        )
-        .subscribe();
-    } catch (err: any) {
-      console.error('Error setting up realtime subscription:', err);
-      setError(err.message || 'An error occurred with realtime subscription');
-    }
-
-    return () => {
-      if (channel.current) {
-        supabase.removeChannel(channel.current);
+        if (error) {
+          console.error(`Error fetching ${table} data:`, error);
+          toast({ variant: 'destructive', title: `Failed to load ${table} data` });
+        } else {
+          setData(result);
+        }
+      } catch (error) {
+        console.error(`Error in fetchData for ${table}:`, error);
+      } finally {
+        setLoading(false);
       }
     };
-  }, [realtimeConfig.table]);
 
-  const refetch = async () => {
-    await fetchData();
-  };
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchInitialData, table, filter, userId]);
 
-  return { data, error, loading, refetch };
+  // Realtime subscription
+  useEffect(() => {
+    // Set up the channel
+    const channel = supabase
+      .channel(`${table}-changes`)
+      .on(
+        'postgres_changes',
+        {
+          event,
+          schema,
+          table,
+          filter: filter ? `${filter}=eq.${userId}` : undefined,
+        },
+        (payload: PostgresChannelPayload<T>) => {
+          console.log(`Received ${payload.eventType} event on ${table}:`, payload);
+          
+          // Update local state based on the event type
+          switch (payload.eventType) {
+            case 'INSERT':
+              setData(currentData => [...currentData, payload.new]);
+              break;
+            case 'UPDATE':
+              setData(currentData =>
+                currentData.map(item => 
+                  // @ts-ignore This is a bit of a hack but works for our use case
+                  item.id === payload.new.id ? payload.new : item
+                )
+              );
+              break;
+            case 'DELETE':
+              setData(currentData =>
+                currentData.filter(item => 
+                  // @ts-ignore This is a bit of a hack but works for our use case
+                  item.id !== payload.old.id
+                )
+              );
+              break;
+          }
+        }
+      )
+      .subscribe();
+
+    // Clean up subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [table, schema, filter, event, userId]);
+
+  return { data, loading, setData };
 }

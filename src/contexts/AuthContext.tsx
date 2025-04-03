@@ -1,365 +1,358 @@
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Customer, Provider, Admin, UserRole, AuthContextType, ProviderVerificationStatus } from '@/types/auth';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
+import { UserRole, Customer, Provider, Admin } from '@/types/auth';
 import { toast } from 'sonner';
 
-interface AuthProviderProps {
-  children: React.ReactNode;
+interface AuthContextProps {
+  user: User | null;
+  session: Session | null;
+  userRole: UserRole | null;
+  userProfile: Customer | Provider | Admin | null;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: any | null }>;
+  signUp: (email: string, password: string, role: UserRole, userData: Partial<Customer | Provider>) => Promise<{ error: any | null, data: any | null }>;
+  signOut: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<{ error: any | null }>;
+  resetPassword: (password: string) => Promise<{ error: any | null }>;
+  updateProfile: (data: Partial<Customer | Provider | Admin>) => Promise<boolean>;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  isLoading: true,
-  signIn: async () => false,
-  signOut: async () => {},
-  signUp: async () => false,
-  resetPassword: async () => false,
-});
+const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const [session, setSession] = useState<Session | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userProfile, setUserProfile] = useState<Customer | Provider | Admin | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const setUpUser = async () => {
-      setIsLoading(true);
-      
-      // Check active auth session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error("Error getting session:", sessionError);
-        setIsLoading(false);
-        return;
-      }
-      
-      if (!session) {
-        setUser(null);
-        setIsLoading(false);
-        return;
-      }
-      
-      // Fetch profile data
-      try {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profileError) {
-          throw profileError;
-        }
-        
-        if (!profile) {
-          console.error("No profile found for user:", session.user.id);
-          setIsLoading(false);
-          return;
-        }
-        
-        // Create the base user object
-        const baseUser: User = {
-          id: profile.id,
-          email: profile.email || session.user.email || '',
-          role: profile.role as UserRole,
-          firstName: profile.first_name || '',
-          lastName: profile.last_name || '',
-          name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
-          avatarUrl: profile.avatar_url || '',
-          avatar: profile.avatar_url || '',
-          isActive: profile.active || false,
-          createdAt: new Date(profile.created_at),
-          phoneNumber: profile.phone_number || '',
-        };
-        
-        // Extend with role-specific data
-        let userData: User | Customer | Provider | Admin;
-        
-        // Handle specific role data
-        if (profile.role === 'provider') {
-          // Fetch provider-specific data
-          const { data: providerData, error: providerError } = await supabase
-            .from('service_providers')
-            .select('*')
-            .eq('id', profile.id)
-            .single();
-          
-          if (providerError) {
-            console.warn("Error fetching provider data:", providerError);
-            userData = baseUser; // Fallback to base user
-          } else {
-            userData = {
-              ...baseUser,
-              role: 'provider' as const,
-              businessName: providerData.business_name || '',
-              description: providerData.business_description || '',
-              verificationStatus: (providerData.verification_status || 'unverified') as ProviderVerificationStatus,
-              categories: [], // Default empty array for categories
-              locations: [], // Default empty array for locations
-              rating: providerData.rating || 0,
-              reviewCount: providerData.rating_count || 0,
-              subscriptionTier: providerData.subscription_tier || 'free',
-              completedBookings: providerData.completed_bookings || 0,
-              bankDetails: providerData.bank_details || {}, // Default empty object
-              commissionRate: providerData.commission_rate || 10,
-            } as Provider;
-          }
-        } else if (profile.role === 'admin') {
-          // Fetch admin-specific data
-          const { data: adminData, error: adminError } = await supabase
-            .from('admin_permissions')
-            .select('*')
-            .eq('user_id', profile.id)
-            .single();
-          
-          if (adminError) {
-            console.warn("Error fetching admin data:", adminError);
-            userData = baseUser; // Fallback to base user
-          } else {
-            userData = {
-              ...baseUser,
-              role: 'admin' as const,
-              permissions: adminData?.permissions || [],
-            } as Admin;
-          }
-        } else {
-          // Default to customer
-          userData = {
-            ...baseUser,
-            role: 'customer' as const,
-            loyaltyPoints: profile.loyalty_points || 0,
-            preferences: profile.user_preferences || {},
-            favorites: profile.favorites || [],
-          } as Customer;
-        }
-        
-        setUser(userData);
-      } catch (error) {
-        console.error("Error setting up user:", error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    // Set up auth state change listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.info("Auth state changed:", event);
-      
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session) {
-          await setUpUser();
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserProfile(session.user);
+      } else {
+        setUserRole(null);
+        setUserProfile(null);
       }
     });
 
-    // Initial setup
-    setUpUser();
+    // Initial session fetch
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserProfile(session.user);
+      } else {
+        setLoading(false);
+      }
+    });
 
-    // Cleanup
     return () => {
-      authListener?.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
+  async function fetchUserProfile(user: User) {
+    try {
+      // First, get the basic user data from the profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        setLoading(false);
+        return;
+      }
+
+      const role = profileData.role as UserRole;
+      setUserRole(role);
+
+      // Depending on the role, fetch additional data from the appropriate table
+      switch (role) {
+        case 'customer':
+          setUserProfile({
+            id: user.id,
+            email: user.email!,
+            firstName: profileData.first_name || '',
+            lastName: profileData.last_name || '',
+            phoneNumber: profileData.phone_number || '',
+            avatar: profileData.avatar_url || '',
+            role: 'customer',
+            preferredCategories: profileData.preferred_categories || [],
+            notificationPreferences: profileData.notification_preferences || { email: true, sms: false, push: true },
+            createdAt: new Date(profileData.created_at),
+            isVerified: profileData.email_verified || false
+          });
+          break;
+
+        case 'provider':
+          // Get provider-specific data
+          const { data: providerData, error: providerError } = await supabase
+            .from('service_providers')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+          if (providerError) {
+            console.error('Error fetching provider data:', providerError);
+            setLoading(false);
+            return;
+          }
+
+          // Combine base profile with provider-specific data
+          setUserProfile({
+            id: user.id,
+            email: user.email!,
+            firstName: profileData.first_name || '',
+            lastName: profileData.last_name || '',
+            phoneNumber: profileData.phone_number || '',
+            avatar: profileData.avatar_url || '',
+            role: 'provider',
+            businessName: providerData.business_name || '',
+            businessDescription: providerData.business_description || '',
+            businessLogo: providerData.avatar_url || '',
+            verificationStatus: providerData.verification_status || 'pending',
+            rating: providerData.rating || 0,
+            reviewCount: providerData.rating_count || 0,
+            completedBookings: providerData.completed_bookings || 0,
+            categories: providerData.categories || [],
+            createdAt: new Date(profileData.created_at),
+            isVerified: profileData.email_verified || false,
+            subscription: providerData.subscription_tier || 'free',
+            bankDetails: providerData.bank_details || {}
+          });
+          break;
+
+        case 'admin':
+          // Get admin permissions
+          const { data: adminData, error: adminError } = await supabase
+            .from('admin_permissions')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+
+          if (adminError && adminError.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
+            console.error('Error fetching admin data:', adminError);
+          }
+
+          setUserProfile({
+            id: user.id,
+            email: user.email!,
+            firstName: profileData.first_name || '',
+            lastName: profileData.last_name || '',
+            phoneNumber: profileData.phone_number || '',
+            avatar: profileData.avatar_url || '',
+            role: 'admin',
+            permissions: adminData?.permissions || [],
+            createdAt: new Date(profileData.created_at),
+            isVerified: true
+          });
+          break;
+
+        default:
+          console.error('Unknown user role:', role);
+      }
+    } catch (error) {
+      console.error('Unexpected error in fetchUserProfile:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const signIn = async (email: string, password: string) => {
     try {
-      setIsLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return { error };
+    } catch (error) {
+      console.error('Error in signIn:', error);
+      return { error };
+    }
+  };
 
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Sign in failed",
-          description: error.message,
-        });
-        return false;
-      }
-
-      if (!data.user) {
-        toast({
-          variant: "destructive",
-          title: "Sign in failed",
-          description: "No user returned from authentication",
-        });
-        return false;
-      }
-
-      // Profile will be set by auth state change listener
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in.",
-      });
+  const signUp = async (
+    email: string, 
+    password: string, 
+    role: UserRole,
+    userData: Partial<Customer | Provider>
+  ) => {
+    try {
+      // First, create the auth user
+      const { data, error } = await supabase.auth.signUp({ email, password });
       
-      return true;
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Sign in failed",
-        description: error.message || "An unknown error occurred",
-      });
-      return false;
-    } finally {
-      setIsLoading(false);
+      if (error) {
+        return { error, data: null };
+      }
+      
+      if (!data.user) {
+        return { error: new Error('No user returned from signup'), data: null };
+      }
+      
+      // Then create the basic profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([{
+          id: data.user.id,
+          email,
+          first_name: userData.firstName || '',
+          last_name: userData.lastName || '',
+          phone_number: userData.phoneNumber || '',
+          role,
+          created_at: new Date().toISOString()
+        }]);
+        
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        return { error: profileError, data: null };
+      }
+      
+      // If this is a provider, create the provider record too
+      if (role === 'provider' && 'businessName' in userData) {
+        const { error: providerError } = await supabase
+          .from('service_providers')
+          .insert([{
+            id: data.user.id,
+            business_name: userData.businessName || '',
+            business_description: userData.businessDescription || '',
+            verification_status: 'pending',
+            subscription_tier: 'free',
+            created_at: new Date().toISOString()
+          }]);
+          
+        if (providerError) {
+          console.error('Error creating provider record:', providerError);
+          return { error: providerError, data: null };
+        }
+      }
+      
+      return { error: null, data };
+    } catch (error) {
+      console.error('Error in signUp:', error);
+      return { error, data: null };
     }
   };
 
   const signOut = async () => {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        throw error;
-      }
-      
-      // User will be cleared by auth state change listener
-      toast({
-        title: "Signed out",
-        description: "You have been signed out successfully.",
-      });
-      
-      navigate('/');
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Sign out failed",
-        description: error.message || "An unknown error occurred",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    await supabase.auth.signOut();
   };
 
-  const signUp = async (email: string, password: string, name: string, role: UserRole) => {
+  const forgotPassword = async (email: string) => {
     try {
-      setIsLoading(true);
-      
-      // Extract first and last name
-      const nameParts = name.trim().split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-      
-      // Create auth user
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            full_name: name,
-            role,
-          },
-        },
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      if (!data.user) {
-        throw new Error("No user returned from sign up");
-      }
-      
-      // Create or update profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: data.user.id,
-          email,
-          first_name: firstName,
-          last_name: lastName,
-          role,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          active: true,
-        });
-      
-      if (profileError) {
-        throw profileError;
-      }
-      
-      // Create role-specific record
-      if (role === 'provider') {
-        const { error: providerError } = await supabase
-          .from('service_providers')
-          .upsert({
-            id: data.user.id,
-            business_name: `${firstName}'s Business`,
-            email,
-            verification_status: 'pending',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          });
-        
-        if (providerError) {
-          throw providerError;
-        }
-      }
-      
-      toast({
-        title: "Account created",
-        description: "Your account has been created successfully.",
-      });
-      
-      return true;
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Sign up failed",
-        description: error.message || "An unknown error occurred",
-      });
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const resetPassword = async (email: string) => {
-    try {
-      setIsLoading(true);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/reset-password`,
       });
-      
-      if (error) {
-        throw error;
-      }
-      
-      toast({
-        title: "Password reset email sent",
-        description: "Please check your email for instructions to reset your password.",
-      });
-      
-      return true;
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Password reset failed",
-        description: error.message || "An unknown error occurred",
-      });
-      return false;
-    } finally {
-      setIsLoading(false);
+      return { error };
+    } catch (error) {
+      console.error('Error in forgotPassword:', error);
+      return { error };
     }
   };
 
-  return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signOut, signUp, resetPassword }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  const resetPassword = async (password: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      return { error };
+    } catch (error) {
+      console.error('Error in resetPassword:', error);
+      return { error };
+    }
+  };
+
+  const updateProfile = async (data: Partial<Customer | Provider | Admin>): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      // First update the base profile
+      const baseProfileData = {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        phone_number: data.phoneNumber,
+        updated_at: new Date().toISOString()
+      };
+      
+      if ('avatar' in data && data.avatar) {
+        baseProfileData['avatar_url'] = data.avatar;
+      }
+      
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update(baseProfileData)
+        .eq('id', user.id);
+        
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+        toast.error('Failed to update profile');
+        return false;
+      }
+      
+      // If this is a provider, update the provider record too
+      if (userRole === 'provider' && 'businessName' in data) {
+        const providerData = {
+          business_name: data.businessName,
+          business_description: data.businessDescription,
+          updated_at: new Date().toISOString()
+        };
+        
+        if ('businessLogo' in data && data.businessLogo) {
+          providerData['business_logo'] = data.businessLogo;
+        }
+        
+        const { error: providerError } = await supabase
+          .from('service_providers')
+          .update(providerData)
+          .eq('id', user.id);
+          
+        if (providerError) {
+          console.error('Error updating provider record:', providerError);
+          toast.error('Failed to update business information');
+          return false;
+        }
+      }
+      
+      // Update the local state
+      setUserProfile(prev => prev ? { ...prev, ...data } : null);
+      
+      toast.success('Profile updated successfully');
+      return true;
+    } catch (error) {
+      console.error('Error in updateProfile:', error);
+      toast.error('Something went wrong while updating your profile');
+      return false;
+    }
+  };
+
+  const value = {
+    user,
+    session,
+    userRole,
+    userProfile,
+    loading,
+    signIn,
+    signUp,
+    signOut,
+    forgotPassword,
+    resetPassword,
+    updateProfile
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}

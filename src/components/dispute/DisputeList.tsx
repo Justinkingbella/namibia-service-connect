@@ -14,14 +14,14 @@ interface DisputeListProps {
 
 const DisputeStatusBadge = ({ status }: { status: string }) => {
   switch (status) {
-    case 'open':
-      return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Open</Badge>;
-    case 'under_review':
-      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Under Review</Badge>;
+    case 'pending':
+      return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
+    case 'in_review':
+      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">In Review</Badge>;
     case 'resolved':
       return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Resolved</Badge>;
-    case 'declined':
-      return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Declined</Badge>;
+    case 'rejected':
+      return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Rejected</Badge>;
     default:
       return <Badge variant="outline">Unknown</Badge>;
   }
@@ -29,13 +29,13 @@ const DisputeStatusBadge = ({ status }: { status: string }) => {
 
 const DisputeIcon = ({ status }: { status: string }) => {
   switch (status) {
-    case 'open':
+    case 'pending':
       return <AlertCircle className="h-10 w-10 text-yellow-500" />;
-    case 'under_review':
+    case 'in_review':
       return <HelpCircle className="h-10 w-10 text-blue-500" />;
     case 'resolved':
       return <CheckCircle className="h-10 w-10 text-green-500" />;
-    case 'declined':
+    case 'rejected':
       return <Clock className="h-10 w-10 text-red-500" />;
     default:
       return <AlertCircle className="h-10 w-10 text-gray-500" />;
@@ -79,7 +79,7 @@ const DisputeList: React.FC<DisputeListProps> = ({ disputes, loading }) => {
               <div className="flex-1">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-semibold text-lg mb-1">{dispute.reason}</h3>
+                    <h3 className="font-semibold text-lg mb-1">{dispute.subject}</h3>
                     <div className="flex items-center gap-2 mb-2">
                       <DisputeStatusBadge status={dispute.status} />
                       <span className="text-sm text-muted-foreground">
