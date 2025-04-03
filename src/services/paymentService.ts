@@ -32,6 +32,103 @@ export const fetchPaymentHistory = async (userId: string): Promise<PaymentHistor
   }
 };
 
+// Function to generate a provider earnings report for a specific date range
+export const generateEarningsReport = async (
+  providerId: string, 
+  startDate: string, 
+  endDate: string
+): Promise<ProviderEarnings> => {
+  try {
+    // First check if a report for this period already exists
+    const { data: existingReport, error: checkError } = await supabase
+      .from('provider_earnings')
+      .select('*')
+      .eq('provider_id', providerId)
+      .eq('period_start', startDate)
+      .eq('period_end', endDate)
+      .single();
+
+    if (existingReport) {
+      return {
+        id: existingReport.id,
+        providerId: existingReport.provider_id,
+        periodStart: new Date(existingReport.period_start),
+        periodEnd: new Date(existingReport.period_end),
+        totalEarnings: existingReport.total_earnings,
+        totalBookings: existingReport.total_bookings,
+        commissionPaid: existingReport.commission_paid,
+        netEarnings: existingReport.net_earnings,
+        payoutStatus: existingReport.payout_status,
+        payoutDate: existingReport.payout_date ? new Date(existingReport.payout_date) : undefined,
+        payoutReference: existingReport.payout_reference,
+        createdAt: new Date(existingReport.created_at),
+        updatedAt: new Date(existingReport.updated_at)
+      };
+    }
+
+    // Get all completed bookings for the period
+    const { data: bookings, error: bookingsError } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('provider_id', providerId)
+      .eq('status', 'completed')
+      .gte('date', startDate)
+      .lte('date', endDate);
+
+    if (bookingsError) {
+      throw new Error(`Error fetching bookings: ${bookingsError.message}`);
+    }
+
+    const totalBookings = bookings?.length || 0;
+    const totalEarnings = bookings?.reduce((sum, booking) => sum + (booking.total_amount || 0), 0) || 0;
+    const commissionRate = 0.10; // 10% commission rate
+    const commissionPaid = totalEarnings * commissionRate;
+    const netEarnings = totalEarnings - commissionPaid;
+
+    // Create a new earnings report
+    const { data: newReport, error: insertError } = await supabase
+      .from('provider_earnings')
+      .insert({
+        provider_id: providerId,
+        period_start: startDate,
+        period_end: endDate,
+        total_earnings: totalEarnings,
+        total_bookings: totalBookings,
+        commission_paid: commissionPaid,
+        net_earnings: netEarnings,
+        payout_status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      throw new Error(`Error creating earnings report: ${insertError.message}`);
+    }
+
+    return {
+      id: newReport.id,
+      providerId: newReport.provider_id,
+      periodStart: new Date(newReport.period_start),
+      periodEnd: new Date(newReport.period_end),
+      totalEarnings: newReport.total_earnings,
+      totalBookings: newReport.total_bookings,
+      commissionPaid: newReport.commission_paid,
+      netEarnings: newReport.net_earnings,
+      payoutStatus: newReport.payout_status,
+      payoutDate: newReport.payout_date ? new Date(newReport.payout_date) : undefined,
+      payoutReference: newReport.payout_reference,
+      createdAt: new Date(newReport.created_at),
+      updatedAt: new Date(newReport.updated_at)
+    };
+    
+  } catch (error) {
+    console.error('Error generating earnings report:', error);
+    throw error;
+  }
+};
+
 // Function to fetch provider earnings
 export const fetchProviderEarnings = async (providerId: string): Promise<ProviderEarnings[]> => {
   try {
