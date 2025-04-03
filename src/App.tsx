@@ -1,5 +1,4 @@
-
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { SiteProvider } from './contexts/SiteContext';
@@ -24,10 +23,8 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import CreateAdmin from './pages/auth/CreateAdmin';
 
-// Dashboard Base
-import Dashboard from './pages/dashboard/Dashboard';
-
 // Dashboard Pages - Overview
+import Dashboard from './pages/dashboard/Dashboard';
 import BookingsPage from './pages/dashboard/bookings/BookingsPage';
 import BookingDetail from './pages/dashboard/bookings/BookingDetail';
 import ServicesPage from './pages/dashboard/services/ServicesPage';
@@ -37,6 +34,7 @@ import MessagesPage from './pages/dashboard/messages/MessagesPage';
 import SettingsPage from './pages/dashboard/settings/SettingsPage';
 
 // Customer Pages
+import CustomerDashboard from './pages/dashboard/CustomerDashboard';
 import CustomerFavoritesPage from './pages/dashboard/customer/FavoritesPage';
 import CustomerProfilePage from './pages/dashboard/customer/ProfilePage';
 import CustomerPaymentHistoryPage from './pages/dashboard/customer/PaymentHistoryPage';
@@ -45,6 +43,7 @@ import CustomerDisputesPage from './pages/dashboard/customer/DisputesPage';
 import CustomerWalletVerificationsPage from './pages/dashboard/customer/WalletVerificationsPage';
 
 // Provider Pages
+import ProviderDashboard from './pages/dashboard/ProviderDashboard';
 import ProviderProfilePage from './pages/dashboard/provider/profile/ProviderProfilePage';
 import ProviderRevenueReportsPage from './pages/dashboard/provider/RevenueReportsPage';
 import ProviderPaymentDetailsPage from './pages/dashboard/provider/PaymentDetailsPage';
@@ -54,6 +53,7 @@ import ProviderWalletVerificationPage from './pages/dashboard/provider/WalletVer
 import SubscriptionPageProvider from './pages/dashboard/provider/SubscriptionPageProvider';
 
 // Admin Pages
+import AdminDashboard from './pages/dashboard/AdminDashboard';
 import AdminProfilePage from './pages/dashboard/admin/profile/AdminProfilePage';
 import AdminPlatformAnalyticsPage from './pages/dashboard/admin/PlatformAnalyticsPage';
 import AdminPlatformControlsPage from './pages/dashboard/admin/PlatformControlsPage';
@@ -89,7 +89,7 @@ const App = () => {
               <Route path="/auth/reset-password" element={<ResetPassword />} />
               <Route path="/auth/create-admin" element={<CreateAdmin />} />
               
-              {/* Dashboard Routes */}
+              {/* Main Dashboard Route - Redirects based on role */}
               <Route
                 path="/dashboard"
                 element={
@@ -99,191 +99,17 @@ const App = () => {
                 }
               />
               
-              {/* Bookings */}
+              {/* ADMIN ROUTES */}
               <Route
-                path="/dashboard/bookings"
+                path="/admin/dashboard"
                 element={
-                  <ProtectedRoute>
-                    <BookingsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/bookings/:id"
-                element={
-                  <ProtectedRoute>
-                    <BookingDetail />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Services */}
-              <Route
-                path="/dashboard/services"
-                element={
-                  <ProtectedRoute>
-                    <ServicesPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/services/:id"
-                element={
-                  <ProtectedRoute>
-                    <ServiceDetail />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/services/create"
-                element={
-                  <RoleBasedRoute allowedRoles={['admin', 'provider']}>
-                    <CreateServicePage />
-                  </RoleBasedRoute>
-                }
-              />
-              
-              {/* Add Provider CreateService route */}
-              <Route
-                path="/dashboard/provider/services/create"
-                element={
-                  <RoleBasedRoute allowedRoles={['provider']}>
-                    <CreateServicePage />
-                  </RoleBasedRoute>
-                }
-              />
-              
-              {/* Messages */}
-              <Route
-                path="/dashboard/messages"
-                element={
-                  <ProtectedRoute>
-                    <MessagesPage />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Settings */}
-              <Route
-                path="/dashboard/settings"
-                element={
-                  <ProtectedRoute>
-                    <SettingsPage />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Customer specific routes */}
-              <Route
-                path="/dashboard/customer/favorites"
-                element={
-                  <RoleBasedRoute allowedRoles={['customer']}>
-                    <CustomerFavoritesPage />
+                  <RoleBasedRoute allowedRoles={['admin']}>
+                    <AdminDashboard />
                   </RoleBasedRoute>
                 }
               />
               <Route
-                path="/dashboard/customer/profile"
-                element={
-                  <RoleBasedRoute allowedRoles={['customer']}>
-                    <CustomerProfilePage />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/customer/payment-history"
-                element={
-                  <RoleBasedRoute allowedRoles={['customer']}>
-                    <CustomerPaymentHistoryPage />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/customer/payment"
-                element={
-                  <RoleBasedRoute allowedRoles={['customer']}>
-                    <CustomerPaymentPage />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/customer/disputes"
-                element={
-                  <RoleBasedRoute allowedRoles={['customer']}>
-                    <CustomerDisputesPage />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/customer/wallet-verifications"
-                element={
-                  <RoleBasedRoute allowedRoles={['customer']}>
-                    <CustomerWalletVerificationsPage />
-                  </RoleBasedRoute>
-                }
-              />
-              
-              {/* Provider specific routes */}
-              <Route
-                path="/dashboard/provider/profile"
-                element={
-                  <RoleBasedRoute allowedRoles={['provider']}>
-                    <ProviderProfilePage />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/provider/revenue"
-                element={
-                  <RoleBasedRoute allowedRoles={['provider']}>
-                    <ProviderRevenueReportsPage />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/provider/payment-details"
-                element={
-                  <RoleBasedRoute allowedRoles={['provider']}>
-                    <ProviderPaymentDetailsPage />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/provider/transactions"
-                element={
-                  <RoleBasedRoute allowedRoles={['provider']}>
-                    <ProviderTransactionsPage />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/provider/disputes"
-                element={
-                  <RoleBasedRoute allowedRoles={['provider']}>
-                    <ProviderDisputesPage />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/provider/wallet-verification"
-                element={
-                  <RoleBasedRoute allowedRoles={['provider']}>
-                    <ProviderWalletVerificationPage />
-                  </RoleBasedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/provider/subscription"
-                element={
-                  <RoleBasedRoute allowedRoles={['provider']}>
-                    <SubscriptionPageProvider />
-                  </RoleBasedRoute>
-                }
-              />
-              
-              {/* Admin specific routes */}
-              <Route
-                path="/dashboard/admin/profile"
+                path="/admin/profile"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminProfilePage />
@@ -291,7 +117,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/analytics"
+                path="/admin/analytics"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminPlatformAnalyticsPage />
@@ -299,7 +125,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/platform-controls"
+                path="/admin/platform-controls"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminPlatformControlsPage />
@@ -307,7 +133,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/content-editor"
+                path="/admin/content-editor"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminContentEditorPage />
@@ -315,7 +141,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/site-settings"
+                path="/admin/site-settings"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminSiteSettingsPage />
@@ -323,7 +149,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/booking-settings"
+                path="/admin/booking-settings"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminBookingSettingsPage />
@@ -331,7 +157,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/category-management"
+                path="/admin/category-management"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminCategoryManagementPage />
@@ -339,7 +165,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/subscription-management"
+                path="/admin/subscription-management"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminSubscriptionManagementPage />
@@ -347,7 +173,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/disputes"
+                path="/admin/disputes"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminDisputesPage />
@@ -355,7 +181,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/provider-verification"
+                path="/admin/provider-verification"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminProviderVerificationPage />
@@ -363,10 +189,222 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/wallet-verification"
+                path="/admin/wallet-verification"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminWalletVerificationPage />
+                  </RoleBasedRoute>
+                }
+              />
+              
+              {/* PROVIDER ROUTES */}
+              <Route
+                path="/provider/dashboard"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <ProviderDashboard />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/provider/profile"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <ProviderProfilePage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/provider/revenue"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <ProviderRevenueReportsPage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/provider/payment-details"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <ProviderPaymentDetailsPage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/provider/transactions"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <ProviderTransactionsPage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/provider/disputes"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <ProviderDisputesPage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/provider/wallet-verification"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <ProviderWalletVerificationPage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/provider/subscription"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <SubscriptionPageProvider />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/provider/services/create"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <CreateServicePage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/provider/services"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <ServicesPage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/provider/services/:id"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <ServiceDetail />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/provider/bookings"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <BookingsPage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/provider/bookings/:id"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <BookingDetail />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/provider/messages"
+                element={
+                  <RoleBasedRoute allowedRoles={['provider']}>
+                    <MessagesPage />
+                  </RoleBasedRoute>
+                }
+              />
+              
+              {/* CUSTOMER ROUTES */}
+              <Route
+                path="/customer/dashboard"
+                element={
+                  <RoleBasedRoute allowedRoles={['customer']}>
+                    <CustomerDashboard />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/customer/favorites"
+                element={
+                  <RoleBasedRoute allowedRoles={['customer']}>
+                    <CustomerFavoritesPage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/customer/profile"
+                element={
+                  <RoleBasedRoute allowedRoles={['customer']}>
+                    <CustomerProfilePage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/customer/payment-history"
+                element={
+                  <RoleBasedRoute allowedRoles={['customer']}>
+                    <CustomerPaymentHistoryPage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/customer/payment"
+                element={
+                  <RoleBasedRoute allowedRoles={['customer']}>
+                    <CustomerPaymentPage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/customer/disputes"
+                element={
+                  <RoleBasedRoute allowedRoles={['customer']}>
+                    <CustomerDisputesPage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/customer/wallet-verifications"
+                element={
+                  <RoleBasedRoute allowedRoles={['customer']}>
+                    <CustomerWalletVerificationsPage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/customer/services"
+                element={
+                  <RoleBasedRoute allowedRoles={['customer']}>
+                    <ServicesPage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/customer/services/:id"
+                element={
+                  <RoleBasedRoute allowedRoles={['customer']}>
+                    <ServiceDetail />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/customer/bookings"
+                element={
+                  <RoleBasedRoute allowedRoles={['customer']}>
+                    <BookingsPage />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/customer/bookings/:id"
+                element={
+                  <RoleBasedRoute allowedRoles={['customer']}>
+                    <BookingDetail />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="/customer/messages"
+                element={
+                  <RoleBasedRoute allowedRoles={['customer']}>
+                    <MessagesPage />
                   </RoleBasedRoute>
                 }
               />

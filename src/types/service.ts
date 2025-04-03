@@ -1,49 +1,39 @@
 
 export type ServiceCategory = 
-  | 'cleaning' 
-  | 'repair' 
-  | 'plumbing' 
-  | 'electrical' 
-  | 'moving' 
-  | 'painting' 
-  | 'landscaping' 
-  | 'tutoring' 
+  | 'all'
+  | 'cleaning'
+  | 'repair'
+  | 'plumbing'
+  | 'electrical'
+  | 'moving'
+  | 'painting'
+  | 'landscaping'
+  | 'tutoring'
   | 'home'
   | 'errand'
   | 'professional'
   | 'freelance'
   | 'transport'
   | 'health'
-  | 'all';
+  | string; // Allow string for flexibility
 
-export type PricingModel = 'hourly' | 'fixed' | string;
+export type PricingModel = 'fixed' | 'hourly' | 'quote' | string; // Allow string for flexibility
 
-export type PaymentMethod =
-  | 'credit_card'
-  | 'debit_card'
-  | 'bank_transfer'
-  | 'wallet'
-  | 'cash'
-  | 'pay_today'
-  | 'pay_fast'
-  | 'e_wallet'
-  | 'dop'
-  | 'easy_wallet'
-  | string;
+export type PaymentMethod = 'credit_card' | 'paypal' | 'bank_transfer' | 'cash' | 'pay_today' | 'pay_fast' | 'e_wallet' | 'dop' | 'easy_wallet';
 
 export interface ServiceListItem {
   id: string;
   title: string;
   description: string;
-  category: ServiceCategory;
-  pricingModel: PricingModel;
   price: number;
+  pricingModel: PricingModel;
+  category: ServiceCategory;
   providerName: string;
   providerId: string;
-  rating: number;
-  reviewCount: number;
-  image: string;
-  location: string;
+  rating?: number;
+  reviewCount?: number;
+  image?: string;
+  location?: string;
 }
 
 export interface Service {
@@ -54,17 +44,21 @@ export interface Service {
   pricingModel: PricingModel;
   category: ServiceCategory;
   providerId: string;
-  providerName?: string;
-  features: string[];
-  image?: string;
+  features?: string[];
   isActive: boolean;
+  image?: string;
   location?: string;
   rating?: number;
   reviewCount?: number;
-  createdAt: Date;
-  updatedAt: Date;
+  providerName?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  commission?: number;
+  available?: boolean;
+  featured?: boolean; // Added missing property
 }
 
+// Fix ServiceData interface
 export interface ServiceData {
   id: string;
   title: string;
@@ -80,6 +74,6 @@ export interface ServiceData {
   location?: string;
   rating?: number;
   review_count?: number;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }

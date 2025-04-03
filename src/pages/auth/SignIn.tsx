@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,20 +16,38 @@ const SignIn = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn, isLoading, user } = useAuth();
+  const { signIn, isLoading, user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
   const { toast } = useToast();
 
-  // Redirect if already authenticated - using useEffect to handle navigation
+  // On initial load, sign out any existing users
+  useEffect(() => {
+    const clearExistingAuth = async () => {
+      // Only run on initial component mount to reset authentication state
+      if (user) {
+        console.log('Logging out existing user on sign-in page visit');
+        await signOut();
+        // Brief timeout to allow auth state to update
+        setTimeout(() => {
+          window.location.reload(); // Force page reload to clear any lingering state
+        }, 100);
+      }
+    };
+    
+    clearExistingAuth();
+  }, []); // Empty dependency array ensures this only runs once
+
+  // Redirect if user is authenticated after signing in
   useEffect(() => {
     if (user) {
-      console.log('User already signed in, navigating to dashboard');
-      const from = location.state?.from?.pathname || '/dashboard';
-      // Use setTimeout to delay the navigation slightly, preventing immediate state changes
+      console.log('User authenticated, navigating to dashboard');
+      // Direct to role-specific dashboard
+      const from = location.state?.from?.pathname || `/${user.role}/dashboard`;
+      // Use setTimeout to delay the navigation slightly
       setTimeout(() => {
-        navigate(from);
+        navigate(from, { replace: true });
       }, 100);
     }
   }, [user, navigate, location]);

@@ -1,161 +1,216 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { fetchUserDisputes } from '@/services/mockProfileService';
-import { Dispute } from '@/types/payments';
+import { useQuery } from '@tanstack/react-query';
+import { Dispute } from '@/types/booking';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { fetchAllDisputes } from '@/services/mockProfileService';
 
-const DisputesPage = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [disputes, setDisputes] = useState<Dispute[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all');
+export function AdminDisputesPage() {
+  const [activeTab, setActiveTab] = useState('pending');
+  const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
 
-  useEffect(() => {
-    const loadDisputes = async () => {
-      if (!user?.id) return;
-      
-      try {
-        setLoading(true);
-        const disputesData = await fetchUserDisputes(user.id);
-        setDisputes(disputesData);
-      } catch (error) {
-        console.error('Failed to load disputes:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load disputes",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadDisputes();
-  }, [user, toast]);
+  const { data: disputes = [], isLoading } = useQuery({
+    queryKey: ['adminDisputes'],
+    queryFn: fetchAllDisputes
+  });
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+  const filteredDisputes = disputes.filter(d => {
+    if (activeTab === 'pending') return d.status === 'pending';
+    if (activeTab === 'in_review') return d.status === 'in_review';
+    if (activeTab === 'resolved') return d.status === 'resolved' || d.status === 'rejected';
+    return true;
+  });
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'open':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700">Open</Badge>;
-      case 'under_review':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700">Under Review</Badge>;
       case 'resolved':
-        return <Badge variant="outline" className="bg-green-50 text-green-700">Resolved</Badge>;
-      case 'declined':
-        return <Badge variant="outline" className="bg-red-50 text-red-700">Declined</Badge>;
+        return 'bg-green-100 text-green-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'in_review':
+        return 'bg-blue-100 text-blue-800';
       default:
-        return <Badge variant="outline">Unknown</Badge>;
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'open':
-        return <Clock className="h-5 w-5 text-blue-500" />;
-      case 'under_review':
-        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
       case 'resolved':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'declined':
-        return <AlertTriangle className="h-5 w-5 text-red-500" />;
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'rejected':
+        return <XCircle className="h-4 w-4 text-red-600" />;
+      case 'pending':
+        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
+      case 'in_review':
+        return <Clock className="h-4 w-4 text-blue-600" />;
       default:
-        return <AlertTriangle className="h-5 w-5 text-gray-500" />;
+        return null;
     }
   };
 
-  const filteredDisputes = activeTab === 'all' 
-    ? disputes 
-    : disputes.filter(d => d.status === activeTab);
+  const formatDisputeStatus = (status: string) => {
+    return status
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Dispute Management</h1>
-          <p className="text-muted-foreground mt-1">Review and manage customer disputes</p>
+          <h1 className="text-2xl font-bold">Manage Disputes</h1>
+          <p className="text-muted-foreground">Review and resolve customer disputes</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>All Disputes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="open">Open</TabsTrigger>
-                <TabsTrigger value="under_review">Under Review</TabsTrigger>
-                <TabsTrigger value="resolved">Resolved</TabsTrigger>
-                <TabsTrigger value="declined">Declined</TabsTrigger>
-              </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="in_review">In Review</TabsTrigger>
+            <TabsTrigger value="resolved">Resolved</TabsTrigger>
+            <TabsTrigger value="all">All Disputes</TabsTrigger>
+          </TabsList>
 
-              <TabsContent value={activeTab} className="mt-0">
-                {loading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-                  </div>
-                ) : filteredDisputes.length === 0 ? (
-                  <div className="text-center py-8">
-                    <AlertTriangle className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-                    <h3 className="text-lg font-medium">No disputes found</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      There are no disputes matching the selected filter.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-3 px-4">ID</th>
-                          <th className="text-left py-3 px-4">Customer</th>
-                          <th className="text-left py-3 px-4">Provider</th>
-                          <th className="text-left py-3 px-4">Reason</th>
-                          <th className="text-left py-3 px-4">Created</th>
-                          <th className="text-left py-3 px-4">Status</th>
-                          <th className="text-left py-3 px-4">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredDisputes.map((dispute) => (
-                          <tr key={dispute.id} className="border-b hover:bg-slate-50">
-                            <td className="py-3 px-4">{dispute.id.substring(0, 8)}</td>
-                            <td className="py-3 px-4">{dispute.customerId.substring(0, 8)}</td>
-                            <td className="py-3 px-4">{dispute.providerId?.substring(0, 8) || 'N/A'}</td>
-                            <td className="py-3 px-4">{dispute.reason}</td>
-                            <td className="py-3 px-4">{formatDate(dispute.createdAt)}</td>
-                            <td className="py-3 px-4">{getStatusBadge(dispute.status)}</td>
-                            <td className="py-3 px-4">
-                              <Button size="sm">Review</Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+          <TabsContent value={activeTab} className="space-y-4">
+            {isLoading ? (
+              <div className="bg-white rounded-xl border shadow-sm p-8 text-center">
+                <AlertCircle className="h-10 w-10 mx-auto text-gray-400 animate-pulse" />
+                <h3 className="mt-4 text-lg font-medium">Loading disputes...</h3>
+              </div>
+            ) : filteredDisputes.length === 0 ? (
+              <div className="bg-white rounded-xl border shadow-sm p-8 text-center">
+                <CheckCircle className="h-10 w-10 mx-auto text-gray-400" />
+                <h3 className="mt-4 text-lg font-medium">No disputes found</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  No {activeTab === 'all' ? '' : activeTab} disputes at the moment.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="lg:col-span-1 space-y-4">
+                  {filteredDisputes.map((dispute) => (
+                    <div 
+                      key={dispute.id}
+                      className={cn(
+                        "bg-white rounded-xl border p-4 cursor-pointer hover:border-primary/50 transition-colors",
+                        selectedDispute?.id === dispute.id && "border-primary/50 shadow-sm"
+                      )}
+                      onClick={() => setSelectedDispute(dispute)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="text-sm font-medium">
+                            {dispute.subject}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Booking #{dispute.bookingId}
+                          </div>
+                        </div>
+                        <div className={cn(
+                          "px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1",
+                          getStatusBadgeClass(dispute.status)
+                        )}>
+                          {getStatusIcon(dispute.status)}
+                          <span>
+                            {formatDisputeStatus(dispute.status)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="lg:col-span-2">
+                  {selectedDispute ? (
+                    <div className="bg-white rounded-xl border shadow-sm h-full p-6 space-y-6">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-xl font-semibold">{selectedDispute.subject}</h3>
+                          <p className="text-sm text-muted-foreground">Booking #{selectedDispute.bookingId}</p>
+                        </div>
+                        <div className={cn(
+                          "px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1",
+                          getStatusBadgeClass(selectedDispute.status)
+                        )}>
+                          {getStatusIcon(selectedDispute.status)}
+                          <span>
+                            {formatDisputeStatus(selectedDispute.status)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-1">Description</h4>
+                          <div className="bg-gray-50 p-4 rounded-md">
+                            <p className="text-sm">{selectedDispute.description}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-700 mb-1">Priority</h4>
+                            <p className="capitalize">{selectedDispute.priority}</p>
+                          </div>
+                          {selectedDispute.refundAmount && (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-1">Requested Refund</h4>
+                              <p>{new Intl.NumberFormat('en-NA', { style: 'currency', currency: 'NAD' }).format(selectedDispute.refundAmount)}</p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {selectedDispute.status === 'pending' && (
+                          <div className="pt-4 border-t border-gray-200 flex justify-end space-x-2">
+                            <Button variant="outline" onClick={() => console.log('Accept dispute')}>
+                              Start Review
+                            </Button>
+                            <Button onClick={() => console.log('Resolve dispute')}>
+                              Resolve Dispute
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {selectedDispute.status === 'in_review' && (
+                          <div className="pt-4 border-t border-gray-200 flex justify-end space-x-2">
+                            <Button variant="outline" onClick={() => console.log('Reject dispute')}>
+                              Reject Dispute
+                            </Button>
+                            <Button onClick={() => console.log('Resolve dispute')}>
+                              Resolve Dispute
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-xl border shadow-sm h-full flex flex-col items-center justify-center p-8">
+                      <AlertCircle className="h-10 w-10 text-gray-300" />
+                      <h3 className="mt-4 text-lg font-medium">No dispute selected</h3>
+                      <p className="mt-2 text-sm text-muted-foreground text-center">
+                        Select a dispute from the list to view its details
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
+}
+
+// For TypeScript compatibility
+const cn = (...classes: (string | boolean | undefined)[]) => {
+  return classes.filter(Boolean).join(' ');
 };
 
-export default DisputesPage;
+export default AdminDisputesPage;

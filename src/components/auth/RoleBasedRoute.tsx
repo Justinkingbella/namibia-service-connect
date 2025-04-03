@@ -11,7 +11,7 @@ interface RoleBasedRouteProps {
 }
 
 const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles }) => {
-  const { user } = useAuth();
+  const { user, userRole, loading } = useAuth();
   
   // Convert role prop to array for easier checking
   const rolesToCheck = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
@@ -19,12 +19,22 @@ const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles 
   // First ensure the user is authenticated with ProtectedRoute
   return (
     <ProtectedRoute>
-      {user && rolesToCheck.includes(user.role) ? (
+      {/* Only show if loading is complete and user has required role */}
+      {!loading && user && userRole && rolesToCheck.includes(userRole) ? (
         // User has the required role, show the component
         <>{children}</>
+      ) : !loading && user && userRole === 'provider' ? (
+        // Provider trying to access non-provider route
+        <Navigate to="/provider/dashboard" replace />
+      ) : !loading && user && userRole === 'customer' ? (
+        // Customer trying to access non-customer route
+        <Navigate to="/customer/dashboard" replace />
+      ) : !loading && user && userRole === 'admin' ? (
+        // Admin trying to access non-admin route
+        <Navigate to="/admin/dashboard" replace />
       ) : (
-        // User is authenticated but doesn't have the required role, redirect to dashboard
-        <Navigate to="/dashboard" replace />
+        // Default fallback - redirect to sign-in
+        <Navigate to="/auth/sign-in" replace />
       )}
     </ProtectedRoute>
   );

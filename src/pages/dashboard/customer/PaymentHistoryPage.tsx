@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { fetchUserTransactions } from '@/services/paymentService';
+import { fetchPaymentHistory } from '@/services/paymentService';
 
 const PaymentHistoryPage = () => {
   const { user } = useAuth();
@@ -19,13 +19,13 @@ const PaymentHistoryPage = () => {
   const { data: transactions, isLoading } = useQuery({
     queryKey: ['customerPaymentTransactions', user?.id, transactionType],
     queryFn: async () => {
-      const allTransactions = await fetchUserTransactions(user?.id || '');
+      const allTransactions = await fetchPaymentHistory(user?.id || '');
       
       if (transactionType === 'all') {
         return allTransactions;
       }
       
-      return allTransactions.filter(t => t.transactionType === transactionType);
+      return allTransactions.filter(t => t.type === transactionType);
     },
     enabled: !!user?.id
   });
@@ -105,14 +105,14 @@ const PaymentHistoryPage = () => {
                       {transactions.map((transaction) => (
                         <div key={transaction.id} className="grid grid-cols-6 gap-2 p-4 text-sm">
                           <div className="font-medium">
-                            {format(new Date(transaction.createdAt), 'MMM d, yyyy')}
+                            {format(new Date(transaction.date), 'MMM d, yyyy')}
                           </div>
                           <div>{transaction.description || 'Transaction'}</div>
-                          <div><Badge variant="secondary">{transaction.transactionType}</Badge></div>
-                          <div className="capitalize">{transaction.paymentMethod.replace('_', ' ')}</div>
+                          <div><Badge variant="secondary">{transaction.type}</Badge></div>
+                          <div className="capitalize">{transaction.type.replace('_', ' ')}</div>
                           <div>{getStatusBadge(transaction.status)}</div>
-                          <div className={`text-right font-medium ${transaction.transactionType === 'refund' ? 'text-green-600' : ''}`}>
-                            {transaction.transactionType === 'refund' ? '+' : ''}
+                          <div className={`text-right font-medium ${transaction.type === 'refund' ? 'text-green-600' : ''}`}>
+                            {transaction.type === 'refund' ? '+' : ''}
                             N${transaction.amount.toFixed(2)}
                           </div>
                         </div>
