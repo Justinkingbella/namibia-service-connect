@@ -4,7 +4,7 @@ import ProviderDashboard from '@/pages/dashboard/provider/ProviderDashboard';
 import CreateServicePage from '@/pages/dashboard/provider/CreateServicePage';
 import ProviderProfilePage from '@/pages/dashboard/provider/profile/ProviderProfilePage';
 import PaymentDetailsPage from '@/pages/dashboard/provider/PaymentDetailsPage';
-import RoleBasedRoute from './components/RoleBasedRoute'; // Assuming this component exists
+import RoleBasedRoute from './components/auth/RoleBasedRoute';
 
 
 function App() {
