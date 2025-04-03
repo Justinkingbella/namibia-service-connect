@@ -13,7 +13,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   allowedRoles = ['admin', 'provider', 'customer'] 
 }) => {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
 
   useEffect(() => {

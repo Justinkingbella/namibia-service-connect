@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from './contexts/AuthContext';
@@ -24,7 +25,6 @@ import ResetPassword from './pages/auth/ResetPassword';
 import CreateAdmin from './pages/auth/CreateAdmin';
 
 // Dashboard Pages - Overview
-import Dashboard from './pages/dashboard/Dashboard';
 import BookingsPage from './pages/dashboard/bookings/BookingsPage';
 import BookingDetail from './pages/dashboard/bookings/BookingDetail';
 import ServicesPage from './pages/dashboard/services/ServicesPage';
@@ -88,16 +88,6 @@ const App = () => {
               <Route path="/auth/forgot-password" element={<ForgotPassword />} />
               <Route path="/auth/reset-password" element={<ResetPassword />} />
               <Route path="/auth/create-admin" element={<CreateAdmin />} />
-              
-              {/* Main Dashboard Route - Redirects based on role */}
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
               
               {/* ADMIN ROUTES */}
               <Route

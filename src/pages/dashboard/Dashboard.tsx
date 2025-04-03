@@ -38,9 +38,6 @@ const Dashboard = () => {
           variant: "destructive"
         });
         navigate('/auth/sign-in', { replace: true });
-        
-        // Clear any stale session data
-        signOut();
       }
     }
   }, [navigate, user, loading, toast, isSubscribed, enableRealtime, signOut]);

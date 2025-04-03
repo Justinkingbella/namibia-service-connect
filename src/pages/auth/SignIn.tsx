@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,28 +15,11 @@ const SignIn = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn, isLoading, user, signOut } = useAuth();
+  const { signIn, isLoading, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
   const { toast } = useToast();
-
-  // On initial load, sign out any existing users
-  useEffect(() => {
-    const clearExistingAuth = async () => {
-      // Only run on initial component mount to reset authentication state
-      if (user) {
-        console.log('Logging out existing user on sign-in page visit');
-        await signOut();
-        // Brief timeout to allow auth state to update
-        setTimeout(() => {
-          window.location.reload(); // Force page reload to clear any lingering state
-        }, 100);
-      }
-    };
-    
-    clearExistingAuth();
-  }, []); // Empty dependency array ensures this only runs once
 
   // Redirect if user is authenticated after signing in
   useEffect(() => {
