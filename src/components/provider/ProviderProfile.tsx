@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/common/Button';
 import { Textarea } from '@/components/ui/textarea';
 import { useProfile } from '@/hooks/useProfile';
-import { useProviderProfile } from '@/hooks/useProviderProfile';
+import { useProviderProfile } from '@/hooks/useProviderProfile.ts';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth'; // Added import for useAuth
 import { Avatar } from '@/components/ui/avatar';
@@ -62,7 +62,7 @@ const ProviderProfile: React.FC = () => {
             .single();
 
           if (createError) throw createError;
-          return setProviderData(newProvider);
+          return setLocalProviderData(newProvider);
         }
 
         const { data, error } = await supabase
@@ -78,7 +78,7 @@ const ProviderProfile: React.FC = () => {
           verification_status: data.verification_status as ProviderVerificationStatus
         };
 
-        setProviderData(typedData);
+        setLocalProviderData(typedData);
 
         setStats({
           totalServices: data.services_count || 0,
@@ -138,7 +138,7 @@ const ProviderProfile: React.FC = () => {
 
         if (error) throw error;
 
-        setProviderData(prev => prev ? { ...prev, avatar_url: url } : { avatar_url: url });
+        setLocalProviderData(prev => prev ? { ...prev, avatar_url: url } : { avatar_url: url });
       }
 
       toast({
