@@ -45,10 +45,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/auth/sign-in" state={{ from: location }} replace />;
   }
 
-  // If user doesn't have permission, redirect to their role-specific dashboard
+  // If user doesn't have permission, redirect to dashboard
   if (!allowedRoles.includes(user.role)) {
     console.log(`User role ${user.role} not in allowed roles:`, allowedRoles);
-    return <Navigate to={`/${user.role}/dashboard`} replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // User is authenticated and authorized

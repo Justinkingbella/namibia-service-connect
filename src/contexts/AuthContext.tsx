@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -41,10 +42,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // First set up the auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session ? 'Session exists' : 'No session');
-      
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         const customSession: CustomSession = {
           access_token: session.access_token,
@@ -58,31 +56,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const user: User = {
           id: session.user.id,
           email: session.user.email || '',
-          role: 'customer', // Default role, will be updated when profile is fetched
+          role: 'customer',
           firstName: '',
           lastName: '',
           isActive: true,
           createdAt: new Date(session.user.created_at),
         };
         setUser(user);
-        
-        // Use setTimeout to prevent recursive deadlocks with Supabase auth
-        setTimeout(() => {
-          fetchUserProfile(session.user);
-        }, 0);
+        fetchUserProfile(session.user);
       } else {
         setSession(null);
         setUser(null);
         setUserRole(null);
         setUserProfile(null);
-        setLoading(false);
       }
     });
 
-    // Then check for an existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session ? 'Session exists' : 'No session');
-      
       if (session) {
         const customSession: CustomSession = {
           access_token: session.access_token,
@@ -96,18 +86,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const user: User = {
           id: session.user.id,
           email: session.user.email || '',
-          role: 'customer', // Default role, will be updated when profile is fetched
+          role: 'customer',
           firstName: '',
           lastName: '',
           isActive: true,
           createdAt: new Date(session.user.created_at),
         };
         setUser(user);
-        
-        // Use setTimeout to prevent recursive deadlocks with Supabase auth
-        setTimeout(() => {
-          fetchUserProfile(session.user);
-        }, 0);
+        fetchUserProfile(session.user);
       } else {
         setLoading(false);
       }
@@ -120,7 +106,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   async function fetchUserProfile(supabaseUser: SupabaseUser) {
     try {
-      // First, try to get the profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -128,13 +113,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single();
 
       if (profileError) {
-        // Don't throw an error if the profile doesn't exist yet
-        if (profileError.code === 'PGRST116') {
-          console.log('Profile not found, user may need to complete registration');
-          setLoading(false);
-          return;
-        }
-        
         console.error('Error fetching user profile:', profileError);
         setLoading(false);
         return;
@@ -396,25 +374,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const signOut = async () => {
-    console.log('Signing out user');
-    try {
-      await supabase.auth.signOut();
-      console.log('User signed out successfully');
-      
-      // Clear all state explicitly
-      setUser(null);
-      setSession(null);
-      setUserRole(null);
-      setUserProfile(null);
-      
-      // Force some browser storage cleanup
-      localStorage.removeItem('supabase.auth.token');
-      
-      return { error: null };
-    } catch (error) {
-      console.error('Error signing out:', error);
-      return { error };
-    }
+    await supabase.auth.signOut();
   };
 
   const forgotPassword = async (email: string) => {
