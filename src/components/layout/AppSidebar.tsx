@@ -68,7 +68,7 @@ const AppSidebar = () => {
       { icon: Receipt, label: 'Subscriptions', path: '/admin/subscription-management' },
       { icon: FileText, label: 'Content Editor', path: '/admin/content-editor' },
       { icon: Settings, label: 'Site Settings', path: '/admin/site-settings' },
-      { icon: UserCircle, label: 'Profile', path: '/admin/profile' },
+      { icon: UserCircle, label: 'Profile', path: '/dashboard/admin/profile' },
     ];
 
     const providerLinks = [
@@ -82,7 +82,7 @@ const AppSidebar = () => {
       { icon: Receipt, label: 'Subscription', path: '/provider/subscription' },
       { icon: Wallet, label: 'Wallet Verification', path: '/provider/wallet-verification' },
       { icon: CreditCard, label: 'Payment Details', path: '/provider/payment-details' },
-      { icon: UserCircle, label: 'Profile', path: '/provider/profile' },
+      { icon: UserCircle, label: 'Profile', path: '/dashboard/provider/profile' },
     ];
 
     const customerLinks = [
@@ -93,7 +93,7 @@ const AppSidebar = () => {
       { icon: Heart, label: 'Favorites', path: '/customer/favorites' },
       { icon: CreditCard, label: 'Payment History', path: '/customer/payment-history' },
       { icon: AlertTriangle, label: 'Disputes', path: '/customer/disputes' },
-      { icon: UserCircle, label: 'Profile', path: '/customer/profile' },
+      { icon: UserCircle, label: 'Profile', path: '/dashboard/customer/profile' },
     ];
 
     if (user.role === 'admin') return adminLinks;
