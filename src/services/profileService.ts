@@ -1,7 +1,457 @@
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 import { ServiceCategory, PricingModel } from '@/types';
-import { uploadImage, deleteImage } from '@/utils/imageUtils';
+import { Dispute } from '@/types/booking';
+import { UserAddress, PaymentMethod } from '@/types/auth';
+
+// Address functions
+export const fetchUserAddresses = async (userId: string): Promise<UserAddress[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_addresses')
+      .select('*')
+      .eq('user_id', userId)
+      .order('is_default', { ascending: false });
+      
+    if (error) {
+      console.error('Error fetching addresses:', error);
+      toast.error('Failed to load your saved addresses');
+      return [];
+    }
+    
+    return data.map(addr => ({
+      id: addr.id,
+      userId: addr.user_id,
+      name: addr.name,
+      street: addr.street,
+      city: addr.city,
+      region: addr.region || undefined,
+      postalCode: addr.postal_code || undefined,
+      country: addr.country,
+      isDefault: addr.is_default,
+      createdAt: new Date(addr.created_at)
+    }));
+  } catch (error) {
+    console.error('Unexpected error in fetchUserAddresses:', error);
+    toast.error('Something went wrong while loading your addresses');
+    return [];
+  }
+};
+
+export const addUserAddress = async (address: Partial<UserAddress>): Promise<UserAddress | null> => {
+  try {
+    // If the new address is default, unset any other default addresses
+    if (address.isDefault && address.userId) {
+      await supabase
+        .from('user_addresses')
+        .update({ is_default: false })
+        .eq('user_id', address.userId);
+    }
+    
+    // Create the new address
+    const { data, error } = await supabase
+      .from('user_addresses')
+      .insert([{
+        user_id: address.userId,
+        name: address.name,
+        street: address.street,
+        city: address.city,
+        region: address.region,
+        postal_code: address.postalCode,
+        country: address.country,
+        is_default: address.isDefault || false
+      }])
+      .select('*')
+      .single();
+      
+    if (error) {
+      console.error('Error adding address:', error);
+      toast.error('Failed to add new address');
+      return null;
+    }
+    
+    toast.success('Address added successfully');
+    
+    return {
+      id: data.id,
+      userId: data.user_id,
+      name: data.name,
+      street: data.street,
+      city: data.city,
+      region: data.region || undefined,
+      postalCode: data.postal_code || undefined,
+      country: data.country,
+      isDefault: data.is_default,
+      createdAt: new Date(data.created_at)
+    };
+  } catch (error) {
+    console.error('Unexpected error in addUserAddress:', error);
+    toast.error('Something went wrong while adding your address');
+    return null;
+  }
+};
+
+export const updateUserAddress = async (addressId: string, data: Partial<UserAddress>): Promise<UserAddress | null> => {
+  try {
+    // If address is being set as default, unset any other default addresses
+    if (data.isDefault && data.userId) {
+      await supabase
+        .from('user_addresses')
+        .update({ is_default: false })
+        .eq('user_id', data.userId);
+    }
+    
+    // Update the address
+    const { data: updatedData, error } = await supabase
+      .from('user_addresses')
+      .update({
+        name: data.name,
+        street: data.street,
+        city: data.city,
+        region: data.region,
+        postal_code: data.postalCode,
+        country: data.country,
+        is_default: data.isDefault
+      })
+      .eq('id', addressId)
+      .select('*')
+      .single();
+      
+    if (error) {
+      console.error('Error updating address:', error);
+      toast.error('Failed to update address');
+      return null;
+    }
+    
+    toast.success('Address updated successfully');
+    
+    return {
+      id: updatedData.id,
+      userId: updatedData.user_id,
+      name: updatedData.name,
+      street: updatedData.street,
+      city: updatedData.city,
+      region: updatedData.region || undefined,
+      postalCode: updatedData.postal_code || undefined,
+      country: updatedData.country,
+      isDefault: updatedData.is_default,
+      createdAt: new Date(updatedData.created_at)
+    };
+  } catch (error) {
+    console.error('Unexpected error in updateUserAddress:', error);
+    toast.error('Something went wrong while updating your address');
+    return null;
+  }
+};
+
+export const deleteUserAddress = async (addressId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('user_addresses')
+      .delete()
+      .eq('id', addressId);
+      
+    if (error) {
+      console.error('Error deleting address:', error);
+      toast.error('Failed to delete address');
+      return false;
+    }
+    
+    toast.success('Address deleted successfully');
+    return true;
+  } catch (error) {
+    console.error('Unexpected error in deleteUserAddress:', error);
+    toast.error('Something went wrong while deleting your address');
+    return false;
+  }
+};
+
+// Favorites functions
+export const fetchUserFavorites = async (userId: string): Promise<string[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('favorite_services')
+      .select('service_id')
+      .eq('user_id', userId);
+      
+    if (error) {
+      console.error('Error fetching favorites:', error);
+      return [];
+    }
+    
+    return data.map(fav => fav.service_id);
+  } catch (error) {
+    console.error('Unexpected error in fetchUserFavorites:', error);
+    return [];
+  }
+};
+
+export const addFavorite = async (userId: string, serviceId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('favorite_services')
+      .insert([{ user_id: userId, service_id: serviceId }]);
+      
+    if (error) {
+      // If it's a duplicate (service already favorited), don't show error
+      if (error.code === '23505') { // Unique violation 
+        return true;
+      }
+      console.error('Error adding favorite:', error);
+      toast.error('Failed to save service to favorites');
+      return false;
+    }
+    
+    toast.success('Service added to favorites');
+    return true;
+  } catch (error) {
+    console.error('Unexpected error in addFavorite:', error);
+    toast.error('Something went wrong');
+    return false;
+  }
+};
+
+export const removeFavorite = async (userId: string, serviceId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('favorite_services')
+      .delete()
+      .eq('user_id', userId)
+      .eq('service_id', serviceId);
+      
+    if (error) {
+      console.error('Error removing favorite:', error);
+      toast.error('Failed to remove service from favorites');
+      return false;
+    }
+    
+    toast.success('Service removed from favorites');
+    return true;
+  } catch (error) {
+    console.error('Unexpected error in removeFavorite:', error);
+    toast.error('Something went wrong');
+    return false;
+  }
+};
+
+// Dispute functions
+export const fetchUserDisputes = async (userId: string): Promise<Dispute[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('disputes')
+      .select('*')
+      .eq('customer_id', userId)
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error('Error fetching user disputes:', error);
+      toast.error('Failed to load your disputes');
+      return [];
+    }
+    
+    return data.map(item => ({
+      id: item.id,
+      bookingId: item.booking_id,
+      customerId: item.customer_id,
+      providerId: item.provider_id,
+      subject: item.subject,
+      description: item.description,
+      status: item.status,
+      resolution: item.resolution,
+      createdAt: new Date(item.created_at),
+      updatedAt: new Date(item.updated_at),
+      priority: item.priority,
+      evidenceUrls: item.evidence_urls || [],
+      refundAmount: item.refund_amount,
+      reason: item.reason
+    }));
+  } catch (error) {
+    console.error('Unexpected error in fetchUserDisputes:', error);
+    toast.error('Something went wrong while loading your disputes');
+    return [];
+  }
+};
+
+export const fetchProviderDisputes = async (providerId: string): Promise<Dispute[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('disputes')
+      .select('*')
+      .eq('provider_id', providerId)
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error('Error fetching provider disputes:', error);
+      toast.error('Failed to load disputes');
+      return [];
+    }
+    
+    return data.map(item => ({
+      id: item.id,
+      bookingId: item.booking_id,
+      customerId: item.customer_id,
+      providerId: item.provider_id,
+      subject: item.subject,
+      description: item.description,
+      status: item.status,
+      resolution: item.resolution,
+      createdAt: new Date(item.created_at),
+      updatedAt: new Date(item.updated_at),
+      priority: item.priority,
+      evidenceUrls: item.evidence_urls || [],
+      refundAmount: item.refund_amount,
+      reason: item.reason
+    }));
+  } catch (error) {
+    console.error('Unexpected error in fetchProviderDisputes:', error);
+    toast.error('Something went wrong while loading disputes');
+    return [];
+  }
+};
+
+export const fetchAllDisputes = async (): Promise<Dispute[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('disputes')
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error('Error fetching all disputes:', error);
+      toast.error('Failed to load disputes');
+      return [];
+    }
+    
+    return data.map(item => ({
+      id: item.id,
+      bookingId: item.booking_id,
+      customerId: item.customer_id,
+      providerId: item.provider_id,
+      subject: item.subject,
+      description: item.description,
+      status: item.status,
+      resolution: item.resolution,
+      createdAt: new Date(item.created_at),
+      updatedAt: new Date(item.updated_at),
+      priority: item.priority,
+      evidenceUrls: item.evidence_urls || [],
+      refundAmount: item.refund_amount,
+      reason: item.reason
+    }));
+  } catch (error) {
+    console.error('Unexpected error in fetchAllDisputes:', error);
+    toast.error('Something went wrong while loading disputes');
+    return [];
+  }
+};
+
+export const createDispute = async (disputeData: Partial<Dispute>): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('disputes')
+      .insert([{
+        booking_id: disputeData.bookingId,
+        customer_id: disputeData.customerId,
+        provider_id: disputeData.providerId,
+        subject: disputeData.subject,
+        description: disputeData.description,
+        status: 'pending',
+        priority: disputeData.priority || 'medium',
+        evidence_urls: disputeData.evidenceUrls || [],
+        refund_amount: disputeData.refundAmount || 0,
+        reason: disputeData.reason
+      }]);
+      
+    if (error) {
+      console.error('Error creating dispute:', error);
+      toast.error('Failed to submit dispute');
+      return false;
+    }
+    
+    toast.success('Dispute submitted successfully');
+    return true;
+  } catch (error) {
+    console.error('Unexpected error in createDispute:', error);
+    toast.error('Something went wrong while submitting your dispute');
+    return false;
+  }
+};
+
+export const updateDisputeStatus = async (
+  disputeId: string, 
+  status: string, 
+  resolution?: string
+): Promise<boolean> => {
+  try {
+    const updateData: any = {
+      status,
+      updated_at: new Date().toISOString()
+    };
+    
+    if (resolution) {
+      updateData.resolution = resolution;
+    }
+    
+    // If status is resolved, add resolution date
+    if (status === 'resolved') {
+      updateData.resolution_date = new Date().toISOString();
+    }
+    
+    const { error } = await supabase
+      .from('disputes')
+      .update(updateData)
+      .eq('id', disputeId);
+      
+    if (error) {
+      console.error('Error updating dispute:', error);
+      toast.error('Failed to update dispute status');
+      return false;
+    }
+    
+    toast.success('Dispute status updated successfully');
+    return true;
+  } catch (error) {
+    console.error('Unexpected error in updateDisputeStatus:', error);
+    toast.error('Something went wrong while updating the dispute');
+    return false;
+  }
+};
+
+export const fetchDisputeById = async (disputeId: string): Promise<Dispute | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('disputes')
+      .select('*')
+      .eq('id', disputeId)
+      .single();
+      
+    if (error) {
+      console.error('Error fetching dispute:', error);
+      return null;
+    }
+    
+    return {
+      id: data.id,
+      bookingId: data.booking_id,
+      customerId: data.customer_id,
+      providerId: data.provider_id,
+      subject: data.subject,
+      description: data.description,
+      status: data.status,
+      resolution: data.resolution,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+      priority: data.priority,
+      evidenceUrls: data.evidence_urls || [],
+      refundAmount: data.refund_amount,
+      reason: data.reason
+    };
+  } catch (error) {
+    console.error('Unexpected error in fetchDisputeById:', error);
+    return null;
+  }
+};
 
 // Profile types
 export interface Profile {
