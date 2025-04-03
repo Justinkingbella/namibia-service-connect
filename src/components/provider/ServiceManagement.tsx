@@ -1,212 +1,286 @@
+
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { fetchProviderServices } from '@/services/profileService';
-import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
-import { ServiceCategory, PricingModel, Service } from '@/types/service';
-import { PlusCircle, Grid, Home, ShoppingBag, Briefcase, Code, Car, Heart, Trash, Wrench, Droplet, Zap, Truck, Palette, Flower, BookOpen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Edit, Trash2, Plus, Star, ToggleLeft, MoreHorizontal, Eye } from 'lucide-react';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { useToast } from '@/hooks/use-toast';
+import { ServiceCategory, PricingModel } from '@/types/service';
 
-const ServiceManagement = () => {
-  const { user } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+interface ServiceItem {
+  id: string;
+  title: string;
+  category: ServiceCategory;
+  pricingModel: PricingModel;
+  price: number;
+  status: 'active' | 'inactive' | 'pending';
+  bookingCount: number;
+  rating: number;
+  createdAt: string;
+}
 
-  const { data: services = [], isLoading, isError, refetch } = useQuery({
-    queryKey: ['providerServices', user?.id],
-    queryFn: () => user?.id ? fetchProviderServices(user.id) : Promise.resolve([]),
-    enabled: !!user?.id
-  });
+// Mock service data
+const mockServices: ServiceItem[] = [
+  {
+    id: '1',
+    title: 'Home Cleaning Service',
+    category: 'home',
+    pricingModel: 'hourly',
+    price: 250,
+    status: 'active',
+    bookingCount: 45,
+    rating: 4.8,
+    createdAt: '2023-03-15',
+  },
+  {
+    id: '2',
+    title: 'Deep Cleaning',
+    category: 'home',
+    pricingModel: 'fixed',
+    price: 1200,
+    status: 'active',
+    bookingCount: 28,
+    rating: 4.6,
+    createdAt: '2023-04-22',
+  },
+  {
+    id: '3',
+    title: 'Post-Construction Cleaning',
+    category: 'home',
+    pricingModel: 'fixed',
+    price: 3000,
+    status: 'inactive',
+    bookingCount: 12,
+    rating: 4.9,
+    createdAt: '2023-05-10',
+  },
+];
 
-  const formatPrice = (price: number, pricingModel: PricingModel) => {
-    return new Intl.NumberFormat('en-NA', { style: 'currency', currency: 'NAD' }).format(price) + 
-      (pricingModel === 'hourly' ? '/hr' : pricingModel === 'quote' ? ' (estimate)' : '');
-  };
+const ServiceManagement: React.FC = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [services, setServices] = useState<ServiceItem[]>(mockServices);
+  const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [serviceToDelete, setServiceToDelete] = useState<ServiceItem | null>(null);
 
-  const formatCategory = (category: ServiceCategory) => {
-    return category.charAt(0).toUpperCase() + category.slice(1);
-  };
+  const filteredServices = filter === 'all' 
+    ? services 
+    : services.filter(service => service.status === filter);
 
-  const categoryIcons: Record<string, string> = {
-    'all': 'grid',
-    'cleaning': 'trash',
-    'repair': 'wrench',
-    'plumbing': 'droplet',
-    'electrical': 'zap',
-    'moving': 'truck',
-    'painting': 'palette',
-    'landscaping': 'flower',
-    'tutoring': 'book-open',
-    'home': 'home',
-    'errand': 'shopping-bag',
-    'professional': 'briefcase',
-    'freelance': 'code',
-    'transport': 'car',
-    'health': 'heart'
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch(category) {
-      case 'cleaning': return <Trash className="h-4 w-4" />;
-      case 'repair': return <Wrench className="h-4 w-4" />;
-      case 'plumbing': return <Droplet className="h-4 w-4" />;
-      case 'electrical': return <Zap className="h-4 w-4" />;
-      case 'moving': return <Truck className="h-4 w-4" />;
-      case 'painting': return <Palette className="h-4 w-4" />;
-      case 'landscaping': return <Flower className="h-4 w-4" />;
-      case 'tutoring': return <BookOpen className="h-4 w-4" />;
-      case 'home': return <Home className="h-4 w-4" />;
-      case 'errand': return <ShoppingBag className="h-4 w-4" />;
-      case 'professional': return <Briefcase className="h-4 w-4" />;
-      case 'freelance': return <Code className="h-4 w-4" />;
-      case 'transport': return <Car className="h-4 w-4" />;
-      case 'health': return <Heart className="h-4 w-4" />;
-      default: return <Grid className="h-4 w-4" />;
-    }
-  };
-
-  const filteredServices = services
-    .filter(service => 
-      service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.description.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter(service => 
-      categoryFilter === 'all' || service.category === categoryFilter
+  const handleStatusToggle = (serviceId: string) => {
+    setServices(prevServices => 
+      prevServices.map(service => 
+        service.id === serviceId
+          ? { 
+              ...service, 
+              status: service.status === 'active' ? 'inactive' : 'active' 
+            }
+          : service
+      )
     );
+    
+    toast({
+      title: "Status updated",
+      description: "Service status has been updated successfully.",
+    });
+  };
 
-  if (isLoading) {
-    return <div className="flex justify-center p-8">Loading services...</div>;
-  }
+  const handleDeleteService = () => {
+    if (!serviceToDelete) return;
+    
+    setServices(prevServices => 
+      prevServices.filter(service => service.id !== serviceToDelete.id)
+    );
+    
+    toast({
+      title: "Service deleted",
+      description: "The service has been deleted successfully.",
+      variant: "destructive",
+    });
+    
+    setServiceToDelete(null);
+  };
 
-  if (isError) {
-    return <div className="text-center p-8 text-red-500">Error loading services. Please try again later.</div>;
-  }
+  const getCategoryLabel = (category: ServiceCategory) => {
+    const labels: Record<ServiceCategory, string> = {
+      all: 'All',
+      home: 'Home Services',
+      errand: 'Errands',
+      professional: 'Professional',
+      freelance: 'Freelance',
+      transport: 'Transport',
+      health: 'Health'
+    };
+    return labels[category] || category;
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Your Services</h2>
-          <p className="text-muted-foreground">Manage the services you offer</p>
+          <h2 className="text-xl font-semibold">Manage Services</h2>
+          <p className="text-muted-foreground text-sm">Create and manage your service offerings</p>
         </div>
-        <Link to="/dashboard/provider/services/create">
-          <Button className="w-full sm:w-auto">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create New Service
-          </Button>
-        </Link>
+        
+        <Button onClick={() => navigate('/dashboard/services/create')}>
+          <Plus className="mr-2 h-4 w-4" /> 
+          Add New Service
+        </Button>
       </div>
       
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="w-full md:w-2/3">
-          <Input
-            placeholder="Search services..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
-          />
-        </div>
-        <div className="w-full md:w-1/3">
-          <Select 
-            value={categoryFilter} 
-            onValueChange={setCategoryFilter}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="cleaning">Cleaning</SelectItem>
-              <SelectItem value="repair">Repair</SelectItem>
-              <SelectItem value="plumbing">Plumbing</SelectItem>
-              <SelectItem value="electrical">Electrical</SelectItem>
-              <SelectItem value="moving">Moving</SelectItem>
-              <SelectItem value="painting">Painting</SelectItem>
-              <SelectItem value="landscaping">Landscaping</SelectItem>
-              <SelectItem value="tutoring">Tutoring</SelectItem>
-              <SelectItem value="home">Home Services</SelectItem>
-              <SelectItem value="errand">Errands</SelectItem>
-              <SelectItem value="professional">Professional Services</SelectItem>
-              <SelectItem value="freelance">Freelance</SelectItem>
-              <SelectItem value="transport">Transportation</SelectItem>
-              <SelectItem value="health">Health & Wellness</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="flex flex-wrap gap-2 mb-4">
+        <Button 
+          size="sm" 
+          variant={filter === 'all' ? 'default' : 'outline'} 
+          onClick={() => setFilter('all')}
+        >
+          All Services
+        </Button>
+        <Button 
+          size="sm" 
+          variant={filter === 'active' ? 'default' : 'outline'} 
+          onClick={() => setFilter('active')}
+        >
+          Active
+        </Button>
+        <Button 
+          size="sm" 
+          variant={filter === 'inactive' ? 'default' : 'outline'} 
+          onClick={() => setFilter('inactive')}
+        >
+          Inactive
+        </Button>
       </div>
       
-      {filteredServices.length === 0 ? (
-        <div className="text-center p-8 bg-gray-50 rounded-xl">
-          <p className="text-muted-foreground">No services found. Create your first service to get started.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredServices.map((service) => (
-            <Card key={service.id} className="overflow-hidden h-full flex flex-col">
-              {service.image ? (
-                <div className="relative h-48 bg-gray-100">
-                  <img
-                    src={service.image}
-                    alt={service.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <Badge 
-                    variant={service.isActive ? "default" : "secondary"}
-                    className="absolute top-2 right-2"
-                  >
-                    {service.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
-                </div>
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Service</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Bookings</TableHead>
+                <TableHead>Rating</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredServices.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                    No services found. Create your first service to get started.
+                  </TableCell>
+                </TableRow>
               ) : (
-                <div className="h-32 bg-gray-100 flex items-center justify-center">
-                  <Badge 
-                    variant={service.isActive ? "default" : "secondary"}
-                    className="absolute top-2 right-2"
-                  >
-                    {service.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
-                  {getCategoryIcon(service.category as string)}
-                </div>
+                filteredServices.map((service) => (
+                  <TableRow key={service.id}>
+                    <TableCell>
+                      <div className="font-medium">{service.title}</div>
+                      <div className="text-xs text-muted-foreground">Added {service.createdAt}</div>
+                    </TableCell>
+                    <TableCell>{getCategoryLabel(service.category)}</TableCell>
+                    <TableCell>
+                      N${service.price}
+                      <span className="text-xs text-muted-foreground ml-1">
+                        {service.pricingModel === 'hourly' ? '/hr' : ''}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        className={
+                          service.status === 'active' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }
+                      >
+                        {service.status.charAt(0).toUpperCase() + service.status.slice(1)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{service.bookingCount}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <Star className="h-4 w-4 text-yellow-400 fill-yellow-400 mr-1" />
+                        <span>{service.rating}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => navigate(`/dashboard/services/${service.id}`)}>
+                            <Eye className="h-4 w-4 mr-2" /> View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/dashboard/services/edit/${service.id}`)}>
+                            <Edit className="h-4 w-4 mr-2" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleStatusToggle(service.id)}>
+                            <ToggleLeft className="h-4 w-4 mr-2" />
+                            {service.status === 'active' ? 'Deactivate' : 'Activate'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-red-600"
+                            onClick={() => setServiceToDelete(service)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
-              
-              <CardHeader className="pb-2">
-                <div className="flex items-center space-x-1 mb-1">
-                  {getCategoryIcon(service.category as string)}
-                  <span className="text-xs text-muted-foreground">
-                    {formatCategory(service.category as ServiceCategory)}
-                  </span>
-                </div>
-                <CardTitle className="text-lg">{service.title}</CardTitle>
-              </CardHeader>
-              
-              <CardContent className="flex-grow pb-2">
-                <p className="text-muted-foreground line-clamp-3 text-sm">
-                  {service.description}
-                </p>
-                <p className="mt-3 font-semibold">
-                  {formatPrice(service.price, service.pricingModel as PricingModel)}
-                </p>
-              </CardContent>
-              
-              <CardFooter className="pt-2 border-t">
-                <div className="w-full flex justify-between">
-                  <Link to={`/dashboard/services/${service.id}`}>
-                    <Button variant="outline" size="sm">View Details</Button>
-                  </Link>
-                  <Link to={`/dashboard/services/${service.id}/edit`}>
-                    <Button variant="outline" size="sm">Edit</Button>
-                  </Link>
-                </div>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!serviceToDelete} onOpenChange={(open) => !open && setServiceToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Are you sure you want to delete this service?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete the service 
+              "{serviceToDelete?.title}" and remove its data from our servers.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-row justify-end space-x-2">
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteService}
+            >
+              Delete Service
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

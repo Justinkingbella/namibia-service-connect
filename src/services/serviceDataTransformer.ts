@@ -1,13 +1,13 @@
 
-import { Service, ServiceData, ServiceListItem, ServiceCategory, PricingModel } from '@/types/service';
+import { Service, ServiceData, ServiceListItem } from '@/types/service';
 
 export function transformServiceListResponse(data: any[]): ServiceListItem[] {
   return data.map(item => ({
     id: item.id,
     title: item.title,
-    description: item.description || '',
-    category: (item.category || 'all') as ServiceCategory,
-    pricingModel: (item.pricing_model || 'fixed') as PricingModel,
+    description: item.description,
+    category: item.category,
+    pricingModel: item.pricing_model,
     price: item.price,
     providerName: item.provider_name || '',
     providerId: item.provider_id,
@@ -23,15 +23,15 @@ export function transformServiceResponse(data: any): Service {
   return {
     id: data.id,
     title: data.title,
-    description: data.description || '',
+    description: data.description,
     price: data.price,
-    pricingModel: (data.pricing_model || 'fixed') as PricingModel,
-    category: (data.category || 'all') as ServiceCategory,
+    pricingModel: data.pricing_model,
+    category: data.category,
     providerId: data.provider_id,
     providerName: data.provider_name,
     features: data.features || [],
     image: data.image,
-    isActive: data.is_active ?? true,
+    isActive: data.is_active,
     location: data.location,
     rating: data.rating,
     reviewCount: data.review_count,
@@ -55,7 +55,7 @@ export function transformServiceToApiFormat(service: Partial<Service>): Partial<
     rating: service.rating,
     review_count: service.reviewCount,
     location: service.location,
-    is_active: service.isActive ?? true,
+    is_active: true,
     pricing_model: service.pricingModel,
     features: service.features,
     created_at: service.createdAt ? service.createdAt.toISOString() : new Date().toISOString(),

@@ -1,38 +1,49 @@
 
 export type ServiceCategory = 
-  | 'all'
-  | 'cleaning'
-  | 'repair'
-  | 'plumbing'
-  | 'electrical'
-  | 'moving'
-  | 'painting'
-  | 'landscaping'
-  | 'tutoring'
+  | 'cleaning' 
+  | 'repair' 
+  | 'plumbing' 
+  | 'electrical' 
+  | 'moving' 
+  | 'painting' 
+  | 'landscaping' 
+  | 'tutoring' 
   | 'home'
   | 'errand'
   | 'professional'
   | 'freelance'
   | 'transport'
-  | 'health';
+  | 'health'
+  | 'all';
 
-export type PricingModel = 'fixed' | 'hourly' | 'quote';
+export type PricingModel = 'hourly' | 'fixed' | string;
 
-export type PaymentMethod = 'credit_card' | 'paypal' | 'bank_transfer' | 'cash' | 'pay_today' | 'pay_fast' | 'e_wallet' | 'dop' | 'easy_wallet';
+export type PaymentMethod =
+  | 'credit_card'
+  | 'debit_card'
+  | 'bank_transfer'
+  | 'wallet'
+  | 'cash'
+  | 'pay_today'
+  | 'pay_fast'
+  | 'e_wallet'
+  | 'dop'
+  | 'easy_wallet'
+  | string;
 
 export interface ServiceListItem {
   id: string;
   title: string;
   description: string;
-  price: number;
-  pricingModel: PricingModel;
   category: ServiceCategory;
+  pricingModel: PricingModel;
+  price: number;
   providerName: string;
   providerId: string;
-  rating?: number;
-  reviewCount?: number;
-  image?: string;
-  location?: string;
+  rating: number;
+  reviewCount: number;
+  image: string;
+  location: string;
 }
 
 export interface Service {
@@ -43,20 +54,17 @@ export interface Service {
   pricingModel: PricingModel;
   category: ServiceCategory;
   providerId: string;
-  features?: string[];
-  isActive: boolean;
+  providerName?: string;
+  features: string[];
   image?: string;
+  isActive: boolean;
   location?: string;
   rating?: number;
   reviewCount?: number;
-  providerName?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-  commission?: number; // Added missing property
-  available?: boolean; // Added missing property
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-// Fix ServiceData interface
 export interface ServiceData {
   id: string;
   title: string;
@@ -72,6 +80,6 @@ export interface ServiceData {
   location?: string;
   rating?: number;
   review_count?: number;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
 }

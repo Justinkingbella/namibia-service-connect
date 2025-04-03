@@ -1,49 +1,67 @@
 
-// Use export type for interfaces to prevent TS1205 error
-export type PaymentTransaction = {
+export interface PaymentTransaction {
   id: string;
   userId: string;
+  bookingId?: string;
   amount: number;
   fee: number;
   netAmount: number;
   currency: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
   method: string;
   gateway: string;
   reference: string;
-  referenceId?: string;
-  transactionType: string;
-  paymentMethod?: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
   description: string;
-  metadata: Record<string, any>;
-  gatewayResponse?: Record<string, any>;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-};
-
-// Add missing types
-
-export interface PaymentMethod {
-  id: string;
-  userId: string;
-  name: string;
-  type: string;
-  details: Record<string, any>;
-  isDefault: boolean;
+  metadata?: Record<string, any>;
   createdAt: Date;
+  updatedAt: Date;
+  // Additional properties needed
+  transactionType?: string;
+  paymentMethod?: string;
+  referenceId?: string;
 }
 
-// Add PaymentHistory type
-export type PaymentHistory = {
+export interface ProviderEarnings {
+  id: string;
+  providerId: string;
+  periodStart: Date;
+  periodEnd: Date;
+  totalEarnings: number;
+  commissionPaid: number;
+  netEarnings: number;
+  totalBookings: number;
+  payoutStatus: 'pending' | 'processing' | 'completed';
+  payoutDate?: Date;
+  payoutReference?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ProviderPayout {
+  id: string;
+  providerId: string;
+  amount: number;
+  fee: number;
+  netAmount: number;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  paymentMethod: string;
+  referenceNumber?: string;
+  bankAccountDetails?: Record<string, any>;
+  mobilePaymentDetails?: Record<string, any>;
+  processedAt?: Date;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PaymentHistory {
   id: string;
   userId: string;
+  bookingId?: string;
   amount: number;
   description: string;
-  date: Date;
+  transactionId?: string;
   status: string;
-  type: string;
-  reference?: string;
-};
-
-// Re-export the Dispute type
-export { Dispute } from './booking';
+  paymentMethod: string;
+  createdAt: Date;
+}

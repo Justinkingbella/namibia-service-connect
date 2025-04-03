@@ -1,358 +1,534 @@
-
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
-import { UserRole, Customer, Provider, Admin } from '@/types/auth';
-import { toast } from 'sonner';
+import { User, UserRole, AuthContextType, Provider, Customer, Admin, DbUserProfile, DbProviderProfile, ProviderVerificationStatus } from '@/types/auth';
+import { useToast } from '@/hooks/use-toast';
 
-interface AuthContextProps {
-  user: User | null;
-  session: Session | null;
-  userRole: UserRole | null;
-  userProfile: Customer | Provider | Admin | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any | null }>;
-  signUp: (email: string, password: string, role: UserRole, userData: Partial<Customer | Provider>) => Promise<{ error: any | null, data: any | null }>;
-  signOut: () => Promise<void>;
-  forgotPassword: (email: string) => Promise<{ error: any | null }>;
-  resetPassword: (password: string) => Promise<{ error: any | null }>;
-  updateProfile: (data: Partial<Customer | Provider | Admin>) => Promise<boolean>;
-}
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AuthContext = createContext<AuthContextProps | undefined>(undefined);
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export function AuthProvider({ children }: AuthProviderProps) {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [userProfile, setUserProfile] = useState<Customer | Provider | Admin | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserProfile(session.user);
-      } else {
-        setUserRole(null);
-        setUserProfile(null);
+    let mounted = true;
+    
+    // Set up auth state change listener first
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event);
+      
+      if (!mounted) return;
+      
+      if (event === 'SIGNED_IN' && session) {
+        try {
+          // Use setTimeout to defer database operations to prevent deadlocks
+          setTimeout(async () => {
+            if (!mounted) return;
+            
+            // Fetch user profile when signed in
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .maybeSingle();
+            
+            if (profileError) {
+              console.error('Error fetching user profile on auth change:', profileError);
+              setUser(null);
+              setIsLoading(false);
+              return;
+            }
+            
+            if (profileData) {
+              await loadUserData(profileData, session.user.id);
+            } else {
+              // Create a basic profile if none exists
+              const baseUser: User = {
+                id: session.user.id,
+                email: session.user.email || '',
+                name: session.user.user_metadata?.first_name || session.user.email?.split('@')[0] || 'User',
+                role: session.user.user_metadata?.role || 'customer',
+                createdAt: new Date(),
+                isVerified: true
+              };
+              
+              setUser(baseUser);
+              setIsLoading(false);
+              
+              // Create profile in background
+              supabase.from('profiles').upsert({
+                id: session.user.id,
+                email: session.user.email,
+                first_name: session.user.user_metadata?.first_name || session.user.email?.split('@')[0],
+                role: session.user.user_metadata?.role || 'customer',
+                is_verified: true,
+                created_at: new Date().toISOString()
+              });
+            }
+          }, 0);
+        } catch (error) {
+          console.error('Error handling auth state change:', error);
+          if (mounted) {
+            setUser(null);
+            setIsLoading(false);
+          }
+        }
+      } else if (event === 'SIGNED_OUT') {
+        if (mounted) {
+          setUser(null);
+          setIsLoading(false);
+        }
       }
     });
 
-    // Initial session fetch
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserProfile(session.user);
-      } else {
-        setLoading(false);
+    // Initial auth check
+    const checkAuth = async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        if (sessionData?.session) {
+          // If we have a session, get user profile from our database
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', sessionData.session.user.id)
+            .maybeSingle();
+          
+          if (profileError && profileError.code !== 'PGRST116') {
+            // PGRST116 is "JSON object requested, multiple (or no) rows returned"
+            // We ignore this specific error as it just means the profile doesn't exist yet
+            console.error('Error fetching user profile:', profileError);
+            setUser(null);
+            setIsLoading(false);
+            return;
+          }
+          
+          if (profileData) {
+            await loadUserData(profileData, sessionData.session.user.id);
+          } else {
+            // Create a basic user object if no profile exists
+            const baseUser: User = {
+              id: sessionData.session.user.id,
+              email: sessionData.session.user.email || '',
+              name: sessionData.session.user.user_metadata?.first_name || 
+                    sessionData.session.user.email?.split('@')[0] || 'User',
+              role: sessionData.session.user.user_metadata?.role || 'customer',
+              createdAt: new Date(),
+              isVerified: true
+            };
+            
+            setUser(baseUser);
+            
+            // Create profile in background
+            supabase.from('profiles').upsert({
+              id: sessionData.session.user.id,
+              email: sessionData.session.user.email,
+              first_name: sessionData.session.user.user_metadata?.first_name || 
+                          sessionData.session.user.email?.split('@')[0],
+              role: sessionData.session.user.user_metadata?.role || 'customer',
+              is_verified: true,
+              created_at: new Date().toISOString()
+            });
+          }
+        } else {
+          // No session found, user is not logged in
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error);
+        setUser(null);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
-    });
+    };
+
+    checkAuth();
 
     return () => {
-      subscription.unsubscribe();
+      mounted = false;
+      authListener?.subscription.unsubscribe();
     };
   }, []);
 
-  async function fetchUserProfile(user: User) {
+  // Helper function to load user data based on role
+  const loadUserData = async (profileData: DbUserProfile, userId: string) => {
     try {
-      // First, get the basic user data from the profiles table
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
-        setLoading(false);
-        return;
-      }
-
-      const role = profileData.role as UserRole;
-      setUserRole(role);
-
-      // Depending on the role, fetch additional data from the appropriate table
-      switch (role) {
-        case 'customer':
-          setUserProfile({
-            id: user.id,
-            email: user.email!,
-            firstName: profileData.first_name || '',
-            lastName: profileData.last_name || '',
-            phoneNumber: profileData.phone_number || '',
-            avatar: profileData.avatar_url || '',
-            role: 'customer',
-            preferredCategories: profileData.preferred_categories || [],
-            notificationPreferences: profileData.notification_preferences || { email: true, sms: false, push: true },
-            createdAt: new Date(profileData.created_at),
-            isVerified: profileData.email_verified || false
-          });
-          break;
-
-        case 'provider':
-          // Get provider-specific data
-          const { data: providerData, error: providerError } = await supabase
-            .from('service_providers')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-
-          if (providerError) {
-            console.error('Error fetching provider data:', providerError);
-            setLoading(false);
-            return;
-          }
-
-          // Combine base profile with provider-specific data
-          setUserProfile({
-            id: user.id,
-            email: user.email!,
-            firstName: profileData.first_name || '',
-            lastName: profileData.last_name || '',
-            phoneNumber: profileData.phone_number || '',
-            avatar: profileData.avatar_url || '',
+      // Construct a name from first_name and last_name or use email
+      const displayName = profileData.first_name && profileData.last_name 
+        ? `${profileData.first_name} ${profileData.last_name}`
+        : profileData.first_name || profileData.email?.split('@')[0] || 'Unknown User';
+      
+      // Create base user object
+      const baseUser: User = {
+        id: userId,
+        email: profileData.email || '',
+        name: displayName,
+        role: profileData.role || 'customer',
+        avatar: profileData.avatar_url,
+        phoneNumber: profileData.phone_number,
+        createdAt: new Date(profileData.created_at || ''),
+        isVerified: !!profileData.is_verified
+      };
+      
+      // Get role-specific data
+      if (profileData.role === 'provider') {
+        const { data: providerData, error: providerError } = await supabase
+          .from('service_providers')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+        
+        if (providerError && providerError.code !== 'PGRST116') {
+          console.error('Error fetching provider data:', providerError);
+          setUser(baseUser);
+          setIsLoading(false);
+          return;
+        }
+        
+        if (providerData) {
+          // Explicitly type the verification_status to resolve TS error
+          const verificationStatus = (providerData.verification_status as ProviderVerificationStatus) || 'unverified';
+          
+          // Create provider-specific user object
+          const provider: Provider = {
+            ...baseUser,
             role: 'provider',
             businessName: providerData.business_name || '',
-            businessDescription: providerData.business_description || '',
-            businessLogo: providerData.avatar_url || '',
-            verificationStatus: providerData.verification_status || 'pending',
+            description: providerData.business_description || '',
+            verificationStatus: verificationStatus,
+            // Default to empty arrays if categories and locations don't exist
+            categories: [], // We'll set this properly below
+            locations: [], // We'll set this properly below
+            subscriptionTier: providerData.subscription_tier as any || 'free',
             rating: providerData.rating || 0,
             reviewCount: providerData.rating_count || 0,
-            completedBookings: providerData.completed_bookings || 0,
-            categories: providerData.categories || [],
-            createdAt: new Date(profileData.created_at),
-            isVerified: profileData.email_verified || false,
-            subscription: providerData.subscription_tier || 'free',
-            bankDetails: providerData.bank_details || {}
-          });
-          break;
-
-        case 'admin':
-          // Get admin permissions
-          const { data: adminData, error: adminError } = await supabase
-            .from('admin_permissions')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-
-          if (adminError && adminError.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
-            console.error('Error fetching admin data:', adminError);
+            earnings: 0,
+            balance: 0,
+            bankDetails: undefined // We'll set this properly below
+          };
+          
+          // Safely handle categories and locations which might not exist in the DB response
+          if ('categories' in providerData && Array.isArray(providerData.categories)) {
+            provider.categories = providerData.categories;
           }
-
-          setUserProfile({
-            id: user.id,
-            email: user.email!,
-            firstName: profileData.first_name || '',
-            lastName: profileData.last_name || '',
-            phoneNumber: profileData.phone_number || '',
-            avatar: profileData.avatar_url || '',
-            role: 'admin',
-            permissions: adminData?.permissions || [],
-            createdAt: new Date(profileData.created_at),
-            isVerified: true
-          });
-          break;
-
-        default:
-          console.error('Unknown user role:', role);
+          
+          if ('locations' in providerData && Array.isArray(providerData.locations)) {
+            provider.locations = providerData.locations;
+          }
+          
+          // Safely handle bank details
+          const hasBankDetails = 
+            ('bank_name' in providerData && providerData.bank_name) || 
+            ('account_name' in providerData && providerData.account_name) || 
+            ('account_number' in providerData && providerData.account_number);
+            
+          if (hasBankDetails) {
+            provider.bankDetails = {
+              accountName: ('account_name' in providerData ? String(providerData.account_name || '') : '') || '',
+              accountNumber: ('account_number' in providerData ? String(providerData.account_number || '') : '') || '',
+              bankName: ('bank_name' in providerData ? String(providerData.bank_name || '') : '') || ''
+            };
+          }
+          
+          setUser(provider);
+        } else {
+          setUser(baseUser);
+        }
+      } else if (profileData.role === 'customer') {
+        const customer: Customer = {
+          ...baseUser,
+          role: 'customer',
+          favorites: profileData.favorites || [],
+          bookingCount: 0,
+          totalSpent: 0,
+          loyaltyPoints: profileData.loyalty_points || 0
+        };
+        
+        setUser(customer);
+      } else if (profileData.role === 'admin') {
+        // Get admin permissions
+        const { data: permissionsData, error: permissionsError } = await supabase
+          .from('admin_permissions')
+          .select('permissions')
+          .eq('user_id', userId)
+          .maybeSingle();
+        
+        if (permissionsError && permissionsError.code !== 'PGRST116') {
+          console.error('Error fetching admin permissions:', permissionsError);
+        }
+        
+        const admin: Admin = {
+          ...baseUser,
+          role: 'admin',
+          permissions: permissionsData?.permissions || []
+        };
+        
+        setUser(admin);
+      } else {
+        setUser(baseUser);
       }
     } catch (error) {
-      console.error('Unexpected error in fetchUserProfile:', error);
+      console.error('Error loading user data:', error);
+      setUser(null);
     } finally {
-      setLoading(false);
-    }
-  }
-
-  const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      return { error };
-    } catch (error) {
-      console.error('Error in signIn:', error);
-      return { error };
+      setIsLoading(false);
     }
   };
 
-  const signUp = async (
-    email: string, 
-    password: string, 
-    role: UserRole,
-    userData: Partial<Customer | Provider>
-  ) => {
+  const signIn = async (email: string, password: string) => {
+    setIsLoading(true);
     try {
-      // First, create the auth user
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      // Try Supabase auth
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
       
       if (error) {
-        return { error, data: null };
+        throw error;
       }
-      
+
       if (!data.user) {
-        return { error: new Error('No user returned from signup'), data: null };
+        throw new Error('No user returned from authentication');
+      }
+
+      // Get user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+      
+      if (profileError) {
+        console.error('Error fetching profile after login:', profileError);
+        // Continue anyway, as the auth is successful
       }
       
-      // Then create the basic profile
+      if (profileData) {
+        await loadUserData(profileData, data.user.id);
+      } else {
+        // If no profile exists, create a basic one
+        const displayName = data.user.user_metadata?.name || email.split('@')[0];
+        const userRole = data.user.user_metadata?.role || 'customer';
+        
+        const baseUser: User = {
+          id: data.user.id,
+          email: email,
+          name: displayName,
+          role: userRole,
+          createdAt: new Date(),
+          isVerified: true
+        };
+        
+        setUser(baseUser);
+        
+        // Create profile if it doesn't exist
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          email: email,
+          first_name: displayName,
+          role: userRole,
+          is_verified: true,
+          created_at: new Date().toISOString()
+        });
+      }
+      
+      toast({
+        title: 'Signed in successfully',
+        description: 'Welcome back!',
+      });
+    } catch (error: any) {
+      console.error('Sign in error:', error);
+      toast({
+        title: 'Authentication failed',
+        description: error.message || 'Invalid email or password',
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signUp = async (email: string, password: string, name: string, role: UserRole) => {
+    setIsLoading(true);
+    try {
+      // Extract first and last name
+      const nameParts = name.split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+      
+      // Create the user in Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            role,
+          }
+        }
+      });
+      
+      if (error) {
+        throw error;
+      }
+
+      if (!data.user) {
+        throw new Error('Failed to create user');
+      }
+      
+      // Create a profile for the user
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert([{
+        .upsert({
           id: data.user.id,
-          email,
-          first_name: userData.firstName || '',
-          last_name: userData.lastName || '',
-          phone_number: userData.phoneNumber || '',
-          role,
+          email: email,
+          first_name: firstName,
+          last_name: lastName,
+          role: role,
+          is_verified: false,
           created_at: new Date().toISOString()
-        }]);
+        });
         
       if (profileError) {
         console.error('Error creating profile:', profileError);
-        return { error: profileError, data: null };
       }
-      
-      // If this is a provider, create the provider record too
-      if (role === 'provider' && 'businessName' in userData) {
+
+      // If the user is a provider, create an entry in service_providers
+      if (role === 'provider') {
         const { error: providerError } = await supabase
           .from('service_providers')
-          .insert([{
+          .upsert({
             id: data.user.id,
-            business_name: userData.businessName || '',
-            business_description: userData.businessDescription || '',
-            verification_status: 'pending',
+            email: email,
+            business_name: `${name}'s Business`,
+            business_description: '',
+            verification_status: 'unverified',
             subscription_tier: 'free',
+            rating: 0,
+            rating_count: 0,
             created_at: new Date().toISOString()
-          }]);
+          });
           
         if (providerError) {
-          console.error('Error creating provider record:', providerError);
-          return { error: providerError, data: null };
+          console.error('Error creating provider profile:', providerError);
         }
       }
+
+      // Create a user object
+      const baseUser: User = {
+        id: data.user.id,
+        email,
+        name,
+        role,
+        createdAt: new Date(),
+        isVerified: false
+      };
+
+      let userWithRole: User = baseUser;
       
-      return { error: null, data };
-    } catch (error) {
-      console.error('Error in signUp:', error);
-      return { error, data: null };
+      if (role === 'provider') {
+        userWithRole = {
+          ...baseUser,
+          role: 'provider',
+          businessName: `${name}'s Business`,
+          description: '',
+          verificationStatus: 'unverified',
+          categories: [],
+          locations: [],
+          subscriptionTier: 'free',
+          rating: 0,
+          reviewCount: 0,
+          earnings: 0,
+          balance: 0
+        } as Provider;
+      } else if (role === 'customer') {
+        userWithRole = {
+          ...baseUser,
+          role: 'customer',
+          favorites: [],
+          bookingCount: 0,
+          totalSpent: 0,
+          loyaltyPoints: 0
+        } as Customer;
+      } else if (role === 'admin') {
+        userWithRole = {
+          ...baseUser,
+          role: 'admin',
+          permissions: []
+        } as Admin;
+      }
+
+      setUser(userWithRole);
+      
+      toast({
+        title: 'Registration successful',
+        description: `Welcome to Namibia Service Hub, ${name}!`,
+      });
+      
+      // Removed the return statement to match the Promise<void> return type
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      toast({
+        title: 'Registration failed',
+        description: error.message || 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-  };
-
-  const forgotPassword = async (email: string) => {
+    setIsLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Remove user from state
+      setUser(null);
+      
+      toast({
+        title: 'Signed out successfully',
       });
-      return { error };
-    } catch (error) {
-      console.error('Error in forgotPassword:', error);
-      return { error };
-    }
-  };
-
-  const resetPassword = async (password: string) => {
-    try {
-      const { error } = await supabase.auth.updateUser({ password });
-      return { error };
-    } catch (error) {
-      console.error('Error in resetPassword:', error);
-      return { error };
-    }
-  };
-
-  const updateProfile = async (data: Partial<Customer | Provider | Admin>): Promise<boolean> => {
-    if (!user) return false;
-    
-    try {
-      // First update the base profile
-      const baseProfileData = {
-        first_name: data.firstName,
-        last_name: data.lastName,
-        phone_number: data.phoneNumber,
-        updated_at: new Date().toISOString()
-      };
-      
-      if ('avatar' in data && data.avatar) {
-        baseProfileData['avatar_url'] = data.avatar;
-      }
-      
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update(baseProfileData)
-        .eq('id', user.id);
-        
-      if (profileError) {
-        console.error('Error updating profile:', profileError);
-        toast.error('Failed to update profile');
-        return false;
-      }
-      
-      // If this is a provider, update the provider record too
-      if (userRole === 'provider' && 'businessName' in data) {
-        const providerData = {
-          business_name: data.businessName,
-          business_description: data.businessDescription,
-          updated_at: new Date().toISOString()
-        };
-        
-        if ('businessLogo' in data && data.businessLogo) {
-          providerData['business_logo'] = data.businessLogo;
-        }
-        
-        const { error: providerError } = await supabase
-          .from('service_providers')
-          .update(providerData)
-          .eq('id', user.id);
-          
-        if (providerError) {
-          console.error('Error updating provider record:', providerError);
-          toast.error('Failed to update business information');
-          return false;
-        }
-      }
-      
-      // Update the local state
-      setUserProfile(prev => prev ? { ...prev, ...data } : null);
-      
-      toast.success('Profile updated successfully');
-      return true;
-    } catch (error) {
-      console.error('Error in updateProfile:', error);
-      toast.error('Something went wrong while updating your profile');
-      return false;
+    } catch (error: any) {
+      console.error('Sign out error:', error);
+      toast({
+        title: 'Sign out failed',
+        description: error.message || 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const value = {
     user,
-    session,
-    userRole,
-    userProfile,
-    loading,
+    isLoading,
     signIn,
     signUp,
     signOut,
-    forgotPassword,
-    resetPassword,
-    updateProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+};
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

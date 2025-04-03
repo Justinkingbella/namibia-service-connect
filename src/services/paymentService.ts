@@ -31,10 +31,6 @@ export async function fetchUserTransactions(userId: string): Promise<PaymentTran
       status: record.status as 'pending' | 'processing' | 'completed' | 'failed' | 'refunded',
       description: record.description,
       metadata: {},
-      currency: 'NAD', // Default currency
-      method: record.payment_method || 'unknown',
-      gateway: 'pay_today', // Default gateway
-      reference: record.transaction_id || record.id,
       createdAt: record.created_at,
       updatedAt: record.created_at // Use created_at as updated_at for now
     }));
@@ -147,10 +143,6 @@ export async function recordPaymentTransaction(
       status: data.status as 'pending' | 'processing' | 'completed' | 'failed' | 'refunded',
       description: data.description,
       metadata: {},
-      currency: 'NAD',
-      method: data.payment_method || 'unknown',
-      gateway: 'pay_today',
-      reference: data.transaction_id || data.id,
       createdAt: data.created_at,
       updatedAt: data.created_at
     };

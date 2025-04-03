@@ -1,9 +1,9 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from './use-toast';
-import { BookingStatus, PaymentStatus } from '@/types/booking';
+import { BookingStatus } from '@/types/booking';
+import { toast } from 'sonner';
+import { useRealtimeData } from './useRealtimeData';
 
 export interface BookingData {
   id: string;
@@ -18,181 +18,116 @@ export interface BookingData {
   total_amount: number;
   commission: number;
   payment_method: string;
-  payment_status: PaymentStatus;
+  payment_status: string;
   notes?: string;
-  is_urgent: boolean;
+  is_urgent?: boolean;
   created_at: string;
   updated_at: string;
-  service_title?: string;
-  service_image?: string;
-  provider_name?: string;
-  customer_name?: string;
+  cancelled_by?: string;
+  cancellation_date?: string;
+  cancellation_reason?: string;
+  provider_notes?: string;
+  customer_notes?: string;
+  feedback?: string;
 }
 
-export const useBookings = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [bookings, setBookings] = useState<BookingData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+interface UseBookingsOptions {
+  userId?: string;
+  userRole?: 'customer' | 'provider';
+  status?: BookingStatus | BookingStatus[];
+  limit?: number;
+}
 
-  const fetchBookings = async () => {
-    if (!user) return;
+export function useBookings({ 
+  userId, 
+  userRole = 'customer',
+  status,
+  limit
+}: UseBookingsOptions = {}) {
+  const [loading, setLoading] = useState(false);
 
+  // Use the useRealtimeData hook for realtime updates
+  const realtimeOptions = {
+    table: 'bookings',
+    filter: userId ? {
+      [userRole === 'customer' ? 'customer_id' : 'provider_id']: userId
+    } : undefined,
+    order: { column: 'created_at', ascending: false },
+    limit: limit,
+    onDataChange: (payload: any) => {
+      console.log('Booking data changed:', payload);
+      toast.info(`A booking has been ${payload.eventType.toLowerCase()}`);
+    }
+  };
+
+  const { 
+    data: bookings, 
+    loading: realtimeLoading, 
+    error, 
+    refetch 
+  } = useRealtimeData<BookingData>(realtimeOptions);
+
+  // Filter bookings based on status
+  const filteredBookings = status 
+    ? bookings.filter(booking => 
+        Array.isArray(status) 
+          ? status.includes(booking.status as BookingStatus)
+          : booking.status === status
+      )
+    : bookings;
+
+  // Function to update booking status
+  const updateBookingStatus = useCallback(async (
+    bookingId: string, 
+    newStatus: BookingStatus,
+    notes?: string
+  ) => {
     setLoading(true);
     try {
-      // Determine the filter based on role
-      const roleFilter = user.role === 'customer' ? 'customer_id' : 'provider_id';
-
-      // Create the query
-      let query = supabase
-        .from('bookings')
-        .select(`
-          *,
-          services:service_id (
-            title,
-            image
-          ),
-          providers:provider_id (
-            business_name
-          ),
-          customers:customer_id (
-            first_name,
-            last_name
-          )
-        `)
-        .eq(roleFilter, user.id)
-        .order('created_at', { ascending: false });
-
-      const { data, error: queryError } = await query;
-
-      if (queryError) {
-        throw queryError;
-      }
-
-      if (data) {
-        // Transform the data to match the expected format
-        const transformedBookings = data.map((booking: any) => ({
-          ...booking,
-          service_title: booking.services?.title,
-          service_image: booking.services?.image,
-          provider_name: booking.providers?.business_name,
-          customer_name: booking.customers
-            ? `${booking.customers.first_name} ${booking.customers.last_name}`
-            : 'Unknown Customer',
-        }));
-
-        setBookings(transformedBookings);
-      }
-    } catch (err: any) {
-      console.error('Error fetching bookings:', err);
-      setError(err.message || 'Failed to load bookings');
-      toast({
-        variant: 'destructive',
-        title: 'Error fetching bookings',
-        description: err.message || 'Failed to load bookings',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (user) {
-      fetchBookings();
-    } else {
-      setBookings([]);
-      setLoading(false);
-    }
-  }, [user]);
-
-  const cancelBooking = async (bookingId: string, reason: string) => {
-    if (!user) return false;
-
-    try {
-      // Update the booking status
-      const { error } = await supabase
-        .from('bookings')
-        .update({
-          status: 'cancelled',
-          cancellation_reason: reason,
-          cancellation_date: new Date().toISOString(),
-          cancelled_by: user.id,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', bookingId)
-        .eq(user.role === 'customer' ? 'customer_id' : 'provider_id', user.id);
-
-      if (error) throw error;
-
-      // Refresh bookings
-      await fetchBookings();
-
-      toast({
-        title: 'Booking cancelled',
-        description: 'The booking has been successfully cancelled.',
-      });
-
-      return true;
-    } catch (err: any) {
-      console.error('Error cancelling booking:', err);
-      toast({
-        variant: 'destructive',
-        title: 'Cancellation failed',
-        description: err.message || 'Failed to cancel booking',
-      });
-      return false;
-    }
-  };
-
-  const completeBooking = async (bookingId: string, rating?: number, feedback?: string) => {
-    if (!user || user.role !== 'provider') return false;
-
-    try {
-      // Update the booking status
-      const updateData: any = {
-        status: 'completed',
-        updated_at: new Date().toISOString(),
+      const updateData: any = { 
+        status: newStatus,
+        updated_at: new Date().toISOString()
       };
-
-      if (feedback) {
-        updateData.provider_notes = feedback;
+      
+      // Add specific fields based on the status change
+      if (newStatus === 'cancelled') {
+        updateData.cancellation_date = new Date().toISOString();
+        updateData.cancellation_reason = notes || 'Cancelled by user';
+        updateData.cancelled_by = userId;
+      } else if (newStatus === 'completed' && notes) {
+        updateData.feedback = notes;
+      } else if ((newStatus === 'confirmed' || newStatus === 'rejected') && notes) {
+        updateData.provider_notes = notes;
       }
-
+      
       const { error } = await supabase
         .from('bookings')
         .update(updateData)
-        .eq('id', bookingId)
-        .eq('provider_id', user.id);
-
+        .eq('id', bookingId);
+        
       if (error) throw error;
-
-      // Refresh bookings
-      await fetchBookings();
-
-      toast({
-        title: 'Booking completed',
-        description: 'The service has been marked as completed.',
-      });
-
+      
+      toast.success(`Booking ${newStatus} successfully`);
+      
+      // The real-time subscription should update the bookings automatically,
+      // but we'll refetch to be safe
+      await refetch();
+      
       return true;
-    } catch (err: any) {
-      console.error('Error completing booking:', err);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: err.message || 'Failed to complete booking',
-      });
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+      toast.error('Failed to update booking status');
       return false;
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [userId, refetch]);
 
   return {
-    bookings,
-    loading,
+    bookings: filteredBookings,
+    loading: loading || realtimeLoading,
     error,
-    cancelBooking,
-    completeBooking,
-    refetch: fetchBookings,
+    updateBookingStatus,
+    refetch
   };
-};
+}

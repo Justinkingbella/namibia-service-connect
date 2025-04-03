@@ -1,224 +1,436 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Trash, Plus } from "lucide-react";
 
-export interface SubscriptionPlan {
-  id?: string;
-  name: string;
-  description: string;
-  price: number;
-  billingCycle: string;
-  features: {
-    name: string;
-    included: boolean;
-    limit?: number;
-  }[];
-  isActive: boolean;
-  isPopular: boolean;
-}
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { PlusCircle, MinusCircle, Trash2, Loader2 } from 'lucide-react';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { SubscriptionFeature, SubscriptionPlan } from '@/types/subscription';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+
+const formSchema = z.object({
+  name: z.string().min(2, { message: 'Plan name must be at least 2 characters.' }),
+  description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
+  price: z.coerce.number().positive({ message: 'Price must be a positive number.' }),
+  billingCycle: z.enum(['monthly', 'yearly']),
+  credits: z.coerce.number().int().positive({ message: 'Credits must be a positive integer.' }),
+  maxBookings: z.coerce.number().int().positive({ message: 'Maximum bookings must be a positive integer.' }),
+  allowedServices: z.coerce.number().int().positive({ message: 'Allowed services must be a positive integer.' }),
+  trialPeriodDays: z.coerce.number().int().min(0, { message: 'Trial period days must be a non-negative integer.' }),
+  sortOrder: z.coerce.number().int().min(0, { message: 'Sort order must be a non-negative integer.' }),
+  isPopular: z.boolean().optional(),
+  isActive: z.boolean().default(true),
+});
+
+type FormValues = z.infer<typeof formSchema> & {
+  features: SubscriptionFeature[];
+};
 
 interface SubscriptionFormProps {
-  plan?: SubscriptionPlan;
-  onSubmit: (plan: SubscriptionPlan) => void;
-  onCancel: () => void;
+  initialData?: SubscriptionPlan | null;
+  onSubmit: (data: SubscriptionPlan) => void;
+  isSubmitting?: boolean;
 }
 
-const SubscriptionForm: React.FC<SubscriptionFormProps> = ({ 
-  plan, 
-  onSubmit, 
-  onCancel 
-}) => {
-  const [formData, setFormData] = useState<SubscriptionPlan>(
-    plan || {
-      name: '',
-      description: '',
-      price: 0,
-      billingCycle: 'monthly',
-      features: [
-        { name: 'Max Services', included: true, limit: 1 },
-        { name: 'Featured Services', included: false },
-        { name: 'Priority Support', included: false },
-      ],
-      isActive: true,
-      isPopular: false,
-    }
+export const SubscriptionForm = ({ initialData, onSubmit, isSubmitting = false }: SubscriptionFormProps) => {
+  const [features, setFeatures] = useState<SubscriptionFeature[]>(
+    initialData?.features || [
+      { id: crypto.randomUUID(), name: '', description: '', included: true }
+    ]
   );
 
-  const handleChange = (field: keyof SubscriptionPlan, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: initialData?.name || '',
+      description: initialData?.description || '',
+      price: initialData?.price || 49.99,
+      billingCycle: initialData?.billingCycle || 'monthly',
+      credits: initialData?.credits || 100,
+      maxBookings: initialData?.maxBookings || 20,
+      allowedServices: initialData?.allowedServices || 1,
+      trialPeriodDays: initialData?.trialPeriodDays || 0,
+      sortOrder: initialData?.sortOrder || 0,
+      isPopular: initialData?.isPopular || false,
+      isActive: initialData?.isActive !== undefined ? initialData.isActive : true,
+    },
+  });
+
+  const handleAddFeature = () => {
+    setFeatures([
+      ...features,
+      { id: crypto.randomUUID(), name: '', description: '', included: true }
+    ]);
   };
 
-  const handleFeatureChange = (index: number, field: string, value: any) => {
-    const updatedFeatures = [...formData.features];
-    updatedFeatures[index] = { ...updatedFeatures[index], [field]: value };
-    setFormData(prev => ({ ...prev, features: updatedFeatures }));
+  const handleRemoveFeature = (id: string) => {
+    setFeatures(features.filter(feature => feature.id !== id));
   };
 
-  const addFeature = () => {
-    setFormData(prev => ({
-      ...prev,
-      features: [...prev.features, { name: '', included: false }]
-    }));
+  const handleFeatureChange = (id: string, field: keyof SubscriptionFeature, value: any) => {
+    setFeatures(features.map(feature => 
+      feature.id === id ? { ...feature, [field]: value } : feature
+    ));
   };
 
-  const removeFeature = (index: number) => {
-    const updatedFeatures = [...formData.features];
-    updatedFeatures.splice(index, 1);
-    setFormData(prev => ({ ...prev, features: updatedFeatures }));
-  };
+  const handleSubmit = (data: FormValues) => {
+    // Validate features
+    const validFeatures = features.filter(f => f.name.trim() !== '');
+    
+    if (validFeatures.length === 0) {
+      form.setError('root', { 
+        message: 'You must add at least one feature to the plan.' 
+      });
+      return;
+    }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    // Make sure all required properties are explicitly assigned to fix the TypeScript error
+    const formData: SubscriptionPlan = {
+      id: initialData?.id || crypto.randomUUID(),
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      billingCycle: data.billingCycle,
+      credits: data.credits,
+      maxBookings: data.maxBookings,
+      allowedServices: data.allowedServices,
+      trialPeriodDays: data.trialPeriodDays,
+      sortOrder: data.sortOrder,
+      features: validFeatures,
+      isPopular: data.isPopular || false,
+      isActive: data.isActive,
+      createdAt: initialData?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
     onSubmit(formData);
   };
 
+  // When initialData changes
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        name: initialData.name,
+        description: initialData.description,
+        price: initialData.price,
+        billingCycle: initialData.billingCycle,
+        credits: initialData.credits,
+        maxBookings: initialData.maxBookings,
+        allowedServices: initialData.allowedServices || 1,
+        trialPeriodDays: initialData.trialPeriodDays || 0,
+        sortOrder: initialData.sortOrder || 0,
+        isPopular: initialData.isPopular,
+        isActive: initialData.isActive,
+      });
+    }
+  }, [initialData, form]);
+
   return (
-    <form onSubmit={handleSubmit}>
-      <Card>
-        <CardHeader>
-          <CardTitle>{plan?.id ? 'Edit Plan' : 'Create New Plan'}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Plan Name</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              required
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 max-w-3xl mx-auto">
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Plan Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Basic Plan" {...field} disabled={isSubmitting} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="A brief description of what this plan offers"
+                    className="resize-none min-h-24"
+                    {...field}
+                    disabled={isSubmitting}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Price (N$)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" min="0" {...field} disabled={isSubmitting} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="billingCycle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Billing Cycle</FormLabel>
+                  <FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      disabled={isSubmitting}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a billing cycle" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Input
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleChange('description', e.target.value)}
-              required
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="credits"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Credits</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="1" {...field} disabled={isSubmitting} />
+                  </FormControl>
+                  <FormDescription>
+                    Credits per billing cycle
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="maxBookings"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Maximum Bookings</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="1" {...field} disabled={isSubmitting} />
+                  </FormControl>
+                  <FormDescription>
+                    Bookings per billing cycle
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="allowedServices"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Allowed Services</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="1" {...field} disabled={isSubmitting} />
+                  </FormControl>
+                  <FormDescription>
+                    Max service listings
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="price">Price (NAD)</Label>
-            <Input
-              id="price"
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.price}
-              onChange={(e) => handleChange('price', parseFloat(e.target.value))}
-              required
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="trialPeriodDays"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Trial Period (Days)</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="0" {...field} disabled={isSubmitting} />
+                  </FormControl>
+                  <FormDescription>
+                    0 means no trial period
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="sortOrder"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sort Order</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="0" {...field} disabled={isSubmitting} />
+                  </FormControl>
+                  <FormDescription>
+                    Lower numbers appear first
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="billingCycle">Billing Cycle</Label>
-            <select
-              id="billingCycle"
-              className="w-full px-3 py-2 border rounded"
-              value={formData.billingCycle}
-              onChange={(e) => handleChange('billingCycle', e.target.value)}
-              required
-            >
-              <option value="monthly">Monthly</option>
-              <option value="quarterly">Quarterly</option>
-              <option value="yearly">Yearly</option>
-            </select>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="isPopular"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Mark as Popular</FormLabel>
+                    <FormDescription>
+                      Highlight this plan as a popular choice.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Active Status</FormLabel>
+                    <FormDescription>
+                      Activate or deactivate this plan.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
-          
-          <div className="space-y-2">
-            <Label>Features</Label>
-            <div className="space-y-3">
-              {formData.features.map((feature, index) => (
-                <div key={index} className="flex items-center space-x-2 border p-3 rounded">
-                  <div className="flex-grow">
+        </div>
+
+        <Separator />
+
+        <div>
+          <h3 className="text-lg font-medium mb-4">Plan Features</h3>
+          <div className="space-y-4">
+            {features.map((feature, index) => (
+              <div key={feature.id} className="grid grid-cols-12 gap-2 items-start">
+                <div className="col-span-10 md:col-span-11 space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <Input
                       placeholder="Feature name"
                       value={feature.name}
-                      onChange={(e) => handleFeatureChange(index, 'name', e.target.value)}
-                      required
+                      onChange={(e) => handleFeatureChange(feature.id, 'name', e.target.value)}
+                      className="mb-1"
+                      disabled={isSubmitting}
+                    />
+                    <Input
+                      placeholder="Feature description (optional)"
+                      value={feature.description}
+                      onChange={(e) => handleFeatureChange(feature.id, 'description', e.target.value)}
+                      className="mb-1"
+                      disabled={isSubmitting}
                     />
                   </div>
-                  
-                  {feature.name.toLowerCase().includes('max') && (
-                    <div className="w-20">
-                      <Input
-                        type="number"
-                        min="1"
-                        placeholder="Limit"
-                        value={feature.limit || ''}
-                        onChange={(e) => handleFeatureChange(index, 'limit', parseInt(e.target.value))}
-                      />
-                    </div>
-                  )}
-                  
                   <div className="flex items-center space-x-2">
                     <Switch
+                      id={`feature-included-${index}`}
                       checked={feature.included}
-                      onCheckedChange={(checked) => handleFeatureChange(index, 'included', checked)}
+                      onCheckedChange={(checked) => handleFeatureChange(feature.id, 'included', checked)}
+                      disabled={isSubmitting}
                     />
-                    <span className="text-sm">Included</span>
+                    <label htmlFor={`feature-included-${index}`} className="text-sm cursor-pointer">
+                      {feature.included ? 'Included in plan' : 'Not included in plan'}
+                    </label>
                   </div>
-                  
+                </div>
+                <div className="col-span-2 md:col-span-1 flex justify-end">
                   <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
-                    onClick={() => removeFeature(index)}
+                    size="icon"
+                    onClick={() => handleRemoveFeature(feature.id)}
+                    disabled={features.length <= 1 || isSubmitting}
+                    className="h-9 w-9"
                   >
-                    <Trash className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-              ))}
-              
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addFeature}
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Feature
-              </Button>
-            </div>
+              </div>
+            ))}
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="isActive"
-              checked={formData.isActive}
-              onCheckedChange={(checked) => handleChange('isActive', checked)}
-            />
-            <Label htmlFor="isActive">Active</Label>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="isPopular"
-              checked={formData.isPopular}
-              onCheckedChange={(checked) => handleChange('isPopular', checked)}
-            />
-            <Label htmlFor="isPopular">Mark as Popular</Label>
-          </div>
-        </CardContent>
-        
-        <CardFooter className="flex justify-between">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-4"
+            onClick={handleAddFeature}
+            disabled={isSubmitting}
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Feature
           </Button>
-          <Button type="submit">
-            {plan?.id ? 'Update Plan' : 'Create Plan'}
+
+          {form.formState.errors.root && (
+            <p className="text-sm font-medium text-destructive mt-2">
+              {form.formState.errors.root.message}
+            </p>
+          )}
+        </div>
+
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {initialData ? 'Update Plan' : 'Create Plan'}
           </Button>
-        </CardFooter>
-      </Card>
-    </form>
+        </div>
+      </form>
+    </Form>
   );
 };
-
-export default SubscriptionForm;

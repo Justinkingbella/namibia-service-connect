@@ -6,9 +6,9 @@ import { Button } from '@/components/common/Button';
 import { useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/use-toast';
 import { DbUserProfile } from '@/types/auth';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Key, Calendar, Heart, CreditCard, MapPin, Phone, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { AvatarUpload } from '@/components/ui/avatar-upload';
 
 const UserProfile: React.FC = () => {
   const { profile, loading, updateProfile } = useProfile();
@@ -67,7 +67,7 @@ const UserProfile: React.FC = () => {
         address: profile.address || '',
         city: profile.city || '',
         country: profile.country || '',
-        birth_date: profile.birth_date ? profile.birth_date.split('T')[0] : '',
+        birth_date: profile.birth_date ? new Date(profile.birth_date).toISOString().split('T')[0] : '',
         preferred_language: profile.preferred_language || '',
       });
     }
@@ -78,54 +78,13 @@ const UserProfile: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAvatarChange = async (file: File) => {
+  const handleAvatarChange = async (url: string | null) => {
     if (!profile?.id) return;
     
     try {
-      // Upload the avatar to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${profile.id}-avatar.${fileExt}`;
-      
-      // Check if avatars bucket exists, if not create one
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const avatarsBucketExists = buckets?.some(bucket => bucket.name === 'avatars');
-      
-      if (!avatarsBucketExists) {
-        await supabase.storage.createBucket('avatars', { public: true });
-      }
-      
-      const { data, error } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file, {
-          upsert: true,
-          contentType: file.type,
-        });
-        
-      if (error) throw error;
-      
-      // Get the public URL
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-        
-      const publicUrl = urlData.publicUrl;
-      
-      // Update profile with new avatar URL
-      await updateProfile({ 
-        avatar_url: publicUrl 
-      });
-      
-      toast({
-        title: 'Avatar updated',
-        description: 'Your profile picture has been updated.',
-      });
-    } catch (error: any) {
+      await updateProfile({ avatar_url: url });
+    } catch (error) {
       console.error('Error updating avatar:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Avatar update failed',
-        description: error.message || 'Failed to update profile picture',
-      });
     }
   };
 
@@ -195,32 +154,16 @@ const UserProfile: React.FC = () => {
         <CardContent>
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex flex-col items-center">
-              <Avatar className="w-32 h-32 border-4 border-white shadow-md">
-                <AvatarImage src={profile?.avatar_url || ''} alt="Profile" />
-                <AvatarFallback className="bg-primary text-white text-3xl">
-                  {profile?.first_name?.charAt(0) || 'C'}
-                </AvatarFallback>
-              </Avatar>
+              <AvatarUpload 
+                userId={profile?.id || ''}
+                currentAvatarUrl={profile?.avatar_url}
+                onAvatarChange={handleAvatarChange}
+              />
               <div className="mt-4 flex flex-col items-center">
                 <h3 className="font-medium text-lg">
                   {profile?.first_name || ''} {profile?.last_name || ''}
                 </h3>
                 <p className="text-sm text-muted-foreground">Customer</p>
-                <label className="mt-3">
-                  <input 
-                    type="file" 
-                    className="hidden" 
-                    accept="image/*"
-                    onChange={(e) => {
-                      if (e.target.files?.[0]) {
-                        handleAvatarChange(e.target.files[0]);
-                      }
-                    }}
-                  />
-                  <span className="cursor-pointer px-3 py-1 text-sm border rounded-md hover:bg-gray-50">
-                    Change Avatar
-                  </span>
-                </label>
               </div>
             </div>
             
@@ -441,16 +384,7 @@ const UserProfile: React.FC = () => {
                   <p className="text-sm text-muted-foreground">Update your account password</p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={() => {
-                toast({
-                  title: "Password Reset",
-                  description: "Password reset link has been sent to your email.",
-                });
-                
-                supabase.auth.resetPasswordForEmail(profile?.email || '');
-              }}>
-                Change Password
-              </Button>
+              <Button variant="outline" size="sm">Change Password</Button>
             </div>
           </div>
         </CardContent>

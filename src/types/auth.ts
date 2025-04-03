@@ -1,3 +1,4 @@
+
 export interface DbUserProfile {
   id: string;
   first_name: string;
@@ -18,9 +19,7 @@ export interface DbUserProfile {
   preferred_language?: string;
   favorites?: string[];
   is_verified?: boolean;
-  verification_status?: string;
-  preferred_categories?: string[];
-  saved_services?: string[];
+  name?: string; // Added for DashboardLayout
 }
 
 export interface DbProviderProfile {
@@ -45,7 +44,6 @@ export interface DbProviderProfile {
   verification_documents?: string[];
   review_count?: number;
   bank_details?: Record<string, any>;
-  rating_count?: number;
 }
 
 export type UserRole = 'admin' | 'provider' | 'customer' | string;
@@ -91,59 +89,34 @@ export interface User {
   avatarUrl?: string;
   isActive: boolean;
   createdAt: Date;
-  name?: string; // Added for compatibility
-  avatar?: string; // Added for compatibility
-  phoneNumber?: string;
+  name?: string; // Added for DashboardLayout
+  avatar?: string; // Added for DashboardLayout
 }
 
-// Update Customer type to include properties used in AuthContext
 export interface Customer extends User {
-  role: 'customer';
   loyaltyPoints: number;
   preferences?: Record<string, any>;
-  favorites?: string[];
-  preferredCategories?: string[]; // Added missing property
-  notificationPreferences?: {
-    email: boolean;
-    sms: boolean;
-    push: boolean;
-  };
-  isVerified?: boolean; // Added missing property
+  favorites?: string[]; // Added for AuthContext
 }
 
-// Update Provider type to include properties used in AuthContext
 export interface Provider extends User {
-  role: 'provider';
   businessName: string;
-  businessDescription?: string; // Added missing property
   verificationStatus: ProviderVerificationStatus;
-  description?: string;
   rating?: number;
-  reviewCount?: number;
-  categories?: string[]; // Added missing property
-  locations?: string[];
-  bankDetails?: Record<string, any>; // Added missing property
-  subscriptionTier?: SubscriptionTier;
-  isVerified?: boolean; // Added missing property
+  categories?: string[]; // Added for AuthContext
+  locations?: string[]; // Added for AuthContext
+  bankDetails?: Record<string, any>; // Added for AuthContext
 }
 
-// Update Admin type to include properties used in AuthContext
 export interface Admin extends User {
-  role: 'admin';
   permissions: string[];
-  isVerified?: boolean; // Added missing property
 }
 
 export interface AuthContextType {
   user: User | null;
-  session: Session | null;
-  userRole: UserRole | null;
-  userProfile: Customer | Provider | Admin | null;
-  loading: boolean; // Changed from isLoading for backward compatibility
-  signIn: (email: string, password: string) => Promise<{ error: any | null }>;
-  signUp: (email: string, password: string, role: UserRole, userData: Partial<Customer | Provider>) => Promise<{ error: any | null, data: any | null }>;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
-  forgotPassword: (email: string) => Promise<{ error: any | null }>;
-  resetPassword: (password: string) => Promise<{ error: any | null }>;
-  updateProfile: (data: Partial<Customer | Provider | Admin>) => Promise<boolean>;
+  signUp: (userData: any) => Promise<boolean>;
+  resetPassword: (email: string) => Promise<boolean>;
 }

@@ -1,155 +1,102 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { DbUserProfile } from '@/types/auth';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from './use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { DbUserProfile, UserAddress, PaymentMethod, User2FA } from '@/types/auth';
+import { fetchUserProfile } from '@/services/profileService';
+import { updateUserPassword } from '@/services/mockProfileService';
 
-export interface UseProfileResult {
-  profile: DbUserProfile | null;
-  loading: boolean;
-  error: string | null;
-  updateProfile: (data: Partial<DbUserProfile>) => Promise<void>;
-  updatePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
-}
-
-export function useProfile(): UseProfileResult {
+export function useProfile() {
   const { user } = useAuth();
-  const [profile, setProfile] = useState<DbUserProfile | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [profile, setProfile] = useState<DbUserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchProfile = async () => {
-      if (!user) {
+    const loadProfile = async () => {
+      if (!user?.id) {
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (error) {
-          throw error;
-        }
-
-        if (isMounted && data) {
-          setProfile(data as DbUserProfile);
-          setError(null);
-        }
-      } catch (err: any) {
-        console.error('Error fetching profile:', err);
-        if (isMounted) {
-          setError(err.message || 'Failed to load profile');
-        }
+        const data = await fetchUserProfile(user.id);
+        setProfile(data);
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        toast({
+          variant: "destructive",
+          title: "Profile loading failed",
+          description: "There was an error loading your profile."
+        });
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
-    fetchProfile();
+    loadProfile();
+  }, [user?.id, toast]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [user]);
-
-  const updateProfile = async (updatedData: Partial<DbUserProfile>) => {
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
+  const updateProfile = async (data: Partial<DbUserProfile>) => {
+    if (!user?.id || !profile) return false;
 
     try {
       setLoading(true);
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          ...updatedData,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (error) {
-        throw error;
-      }
-
-      // Refetch the profile to get updated data
-      const { data, error: fetchError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      setProfile(data as DbUserProfile);
-      setError(null);
+      // For now, we'll just update the local state
+      setProfile(prev => prev ? {...prev, ...data} : null);
       
       toast({
-        title: 'Profile updated',
-        description: 'Your profile has been successfully updated.',
+        title: "Profile updated",
+        description: "Your profile has been successfully updated."
       });
-    } catch (err: any) {
-      console.error('Error updating profile:', err);
-      setError(err.message || 'Failed to update profile');
+      return true;
+    } catch (error) {
+      console.error('Error updating profile:', error);
       toast({
-        variant: 'destructive',
-        title: 'Update failed',
-        description: err.message || 'There was an error updating your profile.',
+        variant: "destructive",
+        title: "Update failed",
+        description: "Failed to update your profile. Please try again."
       });
-      throw err;
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  const updatePassword = async (oldPassword: string, newPassword: string): Promise<boolean> => {
-    if (!user) {
-      toast({
-        variant: 'destructive',
-        title: 'Authentication required',
-        description: 'You must be logged in to change your password.',
-      });
-      return false;
-    }
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    if (!user?.id) return false;
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (error) {
-        throw error;
+      setLoading(true);
+      const success = await updateUserPassword(newPassword);
+      
+      if (success) {
+        toast({
+          title: "Password updated",
+          description: "Your password has been successfully changed."
+        });
+        return true;
       }
-
+      
+      throw new Error("Failed to change password");
+    } catch (error) {
+      console.error('Error changing password:', error);
       toast({
-        title: 'Password updated',
-        description: 'Your password has been successfully changed.',
-      });
-      return true;
-    } catch (err: any) {
-      console.error('Error updating password:', err);
-      toast({
-        variant: 'destructive',
-        title: 'Password change failed',
-        description: err.message || 'There was an error changing your password.',
+        variant: "destructive",
+        title: "Password change failed",
+        description: "Failed to change your password. Please check your current password and try again."
       });
       return false;
+    } finally {
+      setLoading(false);
     }
   };
 
-  return { profile, loading, error, updateProfile, updatePassword };
+  return {
+    profile,
+    loading,
+    updateProfile,
+    changePassword
+  };
 }

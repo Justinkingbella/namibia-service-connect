@@ -1,507 +1,531 @@
-
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Pencil, Plus, Trash, CheckCircle, XCircle, Users, Clock, Tag, BarChart4 } from "lucide-react";
-import { SubscriptionPlan } from "@/components/admin/SubscriptionForm";
-
-// Mock subscription plans
-const mockSubscriptionPlans = [
-  {
-    id: "1",
-    name: "Free",
-    description: "Basic free tier",
-    price: 0,
-    billingCycle: "monthly",
-    features: [
-      { name: "Max Services", limit: 1, included: true },
-      { name: "Featured Services", included: false },
-      { name: "Priority Support", included: false },
-    ],
-    isActive: true,
-    isPopular: false,
-  },
-  {
-    id: "2",
-    name: "Standard",
-    description: "Best for small providers",
-    price: 299,
-    billingCycle: "monthly",
-    features: [
-      { name: "Max Services", limit: 5, included: true },
-      { name: "Featured Services", included: true },
-      { name: "Priority Support", included: false },
-    ],
-    isActive: true,
-    isPopular: true,
-  },
-  {
-    id: "3",
-    name: "Premium",
-    description: "Best for professionals",
-    price: 899,
-    billingCycle: "monthly",
-    features: [
-      { name: "Max Services", limit: 20, included: true },
-      { name: "Featured Services", included: true },
-      { name: "Priority Support", included: true },
-    ],
-    isActive: true,
-    isPopular: false,
-  }
-];
-
-// Mock subscriptions
-const mockSubscriptions = [
-  {
-    id: "1",
-    userId: "user1",
-    userName: "Alice Johnson",
-    planId: "2",
-    planName: "Standard",
-    status: "active",
-    startDate: new Date(2023, 5, 15),
-    endDate: new Date(2023, 6, 15),
-    paymentStatus: "paid",
-  },
-  {
-    id: "2",
-    userId: "user2",
-    userName: "Bob Smith",
-    planId: "3",
-    planName: "Premium",
-    status: "active",
-    startDate: new Date(2023, 4, 20),
-    endDate: new Date(2023, 5, 20),
-    paymentStatus: "paid",
-  },
-  {
-    id: "3",
-    userId: "user3",
-    userName: "Charlie Brown",
-    planId: "2",
-    planName: "Standard",
-    status: "expired",
-    startDate: new Date(2023, 3, 10),
-    endDate: new Date(2023, 4, 10),
-    paymentStatus: "overdue",
-  }
-];
-
-// Mock transaciton history
-const mockTransactions = [
-  {
-    id: "1",
-    userId: "user1",
-    userName: "Alice Johnson",
-    amount: 299,
-    date: new Date(2023, 5, 15),
-    status: "completed",
-    paymentMethod: "credit_card",
-    description: "Standard Plan Subscription",
-  },
-  {
-    id: "2",
-    userId: "user2",
-    userName: "Bob Smith",
-    amount: 899,
-    date: new Date(2023, 4, 20),
-    status: "completed",
-    paymentMethod: "paypal",
-    description: "Premium Plan Subscription",
-  },
-  {
-    id: "3",
-    userId: "user3",
-    userName: "Charlie Brown",
-    amount: 299,
-    date: new Date(2023, 3, 10),
-    status: "failed",
-    paymentMethod: "credit_card",
-    description: "Standard Plan Subscription",
-  }
-];
+import React, { useState } from 'react';
+import { Plus, Edit, Trash2, Check, X, Info, AlertTriangle, Zap, CreditCard } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { SubscriptionPlan, convertJsonToFeatures, convertFeaturesToJson } from '@/types/subscription';
+import { SubscriptionForm } from './SubscriptionForm';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useRealtimeData } from '@/hooks/useRealtimeData';
 
 const SubscriptionManagement = () => {
-  const [plans, setPlans] = useState(mockSubscriptionPlans);
-  const [subscriptions, setSubscriptions] = useState(mockSubscriptions);
-  const [transactions, setTransactions] = useState(mockTransactions);
+  const [isOpen, setIsOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
-  const [activeTab, setActiveTab] = useState("plans");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState('all');
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const filteredSubscriptions = subscriptions.filter(sub => 
-    sub.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sub.planName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Use real-time data hook to get and listen for subscription plan changes
+  const { 
+    data: subscriptionPlans = [], 
+    loading: isLoading, 
+    error, 
+    refetch 
+  } = useRealtimeData<any>({
+    table: 'subscription_plans',
+    onDataChange: (payload) => {
+      console.log('Subscription plan changed:', payload);
+      if (payload.eventType === 'INSERT') {
+        toast.success('New subscription plan added');
+      } else if (payload.eventType === 'UPDATE') {
+        toast.success('Subscription plan updated');
+      } else if (payload.eventType === 'DELETE') {
+        toast.success('Subscription plan deleted');
+      }
+    }
+  });
 
-  const filteredTransactions = transactions.filter(tx => 
-    tx.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tx.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleDeletePlan = (planId: string) => {
-    setPlans(plans.filter(plan => plan.id !== planId));
+  const onOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setEditingPlan(null);
+    }
   };
 
-  const handleEditPlan = (plan: any) => {
-    setEditingPlan(plan);
+  const handleCreateSubscription = async (plan: SubscriptionPlan) => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    setPermissionError(null);
+    
+    try {
+      // Convert features to the correct format
+      const planToInsert = {
+        name: plan.name,
+        description: plan.description,
+        price: plan.price,
+        billing_cycle: plan.billingCycle,
+        features: convertFeaturesToJson(plan.features),
+        credits: plan.credits,
+        max_bookings: plan.maxBookings,
+        is_popular: plan.isPopular || false,
+        is_active: plan.isActive,
+        trial_period_days: plan.trialPeriodDays || 0,
+        allowed_services: plan.allowedServices || 1,
+        sort_order: plan.sortOrder || 0
+      };
+      
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .insert([planToInsert])
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      setIsOpen(false);
+      toast.success(`${plan.name} has been successfully created.`);
+      
+      // The real-time subscription should automatically update the UI
+      await refetch();
+    } catch (error: any) {
+      console.error('Error creating subscription plan:', error);
+      
+      if (error.code === '42501') {
+        setPermissionError("Permission denied. You don't have sufficient privileges to create subscription plans.");
+      } else {
+        toast.error("Failed to create subscription plan.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleUpdatePlan = (updatedPlan: any) => {
-    setPlans(plans.map(plan => plan.id === updatedPlan.id ? updatedPlan : plan));
-    setEditingPlan(null);
+  const handleUpdateSubscription = async (plan: SubscriptionPlan) => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    setPermissionError(null);
+    
+    try {
+      // Convert features to the correct format
+      const planToUpdate = {
+        name: plan.name,
+        description: plan.description,
+        price: plan.price,
+        billing_cycle: plan.billingCycle,
+        features: convertFeaturesToJson(plan.features),
+        credits: plan.credits,
+        max_bookings: plan.maxBookings,
+        is_popular: plan.isPopular || false,
+        is_active: plan.isActive,
+        trial_period_days: plan.trialPeriodDays || 0,
+        allowed_services: plan.allowedServices || 1,
+        sort_order: plan.sortOrder || 0,
+        updated_at: new Date().toISOString()
+      };
+      
+      const { error } = await supabase
+        .from('subscription_plans')
+        .update(planToUpdate)
+        .eq('id', plan.id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      setIsOpen(false);
+      setEditingPlan(null);
+      toast.success(`${plan.name} has been successfully updated.`);
+      
+      // The real-time subscription should automatically update the UI
+      await refetch();
+    } catch (error: any) {
+      console.error('Error updating subscription plan:', error);
+      
+      if (error.code === '42501') {
+        setPermissionError("Permission denied. You don't have sufficient privileges to update subscription plans.");
+      } else {
+        toast.error("Failed to update subscription plan.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleAddPlan = (newPlan: any) => {
-    setPlans([...plans, { ...newPlan, id: Date.now().toString() }]);
+  const handleDeleteSubscription = async (id: string) => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    setPermissionError(null);
+    
+    try {
+      const planToDelete = subscriptionPlans.find((p: any) => p.id === id);
+      
+      const { error } = await supabase
+        .from('subscription_plans')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success(`${planToDelete?.name} has been successfully deleted.`);
+      
+      // The real-time subscription should automatically update the UI
+      await refetch();
+    } catch (error: any) {
+      console.error('Error deleting subscription plan:', error);
+      
+      if (error.code === '42501') {
+        setPermissionError("Permission denied. You don't have sufficient privileges to delete subscription plans.");
+      } else {
+        toast.error("Failed to delete subscription plan.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleTogglePlanStatus = (planId: string) => {
-    setPlans(plans.map(plan => 
-      plan.id === planId ? { ...plan, isActive: !plan.isActive } : plan
-    ));
+  const handleEditSubscription = (plan: SubscriptionPlan) => {
+    // Create a properly formatted plan for editing
+    const formattedPlan: SubscriptionPlan = {
+      ...plan,
+      features: plan.features && Array.isArray(plan.features) 
+        ? plan.features.map((f: any) => ({
+            id: f.id || crypto.randomUUID(),
+            name: f.name || '',
+            description: f.description || '',
+            included: f.included !== undefined ? f.included : true
+          }))
+        : []
+    };
+    
+    setEditingPlan(formattedPlan);
+    setIsOpen(true);
   };
 
-  const formatCurrency = (amount: number) => {
-    return amount === 0 ? "Free" : `N$${amount.toLocaleString()}`;
+  const togglePlanStatus = async (id: string) => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    setPermissionError(null);
+    
+    try {
+      const plan = subscriptionPlans.find((p: any) => p.id === id);
+      if (!plan) return;
+      
+      const updatedStatus = !plan.is_active;
+      
+      const { error } = await supabase
+        .from('subscription_plans')
+        .update({ 
+          is_active: updatedStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success(`${plan.name} has been ${updatedStatus ? 'activated' : 'deactivated'}.`);
+      
+      // The real-time subscription should automatically update the UI
+      await refetch();
+    } catch (error: any) {
+      console.error('Error toggling plan status:', error);
+      
+      if (error.code === '42501') {
+        setPermissionError("Permission denied. You don't have sufficient privileges to update subscription plans.");
+      } else {
+        toast.error("Failed to update plan status.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-NA', { year: 'numeric', month: 'short', day: 'numeric' });
-  };
+  // Format plan data from Supabase to match our SubscriptionPlan type
+  const formattedPlans = subscriptionPlans.map((plan: any) => ({
+    id: plan.id,
+    name: plan.name,
+    description: plan.description,
+    price: Number(plan.price),
+    billingCycle: plan.billing_cycle,
+    credits: plan.credits,
+    maxBookings: plan.max_bookings,
+    features: convertJsonToFeatures(plan.features),
+    isPopular: plan.is_popular || false,
+    isActive: plan.is_active || false,
+    trialPeriodDays: plan.trial_period_days || 0,
+    allowedServices: plan.allowed_services || 1,
+    sortOrder: plan.sort_order || 0,
+    createdAt: plan.created_at,
+    updatedAt: plan.updated_at
+  }));
+
+  const filteredPlans = activeTab === 'all' 
+    ? formattedPlans 
+    : formattedPlans.filter(plan => 
+        activeTab === 'active' ? plan.isActive : !plan.isActive
+      );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <div className="space-y-2 text-center">
+          <div className="animate-spin size-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+          <p className="text-muted-foreground">Loading subscription plans...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Subscription Management</h1>
-        <p className="text-muted-foreground">
-          Manage subscription plans, view active subscriptions, and transaction history
-        </p>
-      </div>
-
-      <div className="flex justify-between items-center">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      {permissionError && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Permission Error</AlertTitle>
+          <AlertDescription>{permissionError}</AlertDescription>
+        </Alert>
+      )}
+      
+      {error && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            {error instanceof Error ? error.message : 'Failed to load subscription plans'}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="plans" className="flex items-center gap-1">
-              <Tag className="h-4 w-4" />
-              <span>Plans</span>
-            </TabsTrigger>
-            <TabsTrigger value="subscriptions" className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              <span>Subscriptions</span>
-            </TabsTrigger>
-            <TabsTrigger value="transactions" className="flex items-center gap-1">
-              <BarChart4 className="h-4 w-4" />
-              <span>Transactions</span>
-            </TabsTrigger>
+            <TabsTrigger value="all">All Plans</TabsTrigger>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="inactive">Inactive</TabsTrigger>
           </TabsList>
-
-          {(activeTab === "subscriptions" || activeTab === "transactions") && (
-            <div className="my-4">
-              <Input
-                placeholder={`Search ${activeTab}...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-md"
-              />
-            </div>
-          )}
-
-          <TabsContent value="plans" className="space-y-4">
-            <div className="flex justify-end">
-              <Button onClick={() => setEditingPlan({} as SubscriptionPlan)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add New Plan
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {plans.map((plan) => (
-                <Card key={plan.id} className={plan.isActive ? "" : "opacity-60"}>
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle>{plan.name}</CardTitle>
-                        <CardDescription>{plan.description}</CardDescription>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          checked={plan.isActive}
-                          onCheckedChange={() => handleTogglePlanStatus(plan.id)}
-                        />
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="mb-4">
-                      <span className="text-3xl font-bold">{formatCurrency(plan.price)}</span>
-                      {plan.price > 0 && (
-                        <span className="text-muted-foreground">/{plan.billingCycle}</span>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      {plan.features.map((feature, index) => (
-                        <div key={index} className="flex items-center">
-                          {feature.included ? (
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                          ) : (
-                            <XCircle className="h-4 w-4 text-gray-300 mr-2" />
-                          )}
-                          <span>
-                            {feature.name}
-                            {feature.limit ? ` (${feature.limit})` : ""}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between border-t pt-4">
-                    <Button variant="outline" onClick={() => handleEditPlan(plan)}>
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
-                    <Button variant="destructive" onClick={() => handleDeletePlan(plan.id)}>
-                      <Trash className="h-4 w-4 mr-2" />
-                      Delete
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-
-            {editingPlan && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <Card className="w-full max-w-lg">
-                  <CardHeader>
-                    <CardTitle>{editingPlan.id ? "Edit Plan" : "Add New Plan"}</CardTitle>
-                    <CardDescription>
-                      {editingPlan.id
-                        ? "Update the subscription plan details"
-                        : "Create a new subscription plan"}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="name">Plan Name</Label>
-                        <Input
-                          id="name"
-                          value={editingPlan.name || ""}
-                          onChange={(e) =>
-                            setEditingPlan({ ...editingPlan, name: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="description">Description</Label>
-                        <Input
-                          id="description"
-                          value={editingPlan.description || ""}
-                          onChange={(e) =>
-                            setEditingPlan({ ...editingPlan, description: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="price">Price (NAD)</Label>
-                        <Input
-                          id="price"
-                          type="number"
-                          value={editingPlan.price || 0}
-                          onChange={(e) =>
-                            setEditingPlan({
-                              ...editingPlan,
-                              price: Number(e.target.value),
-                            })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="billingCycle">Billing Cycle</Label>
-                        <select
-                          id="billingCycle"
-                          className="w-full px-3 py-2 border rounded"
-                          value={editingPlan.billingCycle || "monthly"}
-                          onChange={(e) =>
-                            setEditingPlan({
-                              ...editingPlan,
-                              billingCycle: e.target.value,
-                            })
-                          }
-                        >
-                          <option value="monthly">Monthly</option>
-                          <option value="quarterly">Quarterly</option>
-                          <option value="yearly">Yearly</option>
-                        </select>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="isActive"
-                          checked={editingPlan.isActive !== false}
-                          onCheckedChange={(checked) =>
-                            setEditingPlan({ ...editingPlan, isActive: checked })
-                          }
-                        />
-                        <Label htmlFor="isActive">Active</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="isPopular"
-                          checked={editingPlan.isPopular === true}
-                          onCheckedChange={(checked) =>
-                            setEditingPlan({ ...editingPlan, isPopular: checked })
-                          }
-                        />
-                        <Label htmlFor="isPopular">Mark as Popular</Label>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button variant="outline" onClick={() => setEditingPlan(null)}>
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        if (editingPlan.id) {
-                          handleUpdatePlan(editingPlan);
-                        } else {
-                          handleAddPlan(editingPlan);
-                        }
-                      }}
-                    >
-                      {editingPlan.id ? "Update Plan" : "Create Plan"}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="subscriptions">
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Subscriptions</CardTitle>
-                <CardDescription>
-                  Manage user subscriptions and their status
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Plan</TableHead>
-                      <TableHead>Start Date</TableHead>
-                      <TableHead>End Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredSubscriptions.length > 0 ? (
-                      filteredSubscriptions.map((sub) => (
-                        <TableRow key={sub.id}>
-                          <TableCell>{sub.userName}</TableCell>
-                          <TableCell>{sub.planName}</TableCell>
-                          <TableCell>{formatDate(sub.startDate)}</TableCell>
-                          <TableCell>{formatDate(sub.endDate)}</TableCell>
-                          <TableCell>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                sub.status === "active"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
-                              {sub.status.charAt(0).toUpperCase() + sub.status.slice(1)}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="outline" size="sm">
-                              Manage
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-4">
-                          No subscriptions found
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="transactions">
-            <Card>
-              <CardHeader>
-                <CardTitle>Transaction History</CardTitle>
-                <CardDescription>
-                  View all subscription payment transactions
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Payment Method</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Description</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTransactions.length > 0 ? (
-                      filteredTransactions.map((tx) => (
-                        <TableRow key={tx.id}>
-                          <TableCell>{tx.userName}</TableCell>
-                          <TableCell>{formatCurrency(tx.amount)}</TableCell>
-                          <TableCell>{formatDate(tx.date)}</TableCell>
-                          <TableCell>
-                            {tx.paymentMethod.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                tx.status === "completed"
-                                  ? "bg-green-100 text-green-800"
-                                  : tx.status === "pending"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
-                              {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
-                            </span>
-                          </TableCell>
-                          <TableCell>{tx.description}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-4">
-                          No transactions found
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
+        
+        <Button onClick={() => setIsOpen(true)} disabled={isSubmitting}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Plan
+        </Button>
       </div>
+      
+      {/* Plans Grid View */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredPlans.map((plan) => (
+          <Card key={plan.id} className={`shadow-sm transition duration-200 h-full flex flex-col ${!plan.isActive ? 'opacity-70' : ''}`}>
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>{plan.name}</CardTitle>
+                  <CardDescription className="mt-1">{plan.description}</CardDescription>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  {plan.isPopular && (
+                    <Badge className="bg-green-600">Popular</Badge>
+                  )}
+                  {plan.trialPeriodDays > 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      {plan.trialPeriodDays} Day Trial
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="flex-grow">
+              <div className="mb-4">
+                <div className="text-2xl font-bold">N${plan.price}</div>
+                <div className="text-sm text-muted-foreground">per {plan.billingCycle}</div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm font-medium">Credits</div>
+                    <div className="text-xl font-bold">{plan.credits}</div>
+                    <div className="text-xs text-muted-foreground">credits per {plan.billingCycle}</div>
+                  </div>
+                  
+                  <div>
+                    <div className="text-sm font-medium">Max Bookings</div>
+                    <div className="text-xl font-bold">{plan.maxBookings}</div>
+                    <div className="text-xs text-muted-foreground">bookings per {plan.billingCycle}</div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-sm font-medium">Allowed Services</div>
+                  <div className="text-xl font-bold">{plan.allowedServices}</div>
+                  <div className="text-xs text-muted-foreground">service listings</div>
+                </div>
+                
+                <div>
+                  <div className="text-sm font-medium mb-2">Features:</div>
+                  <ul className="space-y-2 max-h-48 overflow-y-auto">
+                    {plan.features.map((feature) => (
+                      <li key={feature.id} className="flex items-start">
+                        {feature.included ? (
+                          <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5 shrink-0" />
+                        ) : (
+                          <X className="h-4 w-4 text-gray-300 mr-2 mt-0.5 shrink-0" />
+                        )}
+                        <span className={feature.included ? "" : "text-gray-400"}>{feature.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+            
+            <CardFooter className="flex flex-col sm:flex-row sm:justify-between gap-2 border-t pt-4 mt-auto">
+              <div>
+                <Badge variant={plan.isActive ? "default" : "outline"} className="mr-2">
+                  {plan.isActive ? "Active" : "Inactive"}
+                </Badge>
+              </div>
+              <div className="flex space-x-2 w-full sm:w-auto">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 sm:flex-none"
+                  onClick={() => togglePlanStatus(plan.id)}
+                  disabled={isSubmitting}
+                >
+                  {plan.isActive ? "Deactivate" : "Activate"}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={() => handleEditSubscription(plan)}
+                  disabled={isSubmitting}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  size="icon" 
+                  onClick={() => handleDeleteSubscription(plan.id)}
+                  disabled={isSubmitting}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+      
+      {filteredPlans.length === 0 && (
+        <div className="text-center py-10 border border-dashed rounded-md">
+          <Info className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+          <h3 className="text-lg font-medium mb-1">No Plans Found</h3>
+          <p className="text-muted-foreground mb-4">There are no subscription plans in this category.</p>
+          <Button onClick={() => setIsOpen(true)} disabled={isSubmitting}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Plan
+          </Button>
+        </div>
+      )}
+      
+      {/* Table View for larger screens */}
+      <div className="hidden lg:block mt-8">
+        <h2 className="text-xl font-semibold mb-4">Subscription Plans Table View</h2>
+        <div className="border rounded-md overflow-hidden overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Price (N$)</TableHead>
+                <TableHead>Billing</TableHead>
+                <TableHead>Credits</TableHead>
+                <TableHead>Max Bookings</TableHead>
+                <TableHead>Services</TableHead>
+                <TableHead>Trial</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredPlans.map((plan) => (
+                <TableRow key={plan.id}>
+                  <TableCell className="font-medium">
+                    {plan.name}
+                    {plan.isPopular && (
+                      <Badge className="ml-2 bg-green-600">Popular</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>{plan.price}</TableCell>
+                  <TableCell>{plan.billingCycle}</TableCell>
+                  <TableCell>{plan.credits}</TableCell>
+                  <TableCell>{plan.maxBookings}</TableCell>
+                  <TableCell>{plan.allowedServices}</TableCell>
+                  <TableCell>{plan.trialPeriodDays > 0 ? `${plan.trialPeriodDays} days` : '-'}</TableCell>
+                  <TableCell>
+                    <Badge variant={plan.isActive ? "default" : "outline"}>
+                      {plan.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => togglePlanStatus(plan.id)}
+                        disabled={isSubmitting}
+                      >
+                        {plan.isActive ? "Deactivate" : "Activate"}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={() => handleEditSubscription(plan)}
+                        disabled={isSubmitting}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="icon" 
+                        onClick={() => handleDeleteSubscription(plan.id)}
+                        disabled={isSubmitting}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+      
+      {/* Subscription Form Sheet */}
+      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+        <SheetContent className="sm:max-w-lg w-full overflow-y-auto max-h-screen">
+          <SheetHeader>
+            <SheetTitle>{editingPlan ? 'Edit Subscription Plan' : 'Create Subscription Plan'}</SheetTitle>
+            <SheetDescription>
+              {editingPlan 
+                ? 'Make changes to the existing subscription plan.' 
+                : 'Fill in the details to create a new subscription plan.'}
+            </SheetDescription>
+          </SheetHeader>
+          
+          <div className="py-6">
+            <SubscriptionForm 
+              initialData={editingPlan} 
+              onSubmit={editingPlan ? handleUpdateSubscription : handleCreateSubscription}
+              isSubmitting={isSubmitting}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };

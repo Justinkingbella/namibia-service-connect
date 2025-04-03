@@ -1,99 +1,74 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-
-interface User2FA {
-  userId: string;
-  isEnabled: boolean;
-  secret?: string;
-  backupCodes?: string[];
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import { User2FA } from '@/types/auth';
+import { fetchUser2FAStatus, enable2FA, disable2FA } from '@/services/mockProfileService';
 
 export function use2FA() {
   const { user } = useAuth();
-  const [twoFAStatus, setTwoFAStatus] = useState<User2FA | null>(null);
+  const [twoFactorStatus, setTwoFactorStatus] = useState<User2FA | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch2FAStatus = async () => {
-      if (!user) {
+    const load2FAStatus = async () => {
+      if (!user?.id) {
         setLoading(false);
         return;
       }
 
       setLoading(true);
-      
-      try {
-        const { data, error } = await supabase
-          .from('user_2fa')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (error) {
-          if (error.code !== 'PGRST116') { // Not found error
-            console.error('Error fetching 2FA status:', error);
-          }
-          // If not found, set default state
-          setTwoFAStatus({
-            userId: user.id,
-            isEnabled: false
-          });
-        } else {
-          setTwoFAStatus({
-            userId: data.user_id,
-            isEnabled: data.is_enabled,
-            secret: data.secret,
-            backupCodes: data.backup_codes,
-            createdAt: data.created_at ? new Date(data.created_at) : undefined,
-            updatedAt: data.updated_at ? new Date(data.updated_at) : undefined
-          });
-        }
-      } catch (error) {
-        console.error('Error in fetch2FAStatus:', error);
-      } finally {
-        setLoading(false);
-      }
+      const status = await fetchUser2FAStatus(user.id);
+      setTwoFactorStatus(status);
+      setLoading(false);
     };
 
-    fetch2FAStatus();
-  }, [user]);
+    load2FAStatus();
+  }, [user?.id]);
 
-  const update2FAStatus = async (isEnabled: boolean): Promise<boolean> => {
-    if (!user || !twoFAStatus) return false;
-
-    try {
-      const { error } = await supabase
-        .from('user_2fa')
-        .upsert({
-          user_id: user.id,
-          is_enabled: isEnabled,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) {
-        console.error('Error updating 2FA status:', error);
-        return false;
-      }
-
-      setTwoFAStatus({
-        ...twoFAStatus,
-        isEnabled
+  const enableTwoFactor = async () => {
+    if (!user?.id) return null;
+    
+    setLoading(true);
+    const result = await enable2FA(user.id);
+    
+    if (result) {
+      setTwoFactorStatus({
+        userId: user.id,
+        isEnabled: true,
+        secret: result.secret,
+        backupCodes: result.backupCodes
       });
-      
-      return true;
-    } catch (error) {
-      console.error('Error in update2FAStatus:', error);
-      return false;
+      setLoading(false);
+      return result;
     }
+    
+    setLoading(false);
+    return null;
+  };
+
+  const disableTwoFactor = async () => {
+    if (!user?.id) return false;
+    
+    setLoading(true);
+    const success = await disable2FA(user.id);
+    
+    if (success) {
+      setTwoFactorStatus({
+        userId: user.id,
+        isEnabled: false
+      });
+      setLoading(false);
+      return true;
+    }
+    
+    setLoading(false);
+    return false;
   };
 
   return {
-    twoFAStatus,
+    twoFactorStatus,
     loading,
-    update2FAStatus
+    enableTwoFactor,
+    disableTwoFactor
   };
 }

@@ -1,15 +1,16 @@
 
 export interface Message {
   id: string;
-  conversationId: string;
+  content: string;
   senderId: string;
   recipientId: string;
-  content: string;
-  text?: string; // Added for compatibility with existing code
-  timestamp?: Date;
+  conversationId?: string;
   createdAt: Date;
   isRead: boolean;
   attachments?: string[];
+  // Add properties used in MessageThread component
+  timestamp?: Date;
+  text?: string;
 }
 
 export interface Conversation {
@@ -17,11 +18,10 @@ export interface Conversation {
   participants: string[];
   lastMessage?: string;
   lastMessageDate?: Date;
-  status: 'active' | 'archived' | 'deleted';
+  unreadCount: number;
   createdAt: Date;
-  unreadCount?: number;
-  
-  // Added for compatibility with existing code
+  status: 'active' | 'archived' | 'deleted';
+  // Add properties used in ConversationList
   recipientId?: string;
   recipientName?: string;
   recipientAvatar?: string;

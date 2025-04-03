@@ -10,8 +10,47 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
-import { fetchProviderDisputes } from '@/services/mockProfileService';
+
+// Mock data
+const mockDisputes: Dispute[] = [
+  {
+    id: '1',
+    bookingId: 'B1001',
+    customerId: 'C1',
+    providerId: 'P1',
+    status: 'open',
+    reason: 'Service not completed as described',
+    description: 'The service was not completed according to the agreed scope. Several areas were left untouched.',
+    evidenceUrls: ['evidence1.jpg'],
+    createdAt: new Date(Date.now() - 86400000 * 3),
+    updatedAt: new Date(Date.now() - 86400000 * 2)
+  },
+  {
+    id: '2',
+    bookingId: 'B1002',
+    customerId: 'C2',
+    providerId: 'P1',
+    status: 'under_review',
+    reason: 'Overcharge for services',
+    description: 'I was charged more than the initially agreed amount without prior notification of any additional costs.',
+    evidenceUrls: ['evidence2.jpg', 'evidence3.jpg'],
+    createdAt: new Date(Date.now() - 86400000 * 5),
+    updatedAt: new Date(Date.now() - 86400000)
+  },
+  {
+    id: '3',
+    bookingId: 'B1003',
+    customerId: 'C3',
+    providerId: 'P1',
+    status: 'resolved',
+    reason: 'Service quality issues',
+    description: 'The quality of the service was below standard. Had to hire another provider to fix the issues.',
+    evidenceUrls: [],
+    resolution: 'Partial refund processed.',
+    createdAt: new Date(Date.now() - 86400000 * 10),
+    updatedAt: new Date(Date.now() - 86400000 * 7)
+  }
+];
 
 // Mock service names for bookings
 const mockBookingDetails = {
@@ -27,16 +66,28 @@ const mockCustomers = {
   'C3': { name: 'Emma Wilson', avatar: null }
 };
 
-const ProviderDisputesPage = () => {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('all');
+// Mock fetch function
+const fetchDisputes = async (): Promise<Dispute[]> => {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return mockDisputes;
+};
+
+const DisputesPage = () => {
+  const [activeTab, setActiveTab] = useState('open');
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
   const [responseText, setResponseText] = useState('');
 
   const { data: disputes = [], isLoading } = useQuery({
-    queryKey: ['providerDisputes', user?.id],
-    queryFn: () => user?.id ? fetchProviderDisputes(user.id) : Promise.resolve([]),
-    enabled: !!user?.id
+    queryKey: ['providerDisputes'],
+    queryFn: fetchDisputes
+  });
+
+  const filteredDisputes = disputes.filter(d => {
+    if (activeTab === 'open') return d.status === 'open';
+    if (activeTab === 'under_review') return d.status === 'under_review';
+    if (activeTab === 'resolved') return d.status === 'resolved' || d.status === 'declined';
+    return true;
   });
 
   const handleSubmitResponse = () => {
@@ -45,38 +96,8 @@ const ProviderDisputesPage = () => {
     setResponseText('');
   };
 
-  // Map database status values to UI display values
-  const mapStatusToDisplay = (status: string): string => {
-    switch (status) {
-      case 'pending': return 'open';
-      case 'in_review': return 'under_review';
-      case 'resolved': return 'resolved';
-      case 'rejected': return 'declined';
-      default: return status;
-    }
-  };
-
-  // Match UI display values back to database status values
-  const mapDisplayToStatus = (displayStatus: string): 'pending' | 'in_review' | 'resolved' | 'rejected' => {
-    switch (displayStatus) {
-      case 'open': return 'pending';
-      case 'under_review': return 'in_review';
-      case 'declined': return 'rejected';
-      case 'resolved': return 'resolved';
-      default: return 'pending';
-    }
-  };
-
-  const filteredDisputes = disputes.filter(d => {
-    if (activeTab === 'open') return mapStatusToDisplay(d.status) === 'open';
-    if (activeTab === 'under_review') return mapStatusToDisplay(d.status) === 'under_review';
-    if (activeTab === 'resolved') return mapStatusToDisplay(d.status) === 'resolved' || mapStatusToDisplay(d.status) === 'declined';
-    return true;
-  });
-
   const getStatusBadgeClass = (status: string) => {
-    const displayStatus = mapStatusToDisplay(status);
-    switch (displayStatus) {
+    switch (status) {
       case 'resolved':
         return 'bg-green-100 text-green-800';
       case 'declined':
@@ -91,8 +112,7 @@ const ProviderDisputesPage = () => {
   };
 
   const getStatusIcon = (status: string) => {
-    const displayStatus = mapStatusToDisplay(status);
-    switch (displayStatus) {
+    switch (status) {
       case 'resolved':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'declined':
@@ -107,8 +127,7 @@ const ProviderDisputesPage = () => {
   };
 
   const formatDisputeStatus = (status: string) => {
-    const displayStatus = mapStatusToDisplay(status);
-    return displayStatus
+    return status
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
@@ -182,7 +201,7 @@ const ProviderDisputesPage = () => {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-500">Created:</span>
-                          <span>{new Date(dispute.createdAt).toLocaleDateString()}</span>
+                          <span>{dispute.createdAt.toLocaleDateString()}</span>
                         </div>
                       </div>
                     </div>
@@ -215,7 +234,7 @@ const ProviderDisputesPage = () => {
                       <CardContent className="space-y-4">
                         <div>
                           <Label>Reason for Dispute</Label>
-                          <div className="mt-1 font-medium">{selectedDispute.subject}</div>
+                          <div className="mt-1 font-medium">{selectedDispute.reason}</div>
                         </div>
                         
                         <div>
@@ -225,7 +244,7 @@ const ProviderDisputesPage = () => {
                           </div>
                         </div>
                         
-                        {selectedDispute.evidenceUrls && selectedDispute.evidenceUrls.length > 0 && (
+                        {selectedDispute.evidenceUrls.length > 0 && (
                           <div>
                             <Label>Evidence Provided</Label>
                             <div className="mt-1 grid grid-cols-3 gap-2">
@@ -247,7 +266,7 @@ const ProviderDisputesPage = () => {
                           </div>
                         )}
                         
-                        {mapStatusToDisplay(selectedDispute.status) === 'open' && (
+                        {selectedDispute.status === 'open' && (
                           <div className="pt-4">
                             <Label htmlFor="response">Your Response</Label>
                             <Textarea
@@ -261,7 +280,7 @@ const ProviderDisputesPage = () => {
                         )}
                       </CardContent>
                       
-                      {mapStatusToDisplay(selectedDispute.status) === 'open' && (
+                      {selectedDispute.status === 'open' && (
                         <CardFooter className="flex justify-between border-t pt-4">
                           <Button variant="outline">Request Mediation</Button>
                           <Button 
@@ -297,4 +316,4 @@ const cn = (...classes: (string | boolean | undefined)[]) => {
   return classes.filter(Boolean).join(' ');
 };
 
-export default ProviderDisputesPage;
+export default DisputesPage;

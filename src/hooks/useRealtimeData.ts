@@ -1,82 +1,140 @@
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { RealtimeTable, RealtimeQueryResult } from '@/types/supabase';
 
-export function useRealtimeData<T>(
-  tableName: string,
-  filters?: Record<string, any>,
-  initialData: T[] = []
-): { data: T[]; loading: boolean; error: Error | null } {
-  const [data, setData] = useState<T[]>(initialData);
+export function useRealtimeQuery<T>(tableName: string, options: any = {}): RealtimeQueryResult<T> {
+  const [data, setData] = useState<T[]>([]);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      let query = supabase.from(tableName).select('*');
+
+      // Apply filters
+      if (options.filter) {
+        Object.entries(options.filter).forEach(([key, value]) => {
+          query = query.eq(key, value);
+        });
+      }
+
+      // Apply order
+      if (options.order) {
+        query = query.order(options.order.column, {
+          ascending: options.order.ascending,
+        });
+      }
+
+      // Apply limit
+      if (options.limit) {
+        query = query.limit(options.limit);
+      }
+
+      const { data: result, error: queryError } = await query;
+
+      if (queryError) {
+        throw queryError;
+      }
+
+      setData(result as T[]);
+      setError('');
+    } catch (err: any) {
+      console.error('Error fetching data:', err);
+      setError(err.message || 'An error occurred while fetching data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // Dynamically build the query based on filters
-        let query = supabase.from(tableName).select('*');
-        
-        if (filters) {
-          Object.entries(filters).forEach(([field, value]) => {
-            if (value !== undefined && value !== null) {
-              query = query.eq(field, value);
-            }
-          });
-        }
-        
-        const { data: fetchedData, error: fetchError } = await query;
-        
-        if (fetchError) {
-          throw fetchError;
-        }
-        
-        setData(fetchedData as T[]);
-      } catch (err) {
-        console.error(`Error fetching data from ${tableName}:`, err);
-        setError(err instanceof Error ? err : new Error(String(err)));
-      } finally {
-        setLoading(false);
+    fetchData();
+  }, [tableName, JSON.stringify(options)]);
+
+  const refetch = async () => {
+    await fetchData();
+  };
+
+  return { data, error, loading, refetch };
+}
+
+export function useRealtimeData<T>(realtimeConfig: RealtimeTable): RealtimeQueryResult<T> {
+  const [data, setData] = useState<T[]>([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const channel = useRef<any>(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      let query = supabase.from(realtimeConfig.table).select('*');
+
+      // Apply filters
+      if (realtimeConfig.filter) {
+        Object.entries(realtimeConfig.filter).forEach(([key, value]) => {
+          query = query.eq(key, value);
+        });
+      }
+
+      // Apply order
+      if (realtimeConfig.order) {
+        query = query.order(realtimeConfig.order.column, {
+          ascending: realtimeConfig.order.ascending,
+        });
+      }
+
+      // Apply limit
+      if (realtimeConfig.limit) {
+        query = query.limit(realtimeConfig.limit);
+      }
+
+      const { data: result, error: queryError } = await query;
+
+      if (queryError) {
+        throw queryError;
+      }
+
+      setData(result as T[]);
+      setError('');
+    } catch (err: any) {
+      console.error('Error fetching data:', err);
+      setError(err.message || 'An error occurred while fetching data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+
+    // Set up realtime subscription
+    try {
+      channel.current = supabase
+        .channel(`custom-all-channel`)
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: realtimeConfig.table }, 
+          (payload: any) => {
+            realtimeConfig.onDataChange(payload);
+            fetchData();
+          }
+        )
+        .subscribe();
+    } catch (err: any) {
+      console.error('Error setting up realtime subscription:', err);
+      setError(err.message || 'An error occurred with realtime subscription');
+    }
+
+    return () => {
+      if (channel.current) {
+        supabase.removeChannel(channel.current);
       }
     };
-    
-    fetchData();
-    
-    // Subscribe to changes
-    const subscription = supabase
-      .channel(`${tableName}_changes`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: tableName
-      }, (payload) => {
-        // Handle the realtime update
-        if (payload.eventType === 'INSERT') {
-          setData(current => [...current, payload.new as T]);
-        } else if (payload.eventType === 'UPDATE') {
-          setData(current => 
-            current.map(item => 
-              // @ts-ignore - we know id exists on the data
-              item.id === payload.new.id ? payload.new as T : item
-            )
-          );
-        } else if (payload.eventType === 'DELETE') {
-          setData(current => 
-            current.filter(item => 
-              // @ts-ignore - we know id exists on the data
-              item.id !== payload.old.id
-            )
-          );
-        }
-      })
-      .subscribe();
-    
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [tableName, JSON.stringify(filters)]);
-  
-  return { data, loading, error };
+  }, [realtimeConfig.table]);
+
+  const refetch = async () => {
+    await fetchData();
+  };
+
+  return { data, error, loading, refetch };
 }
