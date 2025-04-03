@@ -131,7 +131,7 @@ const ProviderProfile: React.FC = () => {
       // Define updateProfile function locally if it's not available
       const updateProfile = async (data: Partial<DbUserProfile>) => {
         if (!user?.id) return false;
-        
+
         try {
           const { error } = await supabase
             .from('profiles')
@@ -140,7 +140,7 @@ const ProviderProfile: React.FC = () => {
               updated_at: new Date().toISOString()
             })
             .eq('id', user.id);
-            
+
           if (error) throw error;
           return true;
         } catch (error) {
@@ -148,7 +148,7 @@ const ProviderProfile: React.FC = () => {
           return false;
         }
       };
-      
+
       await updateProfile({ avatar_url: url });
       // Also update provider avatar if it exists
       if (localProviderData) {
@@ -187,7 +187,7 @@ const ProviderProfile: React.FC = () => {
       // Update profile data
       const updateProfile = async (data: Partial<DbUserProfile>) => {
         if (!user?.id) return false;
-        
+
         try {
           const { error } = await supabase
             .from('profiles')
@@ -196,7 +196,7 @@ const ProviderProfile: React.FC = () => {
               updated_at: new Date().toISOString()
             })
             .eq('id', user.id);
-            
+
           if (error) throw error;
           return true;
         } catch (error) {
@@ -204,7 +204,7 @@ const ProviderProfile: React.FC = () => {
           return false;
         }
       };
-      
+
       await updateProfile(personalData);
 
       // Update provider data if needed
