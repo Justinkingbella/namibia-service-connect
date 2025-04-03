@@ -21,37 +21,19 @@ export type PaymentTransaction = {
   updatedAt: string | Date;
 };
 
-export type ProviderEarnings = {
-  id: string;
-  providerId: string;
-  periodStart: string | Date;
-  periodEnd: string | Date;
-  totalEarnings: number;
-  totalBookings: number;
-  commissionPaid: number;
-  netEarnings: number;
-  payoutStatus: 'pending' | 'processing' | 'completed';
-  createdAt: string | Date;
-  updatedAt: string | Date;
-};
+// Add missing types
 
-export type ProviderPayout = {
+export interface PaymentMethod {
   id: string;
-  providerId: string;
-  amount: number;
-  fee: number;
-  netAmount: number;
-  paymentMethod: string;
-  bankAccountDetails?: Record<string, any>;
-  mobilePaymentDetails?: Record<string, any>;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  notes?: string;
-  processedAt?: string | Date;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-};
+  userId: string;
+  name: string;
+  type: string;
+  details: Record<string, any>;
+  isDefault: boolean;
+  createdAt: Date;
+}
 
-// Add PaymentHistory type that was missing
+// Add PaymentHistory type
 export type PaymentHistory = {
   id: string;
   userId: string;
@@ -63,5 +45,5 @@ export type PaymentHistory = {
   reference?: string;
 };
 
-// Re-export the Dispute type from booking since it's used in payments context too
-export type { Dispute } from './booking';
+// Re-export the Dispute type
+export { Dispute } from './booking';

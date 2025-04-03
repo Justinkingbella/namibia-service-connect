@@ -1,4 +1,3 @@
-
 export type BookingStatus = 
   | 'pending' 
   | 'confirmed' 
@@ -35,7 +34,8 @@ export interface Booking {
   notes?: string;
   rating?: number;
   isUrgent?: boolean;
-  duration?: number; // Added duration field
+  duration?: number;
+  commission?: number; // Added missing field
 }
 
 export interface BookingWithDetails extends Booking {
@@ -53,14 +53,14 @@ export interface Dispute {
   providerId: string;
   subject: string;
   description: string;
-  status: 'pending' | 'in_review' | 'resolved' | 'rejected';
+  status: 'pending' | 'in_review' | 'resolved' | 'rejected' | 'open' | 'under_review' | 'declined';
   resolution?: string;
   createdAt: Date;
   updatedAt: Date;
   priority: 'low' | 'medium' | 'high';
   evidenceUrls?: string[];
   refundAmount?: number;
-  reason?: string; // Adding reason field that's used in multiple components
+  reason?: string; // Added missing field
 }
 
 // Re-export from types/index.ts

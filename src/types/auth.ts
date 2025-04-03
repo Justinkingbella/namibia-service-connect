@@ -1,4 +1,3 @@
-
 export interface DbUserProfile {
   id: string;
   first_name: string;
@@ -92,41 +91,59 @@ export interface User {
   avatarUrl?: string;
   isActive: boolean;
   createdAt: Date;
-  name?: string;
-  avatar?: string;
+  name?: string; // Added for compatibility
+  avatar?: string; // Added for compatibility
   phoneNumber?: string;
 }
 
+// Update Customer type to include properties used in AuthContext
 export interface Customer extends User {
   role: 'customer';
   loyaltyPoints: number;
   preferences?: Record<string, any>;
   favorites?: string[];
+  preferredCategories?: string[]; // Added missing property
+  notificationPreferences?: {
+    email: boolean;
+    sms: boolean;
+    push: boolean;
+  };
+  isVerified?: boolean; // Added missing property
 }
 
+// Update Provider type to include properties used in AuthContext
 export interface Provider extends User {
   role: 'provider';
   businessName: string;
+  businessDescription?: string; // Added missing property
   verificationStatus: ProviderVerificationStatus;
   description?: string;
   rating?: number;
   reviewCount?: number;
-  categories?: string[];
+  categories?: string[]; // Added missing property
   locations?: string[];
-  bankDetails?: Record<string, any>;
+  bankDetails?: Record<string, any>; // Added missing property
   subscriptionTier?: SubscriptionTier;
+  isVerified?: boolean; // Added missing property
 }
 
+// Update Admin type to include properties used in AuthContext
 export interface Admin extends User {
   role: 'admin';
   permissions: string[];
+  isVerified?: boolean; // Added missing property
 }
 
 export interface AuthContextType {
   user: User | null;
-  isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<boolean>;
+  session: Session | null;
+  userRole: UserRole | null;
+  userProfile: Customer | Provider | Admin | null;
+  loading: boolean; // Changed from isLoading for backward compatibility
+  signIn: (email: string, password: string) => Promise<{ error: any | null }>;
+  signUp: (email: string, password: string, role: UserRole, userData: Partial<Customer | Provider>) => Promise<{ error: any | null, data: any | null }>;
   signOut: () => Promise<void>;
-  signUp: (email: string, password: string, name: string, role: UserRole) => Promise<boolean>;
-  resetPassword: (email: string) => Promise<boolean>;
+  forgotPassword: (email: string) => Promise<{ error: any | null }>;
+  resetPassword: (password: string) => Promise<{ error: any | null }>;
+  updateProfile: (data: Partial<Customer | Provider | Admin>) => Promise<boolean>;
 }

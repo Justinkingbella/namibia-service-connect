@@ -1,121 +1,82 @@
 
-import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-type PostgresChannelPayload<T = any> = {
-  schema: string;
-  table: string;
-  commit_timestamp: string;
-  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
-  new: T;
-  old: T;
-};
-
-interface UseRealtimeDataParams {
-  table: string;
-  schema?: string;
-  filter?: string;
-  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
-  initialData?: any[];
-  fetchInitialData?: boolean;
-  userId?: string;
-}
-
-export function useRealtimeData<T = any>({
-  table,
-  schema = 'public',
-  filter,
-  event = '*',
-  initialData = [],
-  fetchInitialData = true,
-  userId
-}: UseRealtimeDataParams) {
+export function useRealtimeData<T>(
+  tableName: string,
+  filters?: Record<string, any>,
+  initialData: T[] = []
+): { data: T[]; loading: boolean; error: Error | null } {
   const [data, setData] = useState<T[]>(initialData);
-  const [loading, setLoading] = useState(fetchInitialData);
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  // Initial data fetch
   useEffect(() => {
-    if (!fetchInitialData) return;
-
     const fetchData = async () => {
-      setLoading(true);
       try {
-        // Use any query parameter to avoid type errors
-        const query: any = supabase.from(table).select('*');
+        setLoading(true);
         
-        // Apply filter if provided
-        if (filter) {
-          query.eq(filter, userId);
+        // Dynamically build the query based on filters
+        let query = supabase.from(tableName).select('*');
+        
+        if (filters) {
+          Object.entries(filters).forEach(([field, value]) => {
+            if (value !== undefined && value !== null) {
+              query = query.eq(field, value);
+            }
+          });
         }
-
-        const { data: result, error } = await query;
-
-        if (error) {
-          console.error(`Error fetching ${table} data:`, error);
-          toast({ variant: 'destructive', title: `Failed to load ${table} data` });
-        } else {
-          setData(result);
+        
+        const { data: fetchedData, error: fetchError } = await query;
+        
+        if (fetchError) {
+          throw fetchError;
         }
-      } catch (error) {
-        console.error(`Error in fetchData for ${table}:`, error);
+        
+        setData(fetchedData as T[]);
+      } catch (err) {
+        console.error(`Error fetching data from ${tableName}:`, err);
+        setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
         setLoading(false);
       }
     };
-
+    
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchInitialData, table, filter, userId]);
-
-  // Realtime subscription
-  useEffect(() => {
-    // Set up the channel
-    const channel = supabase
-      .channel(`${table}-changes`)
-      .on(
-        'postgres_changes',
-        {
-          event,
-          schema,
-          table,
-          filter: filter ? `${filter}=eq.${userId}` : undefined,
-        },
-        (payload: PostgresChannelPayload<T>) => {
-          console.log(`Received ${payload.eventType} event on ${table}:`, payload);
-          
-          // Update local state based on the event type
-          switch (payload.eventType) {
-            case 'INSERT':
-              setData(currentData => [...currentData, payload.new]);
-              break;
-            case 'UPDATE':
-              setData(currentData =>
-                currentData.map(item => 
-                  // @ts-ignore This is a bit of a hack but works for our use case
-                  item.id === payload.new.id ? payload.new : item
-                )
-              );
-              break;
-            case 'DELETE':
-              setData(currentData =>
-                currentData.filter(item => 
-                  // @ts-ignore This is a bit of a hack but works for our use case
-                  item.id !== payload.old.id
-                )
-              );
-              break;
-          }
+    
+    // Subscribe to changes
+    const subscription = supabase
+      .channel(`${tableName}_changes`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: tableName
+      }, (payload) => {
+        // Handle the realtime update
+        if (payload.eventType === 'INSERT') {
+          setData(current => [...current, payload.new as T]);
+        } else if (payload.eventType === 'UPDATE') {
+          setData(current => 
+            current.map(item => 
+              // @ts-ignore - we know id exists on the data
+              item.id === payload.new.id ? payload.new as T : item
+            )
+          );
+        } else if (payload.eventType === 'DELETE') {
+          setData(current => 
+            current.filter(item => 
+              // @ts-ignore - we know id exists on the data
+              item.id !== payload.old.id
+            )
+          );
         }
-      )
+      })
       .subscribe();
-
-    // Clean up subscription on unmount
+    
     return () => {
-      supabase.removeChannel(channel);
+      subscription.unsubscribe();
     };
-  }, [table, schema, filter, event, userId]);
-
-  return { data, loading, setData };
+  }, [tableName, JSON.stringify(filters)]);
+  
+  return { data, loading, error };
 }

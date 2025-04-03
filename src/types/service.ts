@@ -52,9 +52,11 @@ export interface Service {
   providerName?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  commission?: number; // Added missing property
+  available?: boolean; // Added missing property
 }
 
-// Adding ServiceData interface to fix missing type errors
+// Fix ServiceData interface
 export interface ServiceData {
   id: string;
   title: string;
