@@ -2,9 +2,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRealtimeData } from './useRealtimeData';
-import { BookingStatus, PaymentStatus } from '@/types/booking';
 import { useToast } from './use-toast';
+import { BookingStatus, PaymentStatus } from '@/types/booking';
 
 export interface BookingData {
   id: string;
@@ -30,30 +29,12 @@ export interface BookingData {
   customer_name?: string;
 }
 
-export const useBookings = (
-  role: 'customer' | 'provider',
-  status?: BookingStatus | 'all',
-  limit = 10
-) => {
+export const useBookings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  // Setup realtime subscription
-  const bookingsRealtime = useRealtimeData<BookingData>({
-    table: 'bookings',
-    filter: {
-      [role === 'customer' ? 'customer_id' : 'provider_id']: user?.id,
-    },
-    order: { column: 'created_at', ascending: false },
-    limit,
-    onDataChange: (payload) => {
-      console.log('Booking data changed:', payload);
-      fetchBookings();
-    },
-  });
 
   const fetchBookings = async () => {
     if (!user) return;
@@ -61,7 +42,7 @@ export const useBookings = (
     setLoading(true);
     try {
       // Determine the filter based on role
-      const roleFilter = role === 'customer' ? 'customer_id' : 'provider_id';
+      const roleFilter = user.role === 'customer' ? 'customer_id' : 'provider_id';
 
       // Create the query
       let query = supabase
@@ -82,16 +63,6 @@ export const useBookings = (
         `)
         .eq(roleFilter, user.id)
         .order('created_at', { ascending: false });
-
-      // Add status filter if provided and not 'all'
-      if (status && status !== 'all') {
-        query = query.eq('status', status);
-      }
-
-      // Add limit if provided
-      if (limit) {
-        query = query.limit(limit);
-      }
 
       const { data, error: queryError } = await query;
 
@@ -133,7 +104,7 @@ export const useBookings = (
       setBookings([]);
       setLoading(false);
     }
-  }, [user, role, status, limit]);
+  }, [user]);
 
   const cancelBooking = async (bookingId: string, reason: string) => {
     if (!user) return false;
@@ -150,7 +121,7 @@ export const useBookings = (
           updated_at: new Date().toISOString(),
         })
         .eq('id', bookingId)
-        .eq(role === 'customer' ? 'customer_id' : 'provider_id', user.id);
+        .eq(user.role === 'customer' ? 'customer_id' : 'provider_id', user.id);
 
       if (error) throw error;
 
@@ -175,7 +146,7 @@ export const useBookings = (
   };
 
   const completeBooking = async (bookingId: string, rating?: number, feedback?: string) => {
-    if (!user || role !== 'provider') return false;
+    if (!user || user.role !== 'provider') return false;
 
     try {
       // Update the booking status

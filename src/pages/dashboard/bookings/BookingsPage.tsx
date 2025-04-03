@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BookingCard } from '@/components/dashboard/BookingCard'; // Fixed import
+import { BookingCard } from '@/components/dashboard/BookingCard'; // Named import
 import { useAuth } from '@/contexts/AuthContext';
 import { Container } from '@/components/ui/container';
 import { useBookings } from '@/hooks/useBookings';
@@ -19,18 +20,15 @@ const BookingsPage = () => {
     bookings,
     loading,
     error,
-    fetchBookings
+    refetch
   } = useBookings();
 
   useEffect(() => {
     if (user) {
-      fetchBookings({
-        status: status === 'all' ? undefined : status,
-        sortBy,
-        sortOrder,
-      });
+      // Just refetch without params since useBookings definition changed
+      refetch();
     }
-  }, [user, status, sortBy, sortOrder, fetchBookings]);
+  }, [user, status, sortBy, sortOrder, refetch]);
 
   const filteredBookings = bookings;
 
@@ -105,7 +103,7 @@ const BookingsPage = () => {
             {filteredBookings.map((booking) => (
               <BookingCard
                 key={booking.id}
-                booking={booking as BookingWithDetails & { serviceName: string; serviceImage: string; providerName?: string; customerName?: string; }}
+                booking={booking as BookingWithDetails & { serviceName: string; serviceImage?: string; providerName?: string; customerName?: string; }}
                 viewAs={user.role === 'provider' ? 'provider' : 'customer'}
               />
             ))}
