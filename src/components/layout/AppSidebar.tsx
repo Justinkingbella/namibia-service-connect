@@ -93,7 +93,7 @@ const AppSidebar = () => {
       { icon: Heart, label: 'Favorites', path: '/customer/favorites' },
       { icon: CreditCard, label: 'Payment History', path: '/customer/payment-history' },
       { icon: AlertTriangle, label: 'Disputes', path: '/customer/disputes' },
-      { icon: UserCircle, label: 'Profile', path: '/dashboard/customer/profile' },
+      { icon: UserCircle, label: 'Profile', path: '/customer/profile' },
     ];
 
     if (user.role === 'admin') return adminLinks;

@@ -329,10 +329,10 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/customer/profile"
+                path="/customer/profile"
                 element={
                   <RoleBasedRoute allowedRoles={['customer']}>
-                    <ProfilePage />
+                    <CustomerProfilePage />
                   </RoleBasedRoute>
                 }
               />
