@@ -11,7 +11,7 @@ interface RoleBasedRouteProps {
 }
 
 const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles }) => {
-  const { user, userRole } = useAuth();
+  const { user, userRole, loading } = useAuth();
   
   // Convert role prop to array for easier checking
   const rolesToCheck = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
@@ -19,21 +19,22 @@ const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles 
   // First ensure the user is authenticated with ProtectedRoute
   return (
     <ProtectedRoute>
-      {user && userRole && rolesToCheck.includes(userRole) ? (
+      {/* Only show if loading is complete and user has required role */}
+      {!loading && user && userRole && rolesToCheck.includes(userRole) ? (
         // User has the required role, show the component
         <>{children}</>
-      ) : user && userRole === 'provider' ? (
+      ) : !loading && user && userRole === 'provider' ? (
         // Provider trying to access non-provider route
         <Navigate to="/provider/dashboard" replace />
-      ) : user && userRole === 'customer' ? (
+      ) : !loading && user && userRole === 'customer' ? (
         // Customer trying to access non-customer route
         <Navigate to="/customer/dashboard" replace />
-      ) : user && userRole === 'admin' ? (
+      ) : !loading && user && userRole === 'admin' ? (
         // Admin trying to access non-admin route
         <Navigate to="/admin/dashboard" replace />
       ) : (
-        // Default fallback - redirect to appropriate dashboard based on role
-        <Navigate to={user?.role ? `/${user.role}/dashboard` : "/dashboard"} replace />
+        // Default fallback - redirect to appropriate dashboard based on role or to auth
+        <Navigate to={user?.role ? `/${user.role}/dashboard` : "/auth/sign-in"} replace />
       )}
     </ProtectedRoute>
   );

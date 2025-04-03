@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from './contexts/AuthContext';
@@ -93,7 +92,11 @@ const App = () => {
               {/* Main Dashboard Route - Redirects based on role */}
               <Route
                 path="/dashboard"
-                element={<Dashboard />}
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
               />
               
               {/* ADMIN ROUTES */}

@@ -13,7 +13,6 @@ const Dashboard = () => {
   const { isSubscribed, enableRealtime } = useSupabase();
 
   useEffect(() => {
-    // This component is now just a router to role-specific dashboards
     if (!loading) {
       if (user) {
         // Ensure realtime is enabled
@@ -39,7 +38,7 @@ const Dashboard = () => {
           description: "Please sign in to access your dashboard",
           variant: "destructive"
         });
-        navigate('/auth/sign-in');
+        navigate('/auth/sign-in', { replace: true });
       }
     }
   }, [navigate, user, loading, toast, isSubscribed, enableRealtime]);

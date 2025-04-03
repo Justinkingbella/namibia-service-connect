@@ -42,6 +42,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // First set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         const customSession: CustomSession = {
@@ -56,22 +57,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const user: User = {
           id: session.user.id,
           email: session.user.email || '',
-          role: 'customer',
+          role: 'customer', // Default role, will be updated when profile is fetched
           firstName: '',
           lastName: '',
           isActive: true,
           createdAt: new Date(session.user.created_at),
         };
         setUser(user);
-        fetchUserProfile(session.user);
+        
+        // Use setTimeout to prevent recursive deadlocks with Supabase auth
+        setTimeout(() => {
+          fetchUserProfile(session.user);
+        }, 0);
       } else {
         setSession(null);
         setUser(null);
         setUserRole(null);
         setUserProfile(null);
+        setLoading(false);
       }
     });
 
+    // Then check for an existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         const customSession: CustomSession = {
@@ -86,14 +93,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const user: User = {
           id: session.user.id,
           email: session.user.email || '',
-          role: 'customer',
+          role: 'customer', // Default role, will be updated when profile is fetched
           firstName: '',
           lastName: '',
           isActive: true,
           createdAt: new Date(session.user.created_at),
         };
         setUser(user);
-        fetchUserProfile(session.user);
+        
+        // Use setTimeout to prevent recursive deadlocks with Supabase auth
+        setTimeout(() => {
+          fetchUserProfile(session.user);
+        }, 0);
       } else {
         setLoading(false);
       }
@@ -106,6 +117,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   async function fetchUserProfile(supabaseUser: SupabaseUser) {
     try {
+      // First, try to get the profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -113,6 +125,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single();
 
       if (profileError) {
+        // Don't throw an error if the profile doesn't exist yet
+        if (profileError.code === 'PGRST116') {
+          console.log('Profile not found, user may need to complete registration');
+          setLoading(false);
+          return;
+        }
+        
         console.error('Error fetching user profile:', profileError);
         setLoading(false);
         return;
