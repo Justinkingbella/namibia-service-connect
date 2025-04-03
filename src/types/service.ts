@@ -44,6 +44,7 @@ export interface ServiceListItem {
   reviewCount: number;
   image: string;
   location: string;
+  isFeatured?: boolean;
 }
 
 export interface Service {
@@ -63,6 +64,8 @@ export interface Service {
   reviewCount?: number;
   createdAt: Date;
   updatedAt: Date;
+  available?: boolean;
+  isFeatured?: boolean;
 }
 
 export interface ServiceData {

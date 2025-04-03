@@ -112,7 +112,8 @@ export function useRealtimeData<T>(realtimeConfig: RealtimeTable): RealtimeQuery
     try {
       channel.current = supabase
         .channel(`custom-all-channel`)
-        .on('postgres_changes', 
+        .on(
+          'postgres_changes', 
           { event: '*', schema: 'public', table: realtimeConfig.table }, 
           (payload: any) => {
             realtimeConfig.onDataChange(payload);

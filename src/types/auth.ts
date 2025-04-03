@@ -19,7 +19,9 @@ export interface DbUserProfile {
   preferred_language?: string;
   favorites?: string[];
   is_verified?: boolean;
-  name?: string; // Added for DashboardLayout
+  verification_status?: string;
+  preferred_categories?: string[];
+  saved_services?: string[];
 }
 
 export interface DbProviderProfile {
@@ -44,6 +46,7 @@ export interface DbProviderProfile {
   verification_documents?: string[];
   review_count?: number;
   bank_details?: Record<string, any>;
+  rating_count?: number;
 }
 
 export type UserRole = 'admin' | 'provider' | 'customer' | string;
@@ -89,26 +92,33 @@ export interface User {
   avatarUrl?: string;
   isActive: boolean;
   createdAt: Date;
-  name?: string; // Added for DashboardLayout
-  avatar?: string; // Added for DashboardLayout
+  name?: string;
+  avatar?: string;
+  phoneNumber?: string;
 }
 
 export interface Customer extends User {
+  role: 'customer';
   loyaltyPoints: number;
   preferences?: Record<string, any>;
-  favorites?: string[]; // Added for AuthContext
+  favorites?: string[];
 }
 
 export interface Provider extends User {
+  role: 'provider';
   businessName: string;
   verificationStatus: ProviderVerificationStatus;
+  description?: string;
   rating?: number;
-  categories?: string[]; // Added for AuthContext
-  locations?: string[]; // Added for AuthContext
-  bankDetails?: Record<string, any>; // Added for AuthContext
+  reviewCount?: number;
+  categories?: string[];
+  locations?: string[];
+  bankDetails?: Record<string, any>;
+  subscriptionTier?: SubscriptionTier;
 }
 
 export interface Admin extends User {
+  role: 'admin';
   permissions: string[];
 }
 
@@ -117,6 +127,6 @@ export interface AuthContextType {
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
-  signUp: (userData: any) => Promise<boolean>;
+  signUp: (email: string, password: string, name: string, role: UserRole) => Promise<boolean>;
   resetPassword: (email: string) => Promise<boolean>;
 }

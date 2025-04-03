@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, UserRole, AuthContextType, Provider, Customer, Admin, DbUserProfile, DbProviderProfile, ProviderVerificationStatus } from '@/types/auth';
@@ -46,10 +47,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const baseUser: User = {
                 id: session.user.id,
                 email: session.user.email || '',
-                name: session.user.user_metadata?.first_name || session.user.email?.split('@')[0] || 'User',
+                firstName: session.user.user_metadata?.first_name || '',
+                lastName: session.user.user_metadata?.last_name || '',
                 role: session.user.user_metadata?.role || 'customer',
+                isActive: true,
                 createdAt: new Date(),
-                isVerified: true
+                name: session.user.user_metadata?.first_name || session.user.email?.split('@')[0] || 'User',
+                avatar: session.user.user_metadata?.avatar_url
               };
               
               setUser(baseUser);
@@ -60,6 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 id: session.user.id,
                 email: session.user.email,
                 first_name: session.user.user_metadata?.first_name || session.user.email?.split('@')[0],
+                last_name: session.user.user_metadata?.last_name || '',
                 role: session.user.user_metadata?.role || 'customer',
                 is_verified: true,
                 created_at: new Date().toISOString()
@@ -112,11 +117,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const baseUser: User = {
               id: sessionData.session.user.id,
               email: sessionData.session.user.email || '',
+              firstName: sessionData.session.user.user_metadata?.first_name || '',
+              lastName: sessionData.session.user.user_metadata?.last_name || '',
+              role: sessionData.session.user.user_metadata?.role || 'customer',
+              isActive: true,
+              createdAt: new Date(),
               name: sessionData.session.user.user_metadata?.first_name || 
                     sessionData.session.user.email?.split('@')[0] || 'User',
-              role: sessionData.session.user.user_metadata?.role || 'customer',
-              createdAt: new Date(),
-              isVerified: true
+              avatar: sessionData.session.user.user_metadata?.avatar_url
             };
             
             setUser(baseUser);
@@ -127,6 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               email: sessionData.session.user.email,
               first_name: sessionData.session.user.user_metadata?.first_name || 
                           sessionData.session.user.email?.split('@')[0],
+              last_name: sessionData.session.user.user_metadata?.last_name || '',
               role: sessionData.session.user.user_metadata?.role || 'customer',
               is_verified: true,
               created_at: new Date().toISOString()
@@ -166,12 +175,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const baseUser: User = {
         id: userId,
         email: profileData.email || '',
+        firstName: profileData.first_name || '',
+        lastName: profileData.last_name || '',
+        role: profileData.role as UserRole || 'customer',
         name: displayName,
-        role: profileData.role || 'customer',
         avatar: profileData.avatar_url,
         phoneNumber: profileData.phone_number,
-        createdAt: new Date(profileData.created_at || ''),
-        isVerified: !!profileData.is_verified
+        isActive: profileData.active || false,
+        createdAt: new Date(profileData.created_at || '')
       };
       
       // Get role-specific data
@@ -191,7 +202,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (providerData) {
           // Explicitly type the verification_status to resolve TS error
-          const verificationStatus = (providerData.verification_status as ProviderVerificationStatus) || 'unverified';
+          const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'pending';
           
           // Create provider-specific user object
           const provider: Provider = {
@@ -200,38 +211,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             businessName: providerData.business_name || '',
             description: providerData.business_description || '',
             verificationStatus: verificationStatus,
-            // Default to empty arrays if categories and locations don't exist
-            categories: [], // We'll set this properly below
-            locations: [], // We'll set this properly below
-            subscriptionTier: providerData.subscription_tier as any || 'free',
             rating: providerData.rating || 0,
             reviewCount: providerData.rating_count || 0,
-            earnings: 0,
-            balance: 0,
-            bankDetails: undefined // We'll set this properly below
+            subscriptionTier: providerData.subscription_tier || 'free'
           };
           
-          // Safely handle categories and locations which might not exist in the DB response
-          if ('categories' in providerData && Array.isArray(providerData.categories)) {
-            provider.categories = providerData.categories;
-          }
-          
-          if ('locations' in providerData && Array.isArray(providerData.locations)) {
-            provider.locations = providerData.locations;
-          }
+          // We now safely add these properties that may have been missing before
+          provider.categories = providerData.categories || [];
+          provider.locations = [providerData.city, providerData.country].filter(Boolean);
           
           // Safely handle bank details
-          const hasBankDetails = 
-            ('bank_name' in providerData && providerData.bank_name) || 
-            ('account_name' in providerData && providerData.account_name) || 
-            ('account_number' in providerData && providerData.account_number);
-            
-          if (hasBankDetails) {
-            provider.bankDetails = {
-              accountName: ('account_name' in providerData ? String(providerData.account_name || '') : '') || '',
-              accountNumber: ('account_number' in providerData ? String(providerData.account_number || '') : '') || '',
-              bankName: ('bank_name' in providerData ? String(providerData.bank_name || '') : '') || ''
-            };
+          if (providerData.bank_details) {
+            provider.bankDetails = providerData.bank_details;
           }
           
           setUser(provider);
@@ -243,8 +234,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ...baseUser,
           role: 'customer',
           favorites: profileData.favorites || [],
-          bookingCount: 0,
-          totalSpent: 0,
           loyaltyPoints: profileData.loyalty_points || 0
         };
         
@@ -279,7 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
       // Try Supabase auth
@@ -318,10 +307,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const baseUser: User = {
           id: data.user.id,
           email: email,
-          name: displayName,
-          role: userRole,
+          firstName: data.user.user_metadata?.first_name || '',
+          lastName: data.user.user_metadata?.last_name || '',
+          role: userRole as UserRole,
+          isActive: true,
           createdAt: new Date(),
-          isVerified: true
+          name: displayName,
+          avatar: data.user.user_metadata?.avatar_url
         };
         
         setUser(baseUser);
@@ -341,6 +333,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: 'Signed in successfully',
         description: 'Welcome back!',
       });
+      return true;
     } catch (error: any) {
       console.error('Sign in error:', error);
       toast({
@@ -348,13 +341,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: error.message || 'Invalid email or password',
         variant: 'destructive',
       });
-      throw error;
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const signUp = async (email: string, password: string, name: string, role: UserRole) => {
+  const signUp = async (email: string, password: string, name: string, role: UserRole): Promise<boolean> => {
     setIsLoading(true);
     try {
       // Extract first and last name
@@ -409,7 +402,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: email,
             business_name: `${name}'s Business`,
             business_description: '',
-            verification_status: 'unverified',
+            verification_status: 'pending',
             subscription_tier: 'free',
             rating: 0,
             rating_count: 0,
@@ -425,10 +418,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const baseUser: User = {
         id: data.user.id,
         email,
+        firstName,
+        lastName,
         name,
         role,
-        createdAt: new Date(),
-        isVerified: false
+        isActive: true,
+        createdAt: new Date()
       };
 
       let userWithRole: User = baseUser;
@@ -439,22 +434,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           role: 'provider',
           businessName: `${name}'s Business`,
           description: '',
-          verificationStatus: 'unverified',
+          verificationStatus: 'pending',
           categories: [],
           locations: [],
           subscriptionTier: 'free',
           rating: 0,
-          reviewCount: 0,
-          earnings: 0,
-          balance: 0
+          reviewCount: 0
         } as Provider;
       } else if (role === 'customer') {
         userWithRole = {
           ...baseUser,
           role: 'customer',
           favorites: [],
-          bookingCount: 0,
-          totalSpent: 0,
           loyaltyPoints: 0
         } as Customer;
       } else if (role === 'admin') {
@@ -472,7 +463,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: `Welcome to Namibia Service Hub, ${name}!`,
       });
       
-      // Removed the return statement to match the Promise<void> return type
+      return true;
     } catch (error: any) {
       console.error('Sign up error:', error);
       toast({
@@ -480,7 +471,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: error.message || 'Something went wrong. Please try again.',
         variant: 'destructive',
       });
-      throw error;
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -514,12 +505,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resetPassword = async (email: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: 'Password reset email sent',
+        description: 'Please check your email for password reset instructions.',
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error('Reset password error:', error);
+      toast({
+        title: 'Password reset failed',
+        description: error.message || 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   const value = {
     user,
     isLoading,
     signIn,
     signUp,
     signOut,
+    resetPassword
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
