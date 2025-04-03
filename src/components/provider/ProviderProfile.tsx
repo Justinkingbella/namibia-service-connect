@@ -1,11 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/common/Button';
 import { Textarea } from '@/components/ui/textarea';
 import { useProfile } from '@/hooks/useProfile';
+import { useProviderProfile } from '@/hooks/useProviderProfile';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth'; // Added import for useAuth
 import { Avatar } from '@/components/ui/avatar';
 import { User, Key, MapPin, Phone, Mail, Briefcase, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,25 +30,25 @@ const ProviderProfile: React.FC = () => {
 
   useEffect(() => {
     const fetchProviderData = async () => {
-      if (!profile?.id) return;
-      
+      if (!user?.id) return;
+
       try {
         setLoadingProvider(true);
-        
+
         // Check if provider exists
         const { data: existingProvider, error: checkError } = await supabase
           .from('service_providers')
           .select('*')
-          .eq('id', profile.id)
+          .eq('id', user.id)
           .single();
-          
+
         if (checkError && checkError.code === 'PGRST116') {
           // Create new provider profile
           const { data: newProvider, error: createError } = await supabase
             .from('service_providers')
             .insert([
               {
-                id: profile.id,
+                id: user.id,
                 business_name: '',
                 business_description: '',
                 verification_status: 'pending',
@@ -59,26 +60,26 @@ const ProviderProfile: React.FC = () => {
             ])
             .select()
             .single();
-            
+
           if (createError) throw createError;
           return setProviderData(newProvider);
         }
-        
+
         const { data, error } = await supabase
           .from('service_providers')
           .select('*')
-          .eq('id', profile.id)
+          .eq('id', user.id)
           .single();
-          
+
         if (error) throw error;
-        
+
         const typedData: Partial<DbProviderProfile> = {
           ...data,
           verification_status: data.verification_status as ProviderVerificationStatus
         };
-        
+
         setProviderData(typedData);
-        
+
         setStats({
           totalServices: data.services_count || 0,
           completedBookings: data.completed_bookings || 0,
@@ -95,23 +96,23 @@ const ProviderProfile: React.FC = () => {
         setLoadingProvider(false);
       }
     };
-    
+
     fetchProviderData();
-  }, [profile?.id, toast]);
+  }, [user?.id, toast]);
 
   useEffect(() => {
-    if (profile && !isEditing) {
+    if (user && !isEditing) {
       setPersonalData({
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
-        phone_number: profile.phone_number || '',
-        email: profile.email || '',
-        address: profile.address || '',
-        city: profile.city || '',
-        country: profile.country || '',
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        phone_number: user.phone_number || '',
+        email: user.email || '',
+        address: user.address || '',
+        city: user.city || '',
+        country: user.country || '',
       });
     }
-  }, [profile, isEditing]);
+  }, [user, isEditing]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -124,8 +125,8 @@ const ProviderProfile: React.FC = () => {
   };
 
   const handleAvatarChange = async (url: string | null) => {
-    if (!profile?.id) return;
-    
+    if (!user?.id) return;
+
     try {
       await updateProfile({ avatar_url: url });
       // Also update provider avatar if it exists
@@ -133,13 +134,13 @@ const ProviderProfile: React.FC = () => {
         const { error } = await supabase
           .from('service_providers')
           .update({ avatar_url: url })
-          .eq('id', profile.id);
-          
+          .eq('id', user.id);
+
         if (error) throw error;
-        
+
         setProviderData(prev => prev ? { ...prev, avatar_url: url } : { avatar_url: url });
       }
-      
+
       toast({
         title: "Avatar updated",
         description: "Your profile picture has been updated successfully."
@@ -160,13 +161,13 @@ const ProviderProfile: React.FC = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    
+
     try {
       // Update profile data
       await updateProfile(personalData);
-      
+
       // Update provider data if needed
-      if (providerData && profile?.id) {
+      if (providerData && user?.id) {
         const { error } = await supabase
           .from('service_providers')
           .update({
@@ -179,16 +180,16 @@ const ProviderProfile: React.FC = () => {
             country: providerData.country,
             website: providerData.website
           })
-          .eq('id', profile.id);
-          
+          .eq('id', user.id);
+
         if (error) throw error;
       }
-      
+
       toast({
         title: "Profile updated",
         description: "Your provider profile has been updated successfully."
       });
-      
+
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating provider profile:', error);
@@ -207,14 +208,14 @@ const ProviderProfile: React.FC = () => {
       const { error } = await supabase.auth.updateUser({ 
         password: newPassword 
       });
-      
+
       if (error) throw error;
-      
+
       toast({
         title: "Password updated",
         description: "Your password has been changed successfully."
       });
-      
+
       return true;
     } catch (error) {
       console.error('Error changing password:', error);
@@ -317,7 +318,7 @@ const ProviderProfile: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               {providerData && (
                 <div>
                   <h3 className="text-lg font-medium mb-4">Business Information</h3>
@@ -366,7 +367,7 @@ const ProviderProfile: React.FC = () => {
                   </div>
                 </div>
               )}
-              
+
               <div className="flex justify-end space-x-2 pt-4">
                 <Button 
                   variant="outline" 
@@ -388,19 +389,19 @@ const ProviderProfile: React.FC = () => {
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex flex-col items-center">
                   <AvatarUpload 
-                    userId={profile?.id || ''}
-                    currentAvatarUrl={profile?.avatar_url}
+                    userId={user?.id || ''}
+                    currentAvatarUrl={user?.avatar_url}
                     onAvatarChange={handleAvatarChange}
                   />
-                  
+
                   <div className="mt-4 flex flex-col items-center">
                     <h3 className="font-medium text-lg">
-                      {profile?.first_name || ''} {profile?.last_name || ''}
+                      {user?.first_name || ''} {user?.last_name || ''}
                     </h3>
                     <p className="text-sm text-muted-foreground">Service Provider</p>
                   </div>
                 </div>
-                
+
                 <div className="flex-1">
                   <h3 className="text-lg font-medium mb-4">Personal Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6">
@@ -408,21 +409,21 @@ const ProviderProfile: React.FC = () => {
                       <User className="h-4 w-4 text-muted-foreground mr-2" />
                       <div>
                         <p className="text-sm text-muted-foreground">Full Name</p>
-                        <p>{profile?.first_name || ''} {profile?.last_name || ''}</p>
+                        <p>{user?.first_name || ''} {user?.last_name || ''}</p>
                       </div>
                     </div>
                     <div className="flex items-center">
                       <Mail className="h-4 w-4 text-muted-foreground mr-2" />
                       <div>
                         <p className="text-sm text-muted-foreground">Email</p>
-                        <p>{profile?.email || 'Not specified'}</p>
+                        <p>{user?.email || 'Not specified'}</p>
                       </div>
                     </div>
                     <div className="flex items-center">
                       <Phone className="h-4 w-4 text-muted-foreground mr-2" />
                       <div>
                         <p className="text-sm text-muted-foreground">Phone</p>
-                        <p>{profile?.phone_number || 'Not specified'}</p>
+                        <p>{user?.phone_number || 'Not specified'}</p>
                       </div>
                     </div>
                     <div className="flex items-center">
@@ -430,8 +431,8 @@ const ProviderProfile: React.FC = () => {
                       <div>
                         <p className="text-sm text-muted-foreground">Location</p>
                         <p>
-                          {profile?.city && profile?.country 
-                            ? `${profile.city}, ${profile.country}` 
+                          {user?.city && user?.country 
+                            ? `${user.city}, ${user.country}` 
                             : 'Not specified'}
                         </p>
                       </div>
@@ -439,7 +440,7 @@ const ProviderProfile: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-medium mb-4">Business Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6">
@@ -447,22 +448,22 @@ const ProviderProfile: React.FC = () => {
                     <Briefcase className="h-4 w-4 text-muted-foreground mr-2" />
                     <div>
                       <p className="text-sm text-muted-foreground">Business Name</p>
-                      <p>{providerData?.business_name || 'Not specified'}</p>
+                      <p>{providerProfileData?.business_name || 'Not specified'}</p>
                     </div>
                   </div>
                   <div className="flex items-center">
                     <Clock className="h-4 w-4 text-muted-foreground mr-2" />
                     <div>
                       <p className="text-sm text-muted-foreground">Verification Status</p>
-                      <p className="capitalize">{providerData?.verification_status || 'Pending'}</p>
+                      <p className="capitalize">{providerProfileData?.verification_status || 'Pending'}</p>
                     </div>
                   </div>
                 </div>
-                
-                {providerData?.business_description && (
+
+                {providerProfileData?.business_description && (
                   <div className="mt-4">
                     <p className="text-sm text-muted-foreground mb-1">Business Description</p>
-                    <p className="text-sm">{providerData.business_description}</p>
+                    <p className="text-sm">{providerProfileData.business_description}</p>
                   </div>
                 )}
               </div>
@@ -470,7 +471,7 @@ const ProviderProfile: React.FC = () => {
           )}
         </CardContent>
       </Card>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
@@ -484,7 +485,7 @@ const ProviderProfile: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center">
@@ -497,7 +498,7 @@ const ProviderProfile: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center">
@@ -505,13 +506,13 @@ const ProviderProfile: React.FC = () => {
                 <User className="h-6 w-6 text-purple-600" />
               </div>
               <h3 className="text-lg font-medium">Rating</h3>
-              <p className="text-3xl font-bold mt-2">{providerData?.rating || '0.0'}</p>
+              <p className="text-3xl font-bold mt-2">{providerProfileData?.rating || '0.0'}</p>
               <p className="text-sm text-muted-foreground">Average customer rating</p>
             </div>
           </CardContent>
         </Card>
       </div>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Security Settings</CardTitle>
