@@ -1,7 +1,21 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { RealtimeTable, RealtimeQueryResult } from '@/types/supabase';
+
+export interface RealtimeTable {
+  table: string;
+  filter?: Record<string, any>;
+  order?: { column: string; ascending: boolean };
+  limit?: number;
+  onDataChange: (payload: any) => void;
+}
+
+export interface RealtimeQueryResult<T> {
+  data: T[];
+  error: string;
+  loading: boolean;
+  refetch: () => Promise<void>;
+}
 
 export function useRealtimeQuery<T>(tableName: string, options: any = {}): RealtimeQueryResult<T> {
   const [data, setData] = useState<T[]>([]);
@@ -11,17 +25,20 @@ export function useRealtimeQuery<T>(tableName: string, options: any = {}): Realt
   const fetchData = async () => {
     setLoading(true);
     try {
+      // @ts-ignore - Suppressing type error for the dynamic table name
       let query = supabase.from(tableName).select('*');
 
       // Apply filters
       if (options.filter) {
         Object.entries(options.filter).forEach(([key, value]) => {
+          // @ts-ignore - Suppressing to allow dynamic column name
           query = query.eq(key, value);
         });
       }
 
       // Apply order
       if (options.order) {
+        // @ts-ignore - Suppressing to allow dynamic column name
         query = query.order(options.order.column, {
           ascending: options.order.ascending,
         });
@@ -68,17 +85,20 @@ export function useRealtimeData<T>(realtimeConfig: RealtimeTable): RealtimeQuery
   const fetchData = async () => {
     setLoading(true);
     try {
+      // @ts-ignore - Suppressing type error for the dynamic table name
       let query = supabase.from(realtimeConfig.table).select('*');
 
       // Apply filters
       if (realtimeConfig.filter) {
         Object.entries(realtimeConfig.filter).forEach(([key, value]) => {
+          // @ts-ignore - Suppressing to allow dynamic column name
           query = query.eq(key, value);
         });
       }
 
       // Apply order
       if (realtimeConfig.order) {
+        // @ts-ignore - Suppressing to allow dynamic column name
         query = query.order(realtimeConfig.order.column, {
           ascending: realtimeConfig.order.ascending,
         });

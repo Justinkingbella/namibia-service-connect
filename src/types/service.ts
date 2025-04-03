@@ -14,9 +14,10 @@ export type ServiceCategory =
   | 'freelance'
   | 'transport'
   | 'health'
-  | 'all';
+  | 'all'
+  | string; // Add string to make it more flexible with DB values
 
-export type PricingModel = 'hourly' | 'fixed' | string;
+export type PricingModel = 'hourly' | 'fixed' | string; // Add string to make it more flexible with DB values
 
 export type PaymentMethod =
   | 'credit_card'

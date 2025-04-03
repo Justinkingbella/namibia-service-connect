@@ -2,39 +2,36 @@
 export interface PaymentTransaction {
   id: string;
   userId: string;
-  bookingId?: string;
   amount: number;
   fee: number;
   netAmount: number;
   currency: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
   method: string;
   gateway: string;
   reference: string;
-  description: string;
-  metadata?: Record<string, any>;
-  createdAt: Date;
-  updatedAt: Date;
-  // Additional properties needed
-  transactionType?: string;
-  paymentMethod?: string;
   referenceId?: string;
+  transactionType: string;
+  paymentMethod?: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
+  description: string;
+  metadata: Record<string, any>;
+  gatewayResponse?: Record<string, any>;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 export interface ProviderEarnings {
   id: string;
   providerId: string;
-  periodStart: Date;
-  periodEnd: Date;
+  periodStart: string | Date;
+  periodEnd: string | Date;
   totalEarnings: number;
+  totalBookings: number;
   commissionPaid: number;
   netEarnings: number;
-  totalBookings: number;
   payoutStatus: 'pending' | 'processing' | 'completed';
-  payoutDate?: Date;
-  payoutReference?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 export interface ProviderPayout {
@@ -43,25 +40,15 @@ export interface ProviderPayout {
   amount: number;
   fee: number;
   netAmount: number;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
   paymentMethod: string;
-  referenceNumber?: string;
   bankAccountDetails?: Record<string, any>;
   mobilePaymentDetails?: Record<string, any>;
-  processedAt?: Date;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
   notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  processedAt?: string | Date;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
-export interface PaymentHistory {
-  id: string;
-  userId: string;
-  bookingId?: string;
-  amount: number;
-  description: string;
-  transactionId?: string;
-  status: string;
-  paymentMethod: string;
-  createdAt: Date;
-}
+// Re-export the Dispute type from booking since it's used in payments context too
+export { Dispute } from './booking';

@@ -84,14 +84,18 @@ export const useConversations = () => {
             return null;
           }
 
+          // Convert to our expected Conversation format
           return {
             id: conversation.id,
-            recipientId: profileData.id,
-            recipientName: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || 'Unknown User',
-            recipientAvatar: profileData.avatar_url,
+            participants: [user.id, otherUserId],
             lastMessage: conversation.last_message || '',
             lastMessageDate: new Date(conversation.last_message_date),
-            unreadCount: conversation.unread_count || 0
+            status: conversation.status || 'active',
+            createdAt: new Date(conversation.created_at),
+            unreadCount: conversation.unread_count || 0,
+            recipientId: profileData.id,
+            recipientName: `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || 'Unknown User',
+            recipientAvatar: profileData.avatar_url
           } as Conversation;
         })
       );
@@ -127,11 +131,14 @@ export const useConversations = () => {
           id: msg.id,
           conversationId: msg.conversation_id,
           senderId: msg.sender_id,
-          text: msg.content,
+          recipientId: msg.recipient_id || '',
+          content: msg.content || '',
+          text: msg.content || '', // For backward compatibility
           timestamp: new Date(msg.created_at),
+          createdAt: new Date(msg.created_at),
           isRead: msg.read,
           attachments: msg.attachments || []
-        }));
+        } as Message));
 
         setMessages(prev => ({
           ...prev,
@@ -193,9 +200,9 @@ export const useConversations = () => {
     if (!user) return false;
 
     try {
-      // First get the recipient id
+      // Find the recipient id from the conversation
       const conversation = conversations.find(c => c.id === conversationId);
-      if (!conversation) return false;
+      if (!conversation || !conversation.recipientId) return false;
 
       const { error } = await supabase
         .from('messages')

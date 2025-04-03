@@ -20,7 +20,6 @@ const SubscriptionManagement = () => {
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Use real-time data hook to get and listen for subscription plan changes
   const { 
     data: subscriptionPlans = [], 
     loading: isLoading, 
@@ -54,7 +53,6 @@ const SubscriptionManagement = () => {
     setPermissionError(null);
     
     try {
-      // Convert features to the correct format
       const planToInsert = {
         name: plan.name,
         description: plan.description,
@@ -82,7 +80,6 @@ const SubscriptionManagement = () => {
       setIsOpen(false);
       toast.success(`${plan.name} has been successfully created.`);
       
-      // The real-time subscription should automatically update the UI
       await refetch();
     } catch (error: any) {
       console.error('Error creating subscription plan:', error);
@@ -90,7 +87,7 @@ const SubscriptionManagement = () => {
       if (error.code === '42501') {
         setPermissionError("Permission denied. You don't have sufficient privileges to create subscription plans.");
       } else {
-        toast.error("Failed to create subscription plan.");
+        handleError(error);
       }
     } finally {
       setIsSubmitting(false);
@@ -104,7 +101,6 @@ const SubscriptionManagement = () => {
     setPermissionError(null);
     
     try {
-      // Convert features to the correct format
       const planToUpdate = {
         name: plan.name,
         description: plan.description,
@@ -134,7 +130,6 @@ const SubscriptionManagement = () => {
       setEditingPlan(null);
       toast.success(`${plan.name} has been successfully updated.`);
       
-      // The real-time subscription should automatically update the UI
       await refetch();
     } catch (error: any) {
       console.error('Error updating subscription plan:', error);
@@ -142,7 +137,7 @@ const SubscriptionManagement = () => {
       if (error.code === '42501') {
         setPermissionError("Permission denied. You don't have sufficient privileges to update subscription plans.");
       } else {
-        toast.error("Failed to update subscription plan.");
+        handleError(error);
       }
     } finally {
       setIsSubmitting(false);
@@ -169,7 +164,6 @@ const SubscriptionManagement = () => {
       
       toast.success(`${planToDelete?.name} has been successfully deleted.`);
       
-      // The real-time subscription should automatically update the UI
       await refetch();
     } catch (error: any) {
       console.error('Error deleting subscription plan:', error);
@@ -177,7 +171,7 @@ const SubscriptionManagement = () => {
       if (error.code === '42501') {
         setPermissionError("Permission denied. You don't have sufficient privileges to delete subscription plans.");
       } else {
-        toast.error("Failed to delete subscription plan.");
+        handleError(error);
       }
     } finally {
       setIsSubmitting(false);
@@ -185,7 +179,6 @@ const SubscriptionManagement = () => {
   };
 
   const handleEditSubscription = (plan: SubscriptionPlan) => {
-    // Create a properly formatted plan for editing
     const formattedPlan: SubscriptionPlan = {
       ...plan,
       features: plan.features && Array.isArray(plan.features) 
@@ -228,7 +221,6 @@ const SubscriptionManagement = () => {
       
       toast.success(`${plan.name} has been ${updatedStatus ? 'activated' : 'deactivated'}.`);
       
-      // The real-time subscription should automatically update the UI
       await refetch();
     } catch (error: any) {
       console.error('Error toggling plan status:', error);
@@ -236,14 +228,13 @@ const SubscriptionManagement = () => {
       if (error.code === '42501') {
         setPermissionError("Permission denied. You don't have sufficient privileges to update subscription plans.");
       } else {
-        toast.error("Failed to update plan status.");
+        handleError(error);
       }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Format plan data from Supabase to match our SubscriptionPlan type
   const formattedPlans = subscriptionPlans.map((plan: any) => ({
     id: plan.id,
     name: plan.name,
@@ -314,7 +305,6 @@ const SubscriptionManagement = () => {
         </Button>
       </div>
       
-      {/* Plans Grid View */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredPlans.map((plan) => (
           <Card key={plan.id} className={`shadow-sm transition duration-200 h-full flex flex-col ${!plan.isActive ? 'opacity-70' : ''}`}>
@@ -432,7 +422,6 @@ const SubscriptionManagement = () => {
         </div>
       )}
       
-      {/* Table View for larger screens */}
       <div className="hidden lg:block mt-8">
         <h2 className="text-xl font-semibold mb-4">Subscription Plans Table View</h2>
         <div className="border rounded-md overflow-hidden overflow-x-auto">
@@ -505,7 +494,6 @@ const SubscriptionManagement = () => {
         </div>
       </div>
       
-      {/* Subscription Form Sheet */}
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
         <SheetContent className="sm:max-w-lg w-full overflow-y-auto max-h-screen">
           <SheetHeader>
@@ -528,6 +516,21 @@ const SubscriptionManagement = () => {
       </Sheet>
     </div>
   );
+};
+
+export const handleError = (error: any) => {
+  console.error('Subscription operation failed:', error);
+  let errorMessage = 'An unexpected error occurred';
+  
+  if (typeof error === 'object' && error !== null) {
+    if ('message' in error) {
+      errorMessage = error.message;
+    } else if ('error' in error) {
+      errorMessage = error.error;
+    }
+  }
+  
+  toast.error(errorMessage);
 };
 
 export default SubscriptionManagement;
