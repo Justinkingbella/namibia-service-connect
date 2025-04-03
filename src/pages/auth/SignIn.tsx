@@ -23,7 +23,7 @@ const SignIn = () => {
   const { toast } = useToast();
 
   // On initial load, sign out any existing users
-  useEffect(() => {
+  /*useEffect(() => {
     const clearExistingAuth = async () => {
       // Only run on initial component mount to reset authentication state
       if (user) {
@@ -37,7 +37,7 @@ const SignIn = () => {
     };
     
     clearExistingAuth();
-  }, []); // Empty dependency array ensures this only runs once
+  }, []); *// Empty dependency array ensures this only runs once
 
   // Redirect if user is authenticated after signing in
   useEffect(() => {
