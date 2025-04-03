@@ -33,7 +33,7 @@ const ProviderProfilePage = () => {
         if (user.role === 'admin') {
           navigate('/admin/profile');
         } else if (user.role === 'customer') {
-          navigate('/dashboard/profile');
+          navigate('/customer/profile');
         }
       } else if (!user) {
         // Redirect to login if no user
