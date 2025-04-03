@@ -1,39 +1,5 @@
 
-// Use export type for interfaces to prevent TS1205 error
-export type PaymentTransaction = {
-  id: string;
-  userId: string;
-  amount: number;
-  fee: number;
-  netAmount: number;
-  currency: string;
-  method: string;
-  gateway: string;
-  reference: string;
-  referenceId?: string;
-  transactionType: string;
-  paymentMethod?: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
-  description: string;
-  metadata: Record<string, any>;
-  gatewayResponse?: Record<string, any>;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-};
-
-// Add missing types
-export type PaymentMethod = {
-  id: string;
-  userId: string;
-  name: string;
-  type: string;
-  details: Record<string, any>;
-  isDefault: boolean;
-  createdAt: Date;
-};
-
-// Add PaymentHistory type
-export type PaymentHistory = {
+export interface PaymentHistory {
   id: string;
   userId: string;
   amount: number;
@@ -41,11 +7,10 @@ export type PaymentHistory = {
   date: Date;
   status: string;
   type: string;
-  reference?: string;
-};
+  reference: string;
+}
 
-// Add new types
-export type ProviderEarnings = {
+export interface ProviderEarnings {
   id: string;
   providerId: string;
   periodStart: Date;
@@ -59,9 +24,9 @@ export type ProviderEarnings = {
   payoutReference?: string;
   createdAt: Date;
   updatedAt: Date;
-};
+}
 
-export type ProviderPayout = {
+export interface ProviderPayout {
   id: string;
   providerId: string;
   amount: number;
@@ -69,14 +34,11 @@ export type ProviderPayout = {
   netAmount: number;
   paymentMethod: string;
   status: string;
-  reference?: string;
+  reference: string;
   bankDetails?: Record<string, any>;
   mobilePaymentDetails?: Record<string, any>;
   notes?: string;
   processedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
-};
-
-// Re-export the Dispute type
-export type { Dispute } from './booking';
+}

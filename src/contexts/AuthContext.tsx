@@ -168,12 +168,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             role: 'customer',
             loyaltyPoints: profileData.loyalty_points || 0,
             isActive: true,
-            preferredCategories: (customerData && 'preferred_categories' in customerData) 
-              ? customerData.preferred_categories 
-              : [],
-            notificationPreferences: (customerData && 'notification_preferences' in customerData) 
-              ? customerData.notification_preferences 
-              : { email: true, sms: false, push: true },
+            preferredCategories: customerData?.preferred_categories || [],
+            notificationPreferences: customerData?.notification_preferences || { email: true, sms: false, push: true },
             createdAt: new Date(profileData.created_at),
             isVerified: profileData.email_verified || false
           };
@@ -206,7 +202,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             isActive: true,
             businessName: providerData?.business_name || '',
             businessDescription: providerData?.business_description || '',
-            verificationStatus: (providerData?.verification_status as ProviderVerificationStatus) || 'pending',
+            verificationStatus: (providerData?.verification_status as any) || 'pending',
             rating: providerData?.rating || 0,
             reviewCount: providerData?.rating_count || 0,
             categories: providerData?.categories || [],
@@ -263,7 +259,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.info('Attempting login with credentials:', email);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (!error) {
+        console.info('Sign in successful');
+      } else {
+        console.error('Sign in failed:', error);
+      }
       return { error };
     } catch (error) {
       console.error('Error in signIn:', error);
@@ -285,8 +287,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         options: {
           data: {
             role,
-            first_name: 'firstName' in userData ? userData.firstName : '',
-            last_name: 'lastName' in userData ? userData.lastName : '',
+            first_name: userData.firstName || '',
+            last_name: userData.lastName || '',
             business_name: role === 'provider' && 'businessName' in userData ? userData.businessName : ''
           }
         }
@@ -301,17 +303,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       
       // Then create the basic profile
+      const profileData = {
+        id: data.user.id,
+        email,
+        first_name: userData.firstName || '',
+        last_name: userData.lastName || '',
+        phone_number: 'phoneNumber' in userData ? userData.phoneNumber : '',
+        role,
+        created_at: new Date().toISOString()
+      };
+      
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
-          id: data.user.id,
-          email,
-          first_name: 'firstName' in userData ? userData.firstName : '',
-          last_name: 'lastName' in userData ? userData.lastName : '',
-          phone_number: 'phoneNumber' in userData ? userData.phoneNumber : '',
-          role,
-          created_at: new Date().toISOString()
-        });
+        .insert(profileData);
         
       if (profileError) {
         console.error('Error creating profile:', profileError);
@@ -319,18 +323,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       
       // If this is a provider, create the provider record too
-      if (role === 'provider' && 'businessName' in userData) {
+      if (role === 'provider') {
+        const providerData = {
+          id: data.user.id,
+          email: email,
+          business_name: 'businessName' in userData ? userData.businessName || '' : `${userData.firstName}'s Business`,
+          business_description: 'businessDescription' in userData ? userData.businessDescription || '' : '',
+          verification_status: 'pending',
+          subscription_tier: 'free',
+          created_at: new Date().toISOString()
+        };
+        
         const { error: providerError } = await supabase
           .from('service_providers')
-          .insert({
-            id: data.user.id,
-            email: email,
-            business_name: userData.businessName || '',
-            business_description: userData.businessDescription || '',
-            verification_status: 'pending',
-            subscription_tier: 'free',
-            created_at: new Date().toISOString()
-          });
+          .insert(providerData);
           
         if (providerError) {
           console.error('Error creating provider record:', providerError);
@@ -338,12 +344,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       } else if (role === 'customer') {
         // Create customer record
+        const customerData = {
+          id: data.user.id,
+          created_at: new Date().toISOString()
+        };
+        
         const { error: customerError } = await supabase
           .from('customers')
-          .insert({
-            id: data.user.id,
-            created_at: new Date().toISOString()
-          });
+          .insert(customerData);
           
         if (customerError) {
           console.error('Error creating customer record:', customerError);

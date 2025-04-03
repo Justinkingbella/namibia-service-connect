@@ -46,7 +46,27 @@ const SignUp = () => {
     
     try {
       setIsSubmitting(true);
-      await signUp(email, password, name, role);
+      
+      // Extract first and last name from the full name
+      const nameParts = name.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      // Create the user data object with the correct properties
+      const userData = {
+        firstName,
+        lastName,
+        email,
+        // For providers, we need to include business name
+        ...(role === 'provider' && { businessName: `${firstName}'s Business` }),
+      };
+      
+      const { error } = await signUp(email, password, role, userData);
+      
+      if (error) {
+        throw error;
+      }
+      
       toast({
         title: "Account created!",
         description: "You've been successfully registered.",
