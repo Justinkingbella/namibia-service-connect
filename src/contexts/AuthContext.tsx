@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -42,10 +41,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        // Transform Supabase Session to our custom Session
         const customSession: CustomSession = {
           access_token: session.access_token,
           token_type: session.token_type,
@@ -55,11 +52,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         };
         
         setSession(customSession);
-        // Convert Supabase User to our User type
         const user: User = {
           id: session.user.id,
           email: session.user.email || '',
-          role: 'customer', // Default, will be updated by fetchUserProfile
+          role: 'customer',
           firstName: '',
           lastName: '',
           isActive: true,
@@ -75,10 +71,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     });
 
-    // Initial session fetch
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        // Transform Supabase Session to our custom Session
         const customSession: CustomSession = {
           access_token: session.access_token,
           token_type: session.token_type,
@@ -88,11 +82,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         };
         
         setSession(customSession);
-        // Convert Supabase User to our User type
         const user: User = {
           id: session.user.id,
           email: session.user.email || '',
-          role: 'customer', // Default, will be updated by fetchUserProfile
+          role: 'customer',
           firstName: '',
           lastName: '',
           isActive: true,
@@ -112,7 +105,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   async function fetchUserProfile(supabaseUser: SupabaseUser) {
     try {
-      // First, get the basic user data from the profiles table
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -128,7 +120,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const role = profileData.role as UserRole;
       setUserRole(role);
 
-      // Update user with profile data
       setUser(prev => {
         if (!prev) return prev;
         return {
@@ -144,20 +135,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         };
       });
 
-      // Depending on the role, fetch additional data from the appropriate table
       switch (role) {
         case 'customer': {
-          // Get customer-specific data
           const { data: customerData, error: customerError } = await supabase
             .from('customers')
             .select('*')
             .eq('id', supabaseUser.id)
             .maybeSingle();
 
-          // It's okay if customer data doesn't exist yet or has an error
-          // We'll use profile data instead
-          
-          // Create a customer profile
+          if (customerError && customerError.code !== 'PGRST116') {
+            console.error('Error fetching customer data:', customerError);
+          }
+
           const customer: Customer = {
             id: supabaseUser.id,
             email: supabaseUser.email!,
@@ -179,18 +168,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         case 'provider': {
-          // Get provider-specific data
           const { data: providerData, error: providerError } = await supabase
             .from('service_providers')
             .select('*')
             .eq('id', supabaseUser.id)
             .maybeSingle();
 
-          if (providerError && providerError.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
+          if (providerError && providerError.code !== 'PGRST116') {
             console.error('Error fetching provider data:', providerError);
           }
 
-          // Combine base profile with provider-specific data
           const provider: Provider = {
             id: supabaseUser.id,
             email: supabaseUser.email!,
@@ -217,18 +204,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         case 'admin': {
-          // Get admin permissions
           const { data: adminData, error: adminError } = await supabase
             .from('admin_permissions')
             .select('*')
             .eq('user_id', supabaseUser.id)
             .maybeSingle();
 
-          if (adminError && adminError.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
+          if (adminError && adminError.code !== 'PGRST116') {
             console.error('Error fetching admin data:', adminError);
           }
 
-          // Create admin profile
           const admin: Admin = {
             id: supabaseUser.id,
             email: supabaseUser.email!,
@@ -280,7 +265,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     userData: Partial<Customer | Provider>
   ) => {
     try {
-      // First, create the auth user
+      console.log('Signing up user with role:', role, 'and data:', userData);
+      
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -295,14 +281,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
       
       if (error) {
+        console.error('Error creating user:', error);
         return { error, data: null };
       }
       
       if (!data.user) {
+        console.error('No user returned from signup');
         return { error: new Error('No user returned from signup'), data: null };
       }
       
-      // Then create the basic profile
+      console.log('User created successfully:', data.user.id);
+      
       const profileData = {
         id: data.user.id,
         email,
@@ -313,6 +302,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         created_at: new Date().toISOString()
       };
       
+      console.log('Creating profile with data:', profileData);
+      
       const { error: profileError } = await supabase
         .from('profiles')
         .insert(profileData);
@@ -322,17 +313,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { error: profileError, data: null };
       }
       
-      // If this is a provider, create the provider record too
+      console.log('Profile created successfully');
+      
       if (role === 'provider') {
         const providerData = {
           id: data.user.id,
-          email: email,
           business_name: 'businessName' in userData ? userData.businessName || '' : `${userData.firstName}'s Business`,
           business_description: 'businessDescription' in userData ? userData.businessDescription || '' : '',
           verification_status: 'pending',
           subscription_tier: 'free',
           created_at: new Date().toISOString()
         };
+        
+        console.log('Creating provider record with data:', providerData);
         
         const { error: providerError } = await supabase
           .from('service_providers')
@@ -342,12 +335,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.error('Error creating provider record:', providerError);
           return { error: providerError, data: null };
         }
+        
+        console.log('Provider record created successfully');
       } else if (role === 'customer') {
-        // Create customer record
         const customerData = {
           id: data.user.id,
+          preferred_categories: [],
+          notification_preferences: { email: true, sms: false, push: true },
           created_at: new Date().toISOString()
         };
+        
+        console.log('Creating customer record with data:', customerData);
         
         const { error: customerError } = await supabase
           .from('customers')
@@ -357,6 +355,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.error('Error creating customer record:', customerError);
           return { error: customerError, data: null };
         }
+        
+        console.log('Customer record created successfully');
       }
       
       return { error: null, data };
@@ -396,7 +396,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!user) return false;
     
     try {
-      // First update the base profile
       const baseProfileData: any = {
         first_name: data.firstName,
         last_name: data.lastName,
@@ -419,7 +418,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return false;
       }
       
-      // If this is a provider, update the provider record too
       if (userRole === 'provider' && 'businessName' in data) {
         const providerData: any = {
           business_name: data.businessName,
@@ -443,7 +441,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       }
       
-      // Update the local state
       if (userProfile) {
         if (userRole === 'provider' && userProfile.role === 'provider') {
           const updatedProfile: Provider = {
@@ -477,7 +474,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       }
       
-      // Update the user object as well
       setUser(prev => {
         if (!prev) return prev;
         return {
@@ -505,7 +501,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     userRole,
     userProfile,
     loading,
-    isLoading: loading, // Alias for backward compatibility
+    isLoading: loading,
     signIn,
     signUp,
     signOut,

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,6 +51,8 @@ const SignUp = () => {
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
       
+      console.log('Submitting registration with:', { firstName, lastName, email, role });
+      
       // Create the user data object with the correct properties
       const userData = {
         firstName,
@@ -64,6 +65,7 @@ const SignUp = () => {
       const { error } = await signUp(email, password, role, userData);
       
       if (error) {
+        console.error('Registration error:', error);
         throw error;
       }
       
