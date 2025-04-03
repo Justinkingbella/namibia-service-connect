@@ -14,8 +14,7 @@ function App() {
         {/* Provider routes */}
         <Route path="/provider/dashboard" element={<RoleBasedRoute allowedRoles="provider"><ProviderDashboard /></RoleBasedRoute>} />
         <Route path="/provider/services/create" element={<RoleBasedRoute allowedRoles="provider"><CreateServicePage /></RoleBasedRoute>} />
-        <Route path="/provider/profile" element={<RoleBasedRoute allowedRoles="provider"><ProviderProfilePage /></RoleBasedRoute>} />
-        <Route path="/dashboard/provider/profile" element={<RoleBasedRoute allowedRoles="provider"><ProviderProfilePage /></RoleBasedRoute>} />
+        <Route path="/provider/profile" element={<RoleBasedRoute allowedRoles={['provider']}><ProviderProfilePage /></RoleBasedRoute>} />
         <Route path="/provider/payments" element={<RoleBasedRoute allowedRoles="provider"><PaymentDetailsPage /></RoleBasedRoute>} />
         {/* Add other routes here */}
       </Routes>
