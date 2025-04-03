@@ -13,21 +13,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   allowedRoles = ['admin', 'provider', 'customer'] 
 }) => {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
     // Log authentication state for debugging
     console.log('ProtectedRoute - Auth State:', { 
       user, 
-      loading, 
+      isLoading, 
       currentPath: location.pathname,
       allowedRoles
     });
-  }, [user, loading, location.pathname, allowedRoles]);
+  }, [user, isLoading, location.pathname, allowedRoles]);
 
   // While auth is loading, show loading indicator and don't redirect
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center">

@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import { fetchPaymentHistory } from '@/services/paymentService';
+import { fetchUserTransactions } from '@/services/paymentService';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { CreditCard, Download, Filter } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -18,13 +19,13 @@ export default function PaymentHistory() {
   const { data: transactions, isLoading } = useQuery({
     queryKey: ['paymentTransactions', user?.id, transactionType],
     queryFn: async () => {
-      const allTransactions = await fetchPaymentHistory(user?.id || '');
+      const allTransactions = await fetchUserTransactions(user?.id || '');
       
       if (transactionType === 'all') {
         return allTransactions;
       }
       
-      return allTransactions.filter(t => t.type === transactionType);
+      return allTransactions.filter(t => t.transactionType === transactionType);
     },
     enabled: !!user?.id
   });
@@ -107,14 +108,14 @@ export default function PaymentHistory() {
                 {transactions.map((transaction) => (
                   <div key={transaction.id} className="grid grid-cols-6 gap-2 p-4 text-sm">
                     <div className="font-medium">
-                      {format(new Date(transaction.date), 'MMM d, yyyy')}
+                      {format(new Date(transaction.createdAt), 'MMM d, yyyy')}
                     </div>
                     <div>{transaction.description || 'Transaction'}</div>
-                    <div>{getTransactionTypeIcon(transaction.type)}</div>
-                    <div className="capitalize">{transaction.type.replace('_', ' ')}</div>
+                    <div>{getTransactionTypeIcon(transaction.transactionType)}</div>
+                    <div className="capitalize">{transaction.paymentMethod.replace('_', ' ')}</div>
                     <div>{getStatusBadge(transaction.status)}</div>
-                    <div className={`text-right font-medium ${transaction.type === 'payout' ? 'text-red-600' : ''}`}>
-                      {transaction.type === 'payout' ? '-' : ''}
+                    <div className={`text-right font-medium ${transaction.transactionType === 'payout' ? 'text-red-600' : ''}`}>
+                      {transaction.transactionType === 'payout' ? '-' : ''}
                       N${transaction.amount.toFixed(2)}
                     </div>
                   </div>

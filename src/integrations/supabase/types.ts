@@ -455,33 +455,6 @@ export type Database = {
         }
         Relationships: []
       }
-      customers: {
-        Row: {
-          created_at: string | null
-          id: string
-          notification_preferences: Json | null
-          preferred_categories: string[] | null
-          saved_services: string[] | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id: string
-          notification_preferences?: Json | null
-          preferred_categories?: string[] | null
-          saved_services?: string[] | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          notification_preferences?: Json | null
-          preferred_categories?: string[] | null
-          saved_services?: string[] | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       disputes: {
         Row: {
           admin_assigned_to: string | null
@@ -1625,7 +1598,6 @@ export type Database = {
           created_at: string | null
           email: string
           id: string
-          is_active: boolean | null
           phone_number: string | null
           rating: number | null
           rating_count: number | null
@@ -1650,7 +1622,6 @@ export type Database = {
           created_at?: string | null
           email: string
           id: string
-          is_active?: boolean | null
           phone_number?: string | null
           rating?: number | null
           rating_count?: number | null
@@ -1675,7 +1646,6 @@ export type Database = {
           created_at?: string | null
           email?: string
           id?: string
-          is_active?: boolean | null
           phone_number?: string | null
           rating?: number | null
           rating_count?: number | null

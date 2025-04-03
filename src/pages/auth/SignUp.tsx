@@ -20,7 +20,6 @@ const SignUp = () => {
   const [passwordError, setPasswordError] = useState('');
   const [role, setRole] = useState<UserRole>('customer');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [businessName, setBusinessName] = useState('');
   
   const { signUp, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -47,46 +46,12 @@ const SignUp = () => {
     
     try {
       setIsSubmitting(true);
-      
-      // Extract first and last name from the full name
-      const nameParts = name.trim().split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-      
-      console.log('Submitting registration with:', { firstName, lastName, email, role, businessName });
-      
-      // Create the user data object with the correct properties based on role
-      const userData = role === 'provider' 
-        ? {
-            firstName,
-            lastName,
-            email,
-            businessName: businessName || `${firstName}'s Business`
-          }
-        : {
-            firstName,
-            lastName,
-            email
-          };
-      
-      const { error } = await signUp(email, password, role, userData);
-      
-      if (error) {
-        console.error('Registration error:', error);
-        throw error;
-      }
-      
+      await signUp(email, password, name, role);
       toast({
         title: "Account created!",
         description: "You've been successfully registered.",
       });
-      
-      // Navigate to the correct dashboard based on role
-      if (role === 'provider') {
-        navigate('/dashboard/provider/profile');
-      } else {
-        navigate('/dashboard/customer/profile');
-      }
+      navigate('/dashboard');
     } catch (error: any) {
       console.error('Registration failed:', error);
       toast({
@@ -170,22 +135,6 @@ const SignUp = () => {
                     className="text-sm w-full"
                   />
                 </div>
-                
-                {role === 'provider' && (
-                  <div className="space-y-1">
-                    <label htmlFor="businessName" className="block text-sm font-medium text-gray-700">
-                      Business Name
-                    </label>
-                    <Input
-                      id="businessName"
-                      type="text"
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                      placeholder="Your Business Name"
-                      className="text-sm w-full"
-                    />
-                  </div>
-                )}
                 
                 <div className="space-y-1">
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700">
