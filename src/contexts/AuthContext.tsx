@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -43,7 +42,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     // First set up the auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session ? 'Session exists' : 'No session');
+      
       if (session) {
         const customSession: CustomSession = {
           access_token: session.access_token,
@@ -80,6 +81,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Then check for an existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session ? 'Session exists' : 'No session');
+      
       if (session) {
         const customSession: CustomSession = {
           access_token: session.access_token,
@@ -393,7 +396,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    console.log('Signing out user');
+    try {
+      await supabase.auth.signOut();
+      console.log('User signed out successfully');
+      
+      // Clear all state explicitly
+      setUser(null);
+      setSession(null);
+      setUserRole(null);
+      setUserProfile(null);
+      
+      // Force some browser storage cleanup
+      localStorage.removeItem('supabase.auth.token');
+      
+      return { error: null };
+    } catch (error) {
+      console.error('Error signing out:', error);
+      return { error };
+    }
   };
 
   const forgotPassword = async (email: string) => {

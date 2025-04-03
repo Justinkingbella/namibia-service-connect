@@ -33,8 +33,8 @@ const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles 
         // Admin trying to access non-admin route
         <Navigate to="/admin/dashboard" replace />
       ) : (
-        // Default fallback - redirect to appropriate dashboard based on role or to auth
-        <Navigate to={user?.role ? `/${user.role}/dashboard` : "/auth/sign-in"} replace />
+        // Default fallback - redirect to sign-in
+        <Navigate to="/auth/sign-in" replace />
       )}
     </ProtectedRoute>
   );

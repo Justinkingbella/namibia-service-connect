@@ -13,7 +13,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   allowedRoles = ['admin', 'provider', 'customer'] 
 }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -43,13 +43,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     console.log('No user found, redirecting to sign-in');
     // Redirect to sign-in page but save the location they tried to access
     return <Navigate to="/auth/sign-in" state={{ from: location }} replace />;
-  }
-
-  // Redirect the user to their role-specific dashboard if they're at the generic /dashboard
-  if (location.pathname === '/dashboard') {
-    const roleDashboard = `/${user.role}/dashboard`;
-    console.log(`Redirecting to role-specific dashboard: ${roleDashboard}`);
-    return <Navigate to={roleDashboard} replace />;
   }
 
   // If user doesn't have permission, redirect to their role-specific dashboard

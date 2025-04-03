@@ -7,7 +7,7 @@ import { useSupabase } from '@/contexts/SupabaseContext';
 import { enableSupabaseRealtime } from '@/services/enableRealtimeSupabase';
 
 const Dashboard = () => {
-  const { user, loading } = useAuth(); 
+  const { user, loading, signOut } = useAuth(); 
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isSubscribed, enableRealtime } = useSupabase();
@@ -27,7 +27,6 @@ const Dashboard = () => {
         }
         
         // Redirect to the appropriate dashboard based on user role
-        // Using /${role}/dashboard format instead of /dashboard/${role}
         const dashboardPath = `/${user.role}/dashboard`;
         console.log(`Redirecting to: ${dashboardPath}`);
         navigate(dashboardPath, { replace: true });
@@ -39,16 +38,19 @@ const Dashboard = () => {
           variant: "destructive"
         });
         navigate('/auth/sign-in', { replace: true });
+        
+        // Clear any stale session data
+        signOut();
       }
     }
-  }, [navigate, user, loading, toast, isSubscribed, enableRealtime]);
+  }, [navigate, user, loading, toast, isSubscribed, enableRealtime, signOut]);
 
   // Show loading state while redirecting
   return (
     <div className="flex items-center justify-center h-screen bg-gradient-to-r from-blue-50 to-blue-100">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-blue-800">Redirecting to your dashboard...</p>
+        <p className="text-blue-800">Redirecting...</p>
       </div>
     </div>
   );
