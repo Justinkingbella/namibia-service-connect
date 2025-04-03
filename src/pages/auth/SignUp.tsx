@@ -81,11 +81,13 @@ const SignUp = () => {
       });
       
       // Navigate to the correct dashboard based on role - using new route structure
-      if (role === 'provider') {
+      // Use the correct role from the response
+      const userRole = userData.role || role;
+      if (userRole === 'provider') {
         navigate('/provider/dashboard');
-      } else if (role === 'customer') {
+      } else if (userRole === 'customer') {
         navigate('/customer/dashboard');
-      } else if (role === 'admin') {
+      } else if (userRole === 'admin') {
         navigate('/admin/dashboard');
       }
     } catch (error: any) {

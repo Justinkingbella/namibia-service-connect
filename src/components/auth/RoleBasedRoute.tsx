@@ -34,22 +34,29 @@ const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles 
     return <Navigate to="/auth/sign-in" state={{ from: location }} replace />;
   }
 
+  // Enhanced role checking and redirection logic
   if (!rolesToCheck.includes(user.role)) {
-    // Redirect to appropriate dashboard based on user's role
     let redirectPath;
+    
+    // Explicit role-based routing
     switch (user.role) {
       case 'admin':
         redirectPath = '/admin/dashboard';
+        console.log('Admin user detected, redirecting to admin dashboard');
         break;
       case 'provider':
         redirectPath = '/provider/dashboard';
+        console.log('Provider user detected, redirecting to provider dashboard');
         break;
       case 'customer':
         redirectPath = '/customer/dashboard';
+        console.log('Customer user detected, redirecting to customer dashboard');
         break;
       default:
+        console.log('Unknown role, redirecting to sign-in');
         redirectPath = '/auth/sign-in';
     }
+    
     console.log(`Unauthorized access, redirecting to: ${redirectPath}`);
     return <Navigate to={redirectPath} replace />;
   }

@@ -44,7 +44,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // First set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event, session ? 'Session exists' : 'No session');
-      
+
       if (session) {
         const customSession: CustomSession = {
           access_token: session.access_token,
@@ -53,19 +53,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
           refresh_token: session.refresh_token,
           user: session.user as unknown as User
         };
-        
+
         setSession(customSession);
+        // Get role from user metadata or default to customer
+        const userRole = session.user.user_metadata?.role || 'customer';
+        console.log('Setting user role from metadata:', userRole);
+
         const user: User = {
           id: session.user.id,
           email: session.user.email || '',
-          role: 'customer', // Default role, will be updated when profile is fetched
-          firstName: '',
-          lastName: '',
+          role: userRole, // Use role from metadata
+          firstName: session.user.user_metadata?.first_name || '',
+          lastName: session.user.user_metadata?.last_name || '',
           isActive: true,
           createdAt: new Date(session.user.created_at),
         };
         setUser(user);
-        
+
         // Use setTimeout to prevent recursive deadlocks with Supabase auth
         setTimeout(() => {
           fetchUserProfile(session.user);
@@ -82,7 +86,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Then check for an existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('Initial session check:', session ? 'Session exists' : 'No session');
-      
+
       if (session) {
         const customSession: CustomSession = {
           access_token: session.access_token,
@@ -91,19 +95,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
           refresh_token: session.refresh_token,
           user: session.user as unknown as User
         };
-        
+
         setSession(customSession);
+        // Get role from user metadata or default to customer
+        const userRole = session.user.user_metadata?.role || 'customer';
+        console.log('Setting user role from metadata:', userRole);
+
         const user: User = {
           id: session.user.id,
           email: session.user.email || '',
-          role: 'customer', // Default role, will be updated when profile is fetched
-          firstName: '',
-          lastName: '',
+          role: userRole, // Use role from metadata
+          firstName: session.user.user_metadata?.first_name || '',
+          lastName: session.user.user_metadata?.last_name || '',
           isActive: true,
           createdAt: new Date(session.user.created_at),
         };
         setUser(user);
-        
+
         // Use setTimeout to prevent recursive deadlocks with Supabase auth
         setTimeout(() => {
           fetchUserProfile(session.user);
@@ -134,7 +142,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setLoading(false);
           return;
         }
-        
+
         console.error('Error fetching user profile:', profileError);
         setLoading(false);
         return;
@@ -185,7 +193,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             createdAt: new Date(profileData.created_at),
             isVerified: profileData.email_verified || false
           };
-          
+
           setUserProfile(customer);
           break;
         }
@@ -221,7 +229,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             subscriptionTier: providerData?.subscription_tier || 'free',
             bankDetails: providerData?.bank_details || {}
           };
-          
+
           setUserProfile(provider);
           break;
         }
@@ -250,7 +258,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             createdAt: new Date(profileData.created_at),
             isVerified: true
           };
-          
+
           setUserProfile(admin);
           break;
         }
@@ -289,7 +297,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   ) => {
     try {
       console.log('Signing up user with role:', role, 'and data:', userData);
-      
+
       // 1. Create auth user with role in metadata
       const { data, error } = await supabase.auth.signUp({ 
         email, 
@@ -303,19 +311,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
         }
       });
-      
+
       if (error) {
         console.error('Error creating user:', error);
         return { error, data: null };
       }
-      
+
       if (!data.user) {
         console.error('No user returned from signup');
         return { error: new Error('No user returned from signup'), data: null };
       }
-      
+
       console.log('User created successfully:', data.user.id);
-      
+
       // 2. Create profile record
       const profileData = {
         id: data.user.id,
@@ -326,20 +334,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
         role, // Make sure role is saved in profiles table
         created_at: new Date().toISOString()
       };
-      
+
       console.log('Creating profile with data:', profileData);
-      
+
       const { error: profileError } = await supabase
         .from('profiles')
         .insert(profileData);
-        
+
       if (profileError) {
         console.error('Error creating profile:', profileError);
         return { error: profileError, data: null };
       }
-      
+
       console.log('Profile created successfully');
-      
+
       // 3. Create role-specific records based on the specified role
       if (role === 'provider') {
         // Create provider record
@@ -352,18 +360,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
           is_active: true,
           created_at: new Date().toISOString()
         };
-        
+
         console.log('Creating provider record with data:', providerData);
-        
+
         const { error: providerError } = await supabase
           .from('service_providers')
           .insert(providerData);
-          
+
         if (providerError) {
           console.error('Error creating provider record:', providerError);
           return { error: providerError, data: null };
         }
-        
+
         console.log('Provider record created successfully');
       } else if (role === 'customer') {
         // Create customer record
@@ -373,21 +381,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
           notification_preferences: { email: true, sms: false, push: true },
           created_at: new Date().toISOString()
         };
-        
+
         console.log('Creating customer record with data:', customerData);
-        
+
         const { error: customerError } = await supabase
           .from('customers')
           .insert(customerData);
-          
+
         if (customerError) {
           console.error('Error creating customer record:', customerError);
           return { error: customerError, data: null };
         }
-        
+
         console.log('Customer record created successfully');
       }
-      
+
       return { error: null, data };
     } catch (error) {
       console.error('Error in signUp:', error);
@@ -400,16 +408,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await supabase.auth.signOut();
       console.log('User signed out successfully');
-      
+
       // Clear all state explicitly
       setUser(null);
       setSession(null);
       setUserRole(null);
       setUserProfile(null);
-      
+
       // Force some browser storage cleanup
       localStorage.removeItem('supabase.auth.token');
-      
+
       return { error: null };
     } catch (error) {
       console.error('Error signing out:', error);
@@ -441,7 +449,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const updateProfile = async (data: Partial<Customer | Provider | Admin>): Promise<boolean> => {
     if (!user) return false;
-    
+
     try {
       const baseProfileData: any = {
         first_name: data.firstName,
@@ -449,45 +457,45 @@ export function AuthProvider({ children }: AuthProviderProps) {
         phone_number: data.phoneNumber,
         updated_at: new Date().toISOString()
       };
-      
+
       if ('avatar' in data && data.avatar) {
         baseProfileData['avatar_url'] = data.avatar;
       }
-      
+
       const { error: profileError } = await supabase
         .from('profiles')
         .update(baseProfileData)
         .eq('id', user.id);
-        
+
       if (profileError) {
         console.error('Error updating profile:', profileError);
         toast.error('Failed to update profile');
         return false;
       }
-      
+
       if (userRole === 'provider' && 'businessName' in data) {
         const providerData: any = {
           business_name: data.businessName,
           business_description: data.businessDescription,
           updated_at: new Date().toISOString()
         };
-        
+
         if ('avatar' in data && data.avatar) {
           providerData['avatar_url'] = data.avatar;
         }
-        
+
         const { error: providerError } = await supabase
           .from('service_providers')
           .update(providerData)
           .eq('id', user.id);
-          
+
         if (providerError) {
           console.error('Error updating provider record:', providerError);
           toast.error('Failed to update business information');
           return false;
         }
       }
-      
+
       if (userProfile) {
         if (userRole === 'provider' && userProfile.role === 'provider') {
           const updatedProfile: Provider = {
@@ -520,7 +528,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUserProfile(updatedProfile);
         }
       }
-      
+
       setUser(prev => {
         if (!prev) return prev;
         return {
@@ -532,7 +540,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           name: `${data.firstName || prev.firstName} ${data.lastName || prev.lastName}`,
         };
       });
-      
+
       toast.success('Profile updated successfully');
       return true;
     } catch (error) {
