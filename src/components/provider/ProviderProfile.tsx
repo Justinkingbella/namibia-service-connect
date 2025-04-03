@@ -34,6 +34,36 @@ const { user } = useAuth();
       try {
         setLoadingProvider(true);
         
+        // Check if provider exists
+        const { data: existingProvider, error: checkError } = await supabase
+          .from('service_providers')
+          .select('*')
+          .eq('id', profile.id)
+          .single();
+          
+        if (checkError && checkError.code === 'PGRST116') {
+          // Create new provider profile
+          const { data: newProvider, error: createError } = await supabase
+            .from('service_providers')
+            .insert([
+              {
+                id: profile.id,
+                business_name: '',
+                business_description: '',
+                verification_status: 'pending',
+                rating: 0,
+                review_count: 0,
+                services_count: 0,
+                completed_bookings: 0
+              }
+            ])
+            .select()
+            .single();
+            
+          if (createError) throw createError;
+          return setProviderData(newProvider);
+        }
+        
         const { data, error } = await supabase
           .from('service_providers')
           .select('*')

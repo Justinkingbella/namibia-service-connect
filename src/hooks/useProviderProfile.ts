@@ -39,6 +39,34 @@ export function useProviderProfile() {
       setLoading(true);
       setError(null);
 
+      // First ensure the provider exists
+      const { data: providerExists, error: checkError } = await supabase
+        .from('service_providers')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (checkError && checkError.code === 'PGRST116') {
+        // Provider doesn't exist, create it
+        const { data: newProvider, error: createError } = await supabase
+          .from('service_providers')
+          .insert([
+            { 
+              id: user.id,
+              business_name: '',
+              verification_status: 'pending',
+              rating: 0,
+              review_count: 0
+            }
+          ])
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        if (newProvider) return newProvider;
+      }
+
+      // Now fetch the full provider data
       const { data, error: fetchError } = await supabase
         .from('service_providers')
         .select('*')
