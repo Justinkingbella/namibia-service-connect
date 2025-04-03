@@ -10,7 +10,7 @@ import { useSupabase } from '@/contexts/SupabaseContext';
 import { enableSupabaseRealtime } from '@/services/enableRealtimeSupabase';
 
 const Dashboard = () => {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, loading } = useAuth(); // Use loading instead of isLoading
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -21,7 +21,7 @@ const Dashboard = () => {
     
     const checkAuth = async () => {
       // Wait for auth to finish loading
-      if (authLoading) {
+      if (loading) {
         return;
       }
       
@@ -73,9 +73,9 @@ const Dashboard = () => {
     return () => {
       mounted = false;
     };
-  }, [navigate, user, authLoading, toast, isSubscribed, enableRealtime]);
+  }, [navigate, user, loading, toast, isSubscribed, enableRealtime]);
 
-  if (isLoading || authLoading) {
+  if (isLoading || loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-r from-blue-50 to-blue-100">
         <div className="text-center">

@@ -1,3 +1,4 @@
+
 export type BookingStatus = 
   | 'pending' 
   | 'confirmed' 
@@ -46,6 +47,17 @@ export interface BookingWithDetails extends Booking {
   location?: string;
 }
 
+export type DisputeStatus = 
+  | 'pending' 
+  | 'in_review' 
+  | 'resolved' 
+  | 'rejected' 
+  | 'open' 
+  | 'under_review' 
+  | 'declined';
+
+export type DisputePriority = 'low' | 'medium' | 'high';
+
 export interface Dispute {
   id: string;
   bookingId: string;
@@ -53,11 +65,11 @@ export interface Dispute {
   providerId: string;
   subject: string;
   description: string;
-  status: 'pending' | 'in_review' | 'resolved' | 'rejected' | 'open' | 'under_review' | 'declined';
+  status: DisputeStatus;
   resolution?: string;
   createdAt: Date;
   updatedAt: Date;
-  priority: 'low' | 'medium' | 'high';
+  priority: DisputePriority;
   evidenceUrls?: string[];
   refundAmount?: number;
   reason?: string; // Added missing field

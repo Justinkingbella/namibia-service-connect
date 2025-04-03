@@ -1,3 +1,4 @@
+
 export interface DbUserProfile {
   id: string;
   first_name: string;
@@ -91,9 +92,10 @@ export interface User {
   avatarUrl?: string;
   isActive: boolean;
   createdAt: Date;
-  name?: string; // Added for compatibility
-  avatar?: string; // Added for compatibility
+  name?: string; // For backward compatibility
+  avatar?: string; // For backward compatibility
   phoneNumber?: string;
+  loyaltyPoints?: number; // Added missing property
 }
 
 // Update Customer type to include properties used in AuthContext
@@ -132,6 +134,16 @@ export interface Admin extends User {
   role: 'admin';
   permissions: string[];
   isVerified?: boolean; // Added missing property
+  isActive: boolean;
+}
+
+// Add missing Session type
+export interface Session {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  refresh_token?: string;
+  user: User;
 }
 
 export interface AuthContextType {
@@ -139,7 +151,8 @@ export interface AuthContextType {
   session: Session | null;
   userRole: UserRole | null;
   userProfile: Customer | Provider | Admin | null;
-  loading: boolean; // Changed from isLoading for backward compatibility
+  loading: boolean; // Alias for isLoading
+  isLoading: boolean; // Added to match actual implementation
   signIn: (email: string, password: string) => Promise<{ error: any | null }>;
   signUp: (email: string, password: string, role: UserRole, userData: Partial<Customer | Provider>) => Promise<{ error: any | null, data: any | null }>;
   signOut: () => Promise<void>;

@@ -13,7 +13,7 @@ export interface ProviderData {
   business_address?: string;
   business_hours?: Record<string, any>;
   categories?: string[];
-  verification_status?: ProviderVerificationStatus;
+  verification_status?: ProviderVerificationStatus | string; // Allow string for flexibility
   verification_documents?: string[];
   rating?: number;
   review_count?: number;
@@ -56,7 +56,7 @@ export function useProviderProfile() {
           });
         }
       } else if (data) {
-        setProviderData(data);
+        setProviderData(data as ProviderData);
       }
     } catch (err: any) {
       console.error('Unexpected error in fetchProviderData:', err);

@@ -14,9 +14,10 @@ export type ServiceCategory =
   | 'professional'
   | 'freelance'
   | 'transport'
-  | 'health';
+  | 'health'
+  | string; // Allow string for flexibility
 
-export type PricingModel = 'fixed' | 'hourly' | 'quote';
+export type PricingModel = 'fixed' | 'hourly' | 'quote' | string; // Allow string for flexibility
 
 export type PaymentMethod = 'credit_card' | 'paypal' | 'bank_transfer' | 'cash' | 'pay_today' | 'pay_fast' | 'e_wallet' | 'dop' | 'easy_wallet';
 
@@ -52,8 +53,9 @@ export interface Service {
   providerName?: string;
   createdAt?: Date;
   updatedAt?: Date;
-  commission?: number; // Added missing property
-  available?: boolean; // Added missing property
+  commission?: number;
+  available?: boolean;
+  featured?: boolean; // Added missing property
 }
 
 // Fix ServiceData interface

@@ -50,8 +50,8 @@ export function ProfileSummary() {
   }
   
   const avatarUrl = user.role === 'provider' 
-    ? providerData?.business_logo || user?.avatar 
-    : user?.avatar;
+    ? providerData?.business_logo || user.avatarUrl 
+    : user.avatarUrl;
     
   const displayName = user.role === 'provider'
     ? providerData?.business_name || `${user.firstName} ${user.lastName}`

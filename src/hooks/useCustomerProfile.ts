@@ -11,7 +11,7 @@ export interface CustomerData {
     email: boolean;
     sms: boolean;
     push: boolean;
-  };
+  } | any; // Add any to handle JSON from database
   saved_services?: string[];
   recent_searches?: string[];
   created_at?: string;
@@ -35,6 +35,7 @@ export function useCustomerProfile() {
       setLoading(true);
       setError(null);
 
+      // Check if customers table exists in the database schema
       const { data, error: fetchError } = await supabase
         .from('customers')
         .select('*')
@@ -52,7 +53,7 @@ export function useCustomerProfile() {
           });
         }
       } else if (data) {
-        setCustomerData(data);
+        setCustomerData(data as CustomerData);
       }
     } catch (err: any) {
       console.error('Unexpected error in fetchCustomerData:', err);

@@ -99,16 +99,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   // Helper function to get user display name
   const getUserDisplayName = () => {
     if (!user) return '';
-    // Handle both name and email cases safely
-    const firstName = user.name?.split(' ')[0] || '';
-    const lastName = user.name?.split(' ')[1] || '';
-    return firstName ? `${firstName} ${lastName}`.trim() : user.email || '';
+    return `${user.firstName} ${user.lastName}`.trim() || user.email || '';
   };
 
   // Get avatar initials
   const getAvatarInitials = () => {
     if (!user) return 'U';
-    return user.name?.charAt(0) || user.email?.charAt(0) || 'U';
+    return user.firstName?.charAt(0) || user.email?.charAt(0) || 'U';
   };
 
   return (
@@ -158,8 +155,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   >
                     <Avatar className="h-8 w-8 bg-primary/10 text-primary">
-                      {user?.avatar ? (
-                        <img src={user.avatar} alt="Profile" className="h-full w-full object-cover" />
+                      {user?.avatarUrl ? (
+                        <img src={user.avatarUrl} alt="Profile" className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-sm font-medium">
                           {getAvatarInitials()}
