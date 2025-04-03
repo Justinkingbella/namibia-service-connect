@@ -16,7 +16,7 @@ const SignIn = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn, isLoading, user, signOut } = useAuth();
+  const { signIn, isLoading, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -37,7 +37,7 @@ const SignIn = () => {
     };
     
     clearExistingAuth();
-  }, []); *// Empty dependency array ensures this only runs once
+  }, []); */// Empty dependency array ensures this only runs once
 
   // Redirect if user is authenticated after signing in
   useEffect(() => {
@@ -47,7 +47,7 @@ const SignIn = () => {
       const from = location.state?.from?.pathname || `/${user.role}/dashboard`;
       // Use setTimeout to delay the navigation slightly
       setTimeout(() => {
-        navigate(from, { replace: true });
+        navigate(from);
       }, 100);
     }
   }, [user, navigate, location]);
