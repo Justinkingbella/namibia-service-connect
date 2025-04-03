@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -186,7 +187,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             phoneNumber: profileData.phone_number || '',
             avatar: profileData.avatar_url || '',
             role: 'provider',
-            isActive: true,
+            isActive: providerData?.is_active ?? true,
             businessName: providerData?.business_name || '',
             businessDescription: providerData?.business_description || '',
             verificationStatus: (providerData?.verification_status as any) || 'pending',
@@ -267,6 +268,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       console.log('Signing up user with role:', role, 'and data:', userData);
       
+      // 1. Create auth user with role in metadata
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -292,13 +294,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       console.log('User created successfully:', data.user.id);
       
+      // 2. Create profile record
       const profileData = {
         id: data.user.id,
         email,
         first_name: userData.firstName || '',
         last_name: userData.lastName || '',
         phone_number: 'phoneNumber' in userData ? userData.phoneNumber : '',
-        role,
+        role, // Make sure role is saved in profiles table
         created_at: new Date().toISOString()
       };
       
@@ -315,13 +318,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       console.log('Profile created successfully');
       
+      // 3. Create role-specific records based on the specified role
       if (role === 'provider') {
+        // Create provider record
         const providerData = {
           id: data.user.id,
           business_name: 'businessName' in userData ? userData.businessName || '' : `${userData.firstName}'s Business`,
           business_description: 'businessDescription' in userData ? userData.businessDescription || '' : '',
           verification_status: 'pending',
           subscription_tier: 'free',
+          is_active: true,
           created_at: new Date().toISOString()
         };
         
@@ -338,6 +344,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         console.log('Provider record created successfully');
       } else if (role === 'customer') {
+        // Create customer record
         const customerData = {
           id: data.user.id,
           preferred_categories: [],
