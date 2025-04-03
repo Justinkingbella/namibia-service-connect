@@ -10,17 +10,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 
-interface LocationState {
-  from?: {
-    pathname: string;
-  };
-}
-
 const SignIn = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { signIn, isLoading, user } = useAuth();
@@ -29,11 +21,15 @@ const SignIn = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
 
+  // Redirect if already authenticated - using useEffect to handle navigation
   useEffect(() => {
     if (user) {
-      const state = location.state as LocationState;
-      const from = state?.from?.pathname || `/${user.role}/dashboard`;
-      navigate(from, { replace: true });
+      console.log('User already signed in, navigating to dashboard');
+      const from = location.state?.from?.pathname || '/dashboard';
+      // Use setTimeout to delay the navigation slightly, preventing immediate state changes
+      setTimeout(() => {
+        navigate(from);
+      }, 100);
     }
   }, [user, navigate, location]);
 
@@ -42,7 +38,6 @@ const SignIn = () => {
     setError(null);
     setIsSubmitting(true);
     
-    const { email, password } = formData;
     if (!email || !password) {
       setError('Please provide both email and password');
       setIsSubmitting(false);
@@ -50,27 +45,39 @@ const SignIn = () => {
     }
     
     try {
+      console.log('Attempting login with credentials:', email);
       await signIn(email, password);
+      // The redirect will be handled by the useEffect above
+      console.log('Sign in successful');
       toast({
         title: "Sign in successful",
         description: "Welcome back!",
       });
-    } catch (err) {
-      const error = err as Error;
-      setError(error.message || 'Authentication failed');
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      setError(error.message || 'Authentication failed. Please check your credentials and try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const setDemoCredentials = (role: 'admin' | 'provider' | 'customer') => {
-    const credentials = {
-      admin: { email: 'admin@namibiaservice.com', password: 'admin123' },
-      provider: { email: 'provider@namibiaservice.com', password: 'provider123' },
-      customer: { email: 'customer@namibiaservice.com', password: 'password' },
-    };
-
-    setFormData(credentials[role]);
+  const setDemoCredentials = (role: string) => {
+    switch (role) {
+      case 'admin':
+        setEmail('admin@namibiaservice.com');
+        setPassword('admin123');
+        break;
+      case 'provider':
+        setEmail('provider@namibiaservice.com');
+        setPassword('provider123');
+        break;
+      case 'customer':
+        setEmail('customer@namibiaservice.com');
+        setPassword('password');
+        break;
+    }
+    
+    // Clear any previous errors when setting new credentials
     setError(null);
     
     toast({
@@ -78,8 +85,6 @@ const SignIn = () => {
       description: "Click Sign In to continue",
     });
   };
-
-  const disabled = isLoading || isSubmitting;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -108,10 +113,9 @@ const SignIn = () => {
                 <Input
                   id="email"
                   type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  disabled={disabled}
                   placeholder="you@example.com"
                   className="text-sm"
                 />
@@ -124,10 +128,9 @@ const SignIn = () => {
                 <Input
                   id="password"
                   type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={disabled}
                   placeholder="••••••••"
                   className="text-sm"
                 />
@@ -142,8 +145,7 @@ const SignIn = () => {
               <Button 
                 type="submit" 
                 className="w-full mt-2" 
-                loading={disabled}
-                disabled={disabled}
+                loading={isLoading || isSubmitting}
               >
                 Sign In
               </Button>
@@ -160,16 +162,24 @@ const SignIn = () => {
           <div className="mt-4 text-center text-xs text-gray-500">
             <p>For demo purposes:</p>
             <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mt-2">
-              {(['admin', 'provider', 'customer'] as const).map((role) => (
-                <button 
-                  key={role}
-                  className="text-primary hover:underline text-xs" 
-                  onClick={() => setDemoCredentials(role)}
-                  disabled={disabled}
-                >
-                  {role.charAt(0).toUpperCase() + role.slice(1)} Login
-                </button>
-              ))}
+              <button 
+                className="text-primary hover:underline text-xs" 
+                onClick={() => setDemoCredentials('admin')}
+              >
+                Admin Login
+              </button>
+              <button 
+                className="text-primary hover:underline text-xs" 
+                onClick={() => setDemoCredentials('provider')}
+              >
+                Provider Login
+              </button>
+              <button 
+                className="text-primary hover:underline text-xs" 
+                onClick={() => setDemoCredentials('customer')}
+              >
+                Customer Login
+              </button>
             </div>
             <div className="mt-2">
               <Link to="/auth/create-admin" className="text-primary hover:underline text-xs">
