@@ -118,7 +118,9 @@ export function useRealtimeData<T>({
     
     // Clean up the subscription when the component unmounts
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [table, column, value, orderBy?.column, orderBy?.ascending, limit]);
 
