@@ -13,7 +13,8 @@ import { DbUserProfile, DbProviderProfile, ProviderVerificationStatus } from '@/
 import { AvatarUpload } from '@/components/ui/avatar-upload';
 
 const ProviderProfile: React.FC = () => {
-  const { profile, loading, updateProfile } = useProfile();
+  const { providerData, loading, error, updateProviderData, refreshData } = useProviderProfile();
+const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

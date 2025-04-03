@@ -31,7 +31,7 @@ const ProviderProfilePage = () => {
         });
         
         if (user.role === 'admin') {
-          navigate('/dashboard/admin/profile');
+          navigate('/admin/profile');
         } else if (user.role === 'customer') {
           navigate('/dashboard/profile');
         }

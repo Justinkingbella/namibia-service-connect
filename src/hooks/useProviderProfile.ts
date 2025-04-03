@@ -13,7 +13,7 @@ export interface ProviderData {
   business_address?: string;
   business_hours?: Record<string, any>;
   categories?: string[];
-  verification_status?: ProviderVerificationStatus | string; // Allow string for flexibility
+  verification_status?: ProviderVerificationStatus | string;
   verification_documents?: string[];
   rating?: number;
   review_count?: number;
@@ -48,7 +48,7 @@ export function useProviderProfile() {
       if (fetchError) {
         console.error('Error fetching provider data:', fetchError);
         setError(fetchError.message);
-        if (fetchError.code !== 'PGRST116') { // No data found is not displayed as an error
+        if (fetchError.code !== 'PGRST116') {
           toast({
             variant: 'destructive',
             title: 'Error',
@@ -87,7 +87,6 @@ export function useProviderProfile() {
       setLoading(true);
       setError(null);
 
-      // Add updated_at timestamp
       const dataToUpdate = {
         ...updatedData,
         updated_at: new Date().toISOString(),
@@ -130,16 +129,11 @@ export function useProviderProfile() {
     fetchProviderData();
   }, [user?.id]);
 
-  // Function to manually refetch data
-  const refreshData = () => {
-    fetchProviderData();
-  };
-
   return {
     providerData,
     loading,
     error,
     updateProviderData,
-    refreshData,
+    refreshData: fetchProviderData,
   };
 }

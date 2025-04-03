@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -42,7 +41,7 @@ const AppSidebar = () => {
 
   const getRoleTitle = () => {
     if (!user) return 'Dashboard';
-    
+
     switch (user.role) {
       case 'admin':
         return 'Admin Dashboard';
@@ -71,7 +70,7 @@ const AppSidebar = () => {
       { icon: Settings, label: 'Site Settings', path: '/admin/site-settings' },
       { icon: UserCircle, label: 'Profile', path: '/admin/profile' },
     ];
-    
+
     const providerLinks = [
       { icon: Home, label: 'Dashboard', path: '/provider/dashboard' },
       { icon: Package, label: 'Services', path: '/provider/services' },
@@ -85,7 +84,7 @@ const AppSidebar = () => {
       { icon: CreditCard, label: 'Payment Details', path: '/provider/payment-details' },
       { icon: UserCircle, label: 'Profile', path: '/provider/profile' },
     ];
-    
+
     const customerLinks = [
       { icon: Home, label: 'Dashboard', path: '/customer/dashboard' },
       { icon: Package, label: 'Services', path: '/customer/services' },
@@ -96,7 +95,7 @@ const AppSidebar = () => {
       { icon: AlertTriangle, label: 'Disputes', path: '/customer/disputes' },
       { icon: UserCircle, label: 'Profile', path: '/customer/profile' },
     ];
-    
+
     if (user.role === 'admin') return adminLinks;
     if (user.role === 'provider') return providerLinks;
     return customerLinks;
@@ -108,7 +107,7 @@ const AppSidebar = () => {
         <SidebarTrigger className="h-8 w-8 p-0" />
         <span className="ml-2 text-xl font-semibold">{getRoleTitle()}</span>
       </SidebarHeader>
-      
+
       <SidebarContent className="pt-2">
         <nav className="space-y-1 px-2">
           {getLinks().map((link) => (
@@ -131,7 +130,7 @@ const AppSidebar = () => {
             </a>
           ))}
         </nav>
-        
+
         <div className="mt-auto border-t pt-4 px-2 pb-2">
           <a
             href="/help"
