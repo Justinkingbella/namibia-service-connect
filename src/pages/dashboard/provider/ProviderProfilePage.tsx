@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import ProviderProfile from '@/components/provider/ProviderProfile';
-import { useAuth } from '@/contexts/AuthContext';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import ProviderProfile from '@/components/provider/ProviderProfile';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ProviderProfilePage = () => {
   const { user, isLoading } = useAuth();
