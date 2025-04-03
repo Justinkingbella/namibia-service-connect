@@ -13,13 +13,13 @@ import { DbUserProfile, DbProviderProfile, ProviderVerificationStatus } from '@/
 import { AvatarUpload } from '@/components/ui/avatar-upload';
 
 const ProviderProfile: React.FC = () => {
-  const { providerData, loading, error, updateProviderData, refreshData } = useProviderProfile();
-const { user } = useAuth();
+  const { providerData: providerProfileData, loading, error, updateProviderData, refreshData } = useProviderProfile();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [personalData, setPersonalData] = useState<Partial<DbUserProfile>>({});
-  const [providerData, setProviderData] = useState<Partial<DbProviderProfile> | null>(null);
+  const [localProviderData, setLocalProviderData] = useState<Partial<DbProviderProfile> | null>(null);
   const [loadingProvider, setLoadingProvider] = useState(true);
   const [stats, setStats] = useState({
     totalServices: 0,
@@ -120,7 +120,7 @@ const { user } = useAuth();
 
   const handleProviderInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setProviderData(prev => prev ? { ...prev, [name]: value } : { [name]: value });
+    setLocalProviderData(prev => prev ? { ...prev, [name]: value } : { [name]: value });
   };
 
   const handleAvatarChange = async (url: string | null) => {
