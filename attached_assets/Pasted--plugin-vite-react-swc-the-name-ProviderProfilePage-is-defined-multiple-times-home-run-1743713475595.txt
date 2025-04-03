@@ -1,0 +1,65 @@
+[plugin:vite:react-swc] × the name `ProviderProfilePage` is defined multiple times
+    ╭─[/home/runner/workspace/src/App.tsx:3:1]
+  1 │ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+  2 │ import { Toaster } from '@/components/ui/sonner';
+  3 │ import ProviderProfilePage from '@/pages/dashboard/provider/ProviderProfilePage';
+    ·        ─────────┬─────────
+    ·                 ╰── previous definition of `ProviderProfilePage` here
+  4 │ import { AuthProvider } from './contexts/AuthContext';
+  5 │ import { SiteProvider } from './contexts/SiteContext';
+  6 │ import { SupabaseProvider } from './contexts/SupabaseContext';
+  7 │ import ProtectedRoute from './components/auth/ProtectedRoute';
+  8 │ import RoleBasedRoute from './components/auth/RoleBasedRoute';
+  9 │ 
+ 10 │ // Public Pages
+ 11 │ import Index from './pages/Index';
+ 12 │ import AboutPage from './pages/AboutPage';
+ 13 │ import Services from './pages/Services';
+ 14 │ import FAQPage from './pages/FAQPage';
+ 15 │ import ContactPage from './pages/ContactPage';
+ 16 │ import PrivacyPage from './pages/PrivacyPage';
+ 17 │ import TermsPage from './pages/TermsPage';
+ 18 │ import NotFound from './pages/NotFound';
+ 19 │ 
+ 20 │ // Auth Pages
+ 21 │ import SignIn from './pages/auth/SignIn';
+ 22 │ import SignUp from './pages/auth/SignUp';
+ 23 │ import ForgotPassword from './pages/auth/ForgotPassword';
+ 24 │ import ResetPassword from './pages/auth/ResetPassword';
+ 25 │ import CreateAdmin from './pages/auth/CreateAdmin';
+ 26 │ 
+ 27 │ // Dashboard Pages - Overview
+ 28 │ import Dashboard from './pages/dashboard/Dashboard';
+ 29 │ import BookingsPage from './pages/dashboard/bookings/BookingsPage';
+ 30 │ import BookingDetail from './pages/dashboard/bookings/BookingDetail';
+ 31 │ import ServicesPage from './pages/dashboard/services/ServicesPage';
+ 32 │ import ServiceDetail from './pages/dashboard/services/ServiceDetail';
+ 33 │ import CreateServicePage from './pages/dashboard/services/CreateServicePage';
+ 34 │ import MessagesPage from './pages/dashboard/messages/MessagesPage';
+ 35 │ import SettingsPage from './pages/dashboard/settings/SettingsPage';
+ 36 │ 
+ 37 │ // Customer Pages
+ 38 │ import CustomerDashboard from './pages/dashboard/CustomerDashboard';
+ 39 │ import CustomerFavoritesPage from './pages/dashboard/customer/FavoritesPage';
+ 40 │ import CustomerProfilePage from './pages/dashboard/customer/ProfilePage';
+ 41 │ import CustomerPaymentHistoryPage from './pages/dashboard/customer/PaymentHistoryPage';
+ 42 │ import CustomerPaymentPage from './pages/dashboard/customer/PaymentPage';
+ 43 │ import CustomerDisputesPage from './pages/dashboard/customer/DisputesPage';
+ 44 │ import CustomerWalletVerificationsPage from './pages/dashboard/customer/WalletVerificationsPage';
+ 45 │ 
+ 46 │ // Provider Pages
+ 47 │ import ProviderDashboard from './pages/dashboard/ProviderDashboard';
+ 48 │ import ProviderProfilePage from './pages/dashboard/provider/ProviderProfilePage';
+    ·        ─────────┬─────────
+    ·                 ╰── `ProviderProfilePage` redefined here
+ 49 │ import ProviderRevenueReportsPage from './pages/dashboard/provider/RevenueReportsPage';
+ 50 │ import ProviderPaymentDetailsPage from './pages/dashboard/provider/PaymentDetailsPage';
+ 51 │ import ProviderTransactionsPage from './pages/dashboard/provider/TransactionsPage';
+    ╰────
+/home/runner/workspace/src/App.tsx:3:1
+28 |  import Dashboard from './pages/dashboard/Dashboard';
+29 |  import BookingsPage from './pages/dashboard/bookings/BookingsPage';
+30 |  import BookingDetail from './pages/dashboard/bookings/BookingDetail';
+   |                                                                   ^
+31 |  import ServicesPage from './pages/dashboard/services/ServicesPage';
+32 |  import ServiceDetail from './pages/dashboard/services/ServiceDetail';
