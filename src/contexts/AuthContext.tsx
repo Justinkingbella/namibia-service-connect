@@ -64,7 +64,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           isActive: true,
           createdAt: new Date(session.user.created_at),
         };
-        /* setUser(user);
+        setUser(user);
         
         // Use setTimeout to prevent recursive deadlocks with Supabase auth
         setTimeout(() => {
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUserRole(null);
         setUserProfile(null);
         setLoading(false);
-      } */
+      }
     });
 
     // Then check for an existing session
