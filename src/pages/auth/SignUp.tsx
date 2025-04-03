@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -81,13 +80,13 @@ const SignUp = () => {
         description: "You've been successfully registered.",
       });
       
-      // Navigate to the correct dashboard based on role
+      // Navigate to the correct dashboard based on role - using new route structure
       if (role === 'provider') {
-        navigate('/dashboard/provider');
+        navigate('/provider/dashboard');
       } else if (role === 'customer') {
-        navigate('/dashboard/customer');
+        navigate('/customer/dashboard');
       } else if (role === 'admin') {
-        navigate('/dashboard/admin');
+        navigate('/admin/dashboard');
       }
     } catch (error: any) {
       console.error('Registration failed:', error);

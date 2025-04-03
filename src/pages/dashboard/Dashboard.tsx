@@ -28,6 +28,7 @@ const Dashboard = () => {
         }
         
         // Redirect to the appropriate dashboard based on user role
+        // Using /${role}/dashboard format instead of /dashboard/${role}
         const dashboardPath = `/${user.role}/dashboard`;
         console.log(`Redirecting to: ${dashboardPath}`);
         navigate(dashboardPath, { replace: true });

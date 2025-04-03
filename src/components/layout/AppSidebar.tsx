@@ -37,15 +37,7 @@ const AppSidebar = () => {
   const location = useLocation();
 
   const isActive = (path: string) => {
-    if ((path === '/admin/dashboard' && location.pathname === '/admin/dashboard') ||
-        (path === '/provider/dashboard' && location.pathname === '/provider/dashboard') ||
-        (path === '/customer/dashboard' && location.pathname === '/customer/dashboard')) {
-      return true;
-    }
-    return location.pathname.startsWith(path) && 
-           path !== '/admin/dashboard' && 
-           path !== '/provider/dashboard' && 
-           path !== '/customer/dashboard';
+    return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
   const getRoleTitle = () => {
@@ -64,8 +56,8 @@ const AppSidebar = () => {
   };
 
   const getLinks = () => {
-    const prefix = user?.role ? `/${user.role}` : '';
-    
+    if (!user) return [];
+
     const adminLinks = [
       { icon: Home, label: 'Dashboard', path: '/admin/dashboard' },
       { icon: Package, label: 'Services', path: '/admin/services' },
@@ -105,8 +97,8 @@ const AppSidebar = () => {
       { icon: UserCircle, label: 'Profile', path: '/customer/profile' },
     ];
     
-    if (user?.role === 'admin') return adminLinks;
-    if (user?.role === 'provider') return providerLinks;
+    if (user.role === 'admin') return adminLinks;
+    if (user.role === 'provider') return providerLinks;
     return customerLinks;
   };
 

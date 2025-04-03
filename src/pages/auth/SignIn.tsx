@@ -25,7 +25,8 @@ const SignIn = () => {
   useEffect(() => {
     if (user) {
       console.log('User already signed in, navigating to dashboard');
-      const from = location.state?.from?.pathname || '/dashboard';
+      // Direct to role-specific dashboard instead of the generic one
+      const from = location.state?.from?.pathname || `/${user.role}/dashboard`;
       // Use setTimeout to delay the navigation slightly, preventing immediate state changes
       setTimeout(() => {
         navigate(from);
