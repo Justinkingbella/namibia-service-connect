@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/common/Button';
 import { Textarea } from '@/components/ui/textarea';
 import { useProfile } from '@/hooks/useProfile';
-import { useProviderProfile } from '@/hooks/useProviderProfile.ts';
+import { useProviderProfile } from '@/hooks/useProviderProfile';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth'; // Added import for useAuth
 import { Avatar } from '@/components/ui/avatar';
@@ -130,7 +130,7 @@ const ProviderProfile: React.FC = () => {
     try {
       await updateProfile({ avatar_url: url });
       // Also update provider avatar if it exists
-      if (providerData) {
+      if (providerProfileData) {
         const { error } = await supabase
           .from('service_providers')
           .update({ avatar_url: url })
@@ -319,7 +319,7 @@ const ProviderProfile: React.FC = () => {
                 </div>
               </div>
 
-              {providerData && (
+              {providerProfileData && (
                 <div>
                   <h3 className="text-lg font-medium mb-4">Business Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -327,7 +327,7 @@ const ProviderProfile: React.FC = () => {
                       <label className="text-sm font-medium">Business Name</label>
                       <Input 
                         name="business_name"
-                        value={providerData.business_name || ''}
+                        value={providerProfileData.business_name || ''}
                         onChange={handleProviderInputChange}
                       />
                     </div>
@@ -335,7 +335,7 @@ const ProviderProfile: React.FC = () => {
                       <label className="text-sm font-medium">Business Email</label>
                       <Input 
                         name="email"
-                        value={providerData.email || ''}
+                        value={providerProfileData.email || ''}
                         onChange={handleProviderInputChange}
                       />
                     </div>
@@ -343,7 +343,7 @@ const ProviderProfile: React.FC = () => {
                       <label className="text-sm font-medium">Business Phone</label>
                       <Input 
                         name="phone_number"
-                        value={providerData.phone_number || ''}
+                        value={providerProfileData.phone_number || ''}
                         onChange={handleProviderInputChange}
                       />
                     </div>
@@ -351,7 +351,7 @@ const ProviderProfile: React.FC = () => {
                       <label className="text-sm font-medium">Website</label>
                       <Input 
                         name="website"
-                        value={providerData.website || ''}
+                        value={providerProfileData.website || ''}
                         onChange={handleProviderInputChange}
                       />
                     </div>
@@ -359,7 +359,7 @@ const ProviderProfile: React.FC = () => {
                       <label className="text-sm font-medium">Business Description</label>
                       <Textarea 
                         name="business_description"
-                        value={providerData.business_description || ''}
+                        value={providerProfileData.business_description || ''}
                         onChange={handleProviderInputChange}
                         rows={4}
                       />
