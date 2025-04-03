@@ -24,11 +24,29 @@ export interface DatabaseSchema {
     address: string | null;
     city: string | null;
     country: string | null;
-    favorites: string[] | null; // Array of service IDs
-    loyalty_points: number | null;
     active: boolean | null;
     preferred_language: string | null;
     bio: string | null;
+    created_at: string;
+    updated_at: string;
+  };
+
+  customer_profiles: {
+    id: string; // references profiles.id
+    favorites: string[] | null; // Array of service IDs
+    loyalty_points: number | null;
+    preferred_categories: string[] | null;
+    notification_preferences: Record<string, boolean> | null;
+    is_verified: boolean;
+  };
+
+  admin_profiles: {
+    id: string; // references profiles.id
+    permissions: string[];
+    department: string | null;
+    access_level: string;
+    last_login: string | null;
+    is_super_admin: boolean;
   };
   
   service_providers: {

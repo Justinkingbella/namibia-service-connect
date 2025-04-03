@@ -81,14 +81,14 @@ const App = () => {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
-              
+
               {/* Auth Routes */}
               <Route path="/auth/sign-in" element={<SignIn />} />
               <Route path="/auth/sign-up" element={<SignUp />} />
               <Route path="/auth/forgot-password" element={<ForgotPassword />} />
               <Route path="/auth/reset-password" element={<ResetPassword />} />
               <Route path="/auth/create-admin" element={<CreateAdmin />} />
-              
+
               {/* Main Dashboard Route - Redirects based on role */}
               <Route
                 path="/dashboard"
@@ -98,7 +98,7 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
-              
+
               {/* ADMIN ROUTES */}
               <Route
                 path="/admin/dashboard"
@@ -109,7 +109,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/dashboard/admin/profile"
+                path="/admin/profile"
                 element={
                   <RoleBasedRoute allowedRoles={['admin']}>
                     <AdminProfilePage />
@@ -196,7 +196,7 @@ const App = () => {
                   </RoleBasedRoute>
                 }
               />
-              
+
               {/* PROVIDER ROUTES */}
               <Route
                 path="/provider/dashboard"
@@ -310,7 +310,7 @@ const App = () => {
                   </RoleBasedRoute>
                 }
               />
-              
+
               {/* CUSTOMER ROUTES */}
               <Route
                 path="/customer/dashboard"
@@ -408,7 +408,7 @@ const App = () => {
                   </RoleBasedRoute>
                 }
               />
-              
+
               {/* 404 Page */}
               <Route path="*" element={<NotFound />} />
             </Routes>

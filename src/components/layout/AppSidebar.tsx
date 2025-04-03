@@ -68,7 +68,7 @@ const AppSidebar = () => {
       { icon: Receipt, label: 'Subscriptions', path: '/admin/subscription-management' },
       { icon: FileText, label: 'Content Editor', path: '/admin/content-editor' },
       { icon: Settings, label: 'Site Settings', path: '/admin/site-settings' },
-      { icon: UserCircle, label: 'Profile', path: '/dashboard/admin/profile' },
+      { icon: UserCircle, label: 'Profile', path: '/admin/profile' },
     ];
 
     const providerLinks = [
@@ -82,7 +82,7 @@ const AppSidebar = () => {
       { icon: Receipt, label: 'Subscription', path: '/provider/subscription' },
       { icon: Wallet, label: 'Wallet Verification', path: '/provider/wallet-verification' },
       { icon: CreditCard, label: 'Payment Details', path: '/provider/payment-details' },
-      { icon: UserCircle, label: 'Profile', path: '/dashboard/provider/profile' },
+      { icon: UserCircle, label: 'Profile', path: '/provider/profile' },
     ];
 
     const customerLinks = [

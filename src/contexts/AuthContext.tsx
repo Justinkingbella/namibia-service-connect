@@ -178,20 +178,54 @@ export function AuthProvider({ children }: AuthProviderProps) {
             console.error('Error fetching customer data:', customerError);
           }
 
-          const customer: Customer = {
+          // Fetch role-specific profile data
+          let specificProfile;
+          if (profileData.role === 'customer') {
+            const { data: customerData } = await supabase
+              .from('customer_profiles')
+              .select('*')
+              .eq('id', supabaseUser.id)
+              .single();
+              
+            specificProfile = {
+              ...customerData,
+              role: 'customer'
+            };
+          } else if (profileData.role === 'admin') {
+            const { data: adminData } = await supabase
+              .from('admin_profiles')
+              .select('*')
+              .eq('id', supabaseUser.id)
+              .single();
+              
+            specificProfile = {
+              ...adminData,
+              role: 'admin'
+            };
+          } else if (profileData.role === 'provider') {
+            const { data: providerData } = await supabase
+              .from('service_providers')
+              .select('*')
+              .eq('id', supabaseUser.id)
+              .single();
+              
+            specificProfile = {
+              ...providerData,
+              role: 'provider'
+            };
+          }
+
+          const userProfile = {
             id: supabaseUser.id,
             email: supabaseUser.email!,
             firstName: profileData.first_name || '',
             lastName: profileData.last_name || '',
             phoneNumber: profileData.phone_number || '',
             avatar: profileData.avatar_url || '',
-            role: 'customer',
-            loyaltyPoints: profileData.loyalty_points || 0,
+            role: profileData.role,
             isActive: true,
-            preferredCategories: customerData?.preferred_categories || [],
-            notificationPreferences: customerData?.notification_preferences || { email: true, sms: false, push: true },
             createdAt: new Date(profileData.created_at),
-            isVerified: profileData.email_verified || false
+            ...specificProfile
           };
 
           setUserProfile(customer);
