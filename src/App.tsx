@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import ProviderDashboard from '@/pages/dashboard/provider/ProviderDashboard';
+import ProviderDashboard from '@/pages/dashboard/ProviderDashboard';
 import CreateServicePage from '@/pages/dashboard/provider/CreateServicePage';
 import ProviderProfilePage from '@/pages/dashboard/provider/profile/ProviderProfilePage';
 import PaymentDetailsPage from '@/pages/dashboard/provider/PaymentDetailsPage';
