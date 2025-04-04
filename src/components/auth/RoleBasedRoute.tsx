@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/auth';
-import ProtectedRoute from './ProtectedRoute';
 
 interface RoleBasedRouteProps {
   children: React.ReactNode;
@@ -27,7 +26,14 @@ const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles 
   }, [user, loading, rolesToCheck, location]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          <p className="ml-3 text-gray-600 mt-3">Authenticating...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {

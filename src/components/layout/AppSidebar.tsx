@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -19,7 +20,12 @@ import {
   AlertTriangle,
   LineChart,
   FileText,
-  PlusCircle
+  PlusCircle,
+  Globe,
+  Sliders,
+  Database,
+  Layout,
+  Tag
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -62,13 +68,18 @@ const AppSidebar = () => {
       { icon: Package, label: 'Services', path: '/admin/services' },
       { icon: MessageSquare, label: 'Messages', path: '/admin/messages' },
       { icon: Users, label: 'Users', path: '/admin/users' },
-      { icon: Clock, label: 'Verifications', path: '/admin/wallet-verification' },
+      { icon: Clock, label: 'Wallet Verifications', path: '/admin/wallet-verification' },
       { icon: AlertTriangle, label: 'Disputes', path: '/admin/disputes' },
       { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
       { icon: Receipt, label: 'Subscriptions', path: '/admin/subscription-management' },
       { icon: FileText, label: 'Content Editor', path: '/admin/content-editor' },
-      { icon: Settings, label: 'Site Settings', path: '/admin/site-settings' },
+      { icon: Layout, label: 'Booking Settings', path: '/admin/booking-settings' },
+      { icon: Tag, label: 'Category Management', path: '/admin/category-management' },
+      { icon: Sliders, label: 'Platform Controls', path: '/admin/platform-controls' },
+      { icon: Globe, label: 'Site Settings', path: '/admin/site-settings' },
+      { icon: Database, label: 'Payment Settings', path: '/admin/payment-settings' },
       { icon: UserCircle, label: 'Profile', path: '/admin/profile' },
+      { icon: Settings, label: 'Settings', path: '/admin/settings' },
     ];
 
     const providerLinks = [

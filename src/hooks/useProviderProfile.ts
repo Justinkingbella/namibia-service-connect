@@ -20,6 +20,14 @@ export interface ProviderData {
   bank_details?: Record<string, any>;
   created_at?: string;
   updated_at?: string;
+  email?: string;
+  phone_number?: string;
+  avatar_url?: string;
+  banner_url?: string;
+  city?: string;
+  country?: string;
+  address?: string;
+  website?: string;
 }
 
 export function useProviderProfile() {
@@ -39,7 +47,7 @@ export function useProviderProfile() {
       setLoading(true);
       setError(null);
 
-      // First ensure the provider exists
+      // Check if the provider exists
       const { data: providerExists, error: checkError } = await supabase
         .from('service_providers')
         .select('id')
@@ -48,6 +56,7 @@ export function useProviderProfile() {
 
       if (checkError && checkError.code === 'PGRST116') {
         // Provider doesn't exist, create it
+        console.log('Provider does not exist, creating new record');
         const { data: newProvider, error: createError } = await supabase
           .from('service_providers')
           .insert([
@@ -56,14 +65,18 @@ export function useProviderProfile() {
               business_name: '',
               verification_status: 'pending',
               rating: 0,
-              review_count: 0
+              review_count: 0,
+              email: user.email
             }
           ])
           .select()
           .single();
 
         if (createError) throw createError;
-        if (newProvider) return newProvider;
+        if (newProvider) {
+          setProviderData(newProvider as ProviderData);
+          return;
+        }
       }
 
       // Now fetch the full provider data

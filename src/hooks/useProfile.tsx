@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,6 +15,7 @@ export function useProfile() {
 
     const fetchProfile = async () => {
       try {
+        setLoading(true);
         const { data, error } = await supabase
           .from('profiles')
           .select('*')

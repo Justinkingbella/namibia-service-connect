@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 
 const ProviderProfilePage = () => {
-  const { user, isLoading } = useAuth();
+  const { user, loading: isLoading } = useAuth();
   const [profileLoading, setProfileLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -28,9 +28,9 @@ const ProviderProfilePage = () => {
         });
         
         if (user.role === 'admin') {
-          navigate('/dashboard/admin/profile');
+          navigate('/admin/profile');
         } else if (user.role === 'customer') {
-          navigate('/dashboard/profile');
+          navigate('/customer/profile');
         }
       } else if (!user) {
         // Redirect to login if no user

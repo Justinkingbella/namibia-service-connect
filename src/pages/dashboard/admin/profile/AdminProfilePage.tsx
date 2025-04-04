@@ -5,13 +5,12 @@ import AdminProfile from '@/components/admin/AdminProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const AdminProfilePage = () => {
-  const { user, isLoading } = useAuth();
+  const { user, loading: isLoading } = useAuth();
   const [profileLoading, setProfileLoading] = useState(true);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     // Check if user is loaded and is admin
@@ -24,28 +23,24 @@ const AdminProfilePage = () => {
         return () => clearTimeout(timer);
       } else if (user && user.role !== 'admin') {
         // Redirect to appropriate profile page based on role
-        toast({
-          title: "Access Restricted",
-          description: "You don't have permission to access this page.",
-          variant: "destructive"
+        toast.error("Access Restricted", {
+          description: "You don't have permission to access this page."
         });
         
         if (user.role === 'provider') {
-          navigate('/dashboard/provider/profile');
+          navigate('/provider/profile');
         } else if (user.role === 'customer') {
-          navigate('/dashboard/profile');
+          navigate('/customer/profile');
         }
       } else if (!user) {
         // Redirect to login if no user
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to access this page.",
-          variant: "destructive"
+        toast.error("Authentication Required", {
+          description: "Please sign in to access this page."
         });
         navigate('/auth/sign-in');
       }
     }
-  }, [user, isLoading, navigate, toast]);
+  }, [user, isLoading, navigate]);
 
   if (isLoading || profileLoading) {
     return (
