@@ -7,9 +7,10 @@ export type BookingStatus =
   | 'cancelled' 
   | 'disputed' 
   | 'no_show'
-  | 'rescheduled';
+  | 'rescheduled'
+  | 'rejected';
 
-export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partial';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partial' | 'completed';
 
 export type DisputeStatus = 'pending' | 'in_review' | 'resolved' | 'rejected';
 export type DisputePriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -78,6 +79,10 @@ export interface BookingWithDetails {
   feedback?: string;
   refundAmount?: number;
   paymentReceipt?: string;
+  serviceName?: string;
+  serviceImage?: string;
+  providerName?: string;
+  customerName?: string;
 }
 
 export interface Dispute {
@@ -124,7 +129,7 @@ export interface WalletVerificationRequest {
   id: string;
   bookingId: string;
   amount: number;
-  status: WalletVerificationStatus;
+  status: string;
   dateSubmitted: Date;
   verifiedBy?: string;
   dateVerified?: Date;

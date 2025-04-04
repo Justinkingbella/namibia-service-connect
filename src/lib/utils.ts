@@ -1,4 +1,3 @@
-
 import { BookingStatus, PaymentStatus } from '@/types';
 
 export function formatDate(date: Date | string): string {
@@ -21,57 +20,57 @@ export function formatTime(time: string): string {
   return `${hour12}:${minutes} ${ampm}`;
 }
 
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-NA', {
+export function formatCurrency(amount: number, currency = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'NAD',
+    currency,
   }).format(amount);
 }
 
-export function formatBookingStatus(status: BookingStatus): string {
-  return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+export function formatBookingStatus(status: string): string {
+  return status.replace('_', ' ').split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
-export function getStatusColor(status: BookingStatus | PaymentStatus): string {
+export function getStatusColor(status: string): string {
   switch (status) {
     case 'pending':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      return 'bg-yellow-100 text-yellow-800';
     case 'confirmed':
-      return 'bg-blue-100 text-blue-800 border-blue-200';
+      return 'bg-blue-100 text-blue-800';
     case 'in_progress':
-      return 'bg-purple-100 text-purple-800 border-purple-200';
+      return 'bg-purple-100 text-purple-800';
     case 'completed':
-    case 'paid':
-      return 'bg-green-100 text-green-800 border-green-200';
+      return 'bg-green-100 text-green-800';
     case 'cancelled':
-    case 'failed':
-      return 'bg-red-100 text-red-800 border-red-200';
+      return 'bg-red-100 text-red-800';
     case 'disputed':
-      return 'bg-orange-100 text-orange-800 border-orange-200';
+      return 'bg-orange-100 text-orange-800';
     case 'no_show':
-      return 'bg-gray-100 text-gray-800 border-gray-200';
+      return 'bg-gray-100 text-gray-800';
     case 'rescheduled':
-      return 'bg-indigo-100 text-indigo-800 border-indigo-200';
-    case 'refunded':
-      return 'bg-blue-100 text-blue-800 border-blue-200';
-    case 'partial':
-      return 'bg-teal-100 text-teal-800 border-teal-200';
+      return 'bg-teal-100 text-teal-800';
+    case 'rejected':
+      return 'bg-red-100 text-red-800';
     default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
+      return 'bg-gray-100 text-gray-800';
   }
 }
 
-// Function to convert camelCase to snake_case
+// A safe type cast function to convert strings to enum values
+export function safeEnumCast<T extends string>(value: string, enumObj: Record<string, string>): T {
+  return (Object.values(enumObj).includes(value) ? value : Object.values(enumObj)[0]) as T;
+}
+
 export function camelToSnake(str: string): string {
   return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 }
 
-// Function to convert snake_case to camelCase
 export function snakeToCamel(str: string): string {
   return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 }
 
-// Transform object keys from snake_case to camelCase
 export function transformKeysToCamel(obj: any): any {
   if (obj === null || typeof obj !== 'object') {
     return obj;
@@ -90,7 +89,6 @@ export function transformKeysToCamel(obj: any): any {
   return camelObj;
 }
 
-// Transform object keys from camelCase to snake_case
 export function transformKeysToSnake(obj: any): any {
   if (obj === null || typeof obj !== 'object') {
     return obj;

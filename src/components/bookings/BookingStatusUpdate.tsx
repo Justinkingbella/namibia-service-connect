@@ -22,29 +22,32 @@ const BookingStatusUpdate: React.FC<BookingStatusUpdateProps> = ({
   const [notes, setNotes] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const availableStatuses: Record<string, BookingStatus[]> = {
+  // Define available status transitions based on role and current status
+  const availableStatusesMap: Record<string, Record<string, BookingStatus[]>> = {
     provider: {
-      pending: ['confirmed', 'rejected'],
-      confirmed: ['in_progress', 'cancelled'],
-      in_progress: ['completed'],
-      completed: [],
-      cancelled: [],
-      rejected: []
+      'pending': ['confirmed', 'rejected'],
+      'confirmed': ['in_progress', 'cancelled'],
+      'in_progress': ['completed'],
+      'completed': [],
+      'cancelled': [],
+      'rejected': []
     },
     customer: {
-      pending: ['cancelled'],
-      confirmed: ['cancelled'],
-      in_progress: [],
-      completed: [],
-      cancelled: [],
-      rejected: []
-    },
-    admin: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'rejected']
+      'pending': ['cancelled'],
+      'confirmed': ['cancelled'],
+      'in_progress': [],
+      'completed': [],
+      'cancelled': [],
+      'rejected': []
+    }
   };
 
+  // Admin can change to any status
+  const adminStatuses: BookingStatus[] = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'rejected', 'no_show', 'rescheduled', 'disputed'];
+
   const statusOptions = userRole === 'admin' 
-    ? availableStatuses.admin
-    : availableStatuses[userRole]?.[currentStatus] || [];
+    ? adminStatuses
+    : (availableStatusesMap[userRole] && availableStatusesMap[userRole][currentStatus]) || [];
 
   const handleUpdate = async () => {
     if (!newStatus) return;
@@ -92,7 +95,7 @@ const BookingStatusUpdate: React.FC<BookingStatusUpdateProps> = ({
                 <SelectContent>
                   {statusOptions.map((status) => (
                     <SelectItem key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                      {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
                     </SelectItem>
                   ))}
                 </SelectContent>

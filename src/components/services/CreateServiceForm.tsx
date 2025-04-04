@@ -1,262 +1,269 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ServiceData } from '@/types/service';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { ServiceData, PricingModel } from '@/types/service';
+import { ImageUpload } from '@/components/ui/image-upload';
 
-// Define the form schema
-const serviceFormSchema = z.object({
-  title: z.string().min(3, { message: 'Title must be at least 3 characters long' }),
-  description: z.string().min(10, { message: 'Description must be at least 10 characters long' }),
-  price: z.coerce.number().min(0, { message: 'Price must be a positive number' }),
-  category: z.string().min(1, { message: 'Please select a category' }),
-  pricingModel: z.string().min(1, { message: 'Please select a pricing model' }),
-  location: z.string().optional(),
-  features: z.array(z.string()).optional(),
-  image: z.string().optional(),
-});
-
-type ServiceFormValues = z.infer<typeof serviceFormSchema>;
-
-export interface CreateServiceFormProps {
-  onSubmit: (data: Partial<ServiceData>) => void;
+interface CreateServiceFormProps {
+  onSubmit: (data: Partial<ServiceData>) => Promise<void>;
   isSubmitting: boolean;
 }
 
 export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmitting }) => {
-  const form = useForm<ServiceFormValues>({
-    resolver: zodResolver(serviceFormSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      price: undefined,
-      category: '',
-      pricingModel: 'fixed',
-      location: '',
-      features: [],
-    },
+  const [formData, setFormData] = useState<Partial<ServiceData>>({
+    title: '',
+    description: '',
+    price: 0,
+    pricing_model: 'hourly',
+    category: 'home',
+    features: [],
+    is_active: true,
   });
 
-  const handleSubmit = (values: ServiceFormValues) => {
-    onSubmit({
-      title: values.title,
-      description: values.description,
-      price: values.price,
-      category: values.category,
-      pricing_model: values.pricingModel,
-      location: values.location,
-      features: values.features || [],
-      image: values.image || '',
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [feature, setFeature] = useState<string>('');
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: name === 'price' ? parseFloat(value) : value,
     });
   };
 
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const handleAddFeature = () => {
+    if (feature.trim() && formData.features) {
+      setFormData({
+        ...formData,
+        features: [...formData.features, feature.trim()],
+      });
+      setFeature('');
+    }
+  };
+
+  const handleRemoveFeature = (index: number) => {
+    if (formData.features) {
+      const updatedFeatures = formData.features.filter((_, i) => i !== index);
+      setFormData({
+        ...formData,
+        features: updatedFeatures,
+      });
+    }
+  };
+
+  const handleImageUpload = (url: string) => {
+    setImageUrl(url);
+    setFormData({
+      ...formData,
+      image: url,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await onSubmit(formData);
+  };
+
   const categories = [
-    'Home Services',
-    'Beauty & Wellness',
-    'Professional Services',
-    'Tech & IT',
-    'Events & Entertainment',
-    'Education & Tutoring',
-    'Health & Fitness',
-    'Automotive',
+    { value: 'home', label: 'Home Services' },
+    { value: 'cleaning', label: 'Cleaning' },
+    { value: 'repair', label: 'Repair' },
+    { value: 'plumbing', label: 'Plumbing' },
+    { value: 'electrical', label: 'Electrical' },
+    { value: 'moving', label: 'Moving' },
+    { value: 'painting', label: 'Painting' },
+    { value: 'landscaping', label: 'Landscaping' },
+    { value: 'tutoring', label: 'Tutoring' },
+    { value: 'errand', label: 'Errands' },
+    { value: 'professional', label: 'Professional Services' },
+    { value: 'freelance', label: 'Freelance Services' },
+    { value: 'transport', label: 'Transportation' },
+    { value: 'health', label: 'Health & Wellness' },
   ];
 
   const pricingModels = [
     { value: 'fixed', label: 'Fixed Price' },
     { value: 'hourly', label: 'Hourly Rate' },
     { value: 'daily', label: 'Daily Rate' },
-    { value: 'project', label: 'Project Based' },
+    { value: 'project', label: 'Project-Based' },
+    { value: 'quote', label: 'Quote Required' },
   ];
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Service Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter service title" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      A clear, concise name for your service
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
-                          N$
-                        </span>
-                        <Input
-                          type="number"
-                          placeholder="0.00"
-                          className="pl-10"
-                          {...field}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="pricingModel"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Pricing Model</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select pricing model" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {pricingModels.map((model) => (
-                          <SelectItem key={model.value} value={model.value}>
-                            {model.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Location</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Service location or area covered" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Where the service is provided (e.g., Windhoek, Northern Region, Online)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <form onSubmit={handleSubmit}>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4 md:col-span-2">
+              <div>
+                <label className="block text-sm font-medium mb-1">Service Image</label>
+                <ImageUpload
+                  initialImage={imageUrl}
+                  onImageUpload={handleImageUpload}
+                  className="h-64"
+                />
+              </div>
             </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe your service in detail..."
-                      className="min-h-32"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Provide a detailed description of your service, including what's included and any requirements
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1" htmlFor="title">
+                  Service Title
+                </label>
+                <Input
+                  id="title"
+                  name="title"
+                  placeholder="e.g., Professional House Cleaning"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
 
-        <Card>
-          <CardContent className="pt-6">
-            <FormField
-              control={form.control}
-              name="image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Service Image</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="Image URL or upload an image"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Add an image URL or upload an image for your service
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
+              <div>
+                <label className="block text-sm font-medium mb-1" htmlFor="category">
+                  Category
+                </label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => handleSelectChange('category', value)}
+                >
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.value} value={category.value}>
+                        {category.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline" type="button">
-            Save as Draft
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating...' : 'Create Service'}
-          </Button>
-        </div>
-      </form>
-    </Form>
+              <div>
+                <label className="block text-sm font-medium mb-1" htmlFor="price">
+                  Price
+                </label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={formData.price || ''}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1" htmlFor="pricing_model">
+                  Pricing Model
+                </label>
+                <Select
+                  value={formData.pricing_model}
+                  onValueChange={(value) => handleSelectChange('pricing_model', value)}
+                >
+                  <SelectTrigger id="pricing_model">
+                    <SelectValue placeholder="Select pricing model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pricingModels.map((model) => (
+                      <SelectItem key={model.value} value={model.value}>
+                        {model.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1" htmlFor="description">
+                  Description
+                </label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  placeholder="Describe your service in detail..."
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  className="min-h-32"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1" htmlFor="location">
+                  Service Location
+                </label>
+                <Input
+                  id="location"
+                  name="location"
+                  placeholder="e.g., Windhoek, Namibia"
+                  value={formData.location || ''}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4 md:col-span-2">
+              <div>
+                <label className="block text-sm font-medium mb-1">Service Features</label>
+                <div className="flex space-x-2">
+                  <Input
+                    placeholder="Add a feature e.g. Fast Service"
+                    value={feature}
+                    onChange={(e) => setFeature(e.target.value)}
+                  />
+                  <Button type="button" onClick={handleAddFeature}>
+                    Add
+                  </Button>
+                </div>
+                
+                {formData.features && formData.features.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {formData.features.map((item, index) => (
+                      <div key={index} className="flex items-center bg-gray-100 px-3 py-1 rounded">
+                        <span className="text-sm">{item}</span>
+                        <button
+                          type="button"
+                          className="ml-2 text-gray-500 hover:text-red-500"
+                          onClick={() => handleRemoveFeature(index)}
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Create Service'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </form>
   );
 };
+
+export default CreateServiceForm;

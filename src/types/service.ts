@@ -118,8 +118,6 @@ export interface FavoriteService {
     provider_name: string;
     category?: string;
     pricingModel?: string;
-    providerId?: string;
-    providerName?: string;
     rating?: number;
     reviewCount?: number;
     location?: string;

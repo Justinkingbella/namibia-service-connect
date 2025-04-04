@@ -24,6 +24,7 @@ export interface Transaction {
 export type WalletVerificationStatus = 'pending' | 'submitted' | 'verified' | 'rejected' | 'expired';
 export type NamibianMobileOperator = 'MTC' | 'TN Mobile' | 'Other';
 export type NamibianBank = 'Bank Windhoek' | 'First National Bank' | 'Standard Bank' | 'Nedbank' | 'Other' | 'FNB';
+export type WalletPaymentType = 'e_wallet' | 'easy_wallet';
 
 export interface WalletVerification {
   id: string;

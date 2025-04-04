@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/common/Button';
 import { Heart, Star, Calendar, MapPin, Clock } from 'lucide-react';
-import { ServiceCategory } from '@/types/service';
+import { ServiceCategoryEnum } from '@/types/service';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
@@ -13,7 +13,7 @@ interface FavoriteService {
   title: string;
   providerName: string;
   providerId: string;
-  category: ServiceCategory;
+  category: string;
   rating: number;
   reviewCount: number;
   price: number;

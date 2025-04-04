@@ -1,111 +1,81 @@
 
 export type UserRole = 'customer' | 'provider' | 'admin';
-export type ProviderVerificationStatus = 'pending' | 'verified' | 'rejected' | 'under_review';
-export type SubscriptionTier = 'free' | 'pro' | 'enterprise';
+export type ProviderVerificationStatus = 'pending' | 'verified' | 'rejected' | 'suspended';
+export type SubscriptionTier = 'free' | 'basic' | 'premium' | 'pro';
 
-export interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  phoneNumber?: string;
-  avatarUrl?: string;
-  isActive?: boolean;
-  createdAt: Date;
-  emailVerified?: boolean;
+export interface Session {
+  access_token: string;
+  refresh_token: string;
+  expires_at: number;
+  user: {
+    id: string;
+    email: string;
+    role: UserRole;
+  };
 }
 
 export interface DbUserProfile {
   id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone_number?: string;
-  avatar_url?: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  avatarUrl?: string;
   address?: string;
   city?: string;
   country?: string;
+  active?: boolean;
+  preferredLanguage?: string;
   bio?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  birthDate?: Date;
+  email?: string;
+  emailVerified?: boolean;
   role: UserRole;
-  active: boolean;
-  created_at: string;
+  notificationPreferences?: {
+    email: boolean;
+    sms: boolean;
+    push: boolean;
+  };
+}
+
+export interface DbCustomerProfile {
+  id: string;
+  saved_services?: string[];
+  preferred_categories?: string[];
+  notification_preferences: {
+    email: boolean;
+    sms: boolean;
+    push: boolean;
+  };
+  created_at?: string;
   updated_at?: string;
-  registration_completed?: boolean;
-  email_verified?: boolean;
-  last_active?: string;
-  loyalty_points?: number;
-  total_spent?: number;
-  preferred_language?: string;
-  birth_date?: string;
-  user_preferences?: any;
-  favorites?: string[];
 }
 
 export interface DbProviderProfile {
   id: string;
   email: string;
-  business_name?: string;
-  business_description?: string;
+  phone_number?: string | null;
+  website?: string | null;
+  address?: string | null;
+  city?: string | null;
+  country?: string | null;
   verification_status: ProviderVerificationStatus;
-  avatar_url?: string;
-  banner_url?: string;
-  address?: string;
-  city?: string;
-  country?: string;
-  phone_number?: string;
-  website?: string;
-  created_at: string;
+  subscription_tier: SubscriptionTier;
+  commission_rate?: number | null;
+  business_name?: string | null;
+  business_description?: string | null;
+  avatar_url?: string | null;
+  banner_url?: string | null;
+  created_at?: string;
   updated_at?: string;
-  verified_at?: string;
-  verified_by?: string;
   is_active?: boolean;
   completed_bookings?: number;
-  rating?: number;
-  rating_count?: number;
-  services_count?: number;
-  commission_rate?: number;
-  subscription_tier?: SubscriptionTier;
-}
-
-export interface DbCustomerProfile {
-  id: string;
-  notification_preferences?: { email: boolean; sms: boolean; push: boolean };
-  preferred_categories?: string[];
-  saved_services?: string[];
-  created_at: string;
-  updated_at?: string;
-}
-
-export interface Customer extends User {
-  notificationPreferences?: { email: boolean; sms: boolean; push: boolean };
-  preferredCategories?: string[];
-  savedServices?: string[];
-  loyaltyPoints?: number;
-}
-
-export interface Provider extends User {
-  businessName?: string;
-  businessDescription?: string;
-  verificationStatus: ProviderVerificationStatus;
-  bannerUrl?: string;
-  website?: string;
-  address?: string;
-  city?: string;
-  country?: string;
-  completedBookings?: number;
-  rating?: number;
-  ratingCount?: number;
-  servicesCount?: number;
-  commissionRate?: number;
-  subscriptionTier: SubscriptionTier;
-  isActive: boolean;
-}
-
-export interface Admin extends User {
-  permissions?: string[];
-  lastLogin?: Date;
-  adminLevel?: string;
+  rating?: number | null;
+  rating_count?: number | null;
+  services_count?: number | null;
+  verified_at?: string | null;
+  verified_by?: string | null;
 }
 
 export interface UserAddress {
@@ -115,23 +85,70 @@ export interface UserAddress {
   street: string;
   city: string;
   region?: string;
-  country: string;
   postal_code?: string;
-  is_default: boolean;
+  country: string;
+  is_default?: boolean;
   created_at?: string;
   updated_at?: string;
 }
 
+export interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  phoneNumber?: string;
+  avatarUrl?: string;
+  emailVerified?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  notificationPreferences?: {
+    email: boolean;
+    sms: boolean;
+    push: boolean;
+  };
+}
+
+export interface Customer extends User {
+  loyaltyPoints?: number;
+  preferredCategories?: string[];
+  savedServices?: string[];
+}
+
+export interface Provider extends User {
+  businessName?: string;
+  businessDescription?: string;
+  website?: string;
+  verificationStatus: ProviderVerificationStatus;
+  subscriptionTier: SubscriptionTier;
+  commissionRate?: number;
+  completedBookings?: number;
+  rating?: number;
+  ratingCount?: number;
+  servicesCount?: number;
+  bannerUrl?: string;
+  isActive?: boolean;
+}
+
+export interface Admin extends User {
+  permissions?: string[];
+  department?: string;
+  accessLevel?: string;
+  lastLogin?: Date;
+  isSuperAdmin?: boolean;
+}
+
 export interface AuthContextType {
   user: User | null;
-  session: any;
-  userRole: string;
+  session: Session | null;
+  userRole: UserRole | null;
   userProfile: Customer | Provider | Admin | null;
   loading: boolean;
   isLoading: boolean;
-  error: string | null;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: any) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, data: any) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<Customer | Provider | Admin>) => Promise<boolean>;
+  isAuthenticated: boolean;
 }

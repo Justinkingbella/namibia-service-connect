@@ -29,12 +29,13 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, viewAs = 'cus
       case 'disputed': return 'bg-orange-100 text-orange-800';
       case 'no_show': return 'bg-gray-100 text-gray-800';
       case 'rescheduled': return 'bg-teal-100 text-teal-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -63,7 +64,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, viewAs = 'cus
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm">{formatDate(booking.date)}</span>
           <Clock className="h-4 w-4 text-muted-foreground ml-2" />
-          <span className="text-sm">{booking.startTime}</span>
+          <span className="text-sm">{booking.start_time}</span>
         </div>
         
         {viewAs === 'provider' && booking.customerName && (
@@ -82,7 +83,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, viewAs = 'cus
         
         <div className="flex items-center gap-2">
           <DollarSign className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">{formatCurrency(booking.totalAmount)}</span>
+          <span className="text-sm">{formatCurrency(booking.total_amount)}</span>
         </div>
       </CardContent>
       <CardFooter className="pt-2 border-t flex justify-between">
@@ -94,5 +95,4 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, viewAs = 'cus
   );
 };
 
-// Adding default export
 export default BookingCard;

@@ -30,7 +30,7 @@ export type {
   Customer,
   Provider,
   Admin,
-  AuthContextType,
+  Session,
   SubscriptionTier,
   UserAddress
 } from './auth';
@@ -42,6 +42,7 @@ export type {
   NamibianBank,
   WalletVerification,
   Wallet,
+  WalletPaymentType,
   PaymentMethod as PaymentPaymentMethod
 } from './payment';
 
@@ -55,7 +56,8 @@ export type {
   PricingModel, 
   ServiceListItem, 
   Service,
-  ServiceData
+  ServiceData,
+  FavoriteService
 } from './service';
 
 export interface IResponse<T> {
