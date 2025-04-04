@@ -1,101 +1,127 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { FavoriteService } from '@/types/favorites';
-import { fetchUserFavorites, addFavorite, removeFavorite } from '@/services/mockProfileService';
+import { toast } from 'sonner';
+
+export interface FavoriteService {
+  id: string;
+  user_id: string;
+  service_id: string;
+  created_at: string;
+  service?: {
+    id: string;
+    title: string;
+    description: string;
+    price: number;
+    image?: string;
+    provider_id: string;
+    provider_name: string;
+  };
+}
 
 export function useFavorites() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [favorites, setFavorites] = useState<FavoriteService[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadFavorites = async () => {
-      if (!user?.id) {
-        setLoading(false);
-        return;
-      }
+    if (!user?.id) return;
 
-      setLoading(true);
-      const data = await fetchUserFavorites(user.id);
-      setFavorites(data);
-      setLoading(false);
+    const fetchFavorites = async () => {
+      try {
+        setLoading(true);
+        
+        const { data, error } = await supabase
+          .from('favorite_services')
+          .select(`
+            *,
+            service:service_id (
+              id, title, description, price, image, provider_id, provider_name
+            )
+          `)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+        setFavorites(data);
+      } catch (error) {
+        console.error('Error fetching favorites:', error);
+        toast.error('Failed to load favorite services');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    loadFavorites();
+    fetchFavorites();
   }, [user?.id]);
 
-  const addToFavorites = async (serviceId: string) => {
+  const addFavorite = async (serviceId: string) => {
     if (!user?.id) return false;
 
-    // Check if already in favorites
-    if (favorites.some(fav => fav.serviceId === serviceId)) {
-      toast({
-        title: "Already favorited",
-        description: "This service is already in your favorites."
-      });
-      return true;
-    }
+    try {
+      // Check if already a favorite
+      const exists = favorites.some(fav => fav.service_id === serviceId);
+      if (exists) {
+        return true; // Already a favorite
+      }
 
-    setLoading(true);
-    const newFavorite = await addFavorite(user.id, serviceId);
-    
-    if (newFavorite) {
-      setFavorites(prev => [...prev, newFavorite]);
-      
-      toast({
-        title: "Added to favorites",
-        description: "Service has been added to your favorites."
-      });
-      
-      setLoading(false);
+      const { data, error } = await supabase
+        .from('favorite_services')
+        .insert({
+          user_id: user.id,
+          service_id: serviceId
+        })
+        .select(`
+          *,
+          service:service_id (
+            id, title, description, price, image, provider_id, provider_name
+          )
+        `)
+        .single();
+
+      if (error) throw error;
+
+      setFavorites(prev => [...prev, data as FavoriteService]);
+      toast.success('Added to favorites');
       return true;
+    } catch (error) {
+      console.error('Error adding favorite:', error);
+      toast.error('Failed to add to favorites');
+      return false;
     }
-    
-    toast({
-      variant: "destructive",
-      title: "Failed to add favorite",
-      description: "There was an error adding this service to your favorites."
-    });
-    
-    setLoading(false);
-    return false;
   };
 
-  const removeFromFavorites = async (serviceId: string) => {
+  const removeFavorite = async (serviceId: string) => {
     if (!user?.id) return false;
 
-    setLoading(true);
-    const success = await removeFavorite(user.id, serviceId);
-    
-    if (success) {
-      setFavorites(prev => prev.filter(fav => fav.serviceId !== serviceId));
-      
-      toast({
-        title: "Removed from favorites",
-        description: "Service has been removed from your favorites."
-      });
-      
-      setLoading(false);
+    try {
+      const { error } = await supabase
+        .from('favorite_services')
+        .delete()
+        .eq('service_id', serviceId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setFavorites(prev => prev.filter(fav => fav.service_id !== serviceId));
+      toast.success('Removed from favorites');
       return true;
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+      toast.error('Failed to remove from favorites');
+      return false;
     }
-    
-    toast({
-      variant: "destructive",
-      title: "Failed to remove favorite",
-      description: "There was an error removing this service from your favorites."
-    });
-    
-    setLoading(false);
-    return false;
+  };
+
+  const isFavorite = (serviceId: string) => {
+    return favorites.some(fav => fav.service_id === serviceId);
   };
 
   return {
     favorites,
     loading,
-    addToFavorites,
-    removeFromFavorites
+    addFavorite,
+    removeFavorite,
+    isFavorite
   };
 }

@@ -1,91 +1,122 @@
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { Message } from '@/types/message';
-import { fetchUserMessages, sendMessage, markMessageAsRead } from '@/services/mockProfileService';
+import { toast } from 'sonner';
 
-export function useMessages() {
-  const { user } = useAuth();
-  const { toast } = useToast();
+export function useMessages(conversationId: string) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadMessages = async () => {
-      if (!user?.id) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      const data = await fetchUserMessages(user.id);
-      setMessages(data);
+    if (!conversationId) {
+      setMessages([]);
       setLoading(false);
+      return;
+    }
+
+    const fetchMessages = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('conversation_id', conversationId)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        
+        // Convert to Message type with proper field mapping
+        const formattedMessages = data.map((msg: any): Message => ({
+          id: msg.id,
+          conversationId: msg.conversation_id,
+          senderId: msg.sender_id,
+          recipientId: msg.recipient_id || '',
+          content: msg.content,
+          createdAt: new Date(msg.created_at),
+          read: msg.read,
+          attachments: msg.attachments || [],
+          messageType: msg.message_type || 'text',
+          isSystemMessage: msg.is_system_message || false
+        }));
+        
+        setMessages(formattedMessages);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+        toast.error('Failed to load messages');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    loadMessages();
-  }, [user?.id]);
+    fetchMessages();
 
-  const sendNewMessage = async (recipientId: string, content: string, attachments?: string[]) => {
-    if (!user?.id) return null;
+    // Set up real-time subscription
+    const subscription = supabase
+      .channel(`messages-${conversationId}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'messages',
+        filter: `conversation_id=eq.${conversationId}`
+      }, (payload) => {
+        const newMessage = payload.new as any;
+        
+        const formattedMessage: Message = {
+          id: newMessage.id,
+          conversationId: newMessage.conversation_id,
+          senderId: newMessage.sender_id,
+          recipientId: newMessage.recipient_id || '',
+          content: newMessage.content,
+          createdAt: new Date(newMessage.created_at),
+          read: newMessage.read,
+          attachments: newMessage.attachments || [],
+          messageType: newMessage.message_type || 'text',
+          isSystemMessage: newMessage.is_system_message || false
+        };
+        
+        setMessages(prev => [...prev, formattedMessage]);
+      })
+      .subscribe();
 
-    setLoading(true);
-    const newMessage = await sendMessage({
-      senderId: user.id,
-      recipientId,
-      content,
-      attachments,
-      isRead: false
-    });
-    
-    if (newMessage) {
-      setMessages(prev => [...prev, newMessage]);
-      
-      toast({
-        title: "Message sent",
-        description: "Your message has been sent successfully."
-      });
-      
-      setLoading(false);
-      return newMessage;
-    }
-    
-    toast({
-      variant: "destructive",
-      title: "Failed to send message",
-      description: "There was an error sending your message. Please try again."
-    });
-    
-    setLoading(false);
-    return null;
-  };
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [conversationId]);
 
-  const markAsRead = async (messageId: string) => {
-    setLoading(true);
-    const success = await markMessageAsRead(messageId);
-    
-    if (success) {
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === messageId 
-            ? { ...msg, isRead: true } 
-            : msg
-        )
-      );
+  const sendMessage = async (content: string, recipientId?: string, attachments: string[] = []) => {
+    if (!conversationId || content.trim() === '') return;
+
+    try {
+      const currentUser = (await supabase.auth.getUser()).data.user;
+      if (!currentUser) throw new Error('User not authenticated');
+
+      const messageData = {
+        conversation_id: conversationId,
+        sender_id: currentUser.id,
+        recipient_id: recipientId || null,
+        content,
+        attachments,
+        message_type: 'text',
+        read: false,
+        created_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('messages')
+        .insert(messageData);
+
+      if (error) throw error;
+
+      // No need to update state here - the realtime subscription will handle it
       
-      setLoading(false);
       return true;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message');
+      return false;
     }
-    
-    setLoading(false);
-    return false;
   };
 
-  return {
-    messages,
-    loading,
-    sendMessage: sendNewMessage,
-    markAsRead
-  };
+  return { messages, loading, sendMessage };
 }

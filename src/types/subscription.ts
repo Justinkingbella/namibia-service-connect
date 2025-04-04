@@ -6,6 +6,7 @@ export interface SubscriptionFeature {
   name: string;
   description: string;
   included: boolean;
+  limit?: number;
 }
 
 export interface SubscriptionPlan {
@@ -13,14 +14,14 @@ export interface SubscriptionPlan {
   name: string;
   description: string;
   price: number;
-  billingCycle: 'monthly' | 'yearly';
+  billingCycle: 'monthly' | 'yearly' | string;
   credits: number;
   maxBookings: number;
   features: SubscriptionFeature[];
   isPopular?: boolean;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
   trialPeriodDays?: number;
   allowedServices?: number;
   sortOrder?: number;
@@ -98,7 +99,8 @@ export const convertJsonToFeatures = (jsonFeatures: Json): SubscriptionFeature[]
     id: feature.id || crypto.randomUUID(),
     name: feature.name || '',
     description: feature.description || '',
-    included: feature.included !== undefined ? feature.included : true
+    included: feature.included !== undefined ? feature.included : true,
+    limit: feature.limit
   }));
 };
 
@@ -106,3 +108,18 @@ export const convertJsonToFeatures = (jsonFeatures: Json): SubscriptionFeature[]
 export const convertFeaturesToJson = (features: SubscriptionFeature[]): Json => {
   return features as unknown as Json;
 };
+
+export interface ProviderEarnings {
+  id?: string;
+  providerId: string;
+  periodStart: Date;
+  periodEnd: Date;
+  totalEarnings: number;
+  totalBookings: number;
+  completedBookings: number;
+  commissionPaid: number;
+  netEarnings: number;
+  payoutStatus?: string;
+  payoutDate?: Date;
+  payoutReference?: string;
+}

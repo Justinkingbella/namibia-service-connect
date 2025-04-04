@@ -1,8 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { CustomerData } from '@/hooks/useCustomerProfile';
+import { DbCustomerProfile } from '@/types/auth';
 import { ProviderData } from '@/hooks/useProviderProfile';
-import { User, UserRole, ProviderVerificationStatus, Service } from '@/types/auth';
+import { User, UserRole, ProviderVerificationStatus } from '@/types/auth';
 import { ServiceData, PricingModel, ServiceCategory } from '@/types/service';
 import { Dispute, DisputeStatus, DisputePriority } from '@/types/booking';
 import { uploadImage, deleteImage } from './imageService';
@@ -25,7 +24,7 @@ export async function fetchUserProfile(userId: string) {
 }
 
 // Customer functions
-export async function fetchCustomerData(userId: string): Promise<CustomerData | null> {
+export async function fetchCustomerData(userId: string): Promise<DbCustomerProfile | null> {
   try {
     const { data, error } = await supabase
       .from('customers')
@@ -45,7 +44,7 @@ export async function fetchCustomerData(userId: string): Promise<CustomerData | 
   }
 }
 
-export async function updateCustomerData(userId: string, data: Partial<CustomerData>): Promise<boolean> {
+export async function updateCustomerData(userId: string, data: Partial<DbCustomerProfile>): Promise<boolean> {
   try {
     const { error } = await supabase
       .from('customers')
@@ -99,6 +98,41 @@ export async function updateProviderData(userId: string, data: Partial<ProviderD
   } catch (error) {
     console.error('Error updating provider data:', error);
     return false;
+  }
+}
+
+// Provider services
+export async function fetchProviderServices(providerId: string): Promise<ServiceData[]> {
+  try {
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('provider_id', providerId)
+      .order('created_at', { ascending: false });
+      
+    if (error) throw error;
+    
+    return data.map((service: any) => ({
+      id: service.id,
+      title: service.title,
+      description: service.description,
+      price: service.price,
+      pricing_model: service.pricing_model as PricingModel,
+      category: service.category as ServiceCategory,
+      provider_id: service.provider_id,
+      provider_name: service.provider_name,
+      image: service.image,
+      features: service.features || [],
+      is_active: service.is_active,
+      location: service.location,
+      rating: service.rating,
+      review_count: service.review_count,
+      created_at: service.created_at,
+      updated_at: service.updated_at
+    }));
+  } catch (error) {
+    console.error('Error fetching provider services:', error);
+    return [];
   }
 }
 

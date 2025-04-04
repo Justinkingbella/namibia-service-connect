@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,9 +9,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import SubscriptionPlans from '@/components/provider/SubscriptionPlans';
-import { fetchUserSubscription, cancelSubscription, toggleAutoRenew } from '@/services/subscriptionService';
+import { fetchUserSubscription, cancelSubscription, toggleAutoRenew, fetchSubscriptionPlans } from '@/services/subscriptionService';
 import { useQuery } from '@tanstack/react-query';
 import { Switch } from '@/components/ui/switch';
+import { toast } from 'sonner';
+import { SubscriptionPlan } from '@/types/subscription';
 
 const SubscriptionPageProvider = () => {
   const { user } = useAuth();

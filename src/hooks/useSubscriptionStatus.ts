@@ -1,54 +1,65 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
-export function useSubscriptionStatus(userId?: string) {
-  const [status, setStatus] = useState<'active' | 'inactive' | 'pending' | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+type SubscriptionStatus = 'active' | 'pending' | 'inactive';
+
+export function useSubscriptionStatus() {
+  const { user } = useAuth();
+  const [status, setStatus] = useState<SubscriptionStatus>('inactive');
+  const [planId, setPlanId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) return;
+    const fetchSubscriptionStatus = async () => {
+      if (!user?.id) {
+        setStatus('inactive');
+        setLoading(false);
+        return;
+      }
 
-    const fetchStatus = async () => {
       try {
         const { data, error } = await supabase
           .from('user_subscriptions')
-          .select('status')
-          .eq('user_id', userId)
+          .select('id, status, subscription_plan_id')
+          .eq('user_id', user.id)
           .eq('status', 'active')
+          .order('end_date', { ascending: false })
+          .limit(1)
           .single();
 
-        if (error) throw error;
-        setStatus(data?.status || 'inactive');
+        if (error) {
+          if (error.code === 'PGRST116') {
+            // No active subscription found
+            setStatus('inactive');
+            setPlanId(null);
+          } else {
+            console.error('Error fetching subscription status:', error);
+            setStatus('inactive');
+          }
+        } else if (data) {
+          // Map the status from the database to our SubscriptionStatus type
+          if (data.status === 'active') {
+            setStatus('active');
+          } else if (data.status === 'pending') {
+            setStatus('pending');
+          } else {
+            setStatus('inactive');
+          }
+          
+          setPlanId(data.subscription_plan_id);
+        }
       } catch (error) {
-        console.error('Error fetching subscription status:', error);
+        console.error('Error in useSubscriptionStatus:', error);
         setStatus('inactive');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    fetchStatus();
+    fetchSubscriptionStatus();
+  }, [user?.id]);
 
-    // Subscribe to real-time changes
-    const subscription = supabase
-      .channel(`subscription_status_${userId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'user_subscriptions',
-        filter: `user_id=eq.${userId}`
-      }, (payload) => {
-        setStatus(payload.new.status);
-        toast.info('Subscription status updated');
-      })
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [userId]);
-
-  return { status, isLoading };
+  return { status, planId, loading, isActive: status === 'active' };
 }

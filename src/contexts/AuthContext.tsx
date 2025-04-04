@@ -1,6 +1,7 @@
+
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { AuthChangeEvent, Session as SupabaseSession, User as SupabaseUser } from '@supabase/supabase-js';
 import { UserRole, Customer, Provider, Admin, User, Session as CustomSession } from '@/types/auth';
 import { toast } from 'sonner';
 
@@ -62,7 +63,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const user: User = {
           id: session.user.id,
           email: session.user.email || '',
-          role: userRole, // Use role from metadata
+          role: userRole as UserRole, // Use role from metadata
           firstName: session.user.user_metadata?.first_name || '',
           lastName: session.user.user_metadata?.last_name || '',
           isActive: true,
@@ -104,7 +105,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const user: User = {
           id: session.user.id,
           email: session.user.email || '',
-          role: userRole, // Use role from metadata
+          role: userRole as UserRole, // Use role from metadata
           firstName: session.user.user_metadata?.first_name || '',
           lastName: session.user.user_metadata?.last_name || '',
           isActive: true,
@@ -178,54 +179,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
             console.error('Error fetching customer data:', customerError);
           }
 
-          // Fetch role-specific profile data
-          let specificProfile;
-          if (profileData.role === 'customer') {
-            const { data: customerData } = await supabase
-              .from('customer_profiles')
-              .select('*')
-              .eq('id', supabaseUser.id)
-              .single();
-              
-            specificProfile = {
-              ...customerData,
-              role: 'customer'
-            };
-          } else if (profileData.role === 'admin') {
-            const { data: adminData } = await supabase
-              .from('admin_profiles')
-              .select('*')
-              .eq('id', supabaseUser.id)
-              .single();
-              
-            specificProfile = {
-              ...adminData,
-              role: 'admin'
-            };
-          } else if (profileData.role === 'provider') {
-            const { data: providerData } = await supabase
-              .from('service_providers')
-              .select('*')
-              .eq('id', supabaseUser.id)
-              .single();
-              
-            specificProfile = {
-              ...providerData,
-              role: 'provider'
-            };
-          }
-
-          const userProfile = {
+          const customer: Customer = {
             id: supabaseUser.id,
             email: supabaseUser.email!,
             firstName: profileData.first_name || '',
             lastName: profileData.last_name || '',
             phoneNumber: profileData.phone_number || '',
-            avatar: profileData.avatar_url || '',
-            role: profileData.role,
+            avatarUrl: profileData.avatar_url || '',
+            role: 'customer',
             isActive: true,
             createdAt: new Date(profileData.created_at),
-            ...specificProfile
+            loyaltyPoints: profileData.loyalty_points || 0,
+            preferredCategories: customerData?.preferred_categories || [],
+            notificationPreferences: customerData?.notification_preferences || { email: true, sms: false, push: true },
+            savedServices: customerData?.saved_services || []
           };
 
           setUserProfile(customer);
@@ -243,25 +210,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
             console.error('Error fetching provider data:', providerError);
           }
 
+          // Use safe defaults for both cases: either we have data or we don't
           const provider: Provider = {
             id: supabaseUser.id,
             email: supabaseUser.email!,
             firstName: profileData.first_name || '',
             lastName: profileData.last_name || '',
             phoneNumber: profileData.phone_number || '',
-            avatar: profileData.avatar_url || '',
+            avatarUrl: profileData.avatar_url || '',
             role: 'provider',
             isActive: providerData?.is_active ?? true,
             businessName: providerData?.business_name || '',
             businessDescription: providerData?.business_description || '',
-            verificationStatus: (providerData?.verification_status as any) || 'pending',
+            verificationStatus: (providerData?.verification_status as ProviderVerificationStatus) || 'pending',
             rating: providerData?.rating || 0,
             reviewCount: providerData?.rating_count || 0,
-            categories: providerData?.categories || [],
+            categories: [],
             createdAt: new Date(profileData.created_at),
             isVerified: profileData.email_verified || false,
             subscriptionTier: providerData?.subscription_tier || 'free',
-            bankDetails: providerData?.bank_details || {}
+            bankDetails: {}
           };
 
           setUserProfile(provider);
@@ -285,7 +253,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             firstName: profileData.first_name || '',
             lastName: profileData.last_name || '',
             phoneNumber: profileData.phone_number || '',
-            avatar: profileData.avatar_url || '',
+            avatarUrl: profileData.avatar_url || '',
             role: 'admin',
             isActive: true,
             permissions: adminData?.permissions || [],
@@ -387,6 +355,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Create provider record
         const providerData = {
           id: data.user.id,
+          email: email,
           business_name: 'businessName' in userData ? userData.businessName || '' : `${userData.firstName}'s Business`,
           business_description: 'businessDescription' in userData ? userData.businessDescription || '' : '',
           verification_status: 'pending',
@@ -437,7 +406,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const signOut = async () => {
+  const signOut = async (): Promise<void> => {
     console.log('Signing out user');
     try {
       await supabase.auth.signOut();
@@ -452,10 +421,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Force some browser storage cleanup
       localStorage.removeItem('supabase.auth.token');
 
-      return { error: null };
     } catch (error) {
       console.error('Error signing out:', error);
-      return { error };
+      throw error;
     }
   };
 
@@ -492,8 +460,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         updated_at: new Date().toISOString()
       };
 
-      if ('avatar' in data && data.avatar) {
-        baseProfileData['avatar_url'] = data.avatar;
+      if ('avatarUrl' in data && data.avatarUrl) {
+        baseProfileData['avatar_url'] = data.avatarUrl;
       }
 
       const { error: profileError } = await supabase
@@ -514,8 +482,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           updated_at: new Date().toISOString()
         };
 
-        if ('avatar' in data && data.avatar) {
-          providerData['avatar_url'] = data.avatar;
+        if ('avatarUrl' in data && data.avatarUrl) {
+          providerData['avatar_url'] = data.avatarUrl;
         }
 
         const { error: providerError } = await supabase
@@ -537,7 +505,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             firstName: data.firstName || userProfile.firstName,
             lastName: data.lastName || userProfile.lastName,
             phoneNumber: data.phoneNumber || userProfile.phoneNumber,
-            avatar: ('avatar' in data && data.avatar) ? data.avatar : userProfile.avatar,
+            avatarUrl: ('avatarUrl' in data && data.avatarUrl) ? data.avatarUrl : userProfile.avatarUrl,
             businessName: ('businessName' in data) ? (data.businessName || '') : userProfile.businessName,
             businessDescription: ('businessDescription' in data) ? (data.businessDescription || '') : userProfile.businessDescription,
           };
@@ -548,7 +516,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             firstName: data.firstName || userProfile.firstName,
             lastName: data.lastName || userProfile.lastName,
             phoneNumber: data.phoneNumber || userProfile.phoneNumber,
-            avatar: ('avatar' in data && data.avatar) ? data.avatar : userProfile.avatar,
+            avatarUrl: ('avatarUrl' in data && data.avatarUrl) ? data.avatarUrl : userProfile.avatarUrl,
           };
           setUserProfile(updatedProfile);
         } else if (userRole === 'admin' && userProfile.role === 'admin') {
@@ -557,7 +525,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             firstName: data.firstName || userProfile.firstName,
             lastName: data.lastName || userProfile.lastName,
             phoneNumber: data.phoneNumber || userProfile.phoneNumber,
-            avatar: ('avatar' in data && data.avatar) ? data.avatar : userProfile.avatar,
+            avatarUrl: ('avatarUrl' in data && data.avatarUrl) ? data.avatarUrl : userProfile.avatarUrl,
           };
           setUserProfile(updatedProfile);
         }
@@ -570,7 +538,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           firstName: data.firstName || prev.firstName,
           lastName: data.lastName || prev.lastName,
           phoneNumber: data.phoneNumber || prev.phoneNumber,
-          avatar: ('avatar' in data && data.avatar) ? data.avatar : prev.avatar,
+          avatarUrl: ('avatarUrl' in data && data.avatarUrl) ? data.avatarUrl : prev.avatarUrl,
           name: `${data.firstName || prev.firstName} ${data.lastName || prev.lastName}`,
         };
       });
@@ -584,7 +552,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const value = {
+  const value: AuthContextProps = {
     user,
     session,
     userRole,

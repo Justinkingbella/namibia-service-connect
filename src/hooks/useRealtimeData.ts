@@ -1,82 +1,86 @@
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
+type Table = 'conversations' | 'messages' | 'bookings' | 'services' | 'notifications' | string;
+type Event = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+
+interface RealtimeOptions {
+  event?: Event;
+  filter?: string;
+}
+
+/**
+ * Hook to subscribe to realtime changes for a given table
+ */
 export function useRealtimeData<T>(
-  tableName: string,
-  filters?: Record<string, any>,
-  initialData: T[] = []
-): { data: T[]; loading: boolean; error: Error | null } {
-  const [data, setData] = useState<T[]>(initialData);
-  const [loading, setLoading] = useState(true);
+  table: Table,
+  options: RealtimeOptions = { event: '*' }
+) {
+  const [data, setData] = useState<T[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // Initial data fetch
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       try {
         setLoading(true);
         
-        // Dynamically build the query based on filters
-        let query = supabase.from(tableName).select('*');
+        // The table name is passed directly to from() to avoid TypeScript issues
+        const { data: initialData, error: fetchError } = await supabase
+          .from(table)
+          .select('*');
         
-        if (filters) {
-          Object.entries(filters).forEach(([field, value]) => {
-            if (value !== undefined && value !== null) {
-              query = query.eq(field, value);
-            }
-          });
-        }
+        if (fetchError) throw fetchError;
         
-        const { data: fetchedData, error: fetchError } = await query;
-        
-        if (fetchError) {
-          throw fetchError;
-        }
-        
-        setData(fetchedData as T[]);
+        setData(initialData as T[]);
       } catch (err) {
-        console.error(`Error fetching data from ${tableName}:`, err);
-        setError(err instanceof Error ? err : new Error(String(err)));
+        setError(err instanceof Error ? err : new Error('Failed to fetch data'));
+        console.error(`Error fetching initial ${table} data:`, err);
       } finally {
         setLoading(false);
       }
     };
-    
-    fetchData();
-    
-    // Subscribe to changes
-    const subscription = supabase
-      .channel(`${tableName}_changes`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: tableName
-      }, (payload) => {
-        // Handle the realtime update
-        if (payload.eventType === 'INSERT') {
-          setData(current => [...current, payload.new as T]);
-        } else if (payload.eventType === 'UPDATE') {
-          setData(current => 
-            current.map(item => 
-              // @ts-ignore - we know id exists on the data
-              item.id === payload.new.id ? payload.new as T : item
-            )
-          );
-        } else if (payload.eventType === 'DELETE') {
-          setData(current => 
-            current.filter(item => 
-              // @ts-ignore - we know id exists on the data
-              item.id !== payload.old.id
-            )
-          );
+
+    fetchInitialData();
+  }, [table]);
+
+  // Realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel(`${table}-changes`)
+      .on(
+        'postgres_changes',
+        {
+          event: options.event || '*',
+          schema: 'public',
+          table: table,
+          filter: options.filter
+        },
+        (payload: RealtimePostgresChangesPayload<any>) => {
+          if (payload.eventType === 'INSERT') {
+            setData((currentData) => [...currentData, payload.new as T]);
+          } else if (payload.eventType === 'UPDATE') {
+            setData((currentData) =>
+              currentData.map((item: any) =>
+                item.id === payload.new.id ? payload.new : item
+              )
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setData((currentData) =>
+              currentData.filter((item: any) => item.id !== payload.old.id)
+            );
+          }
         }
-      })
+      )
       .subscribe();
-    
+
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
-  }, [tableName, JSON.stringify(filters)]);
-  
+  }, [table, options.event, options.filter]);
+
   return { data, loading, error };
 }

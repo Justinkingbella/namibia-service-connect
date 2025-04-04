@@ -1,134 +1,183 @@
 
-import React, { useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCustomerProfile } from '@/hooks/useCustomerProfile';
-import { useProviderProfile } from '@/hooks/useProviderProfile';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { Edit, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { MessageSquare, Calendar, Star, Heart } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
+import { Customer, Provider } from '@/types/auth';
 
-export function ProfileSummary() {
-  const { user } = useAuth();
-  const { customerData, loading: customerLoading } = useCustomerProfile();
-  const { providerData, loading: providerLoading } = useProviderProfile();
-  
-  const loading = user?.role === 'provider' ? providerLoading : customerLoading;
-  
-  if (!user) {
+const ProfileSummary = () => {
+  const { user, userProfile, userRole } = useAuth();
+  const { status: subscriptionStatus, isActive } = useSubscriptionStatus();
+
+  // Early return if no user data
+  if (!user || !userProfile) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Profile Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">Please sign in to view your profile.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile Summary</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle>Profile</CardTitle>
+          <CardDescription>Your profile summary</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="w-12 h-12 bg-muted rounded-full animate-pulse" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-[250px]" />
-              <Skeleton className="h-4 w-[200px]" />
+              <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+              <div className="h-3 w-24 bg-muted rounded animate-pulse" />
             </div>
           </div>
         </CardContent>
       </Card>
     );
   }
-  
-  const avatarUrl = user.role === 'provider' 
-    ? providerData?.business_logo || user.avatarUrl 
-    : user.avatarUrl;
-    
-  const displayName = user.role === 'provider'
-    ? providerData?.business_name || `${user.firstName} ${user.lastName}`
-    : `${user.firstName} ${user.lastName}`;
-    
-  const profilePath = user.role === 'provider' 
-    ? '/dashboard/provider/profile' 
-    : '/dashboard/customer/profile';
-  
+
+  // Render specific content based on user role
+  const renderRoleSpecificContent = () => {
+    switch (userRole) {
+      case 'provider':
+        const providerProfile = userProfile as Provider;
+        return (
+          <>
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              <div className="bg-primary/10 p-2 rounded-md">
+                <div className="text-xs text-muted-foreground">Rating</div>
+                <div className="flex items-center">
+                  <Star className="h-3 w-3 text-yellow-500 mr-1" />
+                  <span className="text-sm font-medium">
+                    {providerProfile.rating?.toFixed(1) || '0.0'} 
+                    <span className="text-xs text-muted-foreground ml-1">
+                      ({providerProfile.reviewCount || 0})
+                    </span>
+                  </span>
+                </div>
+              </div>
+              
+              <div className="bg-primary/10 p-2 rounded-md">
+                <div className="text-xs text-muted-foreground">Bookings</div>
+                <div className="flex items-center">
+                  <Calendar className="h-3 w-3 text-primary mr-1" />
+                  <span className="text-sm font-medium">
+                    {providerProfile.completedBookings || 0} completed
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-4">
+              <div className="flex justify-between items-center mb-1">
+                <div className="text-xs text-muted-foreground">Subscription</div>
+                <Badge variant={isActive ? "outline" : "secondary"} className="text-xs">
+                  {subscriptionStatus === 'active' ? 'Active' : 'Inactive'}
+                </Badge>
+              </div>
+              <div className="text-sm font-medium">
+                {providerProfile.subscriptionTier 
+                  ? providerProfile.subscriptionTier.charAt(0).toUpperCase() + providerProfile.subscriptionTier.slice(1) 
+                  : 'Free'} Plan
+              </div>
+            </div>
+            
+            <div className="mt-4">
+              <div className="text-xs text-muted-foreground mb-1">Account Status</div>
+              <div className="flex items-center">
+                <Badge variant={providerProfile.verificationStatus === 'verified' ? "success" : "warning"} className="text-xs">
+                  {providerProfile.verificationStatus.charAt(0).toUpperCase() + providerProfile.verificationStatus.slice(1)}
+                </Badge>
+              </div>
+            </div>
+          </>
+        );
+        
+      case 'customer':
+        const customerProfile = userProfile as Customer;
+        return (
+          <>
+            <div className="mt-4">
+              <div className="text-xs text-muted-foreground mb-1">Loyalty Points</div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium">{customerProfile.loyaltyPoints || 0} pts</span>
+                <span className="text-xs text-muted-foreground">Next tier: 500 pts</span>
+              </div>
+              <Progress value={(customerProfile.loyaltyPoints || 0) / 5} className="h-1.5" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              <div className="bg-primary/10 p-2 rounded-md">
+                <div className="text-xs text-muted-foreground">Bookings</div>
+                <div className="flex items-center">
+                  <Calendar className="h-3 w-3 text-primary mr-1" />
+                  <span className="text-sm font-medium">
+                    {/* We can add actual booking count here in future */}
+                    0 total
+                  </span>
+                </div>
+              </div>
+              
+              <div className="bg-primary/10 p-2 rounded-md">
+                <div className="text-xs text-muted-foreground">Saved Services</div>
+                <div className="flex items-center">
+                  <Heart className="h-3 w-3 text-red-500 mr-1" />
+                  <span className="text-sm font-medium">
+                    {customerProfile.savedServices?.length || 0} services
+                  </span>
+                </div>
+              </div>
+            </div>
+          </>
+        );
+        
+      case 'admin':
+        return (
+          <>
+            <div className="mt-4">
+              <div className="text-xs text-muted-foreground mb-1">Admin Access</div>
+              <Badge variant="outline" className="text-xs">Full Access</Badge>
+            </div>
+            
+            <div className="mt-4">
+              <div className="text-xs text-muted-foreground mb-1">System Status</div>
+              <Badge variant="success" className="text-xs">Online</Badge>
+            </div>
+          </>
+        );
+        
+      default:
+        return null;
+    }
+  };
+
   return (
     <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>Profile Summary</CardTitle>
-          <Button variant="outline" size="sm" asChild>
-            <Link to={profilePath}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Profile
-            </Link>
-          </Button>
-        </div>
+      <CardHeader className="pb-2">
+        <CardTitle>Profile</CardTitle>
+        <CardDescription>Your profile summary</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex items-center space-x-4">
           <Avatar className="h-12 w-12">
-            <AvatarImage src={avatarUrl} alt={displayName} />
-            <AvatarFallback>
-              <User className="h-6 w-6" />
-            </AvatarFallback>
+            <AvatarImage src={user.avatarUrl} alt={user.firstName} />
+            <AvatarFallback>{`${user.firstName.charAt(0)}${user.lastName.charAt(0)}`}</AvatarFallback>
           </Avatar>
           <div>
-            <h3 className="font-medium">{displayName}</h3>
-            <p className="text-sm text-muted-foreground capitalize">{user.role}</p>
-            {user.role === 'provider' && providerData?.verification_status && (
-              <div className="mt-1">
-                <span className={`text-xs px-2 py-1 rounded ${
-                  providerData.verification_status === 'verified' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {providerData.verification_status === 'verified' ? 'Verified' : 'Pending Verification'}
-                </span>
-              </div>
-            )}
+            <div className="font-medium">{user.firstName} {user.lastName}</div>
+            <div className="text-sm text-muted-foreground">{user.email}</div>
           </div>
         </div>
         
-        {user.role === 'customer' && customerData && (
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <p className="text-muted-foreground">Favorites</p>
-                <p className="font-medium">{customerData.saved_services?.length || 0}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Loyalty Points</p>
-                <p className="font-medium">{user.loyaltyPoints || 0}</p>
-              </div>
-            </div>
-          </div>
-        )}
+        {renderRoleSpecificContent()}
         
-        {user.role === 'provider' && providerData && (
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <p className="text-muted-foreground">Rating</p>
-                <p className="font-medium">{providerData.rating?.toFixed(1) || 'No ratings'}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Service Categories</p>
-                <p className="font-medium">{providerData.categories?.length || 0}</p>
-              </div>
-            </div>
+        <div className="mt-4 pt-4 border-t">
+          <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+            <MessageSquare className="h-3 w-3" />
+            <span>Need help? Contact admin support</span>
           </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
-}
+};
+
+export default ProfileSummary;
