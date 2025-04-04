@@ -36,6 +36,7 @@ export interface Customer extends User {
     push: boolean;
   };
   savedServices?: string[];
+  completedBookings?: number;
 }
 
 export interface Provider extends User {
@@ -47,8 +48,9 @@ export interface Provider extends User {
   rating: number;
   reviewCount: number;
   categories?: string[];
-  subscriptionTier?: string;
+  subscriptionTier?: SubscriptionTier;
   bankDetails?: any;
+  completedBookings: number;
 }
 
 export interface Admin extends User {
@@ -72,6 +74,8 @@ export interface DbUserProfile {
   registration_completed?: boolean;
   role?: UserRole;
   loyalty_points?: number;
+  birth_date?: string;
+  preferred_language?: string;
 }
 
 export interface DbProviderProfile {
@@ -109,4 +113,36 @@ export interface DbCustomerProfile {
   saved_services?: string[];
   created_at?: string;
   updated_at?: string;
+}
+
+export interface UserAddress {
+  id: string;
+  user_id: string;
+  name: string;
+  street: string;
+  city: string;
+  region?: string;
+  postal_code?: string;
+  country: string;
+  is_default: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type SubscriptionTier = 'free' | 'basic' | 'professional' | 'premium' | 'enterprise';
+
+export interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  userRole: string;
+  userProfile: Customer | Provider | Admin | null;
+  loading: boolean;
+  isLoading: boolean;
+  error: Error | null;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, userData: Partial<User>) => Promise<void>;
+  signOut: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (password: string) => Promise<void>;
+  updateProfile: (data: Partial<Customer | Provider | Admin>) => Promise<boolean>;
 }

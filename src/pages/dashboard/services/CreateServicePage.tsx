@@ -28,6 +28,7 @@ const CreateServicePage = () => {
         provider_id: user.id,
         provider_name: `${user.firstName} ${user.lastName}`,
         is_active: true,
+        category: serviceData.category || '', // Ensure category is not undefined
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };

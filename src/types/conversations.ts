@@ -1,5 +1,6 @@
 
-import { Message } from "./message";
+// Remove the import that's conflicting
+// import { Message } from "./message";
 
 export interface Conversation {
   id: string;
@@ -22,6 +23,7 @@ export interface Conversation {
   lastSenderId?: string;
 }
 
+// Define the Message interface here to avoid conflict
 export interface Message {
   id: string;
   conversationId: string; 

@@ -1,460 +1,213 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, CreditCard, BarChart2, Download, ArrowDown, CheckCircle, Clock } from 'lucide-react';
-import { PaymentPaymentMethod } from '@/types';
+import { Check, CreditCard, Plus, Wallet, Trash2, Bank } from 'lucide-react';
+import { PaymentMethod } from '@/types/payments';
 
-interface PaymentManagementProps {
-  providerId?: string;
-  type?: string;
-}
+const PaymentManagement: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<string>('methods');
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
+    {
+      id: '1',
+      type: 'bank_transfer',
+      name: 'Bank Windhoek',
+      details: {
+        accountNumber: '1234567890',
+        branchCode: '123456',
+        accountHolder: 'John Doe',
+        accountType: 'Savings'
+      },
+      isDefault: true
+    },
+    {
+      id: '2',
+      type: 'ewallet',
+      name: 'MTC Mobile Money',
+      details: {
+        phoneNumber: '0811234567',
+        holderName: 'John Doe'
+      },
+      isDefault: false
+    },
+    {
+      id: '3',
+      type: 'payfast',
+      name: 'PayFast',
+      details: {
+        email: 'john@example.com'
+      },
+      isDefault: false
+    }
+  ]);
 
-type WithdrawalStatus = 'pending' | 'processing' | 'completed' | 'failed';
+  const handleRemoveMethod = (id: string) => {
+    setPaymentMethods(paymentMethods.filter(method => method.id !== id));
+  };
 
-interface Transaction {
-  id: string;
-  amount: number;
-  fee: number;
-  net: number;
-  date: Date;
-  bookingId: string;
-  serviceName: string;
-  paymentMethod: PaymentPaymentMethod;
-  status: 'completed' | 'pending' | 'failed';
-}
+  const handleSetDefaultMethod = (id: string) => {
+    setPaymentMethods(paymentMethods.map(method => ({
+      ...method,
+      isDefault: method.id === id
+    })));
+  };
 
-interface Withdrawal {
-  id: string;
-  amount: number;
-  fee: number;
-  net: number;
-  date: Date;
-  method: string;
-  accountDetails: string;
-  status: WithdrawalStatus;
-}
-
-const mockTransactions: Transaction[] = [
-  {
-    id: 'trans-1',
-    amount: 500,
-    fee: 50,
-    net: 450,
-    date: new Date(Date.now() - 86400000 * 2),
-    bookingId: '1',
-    serviceName: 'Home Cleaning Service',
-    paymentMethod: 'pay_today',
-    status: 'completed'
-  },
-  {
-    id: 'trans-2',
-    amount: 350,
-    fee: 35,
-    net: 315,
-    date: new Date(Date.now() - 86400000 * 5),
-    bookingId: '2',
-    serviceName: 'Plumbing Repair',
-    paymentMethod: 'e_wallet',
-    status: 'completed'
-  },
-  {
-    id: 'trans-3',
-    amount: 300,
-    fee: 30,
-    net: 270,
-    date: new Date(Date.now() - 86400000 * 7),
-    bookingId: '3',
-    serviceName: 'Deep Cleaning',
-    paymentMethod: 'pay_today',
-    status: 'completed'
-  }
-];
-
-const mockWithdrawals: Withdrawal[] = [
-  {
-    id: 'with-1',
-    amount: 800,
-    fee: 10,
-    net: 790,
-    date: new Date(Date.now() - 86400000 * 3),
-    method: 'Bank Transfer',
-    accountDetails: '**** 1234',
-    status: 'completed'
-  },
-  {
-    id: 'with-2',
-    amount: 500,
-    fee: 5,
-    net: 495,
-    date: new Date(Date.now() - 86400000 * 10),
-    method: 'E-Wallet',
-    accountDetails: '0812345678',
-    status: 'completed'
-  },
-  {
-    id: 'with-3',
-    amount: 600,
-    fee: 6,
-    net: 594,
-    date: new Date(),
-    method: 'PayFast',
-    accountDetails: 'user@example.com',
-    status: 'pending'
-  }
-];
-
-export const PaymentManagement: React.FC<PaymentManagementProps> = ({ providerId, type }) => {
-  const [activeTab, setActiveTab] = useState(type || 'earnings');
-  const [withdrawalAmount, setWithdrawalAmount] = useState<number>(0);
-  const [withdrawalMethod, setWithdrawalMethod] = useState<string>('bank_transfer');
-  
-  const totalEarnings = mockTransactions.reduce((sum, transaction) => sum + transaction.net, 0);
-  const pendingEarnings = mockTransactions
-    .filter(t => t.status === 'pending')
-    .reduce((sum, transaction) => sum + transaction.net, 0);
-  const availableBalance = totalEarnings - mockWithdrawals
-    .filter(w => w.status !== 'failed')
-    .reduce((sum, withdrawal) => sum + withdrawal.net, 0);
-
-  const getStatusBadge = (status: WithdrawalStatus | 'completed' | 'pending' | 'failed') => {
-    switch (status) {
-      case 'pending':
-        return (
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-            <Clock className="h-3 w-3 mr-1" /> Pending
-          </Badge>
-        );
-      case 'processing':
-        return (
-          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-            <Clock className="h-3 w-3 mr-1" /> Processing
-          </Badge>
-        );
-      case 'completed':
-        return (
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            <CheckCircle className="h-3 w-3 mr-1" /> Completed
-          </Badge>
-        );
-      case 'failed':
-        return (
-          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-            <Clock className="h-3 w-3 mr-1" /> Failed
-          </Badge>
-        );
+  const renderPaymentMethodIcon = (type: string) => {
+    switch (type) {
+      case 'bank_transfer':
+        return <Bank className="h-5 w-5 text-blue-500" />;
+      case 'ewallet':
+        return <Wallet className="h-5 w-5 text-green-500" />;
+      case 'payfast':
+      case 'dpo':
+      case 'credit_card':
+        return <CreditCard className="h-5 w-5 text-purple-500" />;
       default:
-        return null;
+        return <CreditCard className="h-5 w-5 text-gray-500" />;
     }
   };
 
-  const getPaymentMethodName = (method: PaymentPaymentMethod) => {
-    switch (method) {
-      case 'pay_today': return 'PayToday';
-      case 'pay_fast': return 'PayFast';
-      case 'e_wallet': return 'E-Wallet';
-      case 'dop': return 'DOP';
-      case 'easy_wallet': return 'EasyWallet';
-      case 'bank_transfer': return 'Bank Transfer';
-      case 'cash': return 'Cash';
-      default: return method;
+  const formatMethodName = (method: PaymentMethod) => {
+    const details = method.details;
+    
+    switch (method.type) {
+      case 'bank_transfer':
+        return `${method.name} (${details.accountNumber ? '••••' + details.accountNumber.slice(-4) : 'Unknown'})`;
+      case 'ewallet':
+        return `${method.name} (${details.phoneNumber ? '••••' + details.phoneNumber.slice(-4) : 'Unknown'})`;
+      case 'payfast':
+        return `${method.name} (${details.email ? details.email.slice(0, 3) + '••••' : 'Unknown'})`;
+      default:
+        return method.name;
     }
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { 
-      day: 'numeric', 
-      month: 'short', 
-      year: 'numeric' 
-    });
-  };
-  
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Payment Management</CardTitle>
         <CardDescription>
-          Track your earnings, request withdrawals, and view payment history
+          Manage payment methods and view transaction history
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Earnings</p>
-                  <h3 className="text-2xl font-bold">N${totalEarnings.toFixed(2)}</h3>
-                </div>
-                <BarChart2 className="h-10 w-10 text-primary-foreground bg-primary rounded-full p-2" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Available Balance</p>
-                  <h3 className="text-2xl font-bold">N${availableBalance.toFixed(2)}</h3>
-                </div>
-                <DollarSign className="h-10 w-10 text-primary-foreground bg-primary rounded-full p-2" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Pending Earnings</p>
-                  <h3 className="text-2xl font-bold">N${pendingEarnings.toFixed(2)}</h3>
-                </div>
-                <Clock className="h-10 w-10 text-primary-foreground bg-primary rounded-full p-2" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
+        <Tabs defaultValue="methods" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
-            <TabsTrigger value="earnings">Earnings</TabsTrigger>
-            <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
-            <TabsTrigger value="request">Request Withdrawal</TabsTrigger>
-            <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
-            <TabsTrigger value="bank-accounts">Bank Accounts</TabsTrigger>
-            <TabsTrigger value="wallet">Wallet</TabsTrigger>
-            <TabsTrigger value="payment-settings">Payment Settings</TabsTrigger>
+            <TabsTrigger value="methods">Payment Methods</TabsTrigger>
+            <TabsTrigger value="transactions">Transactions</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="earnings">
-            <div className="rounded-md border">
-              <div className="flex justify-between p-4">
-                <h3 className="font-medium">Recent Transactions</h3>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" /> Export
-                </Button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-muted/50">
-                      <th className="text-left p-3 text-sm font-medium">Date</th>
-                      <th className="text-left p-3 text-sm font-medium">Service</th>
-                      <th className="text-left p-3 text-sm font-medium">Payment Method</th>
-                      <th className="text-left p-3 text-sm font-medium">Amount</th>
-                      <th className="text-left p-3 text-sm font-medium">Fee</th>
-                      <th className="text-left p-3 text-sm font-medium">Net</th>
-                      <th className="text-left p-3 text-sm font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {mockTransactions.map((transaction) => (
-                      <tr key={transaction.id} className="hover:bg-muted/50">
-                        <td className="p-3 text-sm">{formatDate(transaction.date)}</td>
-                        <td className="p-3 text-sm">{transaction.serviceName}</td>
-                        <td className="p-3 text-sm">{getPaymentMethodName(transaction.paymentMethod)}</td>
-                        <td className="p-3 text-sm">N${transaction.amount.toFixed(2)}</td>
-                        <td className="p-3 text-sm text-muted-foreground">-N${transaction.fee.toFixed(2)}</td>
-                        <td className="p-3 text-sm font-medium">N${transaction.net.toFixed(2)}</td>
-                        <td className="p-3 text-sm">{getStatusBadge(transaction.status)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+
+          <TabsContent value="methods" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium">Your Payment Methods</h3>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-1" /> Add Method
+              </Button>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="withdrawals">
-            <div className="rounded-md border">
-              <div className="flex justify-between p-4">
-                <h3 className="font-medium">Withdrawal History</h3>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" /> Export
-                </Button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-muted/50">
-                      <th className="text-left p-3 text-sm font-medium">Date</th>
-                      <th className="text-left p-3 text-sm font-medium">Method</th>
-                      <th className="text-left p-3 text-sm font-medium">Account</th>
-                      <th className="text-left p-3 text-sm font-medium">Amount</th>
-                      <th className="text-left p-3 text-sm font-medium">Fee</th>
-                      <th className="text-left p-3 text-sm font-medium">Net</th>
-                      <th className="text-left p-3 text-sm font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {mockWithdrawals.map((withdrawal) => (
-                      <tr key={withdrawal.id} className="hover:bg-muted/50">
-                        <td className="p-3 text-sm">{formatDate(withdrawal.date)}</td>
-                        <td className="p-3 text-sm">{withdrawal.method}</td>
-                        <td className="p-3 text-sm">{withdrawal.accountDetails}</td>
-                        <td className="p-3 text-sm">N${withdrawal.amount.toFixed(2)}</td>
-                        <td className="p-3 text-sm text-muted-foreground">-N${withdrawal.fee.toFixed(2)}</td>
-                        <td className="p-3 text-sm font-medium">N${withdrawal.net.toFixed(2)}</td>
-                        <td className="p-3 text-sm">{getStatusBadge(withdrawal.status)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="request">
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="text-lg font-medium mb-4">Request Withdrawal</h3>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  Available balance: <span className="font-medium">N${availableBalance.toFixed(2)}</span>
-                </p>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1" htmlFor="amount">
-                      Amount (N$)
-                    </label>
-                    <input
-                      id="amount"
-                      type="number"
-                      min="0"
-                      max={availableBalance}
-                      value={withdrawalAmount}
-                      onChange={(e) => setWithdrawalAmount(Number(e.target.value))}
-                      className="w-full p-2 border rounded-md"
-                    />
+
+            <div className="space-y-3">
+              {paymentMethods.map((method) => (
+                <div key={method.id} className="border rounded-lg p-4 flex justify-between items-center">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-gray-100 rounded-full">
+                      {renderPaymentMethodIcon(method.type)}
+                    </div>
+                    <div>
+                      <div className="font-medium">{formatMethodName(method)}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {method.type === 'bank_transfer' ? 'Bank Account' : 
+                         method.type === 'ewallet' ? 'Mobile Money' :
+                         method.type === 'payfast' ? 'PayFast Account' : 'Payment Method'}
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-1" htmlFor="method">
-                      Withdrawal Method
-                    </label>
-                    <select
-                      id="method"
-                      value={withdrawalMethod}
-                      onChange={(e) => setWithdrawalMethod(e.target.value)}
-                      className="w-full p-2 border rounded-md"
+                  <div className="flex items-center space-x-2">
+                    {method.isDefault && (
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Default</Badge>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      disabled={method.isDefault}
+                      onClick={() => handleSetDefaultMethod(method.id)}
                     >
-                      <option value="bank_transfer">Bank Transfer</option>
-                      <option value="e_wallet">E-Wallet</option>
-                      <option value="pay_fast">PayFast</option>
-                      <option value="dop">DOP</option>
-                      <option value="easy_wallet">EasyWallet</option>
-                    </select>
-                  </div>
-                  
-                  {withdrawalMethod === 'bank_transfer' && (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1" htmlFor="bank">
-                          Bank Name
-                        </label>
-                        <input
-                          id="bank"
-                          type="text"
-                          className="w-full p-2 border rounded-md"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1" htmlFor="account">
-                          Account Number
-                        </label>
-                        <input
-                          id="account"
-                          type="text"
-                          className="w-full p-2 border rounded-md"
-                        />
-                      </div>
-                    </div>
-                  )}
-                  
-                  {(withdrawalMethod === 'e_wallet' || withdrawalMethod === 'dop' || withdrawalMethod === 'easy_wallet') && (
-                    <div>
-                      <label className="block text-sm font-medium mb-1" htmlFor="phone">
-                        Phone Number
-                      </label>
-                      <input
-                        id="phone"
-                        type="tel"
-                        className="w-full p-2 border rounded-md"
-                      />
-                    </div>
-                  )}
-                  
-                  {withdrawalMethod === 'pay_fast' && (
-                    <div>
-                      <label className="block text-sm font-medium mb-1" htmlFor="email">
-                        Email Address
-                      </label>
-                      <input
-                        id="email"
-                        type="email"
-                        className="w-full p-2 border rounded-md"
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="pt-4">
-                    <Button disabled={withdrawalAmount <= 0 || withdrawalAmount > availableBalance}>
-                      <ArrowDown className="h-4 w-4 mr-2" /> Request Withdrawal
+                      <Check className="h-4 w-4 text-green-500" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleRemoveMethod(method.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              ))}
+
+              {paymentMethods.length === 0 && (
+                <div className="text-center py-8">
+                  <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium">No payment methods</h3>
+                  <p className="text-muted-foreground">
+                    Add a payment method to receive payouts from your service bookings
+                  </p>
+                  <Button className="mt-4">
+                    <Plus className="h-4 w-4 mr-1" /> Add Payment Method
+                  </Button>
+                </div>
+              )}
+            </div>
           </TabsContent>
 
-          <TabsContent value="payment-methods">
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Methods</CardTitle>
-                <CardDescription>Manage your payment methods</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>You have no payment methods configured yet.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="bank-accounts">
-            <Card>
-              <CardHeader>
-                <CardTitle>Bank Accounts</CardTitle>
-                <CardDescription>Manage your bank accounts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>You have no bank accounts configured yet.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="wallet">
-            <Card>
-              <CardHeader>
-                <CardTitle>Wallet</CardTitle>
-                <CardDescription>Manage your wallet</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>Your wallet balance: N$0.00</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="payment-settings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Settings</CardTitle>
-                <CardDescription>Configure your payment preferences</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>No payment settings available.</p>
-              </CardContent>
-            </Card>
+          <TabsContent value="transactions">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Recent Transactions</h3>
+              <div className="border rounded-lg overflow-hidden">
+                <table className="min-w-full divide-y">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Description</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Amount</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Method</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={i} className="hover:bg-muted/50">
+                        <td className="px-4 py-3 text-sm">
+                          {new Date(Date.now() - i * 86400000).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {i % 2 === 0 ? 'Payout' : 'Service payment'}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-medium">
+                          {i % 2 === 0 ? '- ' : '+ '}
+                          N${(Math.random() * 1000).toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {String(i === 0 ? paymentMethods[0].name : 
+                           i === 1 ? paymentMethods[1].name : 
+                           paymentMethods[i % paymentMethods.length].name)}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <Badge variant={i % 3 === 0 ? 'outline' : 'default'} className={
+                            i % 3 === 0 ? 'bg-yellow-50 text-yellow-700' : 
+                            i % 3 === 1 ? 'bg-green-100 text-green-800' : 
+                            'bg-blue-100 text-blue-800'
+                          }>
+                            {i % 3 === 0 ? 'Pending' : i % 3 === 1 ? 'Completed' : 'Processing'}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </CardContent>

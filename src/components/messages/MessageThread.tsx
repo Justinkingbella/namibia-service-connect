@@ -1,97 +1,119 @@
 
-import React from 'react';
-import { Message } from '@/types/message';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import React, { useRef, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Send } from 'lucide-react';
+import { Message } from '@/types/conversations';
+import { formatTime } from '@/lib/utils';
 
 interface MessageThreadProps {
   messages: Message[];
-  currentUserId?: string;
+  currentUserId: string;
+  onSendMessage: (content: string) => void;
+  isLoading?: boolean;
 }
 
-const MessageThread: React.FC<MessageThreadProps> = ({ messages, currentUserId }) => {
-  const sortedMessages = [...messages].sort(
-    (a, b) => {
-      const aTime = a.timestamp ? a.timestamp.getTime() : a.createdAt.getTime();
-      const bTime = b.timestamp ? b.timestamp.getTime() : b.createdAt.getTime();
-      return aTime - bTime;
+const MessageThread: React.FC<MessageThreadProps> = ({ messages, currentUserId, onSendMessage, isLoading = false }) => {
+  const messageInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Group messages by date
+  const groupedMessages = messages.reduce((groups: Record<string, Message[]>, message) => {
+    const date = new Date(message.createdAt).toLocaleDateString();
+    if (!groups[date]) {
+      groups[date] = [];
     }
-  );
+    groups[date].push(message);
+    return groups;
+  }, {});
+
+  const handleSendMessage = () => {
+    if (messageInputRef.current?.value && messageInputRef.current.value.trim() !== '') {
+      onSendMessage(messageInputRef.current.value);
+      messageInputRef.current.value = '';
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
+    }
+  };
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   return (
-    <div className="space-y-4">
-      {sortedMessages.length === 0 ? (
-        <div className="text-center text-muted-foreground py-8">
-          No messages to display. Start the conversation!
-        </div>
-      ) : (
-        sortedMessages.map((message) => {
-          const isCurrentUser = message.senderId === currentUserId;
-          const displayTime = message.timestamp 
-            ? format(message.timestamp, 'h:mm a')
-            : format(message.createdAt, 'h:mm a');
-          const messageText = message.text || message.content;
-          
-          return (
-            <div
-              key={message.id}
-              className={cn(
-                'flex',
-                isCurrentUser ? 'justify-end' : 'justify-start'
-              )}
-            >
-              {!isCurrentUser && (
-                <Avatar className="h-8 w-8 mr-2 mt-1 flex-shrink-0">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                    {message.senderId.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              )}
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {Object.entries(groupedMessages).map(([date, dateMessages]) => (
+          <div key={date} className="space-y-3">
+            <div className="flex justify-center">
+              <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">{date}</span>
+            </div>
+
+            {dateMessages.map((message) => (
               <div
-                className={cn(
-                  'max-w-[75%] px-4 py-3 rounded-lg',
-                  isCurrentUser 
-                    ? 'bg-primary text-primary-foreground rounded-br-none' 
-                    : 'bg-muted rounded-bl-none'
-                )}
+                key={message.id}
+                className={`flex ${
+                  message.senderId === currentUserId ? 'justify-end' : 'justify-start'
+                }`}
               >
-                <div className="mb-1">{messageText}</div>
-                {message.attachments && message.attachments.length > 0 && (
-                  <div className="mt-2 space-y-2">
-                    {message.attachments.map((url, index) => (
-                      <a
-                        key={index}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block text-xs underline"
-                      >
-                        Attachment {index + 1}
-                      </a>
-                    ))}
-                  </div>
+                {message.senderId !== currentUserId && !message.isSystemMessage && (
+                  <Avatar className="h-8 w-8 mr-2">
+                    <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
+                    <AvatarFallback>U</AvatarFallback>
+                  </Avatar>
                 )}
-                <div 
-                  className={cn(
-                    'text-xs mt-1',
-                    isCurrentUser ? 'text-primary-foreground/80' : 'text-muted-foreground'
-                  )}
+
+                <div
+                  className={`max-w-[80%] ${
+                    message.isSystemMessage
+                      ? 'bg-muted text-muted-foreground text-center w-full'
+                      : message.senderId === currentUserId
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted'
+                  } rounded-lg p-3`}
                 >
-                  {displayTime}
+                  {message.content}
+                  <div
+                    className={`text-xs mt-1 ${
+                      message.senderId === currentUserId
+                        ? 'text-primary-foreground/80'
+                        : 'text-muted-foreground'
+                    }`}
+                  >
+                    {formatTime(message.createdAt)} {message.read && message.senderId === currentUserId && '• Read'}
+                  </div>
                 </div>
               </div>
-              {isCurrentUser && (
-                <Avatar className="h-8 w-8 ml-2 mt-1 flex-shrink-0">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                    ME
-                  </AvatarFallback>
-                </Avatar>
-              )}
-            </div>
-          );
-        })
-      )}
+            ))}
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="border-t p-3 flex">
+        <input
+          type="text"
+          ref={messageInputRef}
+          onKeyPress={handleKeyPress}
+          placeholder="Type your message..."
+          className="flex-1 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
+          disabled={isLoading}
+        />
+        <Button
+          type="button"
+          size="icon"
+          className="ml-2"
+          onClick={handleSendMessage}
+          disabled={isLoading}
+        >
+          <Send className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 };

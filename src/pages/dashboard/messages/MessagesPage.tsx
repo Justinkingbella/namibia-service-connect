@@ -1,89 +1,75 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { useConversations } from '@/hooks/useConversations';
-import { ConversationList } from '@/components/messages/ConversationList';
-import { MessageThread } from '@/components/messages/MessageThread';
-import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, MessageSquare } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Conversation, Message } from '@/types/conversations';
 import { useAuth } from '@/contexts/AuthContext';
+import { useConversations } from '@/hooks/useConversations';
+import ConversationList from '@/components/messages/ConversationList';
+import MessageThread from '@/components/messages/MessageThread';
 
 const MessagesPage = () => {
   const { user } = useAuth();
   const { 
     conversations, 
+    messages, 
     loading, 
-    activeConversation, 
+    activeConversation,
     setActiveConversation,
-    sendMessage,
-    createConversation
+    sendMessage
   } = useConversations();
+  
+  const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
+  const isLoading = loading;
 
-  // Handle initial selection if needed
-  useEffect(() => {
-    if (!loading && conversations.length > 0 && !activeConversation) {
-      setActiveConversation(conversations[0].id);
-    }
-  }, [loading, conversations, activeConversation, setActiveConversation]);
+  const handleSelectConversation = (conversation: Conversation) => {
+    setActiveConversation(conversation.id);
+    setCurrentConversation(conversation);
+  };
+
+  const handleSendMessage = (content: string) => {
+    if (!activeConversation || !content.trim()) return;
+    
+    const recipientId = currentConversation?.participants.find(
+      p => p.id !== user?.id
+    )?.id;
+    
+    if (!recipientId) return;
+    
+    sendMessage(activeConversation, content, recipientId);
+  };
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Messages</h1>
-          <p className="text-muted-foreground mt-1">Communicate with customers and service providers</p>
-        </div>
+      <div className="flex flex-col h-[calc(100vh-140px)]">
+        <h1 className="text-2xl font-bold mb-4">Messages</h1>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Conversations List */}
-          <Card className="md:col-span-1 h-[calc(100vh-200px)] overflow-hidden flex flex-col">
-            <CardContent className="p-0 flex-1 overflow-hidden">
-              <ConversationList 
-                conversations={conversations}
-                activeConversationId={activeConversation}
-                onSelectConversation={setActiveConversation}
-                loading={loading}
-              />
-            </CardContent>
-          </Card>
+        <Card className="flex flex-1 overflow-hidden">
+          <div className="w-full md:w-1/3 border-r">
+            <ConversationList 
+              conversations={conversations} 
+              activeConversationId={activeConversation}
+              onSelectConversation={handleSelectConversation}
+              isLoading={isLoading}
+              currentUserId={user?.id || ''}
+            />
+          </div>
           
-          {/* Message Thread */}
-          <Card className="md:col-span-2 h-[calc(100vh-200px)] overflow-hidden flex flex-col">
-            <CardContent className="p-0 flex-1 overflow-hidden">
-              {activeConversation ? (
-                <MessageThread 
-                  conversationId={activeConversation}
-                  onSendMessage={(content) => sendMessage(activeConversation, content)}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  {loading ? (
-                    <div className="animate-pulse flex flex-col items-center justify-center">
-                      <div className="h-12 w-12 bg-gray-200 rounded-full mb-4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-40 mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-24"></div>
-                    </div>
-                  ) : conversations.length > 0 ? (
-                    <div className="flex flex-col items-center justify-center text-center p-4">
-                      <MessageSquare className="h-12 w-12 text-gray-400 mb-4" />
-                      <h3 className="font-medium">Select a conversation</h3>
-                      <p className="text-sm text-muted-foreground">Choose a conversation from the list to view messages</p>
-                    </div>
-                  ) : (
-                    <Alert className="mx-auto w-4/5 bg-muted/50">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>No messages yet</AlertTitle>
-                      <AlertDescription>
-                        You don't have any conversations yet. When you book services or contact providers, your messages will appear here.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+          <div className="hidden md:flex flex-1 flex-col">
+            {activeConversation && messages[activeConversation] ? (
+              <MessageThread 
+                messages={messages[activeConversation] || []} 
+                currentUserId={user?.id || ''}
+                onSendMessage={handleSendMessage}
+                isLoading={isLoading}
+              />
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                Select a conversation or start a new one
+              </div>
+            )}
+          </div>
+        </Card>
       </div>
     </DashboardLayout>
   );

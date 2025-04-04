@@ -1,62 +1,71 @@
 
-export type BookingStatus = 
-  | 'pending' 
-  | 'confirmed' 
-  | 'in_progress'
-  | 'completed' 
-  | 'cancelled' 
-  | 'disputed'
-  | 'no_show' 
-  | 'rescheduled';
+export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'rejected' | 'in_progress';
+export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' | 'cancelled';
 
-export type PaymentStatus = 
-  | 'pending' 
-  | 'paid' 
-  | 'refunded' 
-  | 'failed'
-  | 'partial'
-  | 'processing'
-  | 'completed';
+export interface BookingData {
+  id: string;
+  service_id: string;
+  customer_id: string;
+  provider_id: string;
+  date: string;
+  start_time: string;
+  end_time?: string;
+  status: BookingStatus;
+  payment_status: PaymentStatus;
+  payment_method: string;
+  total_amount: number;
+  commission: number;
+  is_urgent?: boolean;
+  created_at: string;
+  updated_at: string;
+  cancellation_date?: string;
+  cancellation_reason?: string;
+  cancelled_by?: string;
+  notes?: string;
+  customer_notes?: string;
+  provider_notes?: string;
+  duration?: number;
+  refund_amount?: number;
+  payment_receipt?: string;
+  feedback?: string;
+  rating?: number;
+}
 
 export interface Booking {
   id: string;
+  serviceId: string;
   customerId: string;
   providerId: string;
-  serviceId: string;
   date: Date;
   startTime: string;
   endTime?: string;
   status: BookingStatus;
-  totalAmount: number;
   paymentStatus: PaymentStatus;
-  paymentMethod?: string;
+  paymentMethod: string;
+  totalAmount: number;
+  commission: number;
+  isUrgent?: boolean;
   createdAt: Date;
   updatedAt: Date;
+  cancellationDate?: Date;
+  cancellationReason?: string;
+  cancelledBy?: string;
   notes?: string;
-  rating?: number;
-  isUrgent?: boolean;
+  customerNotes?: string;
+  providerNotes?: string;
   duration?: number;
-  commission?: number; // Added missing field
+  refundAmount?: number;
+  paymentReceipt?: string;
+  feedback?: string;
+  rating?: number;
 }
 
 export interface BookingWithDetails extends Booking {
   serviceName: string;
   serviceImage?: string;
-  customerName: string;
-  providerName: string;
-  location?: string;
+  providerName?: string;
+  customerName?: string;
 }
-
-export type DisputeStatus = 
-  | 'pending' 
-  | 'in_review' 
-  | 'resolved' 
-  | 'rejected' 
-  | 'open' 
-  | 'under_review' 
-  | 'declined';
-
-export type DisputePriority = 'low' | 'medium' | 'high';
 
 export interface Dispute {
   id: string;
@@ -65,34 +74,38 @@ export interface Dispute {
   providerId: string;
   subject: string;
   description: string;
-  status: DisputeStatus;
-  resolution?: string;
+  status: string;
+  priority: string;
   createdAt: Date;
   updatedAt: Date;
-  priority: DisputePriority;
-  evidenceUrls?: string[];
+  resolutionDate?: Date;
+  resolution?: string;
+  adminAssignedTo?: string;
   refundAmount?: number;
-  reason?: string; // Added missing field
+  adminNotes?: string;
+  evidenceUrls?: string[];
 }
 
-// Re-export from types/index.ts
 export interface Transaction {
   id: string;
+  bookingId: string;
   amount: number;
   type: string;
+  description: string;
   status: string;
   createdAt: Date;
-  reference: string;
 }
 
 export interface Withdrawal {
   id: string;
   providerId: string;
   amount: number;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  bankDetails: any;
+  status: string;
   createdAt: Date;
   processedAt?: Date;
+  method: string;
+  reference?: string;
+  notes?: string;
 }
 
 export interface WalletVerificationRequest {
@@ -101,9 +114,9 @@ export interface WalletVerificationRequest {
   providerId: string;
   customerId: string;
   amount: number;
-  status: 'pending' | 'verified' | 'rejected';
+  referenceNumber: string;
+  status: string;
   createdAt: Date;
-  paymentMethod: string;
-  proofType?: 'receipt' | 'screenshot' | 'reference';
-  proofData?: string;
+  verifiedAt?: Date;
+  attachments?: string[];
 }

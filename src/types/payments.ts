@@ -42,3 +42,11 @@ export interface ProviderPayout {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface PaymentMethod {
+  id: string;
+  type: string;
+  name: string;
+  details: any;
+  isDefault: boolean;
+}

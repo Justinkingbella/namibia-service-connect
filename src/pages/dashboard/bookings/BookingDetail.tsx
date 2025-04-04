@@ -1,166 +1,139 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { ChevronLeft, Calendar, Clock, Check, X, MessageSquare, Home, MapPin, User, Bookmark, DollarSign, Phone, Mail } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import { formatBookingStatus, formatCurrency, getStatusColor } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { BookingStatusUpdate } from '@/components/bookings/BookingStatusUpdate';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { BookingData } from '@/types/booking';
 import { toast } from 'sonner';
+import { formatBookingStatus, formatCurrency, getStatusColor } from '@/lib/utils';
+import BookingStatusUpdate from '@/components/bookings/BookingStatusUpdate';
+import { ArrowLeft, Calendar, Clock, MapPin, User, CreditCard } from 'lucide-react';
 
 const BookingDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { user, userRole } = useAuth();
-  const [booking, setBooking] = useState<any | null>(null);
-  const [service, setService] = useState<any | null>(null);
-  const [provider, setProvider] = useState<any | null>(null);
-  const [customer, setCustomer] = useState<any | null>(null);
+  const { userRole } = useAuth();
+  const [booking, setBooking] = useState<BookingData | null>(null);
+  const [serviceDetails, setServiceDetails] = useState<{ title: string; image: string } | null>(null);
+  const [customerDetails, setCustomerDetails] = useState<{ firstName: string; lastName: string } | null>(null);
+  const [providerDetails, setProviderDetails] = useState<{ businessName: string } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [notes, setNotes] = useState('');
-  const [savingNotes, setSavingNotes] = useState(false);
-  
+
   useEffect(() => {
     const fetchBookingDetails = async () => {
-      if (!id || !user) return;
-      
       try {
-        setLoading(true);
-        
-        // Fetch booking
+        if (!id) return;
+
         const { data: bookingData, error: bookingError } = await supabase
           .from('bookings')
-          .select('*, profiles!inner(*)')
+          .select('*')
           .eq('id', id)
           .single();
-        
+
         if (bookingError) throw bookingError;
-        
-        // Check permission - user should be the customer, provider, or admin
-        if (userRole !== 'admin' && 
-            bookingData.customer_id !== user.id && 
-            bookingData.provider_id !== user.id) {
-          setError('You do not have permission to view this booking');
-          setLoading(false);
-          return;
-        }
-        
         setBooking(bookingData);
-        
-        // Set notes based on user role
-        if (userRole === 'customer' || user.id === bookingData.customer_id) {
-          setNotes(bookingData.customer_notes || '');
-        } else if (userRole === 'provider' || user.id === bookingData.provider_id) {
-          setNotes(bookingData.provider_notes || '');
-        }
-        
+
         // Fetch service details
         const { data: serviceData, error: serviceError } = await supabase
           .from('services')
-          .select('*')
+          .select('title, image')
           .eq('id', bookingData.service_id)
           .single();
-          
-        if (!serviceError) {
-          setService(serviceData);
-        }
-        
-        // Fetch provider details
-        const { data: providerData, error: providerError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', bookingData.provider_id)
-          .single();
-          
-        if (!providerError) {
-          setProvider(providerData);
-        }
-        
+
+        if (serviceError) throw serviceError;
+        setServiceDetails(serviceData);
+
         // Fetch customer details
         const { data: customerData, error: customerError } = await supabase
           .from('profiles')
-          .select('*')
+          .select('first_name, last_name')
           .eq('id', bookingData.customer_id)
           .single();
-          
-        if (!customerError) {
-          setCustomer(customerData);
-        }
-        
+
+        if (customerError) throw customerError;
+        setCustomerDetails({
+          firstName: customerData.first_name,
+          lastName: customerData.last_name
+        });
+
+        // Fetch provider details
+        const { data: providerData, error: providerError } = await supabase
+          .from('service_providers')
+          .select('business_name')
+          .eq('id', bookingData.provider_id)
+          .single();
+
+        if (providerError) throw providerError;
+        setProviderDetails(providerData);
       } catch (error) {
         console.error('Error fetching booking details:', error);
-        setError('Failed to load booking details');
+        toast.error('Failed to load booking details');
       } finally {
         setLoading(false);
       }
     };
-    
-    fetchBookingDetails();
-  }, [id, user, userRole]);
 
-  const saveNotes = async () => {
-    if (!booking || !user) return;
-    
+    fetchBookingDetails();
+  }, [id]);
+
+  const handleUpdateStatus = async (newStatus: string, notes?: string) => {
+    if (!booking) return;
+
     try {
-      setSavingNotes(true);
-      
-      const updateData: any = {};
-      
-      // Set the appropriate notes field based on user role
-      if (userRole === 'customer' || user.id === booking.customer_id) {
-        updateData.customer_notes = notes;
-      } else if (userRole === 'provider' || user.id === booking.provider_id) {
-        updateData.provider_notes = notes;
+      const updateData: any = {
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (notes) {
+        if (userRole === 'provider') {
+          updateData.provider_notes = notes;
+        } else if (userRole === 'customer') {
+          updateData.customer_notes = notes;
+        }
       }
-      
+
       const { error } = await supabase
         .from('bookings')
         .update(updateData)
         .eq('id', booking.id);
-        
+
       if (error) throw error;
-      
-      toast.success('Notes saved successfully');
+
+      // Update local state
+      setBooking(prev => prev ? { ...prev, ...updateData } : null);
+      toast.success(`Booking status updated to ${newStatus}`);
     } catch (error) {
-      console.error('Error saving notes:', error);
-      toast.error('Failed to save notes');
-    } finally {
-      setSavingNotes(false);
+      console.error('Error updating booking status:', error);
+      toast.error('Failed to update booking status');
     }
   };
 
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="animate-pulse space-y-6">
-          <div className="h-6 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
         </div>
       </DashboardLayout>
     );
   }
 
-  if (error || !booking) {
+  if (!booking || !serviceDetails) {
     return (
       <DashboardLayout>
-        <Alert variant="destructive">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error || 'Booking not found'}</AlertDescription>
-        </Alert>
-        <Button onClick={() => navigate(-1)} className="mt-4">
-          <ChevronLeft className="mr-2 h-4 w-4" />
-          Go Back
-        </Button>
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold">Booking Not Found</h2>
+          <p className="text-muted-foreground mt-2">The booking you're looking for doesn't exist or you don't have access to it.</p>
+          <Button className="mt-4" asChild>
+            <Link to="/dashboard/bookings">Back to Bookings</Link>
+          </Button>
+        </div>
       </DashboardLayout>
     );
   }
@@ -168,253 +141,143 @@ const BookingDetail = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink as={Link} to="/dashboard/bookings">Bookings</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink>Details</BreadcrumbLink>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-        
         <div className="flex justify-between items-center">
-          <div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="icon" asChild>
+              <Link to="/dashboard/bookings">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
             <h1 className="text-2xl font-bold">Booking Details</h1>
-            <p className="text-muted-foreground">
-              {service?.title && `Service: ${service.title}`}
-              {provider && ` • Provider: ${provider.first_name} ${provider.last_name}`}
-            </p>
           </div>
           
-          <Badge className={`${getStatusColor(booking.status)} px-3 py-1`}>
+          <Badge className={getStatusColor(booking.status)}>
             {formatBookingStatus(booking.status)}
           </Badge>
         </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left column - Booking Info */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Booking Information</CardTitle>
-                <CardDescription>Details about this booking</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">Date</h3>
-                    <p className="flex items-center mt-1">
-                      <Calendar className="mr-2 h-4 w-4 text-primary" />
-                      {new Date(booking.date).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">Time</h3>
-                    <p className="flex items-center mt-1">
-                      <Clock className="mr-2 h-4 w-4 text-primary" />
-                      {booking.start_time} {booking.end_time && `- ${booking.end_time}`}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">Total Amount</h3>
-                    <p className="flex items-center mt-1">
-                      <DollarSign className="mr-2 h-4 w-4 text-primary" />
-                      {formatCurrency(booking.total_amount)}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">Payment Status</h3>
-                    <p className="flex items-center mt-1">
-                      {booking.payment_status === 'paid' ? (
-                        <Check className="mr-2 h-4 w-4 text-green-500" />
-                      ) : (
-                        <X className="mr-2 h-4 w-4 text-red-500" />
-                      )}
-                      {booking.payment_status.charAt(0).toUpperCase() + booking.payment_status.slice(1)}
-                    </p>
-                  </div>
-                </div>
 
-                {/* Additional booking details */}
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Notes</h3>
-                  <Textarea
-                    placeholder="Add notes about this booking..."
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    rows={4}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>Booking Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center space-x-4">
+                {serviceDetails.image ? (
+                  <img 
+                    src={serviceDetails.image} 
+                    alt={serviceDetails.title} 
+                    className="w-16 h-16 object-cover rounded-md"
                   />
-                  <Button 
-                    onClick={saveNotes} 
-                    className="mt-2"
-                    disabled={savingNotes}
-                  >
-                    {savingNotes ? 'Saving...' : 'Save Notes'}
-                  </Button>
-                </div>
-                
-                {/* Service details if available */}
-                {service && (
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Service Details</h3>
-                    <div className="flex items-start space-x-4">
-                      {service.image && (
-                        <img 
-                          src={service.image} 
-                          alt={service.title} 
-                          className="w-16 h-16 object-cover rounded" 
-                        />
-                      )}
-                      <div>
-                        <h4 className="font-medium">{service.title}</h4>
-                        <p className="text-sm text-muted-foreground line-clamp-2">{service.description}</p>
-                        <p className="text-sm mt-1">
-                          <span className="font-medium">Price:</span> {formatCurrency(service.price)}
-                        </p>
-                      </div>
-                    </div>
+                ) : (
+                  <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center">
+                    <span className="text-muted-foreground">No Image</span>
                   </div>
                 )}
-              </CardContent>
-              <CardFooter className="border-t pt-6">
-                <div className="flex flex-wrap gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigate('/dashboard/bookings')}
-                  >
-                    <ChevronLeft className="mr-2 h-4 w-4" />
-                    Back to Bookings
-                  </Button>
-                  
-                  {/* Action buttons based on role and status */}
-                  {userRole === 'provider' && booking.status === 'pending' && (
-                    <BookingStatusUpdate 
-                      bookingId={booking.id} 
-                      currentStatus={booking.status}
-                      onUpdate={() => {
-                        // Refresh booking data
-                        window.location.reload();
-                      }}
-                    />
-                  )}
-                  
-                  {/* Message button */}
-                  <Button variant="outline">
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Send Message
-                  </Button>
+                <div>
+                  <h3 className="text-lg font-medium">{serviceDetails.title}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {providerDetails?.businessName || 'Service Provider'}
+                  </p>
                 </div>
-              </CardFooter>
-            </Card>
-            
-            {/* Add additional cards for reviews, dispute options, etc. */}
-          </div>
-          
-          {/* Right column - Sidebar */}
+              </div>
+
+              <Separator />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex items-start space-x-3">
+                  <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <h4 className="font-medium">Date</h4>
+                    <p>{new Date(booking.date).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-3">
+                  <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <h4 className="font-medium">Time</h4>
+                    <p>{booking.start_time} {booking.end_time ? `- ${booking.end_time}` : ''}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-3">
+                  <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <h4 className="font-medium">Location</h4>
+                    <p>Provider Location</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-3">
+                  <User className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <h4 className="font-medium">Customer</h4>
+                    <p>{customerDetails?.firstName} {customerDetails?.lastName}</p>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h4 className="font-medium mb-2">Notes</h4>
+                <p className="text-sm text-muted-foreground">
+                  {booking.notes || 'No additional notes.'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="space-y-6">
-            {/* Provider Info */}
-            {provider && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Provider Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{provider.first_name} {provider.last_name}</p>
-                      <p className="text-sm text-muted-foreground">Service Provider</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {provider.phone_number && (
-                      <div className="flex items-center">
-                        <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="text-sm">{provider.phone_number}</span>
-                      </div>
-                    )}
-                    
-                    {provider.email && (
-                      <div className="flex items-center">
-                        <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="text-sm">{provider.email}</span>
-                      </div>
-                    )}
-                    
-                    {provider.address && (
-                      <div className="flex items-center">
-                        <Home className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="text-sm">{provider.address}</span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            
-            {/* Customer Info */}
-            {customer && userRole !== 'customer' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Customer Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{customer.first_name} {customer.last_name}</p>
-                      <p className="text-sm text-muted-foreground">Customer</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {customer.phone_number && (
-                      <div className="flex items-center">
-                        <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="text-sm">{customer.phone_number}</span>
-                      </div>
-                    )}
-                    
-                    {customer.email && (
-                      <div className="flex items-center">
-                        <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="text-sm">{customer.email}</span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            
-            {/* Booking Timeline / Status History */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Booking Status</CardTitle>
+                <CardTitle>Payment Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Price</span>
+                  <span>{formatCurrency(booking.total_amount)}</span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Method</span>
+                  <div className="flex items-center">
+                    <CreditCard className="h-4 w-4 mr-1" />
+                    <span>{booking.payment_method}</span>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Status</span>
+                  <Badge variant="outline" className={
+                    booking.payment_status === 'completed' ? 'bg-green-50 text-green-700' :
+                    booking.payment_status === 'pending' ? 'bg-yellow-50 text-yellow-700' :
+                    'bg-red-50 text-red-700'
+                  }>
+                    {booking.payment_status}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Status Update</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start">
-                    <div className="mr-4 mt-1 bg-green-500 rounded-full p-1">
-                      <Check className="h-3 w-3 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Booking Created</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(booking.created_at).toLocaleDateString()} at {new Date(booking.created_at).toLocaleTimeString()}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Add other status updates based on booking history */}
-                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Current status: 
+                  <Badge className={`ml-2 ${getStatusColor(booking.status)}`}>
+                    {formatBookingStatus(booking.status)}
+                  </Badge>
+                </p>
+
+                <BookingStatusUpdate
+                  currentStatus={booking.status}
+                  onUpdateStatus={handleUpdateStatus}
+                  userRole={userRole}
+                />
               </CardContent>
             </Card>
           </div>

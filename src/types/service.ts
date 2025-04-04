@@ -1,39 +1,38 @@
 
-export type ServiceCategory = 
-  | 'all'
-  | 'cleaning'
-  | 'repair'
-  | 'plumbing'
-  | 'electrical'
-  | 'moving'
-  | 'painting'
-  | 'landscaping'
-  | 'tutoring'
-  | 'home'
-  | 'errand'
-  | 'professional'
-  | 'freelance'
-  | 'transport'
-  | 'health'
-  | string; // Allow string for flexibility
-
-export type PricingModel = 'fixed' | 'hourly' | 'quote' | string; // Allow string for flexibility
-
-export type PaymentMethod = 'credit_card' | 'paypal' | 'bank_transfer' | 'cash' | 'pay_today' | 'pay_fast' | 'e_wallet' | 'dop' | 'easy_wallet';
-
-export interface ServiceListItem {
+export interface ServiceCategory {
   id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  slug?: string;
+  parentCategoryId?: string;
+  featured?: boolean;
+  isActive?: boolean;
+}
+
+export interface ServiceData {
+  id?: string;
   title: string;
   description: string;
   price: number;
-  pricingModel: PricingModel;
-  category: ServiceCategory;
-  providerName: string;
-  providerId: string;
-  rating?: number;
-  reviewCount?: number;
+  pricing_model: string;
+  category: string;
   image?: string;
   location?: string;
+  provider_id?: string;
+  provider_name?: string;
+  features?: string[];
+  tags?: string[];
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  slug?: string;
+  featured?: boolean;
+  availability?: Record<string, any>;
+  faqs?: Array<{
+    question: string;
+    answer: string;
+  }>;
 }
 
 export interface Service {
@@ -41,39 +40,60 @@ export interface Service {
   title: string;
   description: string;
   price: number;
-  pricingModel: PricingModel;
-  category: ServiceCategory;
-  providerId: string;
-  features?: string[];
-  isActive: boolean;
+  pricingModel: string;
+  category: string;
   image?: string;
   location?: string;
+  providerId: string;
+  providerName: string;
+  features?: string[];
+  tags?: string[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  slug?: string;
+  featured?: boolean;
   rating?: number;
   reviewCount?: number;
-  providerName?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-  commission?: number;
-  available?: boolean;
-  featured?: boolean; // Added missing property
 }
 
-// Fix ServiceData interface
-export interface ServiceData {
+export interface ServiceListItem {
   id: string;
   title: string;
   description: string;
   price: number;
-  pricing_model: PricingModel;
-  category: ServiceCategory;
-  provider_id: string;
-  provider_name?: string;
   image?: string;
-  features?: string[];
-  is_active: boolean;
-  location?: string;
+  category: string;
+  pricingModel: string;
+  providerId: string;
+  providerName: string;
   rating?: number;
-  review_count?: number;
-  created_at?: string;
-  updated_at?: string;
+  reviewCount?: number;
+  location?: string;
+}
+
+export type PricingModel = 'fixed' | 'hourly' | 'daily' | 'project';
+
+export interface PaymentMethod {
+  id: string;
+  name: string;
+  description?: string;
+  enabled: boolean;
+  processingFee?: number;
+  processingFeeType?: 'fixed' | 'percentage';
+}
+
+export interface FavoriteService {
+  id: string;
+  service_id: string;
+  user_id: string;
+  service: {
+    id: string;
+    title: string;
+    description: string;
+    price: number;
+    image?: string;
+    provider_id: string;
+    provider_name: string;
+  };
 }

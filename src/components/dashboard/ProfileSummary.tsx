@@ -1,178 +1,181 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Calendar, Star, Heart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
-import { Customer, Provider } from '@/types/auth';
+import { Link } from 'react-router-dom';
+import { User, Building2, ShieldCheck, AlertTriangle, Star, Calendar, Clock, DollarSign } from 'lucide-react';
 
 const ProfileSummary = () => {
   const { user, userProfile, userRole } = useAuth();
   const { status: subscriptionStatus, isActive } = useSubscriptionStatus();
 
-  // Early return if no user data
   if (!user || !userProfile) {
-    return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>Your profile summary</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-muted rounded-full animate-pulse" />
-            <div className="space-y-2">
-              <div className="h-4 w-32 bg-muted rounded animate-pulse" />
-              <div className="h-3 w-24 bg-muted rounded animate-pulse" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
-  // Render specific content based on user role
-  const renderRoleSpecificContent = () => {
-    switch (userRole) {
-      case 'provider':
-        const providerProfile = userProfile as Provider;
+  const getVerificationBadge = () => {
+    if (userRole === 'provider') {
+      const provider = userProfile as any;
+      if (provider.isVerified) {
         return (
-          <>
-            <div className="grid grid-cols-2 gap-2 mt-4">
-              <div className="bg-primary/10 p-2 rounded-md">
-                <div className="text-xs text-muted-foreground">Rating</div>
-                <div className="flex items-center">
-                  <Star className="h-3 w-3 text-yellow-500 mr-1" />
-                  <span className="text-sm font-medium">
-                    {providerProfile.rating?.toFixed(1) || '0.0'} 
-                    <span className="text-xs text-muted-foreground ml-1">
-                      ({providerProfile.reviewCount || 0})
-                    </span>
-                  </span>
-                </div>
-              </div>
-              
-              <div className="bg-primary/10 p-2 rounded-md">
-                <div className="text-xs text-muted-foreground">Bookings</div>
-                <div className="flex items-center">
-                  <Calendar className="h-3 w-3 text-primary mr-1" />
-                  <span className="text-sm font-medium">
-                    {providerProfile.completedBookings || 0} completed
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-4">
-              <div className="flex justify-between items-center mb-1">
-                <div className="text-xs text-muted-foreground">Subscription</div>
-                <Badge variant={isActive ? "outline" : "secondary"} className="text-xs">
-                  {subscriptionStatus === 'active' ? 'Active' : 'Inactive'}
-                </Badge>
-              </div>
-              <div className="text-sm font-medium">
-                {providerProfile.subscriptionTier 
-                  ? providerProfile.subscriptionTier.charAt(0).toUpperCase() + providerProfile.subscriptionTier.slice(1) 
-                  : 'Free'} Plan
-              </div>
-            </div>
-            
-            <div className="mt-4">
-              <div className="text-xs text-muted-foreground mb-1">Account Status</div>
-              <div className="flex items-center">
-                <Badge variant={providerProfile.verificationStatus === 'verified' ? "success" : "warning"} className="text-xs">
-                  {providerProfile.verificationStatus.charAt(0).toUpperCase() + providerProfile.verificationStatus.slice(1)}
-                </Badge>
-              </div>
-            </div>
-          </>
+          <Badge variant="outline" className="bg-green-50 text-green-700 flex items-center gap-1">
+            <ShieldCheck className="h-3 w-3" />
+            Verified
+          </Badge>
         );
-        
-      case 'customer':
-        const customerProfile = userProfile as Customer;
+      } else {
         return (
-          <>
-            <div className="mt-4">
-              <div className="text-xs text-muted-foreground mb-1">Loyalty Points</div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium">{customerProfile.loyaltyPoints || 0} pts</span>
-                <span className="text-xs text-muted-foreground">Next tier: 500 pts</span>
-              </div>
-              <Progress value={(customerProfile.loyaltyPoints || 0) / 5} className="h-1.5" />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-2 mt-4">
-              <div className="bg-primary/10 p-2 rounded-md">
-                <div className="text-xs text-muted-foreground">Bookings</div>
-                <div className="flex items-center">
-                  <Calendar className="h-3 w-3 text-primary mr-1" />
-                  <span className="text-sm font-medium">
-                    {/* We can add actual booking count here in future */}
-                    0 total
-                  </span>
-                </div>
-              </div>
-              
-              <div className="bg-primary/10 p-2 rounded-md">
-                <div className="text-xs text-muted-foreground">Saved Services</div>
-                <div className="flex items-center">
-                  <Heart className="h-3 w-3 text-red-500 mr-1" />
-                  <span className="text-sm font-medium">
-                    {customerProfile.savedServices?.length || 0} services
-                  </span>
-                </div>
-              </div>
-            </div>
-          </>
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3" />
+            Pending Verification
+          </Badge>
         );
-        
-      case 'admin':
-        return (
-          <>
-            <div className="mt-4">
-              <div className="text-xs text-muted-foreground mb-1">Admin Access</div>
-              <Badge variant="outline" className="text-xs">Full Access</Badge>
-            </div>
-            
-            <div className="mt-4">
-              <div className="text-xs text-muted-foreground mb-1">System Status</div>
-              <Badge variant="success" className="text-xs">Online</Badge>
-            </div>
-          </>
-        );
-        
-      default:
-        return null;
+      }
     }
+    return null;
+  };
+
+  const getSubscriptionBadge = () => {
+    if (userRole === 'provider') {
+      return (
+        <Badge variant={isActive ? "outline" : "outline"} className={isActive ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"}>
+          {(userProfile as any).subscriptionTier || 'Free'}
+        </Badge>
+      );
+    }
+    return null;
+  };
+
+  const getProviderMetrics = () => {
+    if (userRole === 'provider') {
+      const provider = userProfile as any;
+      return (
+        <div className="grid grid-cols-3 gap-4 mt-4">
+          <div className="flex flex-col items-center">
+            <div className="p-2 bg-blue-50 rounded-full">
+              <Star className="h-4 w-4 text-blue-500" />
+            </div>
+            <span className="text-sm text-muted-foreground mt-1">Rating</span>
+            <span className="font-medium">{provider.rating?.toFixed(1) || 'N/A'} ({provider.reviewCount || 0})</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="p-2 bg-green-50 rounded-full">
+              <Calendar className="h-4 w-4 text-green-500" />
+            </div>
+            <span className="text-sm text-muted-foreground mt-1">Completed</span>
+            <span className="font-medium">{provider.completedBookings || 0}</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="p-2 bg-purple-50 rounded-full">
+              <Clock className="h-4 w-4 text-purple-500" />
+            </div>
+            <span className="text-sm text-muted-foreground mt-1">Response Time</span>
+            <span className="font-medium">1h</span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const getCustomerMetrics = () => {
+    if (userRole === 'customer') {
+      const customer = userProfile as any;
+      return (
+        <div className="grid grid-cols-3 gap-4 mt-4">
+          <div className="flex flex-col items-center">
+            <div className="p-2 bg-blue-50 rounded-full">
+              <Calendar className="h-4 w-4 text-blue-500" />
+            </div>
+            <span className="text-sm text-muted-foreground mt-1">Bookings</span>
+            <span className="font-medium">0</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="p-2 bg-green-50 rounded-full">
+              <DollarSign className="h-4 w-4 text-green-500" />
+            </div>
+            <span className="text-sm text-muted-foreground mt-1">Points</span>
+            <span className="font-medium">{customer.loyaltyPoints || 0}</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="p-2 bg-purple-50 rounded-full">
+              <Star className="h-4 w-4 text-purple-500" />
+            </div>
+            <span className="text-sm text-muted-foreground mt-1">Reviews</span>
+            <span className="font-medium">0</span>
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle>Profile</CardTitle>
-        <CardDescription>Your profile summary</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center space-x-4">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src={user.avatarUrl} alt={user.firstName} />
-            <AvatarFallback>{`${user.firstName.charAt(0)}${user.lastName.charAt(0)}`}</AvatarFallback>
+      <CardContent className="p-4 md:p-6">
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-4">
+          <Avatar className="h-20 w-20 border-2 border-primary/10">
+            <AvatarImage src={user.avatarUrl || ''} alt={user.firstName} />
+            <AvatarFallback className="text-xl">
+              {user.firstName?.charAt(0) || ''}
+              {user.lastName?.charAt(0) || ''}
+            </AvatarFallback>
           </Avatar>
-          <div>
-            <div className="font-medium">{user.firstName} {user.lastName}</div>
-            <div className="text-sm text-muted-foreground">{user.email}</div>
-          </div>
-        </div>
-        
-        {renderRoleSpecificContent()}
-        
-        <div className="mt-4 pt-4 border-t">
-          <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-            <MessageSquare className="h-3 w-3" />
-            <span>Need help? Contact admin support</span>
+          
+          <div className="flex-1 text-center md:text-left">
+            <div className="flex flex-col md:flex-row md:items-center gap-2">
+              <h2 className="text-xl font-bold">
+                {userRole === 'provider' ? (userProfile as any).businessName : `${user.firstName} ${user.lastName}`}
+              </h2>
+              
+              <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                {getVerificationBadge()}
+                {getSubscriptionBadge()}
+                
+                <Badge variant="outline" className="flex items-center gap-1">
+                  {userRole === 'provider' ? (
+                    <>
+                      <Building2 className="h-3 w-3" />
+                      Provider
+                    </>
+                  ) : (
+                    <>
+                      <User className="h-3 w-3" />
+                      Customer
+                    </>
+                  )}
+                </Badge>
+              </div>
+            </div>
+            
+            {userRole === 'provider' && (
+              <p className="text-muted-foreground mt-1 text-sm line-clamp-2">
+                {(userProfile as any).businessDescription || 'No description available'}
+              </p>
+            )}
+            
+            <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to={userRole === 'provider' ? '/dashboard/provider/profile' : '/dashboard/profile'}>
+                  View Profile
+                </Link>
+              </Button>
+              
+              {userRole === 'provider' && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/dashboard/services/create">
+                    Create Service
+                  </Link>
+                </Button>
+              )}
+            </div>
+            
+            {getProviderMetrics()}
+            {getCustomerMetrics()}
           </div>
         </div>
       </CardContent>

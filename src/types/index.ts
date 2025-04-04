@@ -27,8 +27,19 @@ export type {
   Provider,
   Admin,
   AuthContextType,
-  SubscriptionTier
+  SubscriptionTier,
+  UserAddress
 } from './auth';
+
+// Export wallet verification types
+export type {
+  WalletVerificationStatus,
+  NamibianMobileOperator,
+  NamibianBank,
+  WalletVerification,
+  Wallet,
+  Transaction
+} from './payment';
 
 // Explicitly re-export types with different names to resolve ambiguities
 export type { PaymentMethod as ServicePaymentMethod } from './service';
@@ -36,13 +47,6 @@ export type { PaymentMethod as PaymentPaymentMethod } from './payment';
 export type { Transaction as PaymentTransaction } from './payment';
 export type { Transaction as BookingTransaction } from './booking';
 export type { ServiceCategory, PricingModel, ServiceListItem, Service } from './service';
-export type { 
-  WalletVerificationStatus, 
-  NamibianMobileOperator, 
-  NamibianBank, 
-  WalletVerification, 
-  Wallet 
-} from './payment';
 
 export interface IResponse<T> {
   success: boolean;
@@ -50,3 +54,6 @@ export interface IResponse<T> {
   error?: string;
   message?: string;
 }
+
+// Export conversation and message types
+export type { Conversation, Message } from './conversations';
