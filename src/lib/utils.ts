@@ -1,3 +1,4 @@
+
 import { BookingStatus, PaymentStatus } from '@/types';
 
 export function formatDate(date: Date | string): string {

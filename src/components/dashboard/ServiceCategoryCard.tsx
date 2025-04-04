@@ -1,102 +1,87 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { ServiceCategoryEnum } from '@/types';
 import { 
+  Hammer, 
+  Lightbulb, 
+  Droplets, 
   Home, 
-  ShoppingBag, 
-  Briefcase, 
-  Palette, 
   Truck, 
-  Heart,
-  LucideIcon
+  Paintbrush2, 
+  Sprout, 
+  GraduationCap, 
+  ShoppingBag, 
+  Users2, 
+  Briefcase, 
+  Car, 
+  Heart
 } from 'lucide-react';
-import { ServiceCategory } from '@/types';
-import { cn } from '@/lib/utils';
 
 interface ServiceCategoryCardProps {
-  category: ServiceCategory;
-  count?: number;
-  className?: string;
+  category: string;
+  count: number;
+  onClick: () => void;
 }
 
-const getCategoryIcon = (category: ServiceCategory): LucideIcon => {
-  switch (category) {
-    case 'errand':
-      return ShoppingBag;
-    case 'home':
-      return Home;
-    case 'professional':
-      return Briefcase;
-    case 'freelance':
-      return Palette;
-    case 'transport':
-      return Truck;
-    case 'health':
-      return Heart;
-    default:
-      return Briefcase;
-  }
-};
+const ServiceCategoryCard: React.FC<ServiceCategoryCardProps> = ({ category, count, onClick }) => {
+  const getIcon = () => {
+    switch (category) {
+      case ServiceCategoryEnum.repair:
+        return <Hammer className="h-5 w-5 text-orange-600" />;
+      case ServiceCategoryEnum.electrical:
+        return <Lightbulb className="h-5 w-5 text-yellow-600" />;
+      case ServiceCategoryEnum.plumbing:
+        return <Droplets className="h-5 w-5 text-blue-600" />;
+      case ServiceCategoryEnum.home:
+        return <Home className="h-5 w-5 text-gray-600" />;
+      case ServiceCategoryEnum.moving:
+        return <Truck className="h-5 w-5 text-indigo-600" />;
+      case ServiceCategoryEnum.painting:
+        return <Paintbrush2 className="h-5 w-5 text-pink-600" />;
+      case ServiceCategoryEnum.landscaping:
+        return <Sprout className="h-5 w-5 text-green-600" />;
+      case ServiceCategoryEnum.tutoring:
+        return <GraduationCap className="h-5 w-5 text-purple-600" />;
+      case ServiceCategoryEnum.errand:
+        return <ShoppingBag className="h-5 w-5 text-red-600" />;
+      case ServiceCategoryEnum.professional:
+        return <Users2 className="h-5 w-5 text-slate-600" />;
+      case ServiceCategoryEnum.freelance:
+        return <Briefcase className="h-5 w-5 text-teal-600" />;
+      case ServiceCategoryEnum.transport:
+        return <Car className="h-5 w-5 text-cyan-600" />;
+      case ServiceCategoryEnum.health:
+        return <Heart className="h-5 w-5 text-rose-600" />;
+      case ServiceCategoryEnum.cleaning:
+      default:
+        return <Home className="h-5 w-5 text-emerald-600" />;
+    }
+  };
 
-const getCategoryName = (category: ServiceCategory): string => {
-  switch (category) {
-    case 'errand':
-      return 'Errands';
-    case 'home':
-      return 'Home Services';
-    case 'professional':
-      return 'Professional Services';
-    case 'freelance':
-      return 'Freelancers';
-    case 'transport':
-      return 'Transport & Rentals';
-    case 'health':
-      return 'Health & Wellness';
-    default:
-      return 'Other Services';
-  }
-};
-
-export function ServiceCategoryCard({ category, count, className }: ServiceCategoryCardProps) {
-  const Icon = getCategoryIcon(category);
-  const name = getCategoryName(category);
+  const getLabel = () => {
+    // Format the category string to have proper capitalization
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  };
 
   return (
-    <Link
-      to={`/dashboard/services/category/${category}`}
-      className={cn(
-        "block p-6 bg-white border rounded-xl shadow-sm hover:shadow-md transition-shadow",
-        "group relative overflow-hidden",
-        className
-      )}
+    <Card
+      className="cursor-pointer hover:shadow-md transition-shadow"
+      onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div className="p-3 rounded-lg bg-primary/10 text-primary">
-            <Icon className="h-6 w-6" />
+      <CardContent className="p-4 flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-gray-100 rounded-md">
+            {getIcon()}
           </div>
           <div>
-            <h3 className="font-medium text-lg">{name}</h3>
-            {count !== undefined && (
-              <p className="text-sm text-muted-foreground">{count} services</p>
-            )}
+            <p className="font-medium">{getLabel()}</p>
+            <p className="text-sm text-muted-foreground">{count} services</p>
           </div>
         </div>
-        <div className="text-primary">
-          <svg className="h-5 w-5 transform transition-transform group-hover:translate-x-1" 
-            xmlns="http://www.w3.org/2000/svg" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </div>
-      </div>
-      
-      {/* Decorative gradient */}
-      <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-tl from-primary/5 to-transparent rounded-full transform translate-x-8 translate-y-8"></div>
-    </Link>
+      </CardContent>
+    </Card>
   );
-}
+};
 
 export default ServiceCategoryCard;

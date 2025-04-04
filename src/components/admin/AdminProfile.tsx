@@ -54,9 +54,9 @@ const AdminProfile: React.FC = () => {
   useEffect(() => {
     if (profile && !isEditing) {
       setPersonalData({
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
-        phone_number: profile.phone_number || '',
+        firstName: profile.firstName || '',
+        lastName: profile.lastName || '',
+        phoneNumber: profile.phoneNumber || '',
         email: profile.email || '',
         address: profile.address || '',
         city: profile.city || '',
@@ -78,7 +78,7 @@ const AdminProfile: React.FC = () => {
     if (!profile?.id) return;
     
     try {
-      await updateProfile({ avatar_url: url });
+      await updateProfile({ avatarUrl: url });
     } catch (error) {
       console.error('Error updating avatar:', error);
     }
@@ -142,16 +142,16 @@ const AdminProfile: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">First Name</label>
                     <Input 
-                      name="first_name"
-                      value={personalData.first_name || ''}
+                      name="firstName"
+                      value={personalData.firstName || ''}
                       onChange={handleInputChange}
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Last Name</label>
                     <Input 
-                      name="last_name"
-                      value={personalData.last_name || ''}
+                      name="lastName"
+                      value={personalData.lastName || ''}
                       onChange={handleInputChange}
                     />
                   </div>
@@ -166,8 +166,8 @@ const AdminProfile: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Phone Number</label>
                     <Input 
-                      name="phone_number"
-                      value={personalData.phone_number || ''}
+                      name="phoneNumber"
+                      value={personalData.phoneNumber || ''}
                       onChange={handleInputChange}
                     />
                   </div>
@@ -220,12 +220,12 @@ const AdminProfile: React.FC = () => {
                 <div className="flex flex-col items-center">
                   <AvatarUpload 
                     userId={profile?.id || ''}
-                    currentAvatarUrl={profile?.avatar_url}
+                    currentAvatarUrl={profile?.avatarUrl}
                     onAvatarChange={handleAvatarChange}
                   />
                   <div className="mt-4 flex flex-col items-center">
                     <h3 className="font-medium text-lg">
-                      {profile?.first_name || ''} {profile?.last_name || ''}
+                      {profile?.firstName || ''} {profile?.lastName || ''}
                     </h3>
                     <p className="text-sm text-muted-foreground">Administrator</p>
                     <Badge className="mt-2 bg-purple-100 text-purple-800">
@@ -241,7 +241,7 @@ const AdminProfile: React.FC = () => {
                       <User className="h-4 w-4 text-muted-foreground mr-2" />
                       <div>
                         <p className="text-sm text-muted-foreground">Full Name</p>
-                        <p>{profile?.first_name || ''} {profile?.last_name || ''}</p>
+                        <p>{profile?.firstName || ''} {profile?.lastName || ''}</p>
                       </div>
                     </div>
                     <div className="flex items-center">
@@ -255,7 +255,7 @@ const AdminProfile: React.FC = () => {
                       <User className="h-4 w-4 text-muted-foreground mr-2" />
                       <div>
                         <p className="text-sm text-muted-foreground">Phone</p>
-                        <p>{profile?.phone_number || 'Not specified'}</p>
+                        <p>{profile?.phoneNumber || 'Not specified'}</p>
                       </div>
                     </div>
                     <div className="flex items-center">

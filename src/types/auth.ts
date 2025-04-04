@@ -1,12 +1,13 @@
 
 export type UserRole = 'customer' | 'provider' | 'admin';
 export type ProviderVerificationStatus = 'pending' | 'verified' | 'rejected' | 'suspended';
-export type SubscriptionTier = 'free' | 'basic' | 'premium' | 'pro';
+export type SubscriptionTier = 'free' | 'basic' | 'premium' | 'pro' | 'enterprise';
 
 export interface Session {
   access_token: string;
   refresh_token: string;
   expires_at: number;
+  token_type?: string;
   user: {
     id: string;
     email: string;
@@ -32,6 +33,7 @@ export interface DbUserProfile {
   email?: string;
   emailVerified?: boolean;
   role: UserRole;
+  loyaltyPoints?: number;
   notificationPreferences?: {
     email: boolean;
     sms: boolean;
@@ -101,6 +103,10 @@ export interface User {
   phoneNumber?: string;
   avatarUrl?: string;
   emailVerified?: boolean;
+  address?: string;
+  city?: string;
+  country?: string;
+  isActive?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
   notificationPreferences?: {
@@ -137,6 +143,7 @@ export interface Admin extends User {
   accessLevel?: string;
   lastLogin?: Date;
   isSuperAdmin?: boolean;
+  isVerified?: boolean;
 }
 
 export interface AuthContextType {

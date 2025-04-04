@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Avatar } from '@/components/ui/avatar';
 import { User, Key, MapPin, Phone, Mail, Briefcase, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { DbUserProfile, DbProviderProfile, ProviderVerificationStatus } from '@/types/auth';
+import { DbUserProfile, DbProviderProfile, ProviderVerificationStatus, SubscriptionTier } from '@/types/auth';
 import { AvatarUpload } from '@/components/ui/avatar-upload';
 
 const ProviderProfile: React.FC = () => {
@@ -51,6 +52,7 @@ const ProviderProfile: React.FC = () => {
               business_name: '',
               business_description: '',
               verification_status: 'pending' as ProviderVerificationStatus,
+              subscription_tier: 'free' as SubscriptionTier,
               rating: 0,
               rating_count: 0,
               services_count: 0,
@@ -75,7 +77,8 @@ const ProviderProfile: React.FC = () => {
 
         const typedData: Partial<DbProviderProfile> = {
           ...data,
-          verification_status: data.verification_status as ProviderVerificationStatus
+          verification_status: data.verification_status as ProviderVerificationStatus,
+          subscription_tier: data.subscription_tier as SubscriptionTier
         };
 
         setLocalProviderData(typedData);
@@ -103,9 +106,9 @@ const ProviderProfile: React.FC = () => {
   useEffect(() => {
     if (user && !isEditing) {
       setPersonalData({
-        first_name: user.firstName || '',
-        last_name: user.lastName || '',
-        phone_number: user.phoneNumber || '',
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        phoneNumber: user.phoneNumber || '',
         email: user.email || '',
         address: user.address || '',
         city: user.city || '',
@@ -129,18 +132,18 @@ const ProviderProfile: React.FC = () => {
 
     try {
       // Define updateProfile function locally if it's not available
-      const updateProfile = async (data: Partial<DbUserProfile>) => {
+      const updateUserProfile = async (data: Partial<DbUserProfile>) => {
         if (!user?.id) return false;
         
         try {
           const { error } = await supabase
             .from('profiles')
             .update({
-              ...data,
+              avatar_url: url,
               updated_at: new Date().toISOString()
             })
             .eq('id', user.id);
-            
+
           if (error) throw error;
           return true;
         } catch (error) {
@@ -148,18 +151,25 @@ const ProviderProfile: React.FC = () => {
           return false;
         }
       };
-      
-      await updateProfile({ avatar_url: url });
+
+      // Update avatar in profile
+      await updateUserProfile({ avatarUrl: url || undefined });
+
+      // Also update in provider profile if applicable
+      if (localProviderData) {
+        await updateProviderData({ avatar_url: url || undefined });
+      }
+
       toast({
-        title: "Avatar updated",
-        description: "Your profile picture has been updated successfully."
+        title: 'Avatar updated',
+        description: 'Your profile picture has been updated'
       });
     } catch (error) {
       console.error('Error updating avatar:', error);
       toast({
-        variant: "destructive",
-        title: "Avatar update failed",
-        description: "There was an error updating your profile picture."
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to update avatar'
       });
     }
   };
@@ -170,93 +180,66 @@ const ProviderProfile: React.FC = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-
+    
     try {
-      // Update profile data
-      const updateProfile = async (data: Partial<DbUserProfile>) => {
-        if (!user?.id) return false;
+      // 1. Update personal details in the profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          first_name: personalData.firstName,
+          last_name: personalData.lastName,
+          phone_number: personalData.phoneNumber,
+          email: personalData.email,
+          address: personalData.address,
+          city: personalData.city,
+          country: personalData.country,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user?.id);
         
-        try {
-          const { error } = await supabase
-            .from('profiles')
-            .update({
-              ...data,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', user.id);
-            
-          if (error) throw error;
-          return true;
-        } catch (error) {
-          console.error('Error updating profile:', error);
-          return false;
-        }
-      };
+      if (profileError) throw profileError;
       
-      await updateProfile(personalData);
-
-      // Update provider data if needed
-      if (localProviderData && user?.id) {
-        const { error } = await supabase
+      // 2. Update provider details in service_providers table
+      if (localProviderData) {
+        const { error: providerError } = await supabase
           .from('service_providers')
           .update({
             business_name: localProviderData.business_name,
             business_description: localProviderData.business_description,
-            email: localProviderData.email,
-            phone_number: localProviderData.phone_number,
-            address: localProviderData.address,
-            city: localProviderData.city,
-            country: localProviderData.country,
-            website: localProviderData.website
+            phone_number: personalData.phoneNumber,
+            email: personalData.email,
+            address: personalData.address,
+            city: personalData.city,
+            country: personalData.country,
+            website: localProviderData.website,
+            updated_at: new Date().toISOString()
           })
-          .eq('id', user.id);
-
-        if (error) throw error;
+          .eq('id', user?.id);
+          
+        if (providerError) throw providerError;
       }
-
+      
       toast({
-        title: "Profile updated",
-        description: "Your provider profile has been updated successfully."
+        title: 'Profile updated',
+        description: 'Your profile has been successfully updated.'
       });
-
+      
       setIsEditing(false);
-    } catch (error) {
-      console.error('Error updating provider profile:', error);
+      
+      // Refresh the provider data
+      await refreshData();
+    } catch (error: any) {
+      console.error('Error saving profile:', error);
       toast({
-        variant: "destructive",
-        title: "Update failed",
-        description: "There was an error updating your profile."
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to update profile'
       });
     } finally {
       setIsSaving(false);
     }
   };
-
-  const handlePasswordChange = async (currentPassword: string, newPassword: string) => {
-    try {
-      const { error } = await supabase.auth.updateUser({ 
-        password: newPassword 
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Password updated",
-        description: "Your password has been changed successfully."
-      });
-
-      return true;
-    } catch (error) {
-      console.error('Error changing password:', error);
-      toast({
-        variant: "destructive",
-        title: "Password update failed",
-        description: "There was an error changing your password."
-      });
-      return false;
-    }
-  };
-
+  
   if (loading || loadingProvider) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -269,176 +252,270 @@ const ProviderProfile: React.FC = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-start justify-between">
+          <div className="flex justify-between">
             <div>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>Manage your personal details</CardDescription>
+              <CardTitle>Provider Profile</CardTitle>
+              <CardDescription>
+                Manage your provider profile information
+              </CardDescription>
             </div>
-            {!isEditing ? (
-              <Button onClick={() => setIsEditing(true)}>
+            {!isEditing && (
+              <Button onClick={handleEdit} variant="outline">
                 Edit Profile
               </Button>
-            ) : (
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setIsEditing(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => console.log('Save')}>
-                  {isSaving ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </div>
             )}
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-8">
-            <div className="flex flex-col items-center gap-4">
-              <Avatar className="w-32 h-32">
-                {user?.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
-                ) : (
-                  <User className="w-16 h-16" />
-                )}
-              </Avatar>
+          {isEditing ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="flex flex-col items-center justify-start">
+                  <AvatarUpload 
+                    userId={user?.id || ''}
+                    currentAvatarUrl={user?.avatarUrl}
+                    onAvatarChange={handleAvatarChange}
+                  />
+                </div>
+                
+                <div className="col-span-2 space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Personal Information</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">First Name</label>
+                        <Input 
+                          name="firstName"
+                          value={personalData.firstName || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Last Name</label>
+                        <Input 
+                          name="lastName"
+                          value={personalData.lastName || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Email</label>
+                        <Input 
+                          name="email"
+                          value={personalData.email || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Phone Number</label>
+                        <Input 
+                          name="phoneNumber"
+                          value={personalData.phoneNumber || ''}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Business Information</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Business Name</label>
+                        <Input 
+                          name="business_name"
+                          value={localProviderData?.business_name || ''}
+                          onChange={handleProviderInputChange}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Website</label>
+                        <Input 
+                          name="website"
+                          value={localProviderData?.website || ''}
+                          onChange={handleProviderInputChange}
+                        />
+                      </div>
+                      <div className="col-span-1 sm:col-span-2 space-y-2">
+                        <label className="text-sm font-medium">Business Description</label>
+                        <Textarea 
+                          name="business_description"
+                          value={localProviderData?.business_description || ''}
+                          onChange={handleProviderInputChange}
+                          rows={4}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
               
-              <AvatarUpload
-                currentAvatarUrl={user?.avatarUrl || ''}
-                onAvatarChange={handleAvatarChange}
-              />
+              <div>
+                <h3 className="text-lg font-medium mb-4">Location</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Address</label>
+                    <Input 
+                      name="address"
+                      value={personalData.address || ''}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">City</label>
+                    <Input 
+                      name="city"
+                      value={personalData.city || ''}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Country</label>
+                    <Input 
+                      name="country"
+                      value={personalData.country || ''}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditing(false)}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSave} 
+                  loading={isSaving}
+                >
+                  Save Changes
+                </Button>
+              </div>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-              <div>
-                <label className="block text-sm font-medium mb-1">First Name</label>
-                {isEditing ? (
-                  <Input
-                    name="first_name"
-                    value={personalData.first_name || ''}
-                    onChange={handleInputChange}
-                  />
-                ) : (
-                  <p className="text-gray-700">{user?.firstName || 'Not provided'}</p>
-                )}
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="flex flex-col items-center space-y-4">
+                <Avatar className="w-32 h-32 border-4 border-white shadow-md">
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-primary flex items-center justify-center text-white text-4xl">
+                      {user?.firstName?.charAt(0) || 'P'}
+                    </div>
+                  )}
+                </Avatar>
+                
+                <div className="text-center">
+                  <h3 className="font-medium text-lg">{user?.firstName} {user?.lastName}</h3>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                      {localProviderData?.verification_status === 'verified' 
+                        ? 'Verified Provider' 
+                        : 'Pending Verification'}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-3 w-full gap-4 text-center">
+                  <div>
+                    <p className="text-2xl font-bold">{stats.totalServices}</p>
+                    <p className="text-xs text-muted-foreground">Services</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{stats.completedBookings}</p>
+                    <p className="text-xs text-muted-foreground">Bookings</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{localProviderData?.rating || 0}</p>
+                    <p className="text-xs text-muted-foreground">Rating</p>
+                  </div>
+                </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium mb-1">Last Name</label>
-                {isEditing ? (
-                  <Input
-                    name="last_name"
-                    value={personalData.last_name || ''}
-                    onChange={handleInputChange}
-                  />
-                ) : (
-                  <p className="text-gray-700">{user?.lastName || 'Not provided'}</p>
-                )}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  <Mail className="inline h-4 w-4 mr-1" /> Email
-                </label>
-                <p className="text-gray-700">{user?.email || 'Not provided'}</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  <Phone className="inline h-4 w-4 mr-1" /> Phone Number
-                </label>
-                {isEditing ? (
-                  <Input
-                    name="phone_number"
-                    value={personalData.phone_number || ''}
-                    onChange={handleInputChange}
-                  />
-                ) : (
-                  <p className="text-gray-700">{user?.phoneNumber || 'Not provided'}</p>
-                )}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  <MapPin className="inline h-4 w-4 mr-1" /> Location
-                </label>
-                {isEditing ? (
-                  <Input
-                    name="location"
-                    value={`${personalData.city || ''}, ${personalData.country || ''}`}
-                    onChange={handleInputChange}
-                    placeholder="City, Country"
-                  />
-                ) : (
-                  <p className="text-gray-700">
-                    {user?.city && user?.country ? `${user.city}, ${user.country}` : 'Not provided'}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Business Information</CardTitle>
-          <CardDescription>Manage your business details</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {providerProfileData && (
-            <div>
-              <h3 className="text-lg font-medium mb-4">Business Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Business Name</label>
-                  <Input 
-                    name="business_name"
-                    value={providerProfileData.business_name || ''}
-                    onChange={handleProviderInputChange}
-                  />
+              <div className="md:col-span-2 space-y-8">
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Personal Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6">
+                    <div className="flex items-center">
+                      <User className="h-4 w-4 text-muted-foreground mr-2" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Full Name</p>
+                        <p>{user?.firstName} {user?.lastName}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <Mail className="h-4 w-4 text-muted-foreground mr-2" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Email</p>
+                        <p>{user?.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <Phone className="h-4 w-4 text-muted-foreground mr-2" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Phone</p>
+                        <p>{user?.phoneNumber || 'Not specified'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <MapPin className="h-4 w-4 text-muted-foreground mr-2" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Location</p>
+                        <p>
+                          {user?.city && user?.country 
+                            ? `${user.city}, ${user.country}` 
+                            : 'Not specified'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Business Email</label>
-                  <Input 
-                    name="email"
-                    value={providerProfileData.email || ''}
-                    onChange={handleProviderInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Business Phone</label>
-                  <Input 
-                    name="phone_number"
-                    value={providerProfileData.phone_number || ''}
-                    onChange={handleProviderInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Website</label>
-                  <Input 
-                    name="website"
-                    value={providerProfileData.website || ''}
-                    onChange={handleProviderInputChange}
-                  />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <label className="text-sm font-medium">Business Description</label>
-                  <Textarea 
-                    name="business_description"
-                    value={providerProfileData.business_description || ''}
-                    onChange={handleProviderInputChange}
-                    rows={4}
-                  />
+                
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Business Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6">
+                    <div className="flex items-center">
+                      <Briefcase className="h-4 w-4 text-muted-foreground mr-2" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Business Name</p>
+                        <p>{localProviderData?.business_name || 'Not specified'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 text-muted-foreground mr-2" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Subscription</p>
+                        <p className="capitalize">{localProviderData?.subscription_tier || 'Free'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <div className="flex items-start">
+                      <User className="h-4 w-4 text-muted-foreground mr-2 mt-1" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Business Description</p>
+                        <p className="mt-1">
+                          {localProviderData?.business_description || 'No business description provided.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
-
+      
       <Card>
         <CardHeader>
-          <CardTitle>Verification Status</CardTitle>
-          <CardDescription>Your account verification status</CardDescription>
+          <CardTitle>Account Settings</CardTitle>
+          <CardDescription>Manage your account settings and preferences</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
@@ -448,64 +525,11 @@ const ProviderProfile: React.FC = () => {
                   <Key className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-medium">Password</h3>
+                  <h3 className="font-medium">Change Password</h3>
                   <p className="text-sm text-muted-foreground">Update your account password</p>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  const currentPassword = prompt("Enter your current password:");
-                  if (currentPassword) {
-                    const newPassword = prompt("Enter your new password:");
-                    if (newPassword) {
-                      handlePasswordChange(currentPassword, newPassword);
-                    }
-                  }
-                }}
-              >
-                Change Password
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Provider Statistics</CardTitle>
-          <CardDescription>Overview of your provider activities</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="flex flex-col items-center">
-                <div className="p-3 bg-blue-100 rounded-full mb-3">
-                  <Briefcase className="h-6 w-6 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-medium">Services</h3>
-                <p className="text-3xl font-bold mt-2">{stats.totalServices}</p>
-                <p className="text-sm text-muted-foreground">Total services offered</p>
-              </div>
-
-              <div className="flex flex-col items-center">
-                <div className="p-3 bg-green-100 rounded-full mb-3">
-                  <Clock className="h-6 w-6 text-green-600" />
-                </div>
-                <h3 className="text-lg font-medium">Bookings</h3>
-                <p className="text-3xl font-bold mt-2">{stats.completedBookings}</p>
-                <p className="text-sm text-muted-foreground">Completed bookings</p>
-              </div>
-
-              <div className="flex flex-col items-center">
-                <div className="p-3 bg-purple-100 rounded-full mb-3">
-                  <User className="h-6 w-6 text-purple-600" />
-                </div>
-                <h3 className="text-lg font-medium">Rating</h3>
-                <p className="text-3xl font-bold mt-2">{providerProfileData?.rating || '0.0'}</p>
-                <p className="text-sm text-muted-foreground">Average customer rating</p>
-              </div>
+              <Button variant="outline" size="sm">Change Password</Button>
             </div>
           </div>
         </CardContent>

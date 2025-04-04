@@ -1,16 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
+import React, { useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Avatar } from '@/components/ui/avatar';
-import { User, X, Upload } from 'lucide-react';
+import { Camera, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
-interface AvatarUploadProps {
+export interface AvatarUploadProps {
   userId: string;
   currentAvatarUrl?: string | null;
-  onAvatarChange: (url: string | null) => void;
+  onAvatarChange: (url: string | null) => Promise<void>;
 }
 
 export const AvatarUpload: React.FC<AvatarUploadProps> = ({ 
@@ -18,138 +16,83 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   currentAvatarUrl, 
   onAvatarChange 
 }) => {
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(currentAvatarUrl || null);
   const [uploading, setUploading] = useState(false);
-  const { toast } = useToast();
-  
-  useEffect(() => {
-    if (currentAvatarUrl !== avatarUrl) {
-      setAvatarUrl(currentAvatarUrl || null);
-    }
-  }, [currentAvatarUrl]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
     try {
       setUploading(true);
-      
-      if (!e.target.files || e.target.files.length === 0) {
-        throw new Error('You must select an image to upload.');
-      }
-      
-      const file = e.target.files[0];
+
+      // Upload the avatar to Supabase Storage
       const fileExt = file.name.split('.').pop();
-      const filePath = `${userId}/${Math.random().toString(36).slice(2)}.${fileExt}`;
+      const fileName = `${userId}-avatar.${fileExt}`;
       
-      // Upload the file to Supabase storage
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
-        
-      if (uploadError) {
-        throw uploadError;
+      // Check if avatars bucket exists, if not create one
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const avatarsBucketExists = buckets?.some(bucket => bucket.name === 'avatars');
+      
+      if (!avatarsBucketExists) {
+        await supabase.storage.createBucket('avatars', { public: true });
       }
       
-      // Get the public URL for the uploaded file
-      const { data } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from('avatars')
-        .getPublicUrl(filePath);
+        .upload(fileName, file, {
+          upsert: true,
+          contentType: file.type,
+        });
         
-      const newAvatarUrl = data.publicUrl;
-      setAvatarUrl(newAvatarUrl);
-      onAvatarChange(newAvatarUrl);
+      if (error) throw error;
       
-      toast({
-        title: "Avatar updated",
-        description: "Your profile picture has been updated successfully."
-      });
-    } catch (error: any) {
-      console.error('Error uploading avatar:', error);
-      toast({
-        variant: "destructive",
-        title: "Upload failed",
-        description: error.message || "Failed to upload image"
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleRemove = async () => {
-    if (!avatarUrl) return;
-    
-    try {
-      setUploading(true);
+      // Get the public URL
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+        
+      const publicUrl = urlData.publicUrl;
       
-      // Extract the file path from the URL
-      const urlParts = avatarUrl.split('/');
-      const bucketParts = urlParts.slice(urlParts.indexOf('avatars') + 1);
-      const filePath = bucketParts.join('/');
-      
-      if (filePath) {
-        const { error } = await supabase.storage
-          .from('avatars')
-          .remove([filePath]);
-          
-        if (error) {
-          console.error('Error removing avatar:', error);
-        }
-      }
-      
-      setAvatarUrl(null);
-      onAvatarChange(null);
-      
-      toast({
-        title: "Avatar removed",
-        description: "Your profile picture has been removed."
-      });
+      // Update profile with new avatar URL
+      await onAvatarChange(publicUrl);
     } catch (error) {
-      console.error('Error removing avatar:', error);
+      console.error('Error updating avatar:', error);
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative mb-4">
-        <Avatar className="w-32 h-32 border-4 border-white shadow-md">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-          ) : (
-            <div className="bg-primary/10 text-primary w-full h-full flex items-center justify-center">
-              <User className="h-16 w-16" />
-            </div>
-          )}
-        </Avatar>
-        {avatarUrl && (
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon"
-            className="absolute -top-2 -right-2 h-8 w-8 rounded-full"
-            onClick={handleRemove}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+    <div className="relative">
+      <Avatar className="w-32 h-32 border-4 border-white shadow-md">
+        {currentAvatarUrl ? (
+          <AvatarImage src={currentAvatarUrl} alt="Profile" />
+        ) : (
+          <AvatarFallback className="bg-primary text-white text-2xl">
+            {userId.charAt(0).toUpperCase()}
+          </AvatarFallback>
         )}
-      </div>
+      </Avatar>
       
-      <div className="flex flex-col sm:flex-row gap-2 w-full justify-center">
-        <label htmlFor="avatar-upload" className="cursor-pointer">
-          <div className="flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
-            <Upload className="mr-2 h-4 w-4" />
-            <span>{avatarUrl ? 'Change Photo' : 'Upload Photo'}</span>
-          </div>
-          <Input
-            id="avatar-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            disabled={uploading}
-            className="hidden"
-          />
-        </label>
-      </div>
+      <label
+        htmlFor="avatar-upload"
+        className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full cursor-pointer shadow-md hover:bg-primary/90 transition-colors"
+      >
+        {uploading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Camera className="h-4 w-4" />
+        )}
+      </label>
+      
+      <input
+        id="avatar-upload"
+        type="file"
+        className="hidden"
+        accept="image/*"
+        onChange={handleFileChange}
+        disabled={uploading}
+      />
     </div>
   );
 };

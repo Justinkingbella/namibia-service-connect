@@ -12,8 +12,7 @@ export type {
   Dispute,
   DisputeStatus,
   DisputePriority,
-  Withdrawal,
-  WalletVerificationRequest
+  Withdrawal
 } from './booking';
 
 // Export payment types
@@ -32,7 +31,8 @@ export type {
   Admin,
   Session,
   SubscriptionTier,
-  UserAddress
+  UserAddress,
+  AuthContextType
 } from './auth';
 
 // Export wallet verification types
@@ -43,12 +43,12 @@ export type {
   WalletVerification,
   Wallet,
   WalletPaymentType,
-  PaymentMethod as PaymentPaymentMethod
+  PaymentMethod as PaymentPaymentMethod,
+  Transaction as PaymentTransaction
 } from './payment';
 
 // Explicitly re-export types with different names to resolve ambiguities
 export type { PaymentMethod as ServicePaymentMethod } from './service';
-export type { Transaction as PaymentTransaction } from './payment';
 export type { Transaction as BookingTransaction } from './booking';
 export type { 
   ServiceCategory, 

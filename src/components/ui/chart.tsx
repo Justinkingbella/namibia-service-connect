@@ -32,6 +32,22 @@ function useChart() {
   return context
 }
 
+export function cn(...inputs: (string | boolean | Record<string, boolean> | undefined)[]): string {
+  // First, we flatten any object properties into strings
+  const classes = inputs.map(input => {
+    if (typeof input === 'object' && input !== null) {
+      return Object.entries(input)
+        .filter(([_, value]) => Boolean(value))
+        .map(([key]) => key)
+        .join(' ');
+    }
+    return input;
+  });
+  
+  // Then filter out falsy values and join
+  return classes.filter(Boolean).join(' ');
+}
+
 const ChartContainer = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
