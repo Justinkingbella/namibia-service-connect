@@ -1,8 +1,20 @@
 
-export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'rejected' | 'in_progress';
-export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' | 'cancelled';
+export type BookingStatus = 
+  | 'pending' 
+  | 'confirmed' 
+  | 'in_progress' 
+  | 'completed' 
+  | 'cancelled' 
+  | 'disputed' 
+  | 'no_show'
+  | 'rescheduled';
 
-export interface BookingData {
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partial';
+
+export type DisputeStatus = 'pending' | 'in_review' | 'resolved' | 'rejected';
+export type DisputePriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface Booking {
   id: string;
   service_id: string;
   customer_id: string;
@@ -15,28 +27,36 @@ export interface BookingData {
   payment_method: string;
   total_amount: number;
   commission: number;
-  is_urgent?: boolean;
+  notes?: string;
   created_at: string;
   updated_at: string;
-  cancellation_date?: string;
-  cancellation_reason?: string;
-  cancelled_by?: string;
-  notes?: string;
-  customer_notes?: string;
-  provider_notes?: string;
-  duration?: number;
-  refund_amount?: number;
-  payment_receipt?: string;
-  feedback?: string;
-  rating?: number;
+  is_urgent?: boolean;
 }
 
-export interface Booking {
+export interface BookingData extends Booking {
+  customer_notes?: string;
+  provider_notes?: string;
+  cancellation_reason?: string;
+  cancellation_date?: string;
+  cancelled_by?: string;
+  duration?: number;
+  rating?: number;
+  feedback?: string;
+  refund_amount?: number;
+  payment_receipt?: string;
+  // Additional properties for UI display
+  serviceName?: string;
+  serviceImage?: string;
+  providerName?: string;
+  customerName?: string;
+}
+
+export interface BookingWithDetails {
   id: string;
   serviceId: string;
   customerId: string;
   providerId: string;
-  date: Date;
+  date: string;
   startTime: string;
   endTime?: string;
   status: BookingStatus;
@@ -44,27 +64,20 @@ export interface Booking {
   paymentMethod: string;
   totalAmount: number;
   commission: number;
-  isUrgent?: boolean;
+  notes?: string;
   createdAt: Date;
   updatedAt: Date;
-  cancellationDate?: Date;
-  cancellationReason?: string;
-  cancelledBy?: string;
-  notes?: string;
+  isUrgent?: boolean;
   customerNotes?: string;
   providerNotes?: string;
+  cancellationReason?: string;
+  cancellationDate?: Date;
+  cancelledBy?: string;
   duration?: number;
+  rating?: number;
+  feedback?: string;
   refundAmount?: number;
   paymentReceipt?: string;
-  feedback?: string;
-  rating?: number;
-}
-
-export interface BookingWithDetails extends Booking {
-  serviceName: string;
-  serviceImage?: string;
-  providerName?: string;
-  customerName?: string;
 }
 
 export interface Dispute {
@@ -74,26 +87,14 @@ export interface Dispute {
   providerId: string;
   subject: string;
   description: string;
-  status: string;
-  priority: string;
+  status: DisputeStatus;
+  resolution?: string;
   createdAt: Date;
   updatedAt: Date;
-  resolutionDate?: Date;
-  resolution?: string;
-  adminAssignedTo?: string;
-  refundAmount?: number;
-  adminNotes?: string;
+  priority: DisputePriority;
   evidenceUrls?: string[];
-}
-
-export interface Transaction {
-  id: string;
-  bookingId: string;
-  amount: number;
-  type: string;
-  description: string;
-  status: string;
-  createdAt: Date;
+  refundAmount?: number;
+  reason?: string;
 }
 
 export interface Withdrawal {
@@ -101,22 +102,33 @@ export interface Withdrawal {
   providerId: string;
   amount: number;
   status: string;
-  createdAt: Date;
-  processedAt?: Date;
-  method: string;
+  date: Date;
+  paymentMethod: string;
   reference?: string;
   notes?: string;
+}
+
+export interface Transaction {
+  id: string;
+  bookingId?: string;
+  userId: string;
+  amount: number;
+  type: 'payout' | 'refund' | 'payment' | 'deposit' | 'withdrawal';
+  status: string;
+  date: Date;
+  description: string;
+  reference?: string;
 }
 
 export interface WalletVerificationRequest {
   id: string;
   bookingId: string;
-  providerId: string;
-  customerId: string;
   amount: number;
+  status: WalletVerificationStatus;
+  dateSubmitted: Date;
+  verifiedBy?: string;
+  dateVerified?: Date;
+  paymentMethod: string;
   referenceNumber: string;
-  status: string;
-  createdAt: Date;
-  verifiedAt?: Date;
-  attachments?: string[];
+  notes?: string;
 }

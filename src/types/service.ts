@@ -10,6 +10,25 @@ export interface ServiceCategory {
   isActive?: boolean;
 }
 
+// Using a string enum for ServiceCategory for better type safety
+export enum ServiceCategoryEnum {
+  cleaning = 'cleaning',
+  repair = 'repair',
+  plumbing = 'plumbing',
+  electrical = 'electrical',
+  moving = 'moving',
+  painting = 'painting',
+  landscaping = 'landscaping',
+  tutoring = 'tutoring',
+  home = 'home',
+  errand = 'errand',
+  professional = 'professional',
+  freelance = 'freelance',
+  transport = 'transport',
+  health = 'health',
+  all = 'all'
+}
+
 export interface ServiceData {
   id?: string;
   title: string;
@@ -33,6 +52,8 @@ export interface ServiceData {
     question: string;
     answer: string;
   }>;
+  rating?: number;
+  review_count?: number;
 }
 
 export interface Service {
@@ -72,7 +93,7 @@ export interface ServiceListItem {
   location?: string;
 }
 
-export type PricingModel = 'fixed' | 'hourly' | 'daily' | 'project';
+export type PricingModel = 'fixed' | 'hourly' | 'daily' | 'project' | 'quote';
 
 export interface PaymentMethod {
   id: string;
@@ -95,5 +116,12 @@ export interface FavoriteService {
     image?: string;
     provider_id: string;
     provider_name: string;
+    category?: string;
+    pricingModel?: string;
+    providerId?: string;
+    providerName?: string;
+    rating?: number;
+    reviewCount?: number;
+    location?: string;
   };
 }

@@ -4,11 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Check, CreditCard, Plus, Wallet, Trash2, Bank } from 'lucide-react';
-import { PaymentMethod } from '@/types/payments';
+import { Check, CreditCard, Plus, Wallet, Trash2, Building as BankIcon } from 'lucide-react';
+import { PaymentPaymentMethod as PaymentMethod } from '@/types';
 
-const PaymentManagement: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>('methods');
+interface PaymentManagementProps {
+  type?: string;
+}
+
+const PaymentManagement: React.FC<PaymentManagementProps> = ({ type = 'methods' }) => {
+  const [activeTab, setActiveTab] = useState<string>(type);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
     {
       id: '1',
@@ -20,7 +24,10 @@ const PaymentManagement: React.FC = () => {
         accountHolder: 'John Doe',
         accountType: 'Savings'
       },
-      isDefault: true
+      is_default: true,
+      user_id: '',
+      created_at: '',
+      updated_at: ''
     },
     {
       id: '2',
@@ -30,7 +37,10 @@ const PaymentManagement: React.FC = () => {
         phoneNumber: '0811234567',
         holderName: 'John Doe'
       },
-      isDefault: false
+      is_default: false,
+      user_id: '',
+      created_at: '',
+      updated_at: ''
     },
     {
       id: '3',
@@ -39,7 +49,10 @@ const PaymentManagement: React.FC = () => {
       details: {
         email: 'john@example.com'
       },
-      isDefault: false
+      is_default: false,
+      user_id: '',
+      created_at: '',
+      updated_at: ''
     }
   ]);
 
@@ -50,14 +63,14 @@ const PaymentManagement: React.FC = () => {
   const handleSetDefaultMethod = (id: string) => {
     setPaymentMethods(paymentMethods.map(method => ({
       ...method,
-      isDefault: method.id === id
+      is_default: method.id === id
     })));
   };
 
   const renderPaymentMethodIcon = (type: string) => {
     switch (type) {
       case 'bank_transfer':
-        return <Bank className="h-5 w-5 text-blue-500" />;
+        return <BankIcon className="h-5 w-5 text-blue-500" />;
       case 'ewallet':
         return <Wallet className="h-5 w-5 text-green-500" />;
       case 'payfast':
@@ -93,7 +106,7 @@ const PaymentManagement: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="methods" value={activeTab} onValueChange={setActiveTab}>
+        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="methods">Payment Methods</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
@@ -124,13 +137,13 @@ const PaymentManagement: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {method.isDefault && (
+                    {method.is_default && (
                       <Badge variant="outline" className="bg-green-50 text-green-700">Default</Badge>
                     )}
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      disabled={method.isDefault}
+                      disabled={method.is_default}
                       onClick={() => handleSetDefaultMethod(method.id)}
                     >
                       <Check className="h-4 w-4 text-green-500" />
@@ -189,9 +202,9 @@ const PaymentManagement: React.FC = () => {
                           N${(Math.random() * 1000).toFixed(2)}
                         </td>
                         <td className="px-4 py-3 text-sm">
-                          {String(i === 0 ? paymentMethods[0].name : 
+                          {i === 0 ? paymentMethods[0].name : 
                            i === 1 ? paymentMethods[1].name : 
-                           paymentMethods[i % paymentMethods.length].name)}
+                           paymentMethods[i % paymentMethods.length].name}
                         </td>
                         <td className="px-4 py-3 text-sm">
                           <Badge variant={i % 3 === 0 ? 'outline' : 'default'} className={

@@ -37,16 +37,16 @@ const PaymentDetailsPage = () => {
           </TabsList>
 
           <TabsContent value="payment-methods">
-            <PaymentManagement type="payment-methods" />
+            <PaymentManagement />
           </TabsContent>
           <TabsContent value="bank-accounts">
-            <PaymentManagement type="bank-accounts" />
+            <PaymentManagement />
           </TabsContent>
           <TabsContent value="wallet">
-            <PaymentManagement type="wallet" />
+            <PaymentManagement />
           </TabsContent>
           <TabsContent value="payment-settings">
-            <PaymentManagement type="payment-settings" />
+            <PaymentManagement />
           </TabsContent>
         </Tabs>
       </div>

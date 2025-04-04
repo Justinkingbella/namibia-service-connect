@@ -1,7 +1,4 @@
 
-// Remove the import that's conflicting
-// import { Message } from "./message";
-
 export interface Conversation {
   id: string;
   participants: {

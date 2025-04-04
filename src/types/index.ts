@@ -2,13 +2,16 @@
 // Export base types but exclude those with name conflicts
 export * from './subscription';
 
-// Export booking types (excluding ones that will be renamed)
+// Export booking types
 export type { 
   BookingStatus, 
   PaymentStatus, 
   Booking, 
   BookingWithDetails,
+  BookingData,
   Dispute,
+  DisputeStatus,
+  DisputePriority,
   Withdrawal,
   WalletVerificationRequest
 } from './booking';
@@ -20,6 +23,7 @@ export * from './payments';
 export type { 
   DbUserProfile, 
   DbProviderProfile,
+  DbCustomerProfile,
   UserRole, 
   ProviderVerificationStatus, 
   User,
@@ -38,15 +42,21 @@ export type {
   NamibianBank,
   WalletVerification,
   Wallet,
-  Transaction
+  PaymentMethod as PaymentPaymentMethod
 } from './payment';
 
 // Explicitly re-export types with different names to resolve ambiguities
 export type { PaymentMethod as ServicePaymentMethod } from './service';
-export type { PaymentMethod as PaymentPaymentMethod } from './payment';
 export type { Transaction as PaymentTransaction } from './payment';
 export type { Transaction as BookingTransaction } from './booking';
-export type { ServiceCategory, PricingModel, ServiceListItem, Service } from './service';
+export type { 
+  ServiceCategory, 
+  ServiceCategoryEnum,
+  PricingModel, 
+  ServiceListItem, 
+  Service,
+  ServiceData
+} from './service';
 
 export interface IResponse<T> {
   success: boolean;
