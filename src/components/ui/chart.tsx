@@ -1,28 +1,8 @@
-import * as React from "react"
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js"
-import { Bar } from "react-chartjs-2"
 
+import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-)
 
 export interface ChartProps {
   title: string
@@ -46,40 +26,6 @@ export function Chart({
   isLoading,
   className,
 }: ChartProps) {
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "top" as const,
-        labels: {
-          color: "hsl(var(--foreground))",
-        },
-      },
-      title: {
-        display: false,
-        text: title,
-      },
-    },
-    scales: {
-      x: {
-        ticks: {
-          color: "hsl(var(--foreground))",
-        },
-        grid: {
-          color: "hsl(var(--border))",
-        },
-      },
-      y: {
-        ticks: {
-          color: "hsl(var(--foreground))",
-        },
-        grid: {
-          color: "hsl(var(--border))",
-        },
-      },
-    },
-  }
-
   return (
     <Card className={cn(className)}>
       <CardHeader>
@@ -90,7 +36,11 @@ export function Chart({
         {isLoading ? (
           <Skeleton className="h-[300px] w-full" />
         ) : (
-          <Bar options={options} data={data} />
+          <div className="h-[300px] flex items-center justify-center border border-dashed rounded-md">
+            <p className="text-muted-foreground">
+              Chart visualization requires chart.js. Please install: chart.js and react-chartjs-2
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>

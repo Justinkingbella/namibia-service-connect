@@ -142,7 +142,7 @@ const AdminDashboard = () => {
                 <h2 className="text-xl font-semibold">Pending Provider Approvals</h2>
                 <Button 
                   as="a"
-                  onClick={() => navigate('/dashboard/admin/providers/verification')}
+                  onClick={() => navigate('/admin/provider-verification')}
                   variant="outline" 
                   size="sm"
                 >
@@ -160,7 +160,12 @@ const AdminDashboard = () => {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Recent Disputes</h2>
-                <Button as="a" href="/dashboard/disputes" variant="outline" size="sm">
+                <Button 
+                  as="a" 
+                  onClick={() => navigate('/admin/disputes')} 
+                  variant="outline" 
+                  size="sm"
+                >
                   View All
                 </Button>
               </div>
@@ -210,7 +215,10 @@ const AdminDashboard = () => {
                             <div className="text-gray-500">{dispute.date}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                            <Button size="xs" as="a" href={`/dashboard/disputes/${dispute.id}`}>
+                            <Button 
+                              size="xs" 
+                              onClick={() => navigate(`/admin/disputes/${dispute.id}`)}
+                            >
                               Resolve
                             </Button>
                           </td>
@@ -254,34 +262,69 @@ const AdminDashboard = () => {
               title="Manage Users"
               description="View and manage all users"
               icon={<Users className="h-5 w-5" />}
-              onClick={() => navigate('/dashboard/users')}
+              onClick={() => navigate('/admin/users')}
             />
             
             <SettingsCard
               title="Provider Verification"
               description="Review provider applications"
-              onClick={() => navigate('/dashboard/admin/providers/verification')}
+              onClick={() => navigate('/admin/provider-verification')}
             />
             
             <SettingsCard
               title="Platform Analytics"
               description="View detailed platform metrics"
               icon={<BarChart className="h-5 w-5" />}
-              onClick={() => navigate('/dashboard/admin/analytics')}
+              onClick={() => navigate('/admin/analytics')}
             />
             
             <SettingsCard
               title="Subscription Plans"
               description="Manage subscription plans"
               icon={<Receipt className="h-5 w-5" />}
-              onClick={() => navigate('/dashboard/admin/subscriptions')}
+              onClick={() => navigate('/admin/subscription-management')}
             />
             
             <SettingsCard
               title="Platform Settings"
               description="Configure global settings"
               icon={<Settings className="h-5 w-5" />}
-              onClick={() => navigate('/dashboard/settings')}
+              onClick={() => navigate('/admin/platform-controls')}
+            />
+            
+            <SettingsCard
+              title="Manage Services"
+              description="Review and manage services"
+              icon={<CreditCard className="h-5 w-5" />}
+              onClick={() => navigate('/admin/services')}
+            />
+            
+            <SettingsCard
+              title="Messages"
+              description="Monitor user messages"
+              icon={<Users className="h-5 w-5" />}
+              onClick={() => navigate('/admin/messages')}
+            />
+            
+            <SettingsCard
+              title="Payment Settings"
+              description="Configure payment methods"
+              icon={<DollarSign className="h-5 w-5" />}
+              onClick={() => navigate('/admin/payment-settings')}
+            />
+            
+            <SettingsCard
+              title="Wallet Verification"
+              description="Verify payment confirmations"
+              icon={<AlertTriangle className="h-5 w-5" />}
+              onClick={() => navigate('/admin/wallet-verification')}
+            />
+            
+            <SettingsCard
+              title="Site Settings"
+              description="Manage website settings"
+              icon={<Settings className="h-5 w-5" />}
+              onClick={() => navigate('/admin/site-settings')}
             />
           </div>
         </div>

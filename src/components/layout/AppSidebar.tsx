@@ -65,9 +65,9 @@ const AppSidebar = () => {
 
     const adminLinks = [
       { icon: Home, label: 'Dashboard', path: '/admin/dashboard' },
+      { icon: Users, label: 'Users', path: '/admin/users' },
       { icon: Package, label: 'Services', path: '/admin/services' },
       { icon: MessageSquare, label: 'Messages', path: '/admin/messages' },
-      { icon: Users, label: 'Users', path: '/admin/users' },
       { icon: Clock, label: 'Wallet Verifications', path: '/admin/wallet-verification' },
       { icon: AlertTriangle, label: 'Disputes', path: '/admin/disputes' },
       { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
@@ -75,9 +75,9 @@ const AppSidebar = () => {
       { icon: FileText, label: 'Content Editor', path: '/admin/content-editor' },
       { icon: Layout, label: 'Booking Settings', path: '/admin/booking-settings' },
       { icon: Tag, label: 'Category Management', path: '/admin/category-management' },
+      { icon: Database, label: 'Payment Settings', path: '/admin/payment-settings' },
       { icon: Sliders, label: 'Platform Controls', path: '/admin/platform-controls' },
       { icon: Globe, label: 'Site Settings', path: '/admin/site-settings' },
-      { icon: Database, label: 'Payment Settings', path: '/admin/payment-settings' },
       { icon: UserCircle, label: 'Profile', path: '/admin/profile' },
       { icon: Settings, label: 'Settings', path: '/admin/settings' },
     ];

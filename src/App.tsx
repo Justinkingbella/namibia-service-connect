@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { SupabaseProvider } from './contexts/SupabaseContext';
@@ -15,6 +16,8 @@ import ContactPage from './pages/ContactPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import NotFound from './pages/NotFound';
+import HowItWorksPage from './pages/HowItWorksPage';
+import HelpCenterPage from './pages/HelpCenterPage';
 
 // Auth Pages
 import SignIn from './pages/auth/SignIn';
@@ -65,6 +68,9 @@ import AdminSubscriptionManagementPage from './pages/dashboard/admin/Subscriptio
 import AdminDisputesPage from './pages/dashboard/admin/DisputesPage';
 import AdminProviderVerificationPage from './pages/dashboard/admin/ProviderVerificationPage';
 import AdminWalletVerificationPage from './pages/dashboard/admin/WalletVerificationPage';
+import AdminServicesPage from './pages/dashboard/admin/ServicesPage';
+import AdminMessagesPage from './pages/dashboard/admin/MessagesPage';
+import AdminPaymentSettingsPage from './pages/dashboard/admin/PaymentSettingsPage';
 
 const AppContent = () => {
   useAuthSync();
@@ -78,6 +84,8 @@ const AppContent = () => {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/services" element={<Services />} />
         <Route path="/faq" element={<FAQPage />} />
+        <Route path="/how-it-works" element={<HowItWorksPage />} />
+        <Route path="/help" element={<HelpCenterPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
@@ -193,6 +201,30 @@ const AppContent = () => {
           element={
             <RoleBasedRoute allowedRoles={['admin']}>
               <AdminWalletVerificationPage />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/admin/services"
+          element={
+            <RoleBasedRoute allowedRoles={['admin']}>
+              <AdminServicesPage />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/admin/messages"
+          element={
+            <RoleBasedRoute allowedRoles={['admin']}>
+              <AdminMessagesPage />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/admin/payment-settings"
+          element={
+            <RoleBasedRoute allowedRoles={['admin']}>
+              <AdminPaymentSettingsPage />
             </RoleBasedRoute>
           }
         />

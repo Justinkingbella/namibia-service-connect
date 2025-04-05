@@ -1,87 +1,79 @@
 
-/**
- * Format a number as currency
- * @param amount - The amount to format
- * @param currency - The currency code (default: USD)
- * @param locale - The locale to use for formatting (default: en-US)
- */
-export const formatCurrency = (
-  amount: number,
-  currency: string = 'USD',
-  locale: string = 'en-US'
-): string => {
-  return new Intl.NumberFormat(locale, {
+import { BookingStatus, PaymentStatus } from "@/types/booking";
+
+export function formatDate(date: string | Date): string {
+  if (!date) return '';
+  const d = new Date(date);
+  return d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+export function formatDateTime(date: string | Date): string {
+  if (!date) return '';
+  const d = new Date(date);
+  return d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-NA', {
     style: 'currency',
-    currency,
+    currency: 'NAD',
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
   }).format(amount);
-};
+}
 
-/**
- * Format a date string for display
- * @param dateString - The date string to format
- * @param options - Intl.DateTimeFormatOptions
- * @param locale - The locale to use for formatting (default: en-US)
- */
-export const formatDate = (
-  dateString: string,
-  options: Intl.DateTimeFormatOptions = { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  },
-  locale: string = 'en-US'
-): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString(locale, options);
-};
+export function formatBookingStatus(status: BookingStatus): string {
+  const statusMap: Record<BookingStatus, string> = {
+    pending: 'Pending',
+    confirmed: 'Confirmed',
+    in_progress: 'In Progress',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    rejected: 'Rejected',
+    no_show: 'No Show',
+  };
+  
+  return statusMap[status] || status;
+}
 
-/**
- * Format a date string as relative time (e.g., "2 days ago")
- * @param dateString - The date string to format
- */
-export const formatRelativeTime = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+export function formatPaymentStatus(status: PaymentStatus): string {
+  const statusMap: Record<PaymentStatus, string> = {
+    pending: 'Pending',
+    paid: 'Paid',
+    failed: 'Failed',
+    refunded: 'Refunded',
+    partially_refunded: 'Partially Refunded',
+  };
   
-  if (diffInSeconds < 60) {
-    return 'just now';
-  }
-  
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`;
-  }
-  
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) {
-    return `${diffInHours} hour${diffInHours !== 1 ? 's' : ''} ago`;
-  }
-  
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 30) {
-    return `${diffInDays} day${diffInDays !== 1 ? 's' : ''} ago`;
-  }
-  
-  const diffInMonths = Math.floor(diffInDays / 30);
-  if (diffInMonths < 12) {
-    return `${diffInMonths} month${diffInMonths !== 1 ? 's' : ''} ago`;
-  }
-  
-  const diffInYears = Math.floor(diffInMonths / 12);
-  return `${diffInYears} year${diffInYears !== 1 ? 's' : ''} ago`;
-};
+  return statusMap[status] || status;
+}
 
-/**
- * Format a number with thousand separators
- * @param num - The number to format
- * @param locale - The locale to use for formatting (default: en-US)
- */
-export const formatNumber = (
-  num: number,
-  locale: string = 'en-US'
-): string => {
-  return new Intl.NumberFormat(locale).format(num);
-};
+export function getStatusColor(status: BookingStatus | PaymentStatus): string {
+  const colorMap: Record<string, string> = {
+    // Booking status colors
+    pending: 'bg-yellow-100 text-yellow-800',
+    confirmed: 'bg-blue-100 text-blue-800',
+    in_progress: 'bg-indigo-100 text-indigo-800',
+    completed: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800',
+    rejected: 'bg-gray-100 text-gray-800',
+    no_show: 'bg-orange-100 text-orange-800',
+    
+    // Payment status colors
+    paid: 'bg-green-100 text-green-800',
+    failed: 'bg-red-100 text-red-800',
+    refunded: 'bg-purple-100 text-purple-800',
+    partially_refunded: 'bg-amber-100 text-amber-800',
+  };
+  
+  return colorMap[status] || 'bg-gray-100 text-gray-800';
+}
