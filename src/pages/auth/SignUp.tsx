@@ -1,194 +1,233 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { UserRole } from '@/types/auth';
+import { useAuthStore } from '@/store/authStore';
 
 const SignUp = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [role, setRole] = useState<UserRole>('customer');
   const [businessName, setBusinessName] = useState('');
-  const [userType, setUserType] = useState<'customer' | 'provider'>('customer');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { signUp } = useAuth();
+  const { signUp, user, isLoading } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user && !isLoading) {
+      navigate('/dashboard');
+    }
+  }, [user, isLoading, navigate]);
+
+  const validateForm = () => {
+    if (!email || !password || !passwordConfirm || !firstName || !lastName) {
+      toast.error('Please fill in all required fields');
+      return false;
+    }
+
+    if (password !== passwordConfirm) {
+      toast.error('Passwords do not match');
+      return false;
+    }
+
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return false;
+    }
+
+    // Require business name if role is provider
+    if (role === 'provider' && !businessName.trim()) {
+      toast.error('Please enter your business name');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-    
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
-    }
-    
+    if (!validateForm()) return;
+
     setIsSubmitting(true);
     
     try {
-      // Create user data object based on user type
-      const userData = userType === 'provider' 
-        ? { firstName, lastName, email, businessName }
-        : { firstName, lastName, email };
-      
-      // Sign up user
-      const { error } = await signUp(
-        email, 
-        password, 
-        userType as UserRole, 
-        userData
-      );
+      // Create user data based on role
+      const userData = {
+        firstName,
+        lastName,
+        ...(role === 'provider' ? { businessName } : {})
+      };
+
+      const { error, data } = await signUp(email, password, role, userData);
       
       if (error) {
-        throw error;
+        console.error('Sign up error:', error);
+        if (error.message.includes('already registered')) {
+          toast.error('Sign up failed', {
+            description: 'This email is already registered. Please sign in instead.',
+          });
+        } else if (error.message.includes('Invalid email')) {
+          toast.error('Sign up failed', {
+            description: 'Please enter a valid email address.',
+          });
+        } else {
+          toast.error('Sign up failed', {
+            description: error.message || 'Please check your information and try again.',
+          });
+        }
+      } else {
+        toast.success('Account created successfully', {
+          description: 'Redirecting to your dashboard...',
+        });
+        navigate('/dashboard');
       }
-      
-      toast.success('Sign up successful! Please check your email to confirm your account.');
-      
-      // Redirect to sign in
-      navigate('/auth/sign-in');
-    } catch (error: any) {
-      console.error('Error signing up:', error);
-      toast.error(error.message || 'Failed to sign up. Please try again.');
+    } catch (err) {
+      console.error('Unexpected sign up error:', err);
+      toast.error('Sign up failed', {
+        description: 'An unexpected error occurred. Please try again.',
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-4">
+      <Card className="w-full max-w-lg">
         <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <img src="/logo.png" alt="Logo" className="h-12" />
-          </div>
           <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
-          <CardDescription>Sign up to start using our platform</CardDescription>
+          <CardDescription>Enter your information to create your account</CardDescription>
         </CardHeader>
-        
-        <CardContent>
-          <Tabs defaultValue="customer" onValueChange={(value) => setUserType(value as 'customer' | 'provider')}>
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="customer">Customer</TabsTrigger>
-              <TabsTrigger value="provider">Service Provider</TabsTrigger>
-            </TabsList>
-            
-            <form onSubmit={handleSubmit}>
-              <div className="grid gap-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input 
-                      id="firstName" 
-                      placeholder="John" 
-                      required 
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input 
-                      id="lastName" 
-                      placeholder="Doe" 
-                      required 
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                {userType === 'provider' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="businessName">Business Name</Label>
-                    <Input 
-                      id="businessName" 
-                      placeholder="Your Business LLC" 
-                      required 
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                    />
-                  </div>
-                )}
-                
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="name@example.com" 
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input 
-                    id="password" 
-                    type="password" 
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <Input 
-                    id="confirmPassword" 
-                    type="password" 
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
-                </div>
-                
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing up...
-                    </>
-                  ) : (
-                    'Sign Up'
-                  )}
-                </Button>
+        <form onSubmit={handleSignUp}>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input 
+                  id="firstName" 
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
               </div>
-            </form>
-          </Tabs>
-        </CardContent>
-        
-        <CardFooter className="flex flex-col space-y-4">
-          <div className="text-center text-sm">
-            By signing up, you agree to our{" "}
-            <Link to="/terms" className="underline">Terms of Service</Link>
-            {" "}and{" "}
-            <Link to="/privacy" className="underline">Privacy Policy</Link>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input 
+                  id="lastName" 
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="name@example.com" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input 
+                  id="password" 
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="passwordConfirm">Confirm Password</Label>
+                <Input 
+                  id="passwordConfirm" 
+                  type="password"
+                  value={passwordConfirm}
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>I am a:</Label>
+              <RadioGroup 
+                value={role} 
+                onValueChange={(value) => setRole(value as UserRole)}
+                className="flex space-x-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="customer" id="customer" />
+                  <Label htmlFor="customer">Customer</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="provider" id="provider" />
+                  <Label htmlFor="provider">Service Provider</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            {role === 'provider' && (
+              <div className="space-y-2">
+                <Label htmlFor="businessName">Business Name</Label>
+                <Input 
+                  id="businessName" 
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+          </CardContent>
           
-          <div className="text-center text-sm">
-            Already have an account?{" "}
-            <Link to="/auth/sign-in" className="text-primary underline">
-              Sign in
-            </Link>
-          </div>
-        </CardFooter>
+          <CardFooter className="flex flex-col space-y-4">
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center">
+                  <span className="animate-spin mr-2">⚙️</span> Creating Account...
+                </div>
+              ) : 'Create Account'}
+            </Button>
+            <p className="text-center text-sm text-muted-foreground">
+              Already have an account?{' '}
+              <Link to="/auth/sign-in" className="text-blue-600 hover:text-blue-800 font-medium">
+                Sign in
+              </Link>
+            </p>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   );

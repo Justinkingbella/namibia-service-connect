@@ -1,9 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { RealtimePostgresChangesPayload, RealtimeChannel } from '@supabase/supabase-js';
 
-type Table = 'conversations' | 'messages' | 'bookings' | 'services' | 'notifications' | string;
+type TableName = 'profiles' | 'conversations' | 'messages' | 'bookings' | 'services' | 
+                'notifications' | 'disputes' | 'customers' | 'service_providers' | string;
 type Event = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
 interface RealtimeOptions {
@@ -15,12 +16,13 @@ interface RealtimeOptions {
  * Hook to subscribe to realtime changes for a given table
  */
 export function useRealtimeData<T>(
-  table: Table,
+  table: TableName,
   options: RealtimeOptions = { event: '*' }
 ) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
   // Initial data fetch
   useEffect(() => {
@@ -28,9 +30,9 @@ export function useRealtimeData<T>(
       try {
         setLoading(true);
         
-        // The table name is passed directly to from() to avoid TypeScript issues
+        // Cast the table name to any to avoid TypeScript errors with dynamic table names
         const { data: initialData, error: fetchError } = await supabase
-          .from(table)
+          .from(table as any)
           .select('*');
         
         if (fetchError) throw fetchError;
@@ -49,7 +51,7 @@ export function useRealtimeData<T>(
 
   // Realtime subscription
   useEffect(() => {
-    const channel = supabase
+    const newChannel = supabase
       .channel(`${table}-changes`)
       .on(
         'postgres_changes',
@@ -76,9 +78,13 @@ export function useRealtimeData<T>(
         }
       )
       .subscribe();
+    
+    setChannel(newChannel);
 
     return () => {
-      supabase.removeChannel(channel);
+      if (newChannel) {
+        supabase.removeChannel(newChannel);
+      }
     };
   }, [table, options.event, options.filter]);
 

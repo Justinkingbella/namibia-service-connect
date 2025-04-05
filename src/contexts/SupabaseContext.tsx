@@ -1,82 +1,22 @@
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useAuthStore } from '@/store/authStore';
 
-interface SupabaseContextType {
+interface SupabaseContextProps {
   isSubscribed: boolean;
-  enableRealtime: () => void;
-  disableRealtime: () => void;
+  enableRealtime: () => Promise<boolean>;
+  subscribeToTable: <T>(
+    tableName: string,
+    event: 'INSERT' | 'UPDATE' | 'DELETE' | '*',
+    callback: (payload: RealtimePostgresChangesPayload<T>) => void,
+    filter?: string
+  ) => RealtimeChannel;
+  unsubscribeChannel: (channel: RealtimeChannel) => void;
 }
 
-const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined);
-
-export const SupabaseProvider = ({ children }: { children: ReactNode }) => {
-  const [channel, setChannel] = useState<any>(null);
-  const [isSubscribed, setIsSubscribed] = useState(false);
-
-  const enableRealtime = () => {
-    if (isSubscribed) return;
-
-    // Subscribe to all relevant tables
-    const newChannel = supabase
-      .channel('global-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, 
-        (payload) => console.log('Profile change:', payload))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_history' }, 
-        (payload) => console.log('Payment history change:', payload))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'disputes' }, 
-        (payload) => console.log('Dispute change:', payload))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, 
-        (payload) => console.log('Booking change:', payload))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, 
-        (payload) => console.log('Service change:', payload))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'subscription_plans' }, 
-        (payload) => console.log('Subscription plan change:', payload))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_subscriptions' }, 
-        (payload) => console.log('User subscription change:', payload))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'favorite_services' }, 
-        (payload) => console.log('Favorite change:', payload))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_addresses' }, 
-        (payload) => console.log('Address change:', payload))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_methods' }, 
-        (payload) => console.log('Payment method change:', payload))
-      .subscribe();
-
-    setChannel(newChannel);
-    setIsSubscribed(true);
-  };
-
-  const disableRealtime = () => {
-    if (!isSubscribed || !channel) return;
-    
-    supabase.removeChannel(channel);
-    setChannel(null);
-    setIsSubscribed(false);
-  };
-
-  useEffect(() => {
-    // Enable realtime by default
-    enableRealtime();
-
-    // Cleanup on unmount
-    return () => {
-      disableRealtime();
-    };
-  }, []);
-
-  const value = {
-    isSubscribed,
-    enableRealtime,
-    disableRealtime
-  };
-
-  return (
-    <SupabaseContext.Provider value={value}>
-      {children}
-    </SupabaseContext.Provider>
-  );
-};
+const SupabaseContext = createContext<SupabaseContextProps | undefined>(undefined);
 
 export const useSupabase = () => {
   const context = useContext(SupabaseContext);
@@ -84,4 +24,71 @@ export const useSupabase = () => {
     throw new Error('useSupabase must be used within a SupabaseProvider');
   }
   return context;
+};
+
+interface SupabaseProviderProps {
+  children: React.ReactNode;
+}
+
+export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) => {
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const { user } = useAuthStore();
+
+  // Effect to check if we need to enable realtime
+  useEffect(() => {
+    if (user && !isSubscribed) {
+      enableRealtime().catch(console.error);
+    }
+  }, [user]);
+
+  const enableRealtime = async () => {
+    try {
+      // Enable realtime feature
+      setIsSubscribed(true);
+      return true;
+    } catch (error) {
+      console.error('Failed to enable realtime:', error);
+      return false;
+    }
+  };
+
+  const subscribeToTable = <T extends unknown>(
+    tableName: string,
+    event: 'INSERT' | 'UPDATE' | 'DELETE' | '*',
+    callback: (payload: RealtimePostgresChangesPayload<T>) => void,
+    filter?: string
+  ) => {
+    const channel = supabase
+      .channel(`${tableName}-changes`)
+      .on(
+        'postgres_changes',
+        {
+          event,
+          schema: 'public',
+          table: tableName,
+          filter: filter,
+        },
+        callback as any
+      )
+      .subscribe();
+
+    return channel;
+  };
+
+  const unsubscribeChannel = (channel: RealtimeChannel) => {
+    supabase.removeChannel(channel);
+  };
+
+  return (
+    <SupabaseContext.Provider
+      value={{
+        isSubscribed,
+        enableRealtime,
+        subscribeToTable,
+        unsubscribeChannel,
+      }}
+    >
+      {children}
+    </SupabaseContext.Provider>
+  );
 };

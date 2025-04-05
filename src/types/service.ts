@@ -95,7 +95,8 @@ export interface ServiceListItem {
 
 export type PricingModel = 'fixed' | 'hourly' | 'daily' | 'project' | 'quote';
 
-export interface PaymentMethod {
+// Interface for service payment method information
+export interface ServicePaymentMethod {
   id: string;
   name: string;
   description?: string;
@@ -104,6 +105,7 @@ export interface PaymentMethod {
   processingFeeType?: 'fixed' | 'percentage';
 }
 
+// Interface for user's favorite services
 export interface FavoriteService {
   id: string;
   service_id: string;

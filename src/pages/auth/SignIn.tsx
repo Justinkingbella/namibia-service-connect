@@ -1,212 +1,141 @@
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import Logo from '@/components/common/Logo';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import Button from '@/components/common/Button';
-import Container from '@/components/common/Container';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import { useAuthStore } from '@/store/authStore';
 
 const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn, isLoading, user } = useAuth();
+  const { signIn, user, isLoading } = useAuthStore();
   const navigate = useNavigate();
-  const location = useLocation();
-  const isMobile = useIsMobile();
-  const { toast } = useToast();
 
-  // Redirect if already authenticated - using useEffect to handle navigation
+  // Redirect if already authenticated
   useEffect(() => {
-    if (user) {
-      console.log('User signed in, role:', user.role);
-      let dashboardPath;
-      
-      switch (user.role) {
-        case 'admin':
-          dashboardPath = '/admin/dashboard';
-          break;
-        case 'provider':
-          dashboardPath = '/provider/dashboard';
-          break;
-        case 'customer':
-          dashboardPath = '/customer/dashboard';
-          break;
-        default:
-          dashboardPath = '/customer/dashboard';
-      }
-      
-      const from = location.state?.from?.pathname || dashboardPath;
-      console.log('Navigating to:', from);
-      
-      // Use setTimeout to delay the navigation slightly, preventing immediate state changes
-      setTimeout(() => {
-        navigate(from);
-      }, 100);
+    if (user && !isLoading) {
+      navigate('/dashboard');
     }
-  }, [user, navigate, location]);
+  }, [user, isLoading, navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
     
     if (!email || !password) {
-      setError('Please provide both email and password');
-      setIsSubmitting(false);
+      toast.error('Please fill in all required fields', {
+        description: 'Email and password are required',
+      });
       return;
     }
+
+    setIsSubmitting(true);
     
     try {
-      console.log('Attempting login with credentials:', email);
-      await signIn(email, password);
-      // The redirect will be handled by the useEffect above
-      console.log('Sign in successful');
-      toast({
-        title: "Sign in successful",
-        description: "Welcome back!",
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        console.error('Sign in error:', error);
+        if (error.status === 400) {
+          toast.error('Sign in failed', {
+            description: 'Incorrect email or password.',
+          });
+        } else if (error.status === 422) {
+          toast.error('Sign in failed', {
+            description: 'Invalid email format.',
+          });
+        } else {
+          toast.error('Sign in failed', {
+            description: error.message || 'Please check your credentials and try again.',
+          });
+        }
+      } else {
+        toast.success('Sign in successful', {
+          description: 'Redirecting to your dashboard...',
+        });
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      console.error('Unexpected sign in error:', err);
+      toast.error('Sign in failed', {
+        description: 'An unexpected error occurred. Please try again.',
       });
-    } catch (error: any) {
-      console.error('Login failed:', error);
-      setError(error.message || 'Authentication failed. Please check your credentials and try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const setDemoCredentials = (role: string) => {
-    switch (role) {
-      case 'admin':
-        setEmail('admin@namibiaservice.com');
-        setPassword('admin123');
-        break;
-      case 'provider':
-        setEmail('provider@namibiaservice.com');
-        setPassword('provider123');
-        break;
-      case 'customer':
-        setEmail('customer@namibiaservice.com');
-        setPassword('password');
-        break;
-    }
-    
-    // Clear any previous errors when setting new credentials
-    setError(null);
-    
-    toast({
-      title: `Demo ${role} credentials set`,
-      description: "Click Sign In to continue",
-    });
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <Container size="sm" className="py-6 sm:py-12">
-        <div className="mx-auto w-full max-w-md">
-          <div className="flex justify-center mb-6 sm:mb-8">
-            <Logo size="lg" />
-          </div>
-          
-          <div className="bg-white shadow-md rounded-xl p-5 sm:p-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">Sign In</h2>
-            
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
-            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  className="text-sm"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="text-sm"
-                />
-              </div>
-              
-              <div className="text-xs sm:text-sm text-right">
-                <Link to="/auth/forgot-password" className="text-primary hover:underline">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
+          <CardDescription>Enter your email and password to sign in to your account</CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSignIn}>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="name@example.com" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Link 
+                  to="/auth/forgot-password" 
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
                   Forgot password?
                 </Link>
               </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full mt-2" 
-                loading={isLoading || isSubmitting}
-              >
-                Sign In
-              </Button>
-            </form>
-            
-            <div className="mt-5 sm:mt-6 text-center text-xs sm:text-sm">
-              <span className="text-gray-600">Don't have an account?</span>{' '}
-              <Link to="/auth/sign-up" className="text-primary font-medium hover:underline">
-                Sign Up
+              <Input 
+                id="password" 
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center">
+                  <span className="animate-spin mr-2">⚙️</span> Signing In...
+                </div>
+              ) : 'Sign In'}
+            </Button>
+            <p className="text-center text-sm text-muted-foreground">
+              Don't have an account?{' '}
+              <Link to="/auth/sign-up" className="text-blue-600 hover:text-blue-800 font-medium">
+                Sign up
               </Link>
-            </div>
-          </div>
-          
-          <div className="mt-4 text-center text-xs text-gray-500">
-            <p>For demo purposes:</p>
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mt-2">
-              <button 
-                className="text-primary hover:underline text-xs" 
-                onClick={() => setDemoCredentials('admin')}
-              >
-                Admin Login
-              </button>
-              <button 
-                className="text-primary hover:underline text-xs" 
-                onClick={() => setDemoCredentials('provider')}
-              >
-                Provider Login
-              </button>
-              <button 
-                className="text-primary hover:underline text-xs" 
-                onClick={() => setDemoCredentials('customer')}
-              >
-                Customer Login
-              </button>
-            </div>
-            <div className="mt-2">
-              <Link to="/auth/create-admin" className="text-primary hover:underline text-xs">
-                Create Admin Account
-              </Link>
-            </div>
-          </div>
-        </div>
-      </Container>
+            </p>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
 };

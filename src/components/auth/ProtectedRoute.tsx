@@ -1,69 +1,27 @@
 
-import React, { useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { UserRole } from '@/types/auth';
+import { Navigate } from 'react-router-dom';
+import { useAuthStore } from '@/store/authStore';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: UserRole[];
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  children, 
-  allowedRoles = ['admin', 'provider', 'customer'] 
-}) => {
-  const { user, loading, signOut } = useAuth();
-  const location = useLocation();
+function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const { user, isLoading } = useAuthStore();
 
-  useEffect(() => {
-    // Log authentication state for debugging
-    console.log('ProtectedRoute - Auth State:', { 
-      user, 
-      loading, 
-      currentPath: location.pathname,
-      allowedRoles
-    });
-  }, [user, loading, location.pathname, allowedRoles]);
-
-  // While auth is loading, show loading indicator and don't redirect
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          <p className="ml-3 text-gray-600 mt-3">Authenticating...</p>
-        </div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full"></div>
       </div>
     );
   }
 
-  // If no user after loading completes, redirect to sign-in
   if (!user) {
-    console.log('No user found, redirecting to sign-in');
-    // Redirect to sign-in page but save the location they tried to access
-    return <Navigate to="/auth/sign-in" state={{ from: location }} replace />;
+    return <Navigate to="/auth/sign-in" replace />;
   }
 
-  // If user doesn't have permission, redirect to their role-specific dashboard
-  if (!allowedRoles.includes(user.role)) {
-    console.log(`User role ${user.role} not in allowed roles:`, allowedRoles);
-    
-    // Role-specific redirections
-    if (user.role === 'admin') {
-      return <Navigate to="/admin/dashboard" replace />;
-    } else if (user.role === 'provider') {
-      return <Navigate to="/provider/dashboard" replace />;
-    } else if (user.role === 'customer') {
-      return <Navigate to="/customer/dashboard" replace />;
-    }
-    
-    // Fallback
-    return <Navigate to={`/${user.role}/dashboard`} replace />;
-  }
-
-  // User is authenticated and authorized
   return <>{children}</>;
-};
+}
 
 export default ProtectedRoute;
