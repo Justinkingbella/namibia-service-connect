@@ -67,7 +67,7 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
           schema: 'public',
           table: tableName,
           filter: filter,
-        },
+        } as any,
         callback as any
       )
       .subscribe();

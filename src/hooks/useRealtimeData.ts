@@ -1,92 +1,94 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { RealtimePostgresChangesPayload, RealtimeChannel } from '@supabase/supabase-js';
+import { useAuthStore } from '@/store/authStore';
 
-type TableName = 'profiles' | 'conversations' | 'messages' | 'bookings' | 'services' | 
-                'notifications' | 'disputes' | 'customers' | 'service_providers' | string;
-type Event = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
-
-interface RealtimeOptions {
-  event?: Event;
+interface UseRealtimeDataOptions<T> {
+  table: string;
+  column?: string;
+  value?: string;
+  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
   filter?: string;
+  onData?: (data: T) => void;
+  onError?: (error: any) => void;
 }
 
-/**
- * Hook to subscribe to realtime changes for a given table
- */
-export function useRealtimeData<T>(
-  table: TableName,
-  options: RealtimeOptions = { event: '*' }
-) {
+export function useRealtimeData<T>(options: UseRealtimeDataOptions<T>) {
+  const { table, column, value, event = '*', filter, onData, onError } = options;
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
+  const [error, setError] = useState<any>(null);
+  const { user } = useAuthStore();
 
-  // Initial data fetch
   useEffect(() => {
+    if (!user) return;
+
     const fetchInitialData = async () => {
       try {
         setLoading(true);
+        let query = supabase.from(table).select('*');
         
-        // Cast the table name to any to avoid TypeScript errors with dynamic table names
-        const { data: initialData, error: fetchError } = await supabase
-          .from(table as any)
-          .select('*');
+        if (column && value) {
+          query = query.eq(column, value);
+        }
         
-        if (fetchError) throw fetchError;
+        const { data: initialData, error: fetchError } = await query;
+        
+        if (fetchError) {
+          setError(fetchError);
+          if (onError) onError(fetchError);
+          return;
+        }
         
         setData(initialData as T[]);
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to fetch data'));
-        console.error(`Error fetching initial ${table} data:`, err);
+        setError(err);
+        if (onError) onError(err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchInitialData();
-  }, [table]);
 
-  // Realtime subscription
-  useEffect(() => {
-    const newChannel = supabase
+    // Set up realtime subscription
+    const channel = supabase
       .channel(`${table}-changes`)
-      .on(
-        'postgres_changes',
-        {
-          event: options.event || '*',
-          schema: 'public',
+      .on('postgres_changes', 
+        { 
+          event: event, 
+          schema: 'public', 
           table: table,
-          filter: options.filter
+          filter: filter
         },
-        (payload: RealtimePostgresChangesPayload<any>) => {
+        (payload) => {
+          // Handle the realtime update
           if (payload.eventType === 'INSERT') {
-            setData((currentData) => [...currentData, payload.new as T]);
-          } else if (payload.eventType === 'UPDATE') {
-            setData((currentData) =>
-              currentData.map((item: any) =>
-                item.id === payload.new.id ? payload.new : item
-              )
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setData((currentData) =>
-              currentData.filter((item: any) => item.id !== payload.old.id)
-            );
+            setData(prev => [...prev, payload.new as T]);
+            if (onData) onData(payload.new as T);
+          } 
+          else if (payload.eventType === 'UPDATE') {
+            setData(prev => prev.map(item => 
+              // @ts-ignore - we know the id exists on both objects
+              item.id === payload.new.id ? payload.new as T : item
+            ));
+            if (onData) onData(payload.new as T);
+          } 
+          else if (payload.eventType === 'DELETE') {
+            setData(prev => prev.filter(item => 
+              // @ts-ignore - we know the id exists on both objects
+              item.id !== payload.old.id
+            ));
           }
         }
       )
       .subscribe();
-    
-    setChannel(newChannel);
 
+    // Cleanup function
     return () => {
-      if (newChannel) {
-        supabase.removeChannel(newChannel);
-      }
+      supabase.removeChannel(channel);
     };
-  }, [table, options.event, options.filter]);
+  }, [table, column, value, event, filter, onData, onError, user]);
 
   return { data, loading, error };
 }

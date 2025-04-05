@@ -1,213 +1,139 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { fetchProviderServices } from '@/services/profileService';
-import { useAuth } from '@/contexts/AuthContext';
+
+import React from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
-import { ServiceCategory, PricingModel, Service } from '@/types/service';
-import { PlusCircle, Grid, Home, ShoppingBag, Briefcase, Code, Car, Heart, Trash, Wrench, Droplet, Zap, Truck, Palette, Flower, BookOpen } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Check, X, AlertCircle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ServiceData } from '@/types/service';
 import { Badge } from '@/components/ui/badge';
 
-const ServiceManagement = () => {
-  const { user } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+interface ServiceManagementProps {
+  services: ServiceData[];
+  onDeleteService?: (serviceId: string) => void;
+  onEditService?: (service: ServiceData) => void;
+  onViewService?: (serviceId: string) => void;
+  onToggleServiceStatus?: (serviceId: string, isActive: boolean) => void;
+}
 
-  const { data: services = [], isLoading, isError, refetch } = useQuery({
-    queryKey: ['providerServices', user?.id],
-    queryFn: () => user?.id ? fetchProviderServices(user.id) : Promise.resolve([]),
-    enabled: !!user?.id
-  });
+const ServiceManagement: React.FC<ServiceManagementProps> = ({
+  services,
+  onDeleteService,
+  onEditService,
+  onViewService,
+  onToggleServiceStatus,
+}) => {
+  const navigate = useNavigate();
 
-  const formatPrice = (price: number, pricingModel: PricingModel) => {
-    return new Intl.NumberFormat('en-NA', { style: 'currency', currency: 'NAD' }).format(price) + 
-      (pricingModel === 'hourly' ? '/hr' : pricingModel === 'quote' ? ' (estimate)' : '');
+  // Format category name for display (e.g. "home_cleaning" -> "Home Cleaning")
+  const formatCategory = (category: string) => {
+    return category.charAt(0).toUpperCase() + category.slice(1).replace(/_/g, ' ');
   };
-
-  const formatCategory = (category: ServiceCategory) => {
-    return category.charAt(0).toUpperCase() + category.slice(1);
-  };
-
-  const categoryIcons: Record<string, string> = {
-    'all': 'grid',
-    'cleaning': 'trash',
-    'repair': 'wrench',
-    'plumbing': 'droplet',
-    'electrical': 'zap',
-    'moving': 'truck',
-    'painting': 'palette',
-    'landscaping': 'flower',
-    'tutoring': 'book-open',
-    'home': 'home',
-    'errand': 'shopping-bag',
-    'professional': 'briefcase',
-    'freelance': 'code',
-    'transport': 'car',
-    'health': 'heart'
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch(category) {
-      case 'cleaning': return <Trash className="h-4 w-4" />;
-      case 'repair': return <Wrench className="h-4 w-4" />;
-      case 'plumbing': return <Droplet className="h-4 w-4" />;
-      case 'electrical': return <Zap className="h-4 w-4" />;
-      case 'moving': return <Truck className="h-4 w-4" />;
-      case 'painting': return <Palette className="h-4 w-4" />;
-      case 'landscaping': return <Flower className="h-4 w-4" />;
-      case 'tutoring': return <BookOpen className="h-4 w-4" />;
-      case 'home': return <Home className="h-4 w-4" />;
-      case 'errand': return <ShoppingBag className="h-4 w-4" />;
-      case 'professional': return <Briefcase className="h-4 w-4" />;
-      case 'freelance': return <Code className="h-4 w-4" />;
-      case 'transport': return <Car className="h-4 w-4" />;
-      case 'health': return <Heart className="h-4 w-4" />;
-      default: return <Grid className="h-4 w-4" />;
-    }
-  };
-
-  const filteredServices = services
-    .filter(service => 
-      service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.description.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter(service => 
-      categoryFilter === 'all' || service.category === categoryFilter
-    );
-
-  if (isLoading) {
-    return <div className="flex justify-center p-8">Loading services...</div>;
-  }
-
-  if (isError) {
-    return <div className="text-center p-8 text-red-500">Error loading services. Please try again later.</div>;
-  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Your Services</h2>
-          <p className="text-muted-foreground">Manage the services you offer</p>
-        </div>
-        <Link to="/dashboard/provider/services/create">
-          <Button className="w-full sm:w-auto">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create New Service
-          </Button>
-        </Link>
-      </div>
-      
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="w-full md:w-2/3">
-          <Input
-            placeholder="Search services..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
-          />
-        </div>
-        <div className="w-full md:w-1/3">
-          <Select 
-            value={categoryFilter} 
-            onValueChange={setCategoryFilter}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="cleaning">Cleaning</SelectItem>
-              <SelectItem value="repair">Repair</SelectItem>
-              <SelectItem value="plumbing">Plumbing</SelectItem>
-              <SelectItem value="electrical">Electrical</SelectItem>
-              <SelectItem value="moving">Moving</SelectItem>
-              <SelectItem value="painting">Painting</SelectItem>
-              <SelectItem value="landscaping">Landscaping</SelectItem>
-              <SelectItem value="tutoring">Tutoring</SelectItem>
-              <SelectItem value="home">Home Services</SelectItem>
-              <SelectItem value="errand">Errands</SelectItem>
-              <SelectItem value="professional">Professional Services</SelectItem>
-              <SelectItem value="freelance">Freelance</SelectItem>
-              <SelectItem value="transport">Transportation</SelectItem>
-              <SelectItem value="health">Health & Wellness</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      
-      {filteredServices.length === 0 ? (
-        <div className="text-center p-8 bg-gray-50 rounded-xl">
-          <p className="text-muted-foreground">No services found. Create your first service to get started.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredServices.map((service) => (
-            <Card key={service.id} className="overflow-hidden h-full flex flex-col">
-              {service.image ? (
-                <div className="relative h-48 bg-gray-100">
-                  <img
-                    src={service.image}
-                    alt={service.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <Badge 
-                    variant={service.isActive ? "default" : "secondary"}
-                    className="absolute top-2 right-2"
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-lg">Your Services</CardTitle>
+        <Button 
+          size="sm"
+          onClick={() => navigate('/provider/services/create')}
+        >
+          <Plus className="mr-2 h-4 w-4" /> Add New Service
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {services.length === 0 ? (
+          <div className="text-center py-8">
+            <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
+            <p className="text-muted-foreground">You haven't added any services yet.</p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => navigate('/provider/services/create')}
+            >
+              Create Your First Service
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {services.map((service) => (
+              <div 
+                key={service.id}
+                className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border rounded-md gap-4"
+              >
+                <div className="flex flex-row items-center gap-4">
+                  <div 
+                    className="w-16 h-16 rounded-md bg-muted overflow-hidden flex-shrink-0"
+                    style={{
+                      backgroundImage: service.image ? `url(${service.image})` : undefined,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    }}
                   >
-                    {service.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
+                    {!service.image && (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        No Image
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium text-base">{service.title}</h3>
+                      <Badge variant={service.is_active ? "outline" : "secondary"}>
+                        {service.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                    <p className="text-muted-foreground text-sm line-clamp-1 mt-1">{service.description}</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <span className="text-xs px-2 py-1 bg-secondary rounded-full">
+                        {formatCategory(service.category)}
+                      </span>
+                      <span className="text-xs px-2 py-1 bg-secondary rounded-full">
+                        ${service.price} ({service.pricing_model})
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                <div className="h-32 bg-gray-100 flex items-center justify-center">
-                  <Badge 
-                    variant={service.isActive ? "default" : "secondary"}
-                    className="absolute top-2 right-2"
+
+                <div className="flex gap-2 mt-4 sm:mt-0 w-full sm:w-auto">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 sm:flex-none"
+                    onClick={() => onViewService && onViewService(service.id!)}
                   >
-                    {service.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
-                  {getCategoryIcon(service.category as string)}
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 sm:flex-none"
+                    onClick={() => onEditService && onEditService(service)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={service.is_active ? "destructive" : "default"}
+                    size="sm"
+                    className="flex-1 sm:flex-none"
+                    onClick={() => onToggleServiceStatus && onToggleServiceStatus(service.id!, !service.is_active)}
+                  >
+                    {service.is_active ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="flex-1 sm:flex-none"
+                    onClick={() => onDeleteService && onDeleteService(service.id!)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-              )}
-              
-              <CardHeader className="pb-2">
-                <div className="flex items-center space-x-1 mb-1">
-                  {getCategoryIcon(service.category as string)}
-                  <span className="text-xs text-muted-foreground">
-                    {formatCategory(service.category as ServiceCategory)}
-                  </span>
-                </div>
-                <CardTitle className="text-lg">{service.title}</CardTitle>
-              </CardHeader>
-              
-              <CardContent className="flex-grow pb-2">
-                <p className="text-muted-foreground line-clamp-3 text-sm">
-                  {service.description}
-                </p>
-                <p className="mt-3 font-semibold">
-                  {formatPrice(service.price, service.pricingModel as PricingModel)}
-                </p>
-              </CardContent>
-              
-              <CardFooter className="pt-2 border-t">
-                <div className="w-full flex justify-between">
-                  <Link to={`/dashboard/services/${service.id}`}>
-                    <Button variant="outline" size="sm">View Details</Button>
-                  </Link>
-                  <Link to={`/dashboard/services/${service.id}/edit`}>
-                    <Button variant="outline" size="sm">Edit</Button>
-                  </Link>
-                </div>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

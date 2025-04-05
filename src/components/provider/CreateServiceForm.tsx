@@ -1,133 +1,167 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { PricingModel, ServiceCategory, ServiceData } from '@/types/service';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { ServiceData, PricingModel } from '@/types/service';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+// Create the form schema
+const serviceSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters'),
+  description: z.string().min(10, 'Description must be at least 10 characters'),
+  price: z.coerce.number().positive('Price must be positive'),
+  pricing_model: z.string(),
+  category: z.string(),
+  location: z.string().optional(),
+  features: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+type ServiceFormData = z.infer<typeof serviceSchema>;
 
 interface CreateServiceFormProps {
-  onSubmit: (serviceData: ServiceData) => Promise<void>;
-  isSubmitting: boolean;
+  initialData?: ServiceData;
+  onSubmit: (data: ServiceFormData) => void;
+  loading?: boolean;
 }
 
-const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmitting }) => {
-  const [formData, setFormData] = useState<Partial<ServiceData>>({
-    title: '',
-    description: '',
-    price: 0,
-    pricing_model: 'fixed' as PricingModel,
-    category: 'home' as ServiceCategory,
-    is_active: true,
+const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
+  initialData,
+  onSubmit,
+  loading = false
+}) => {
+  // Initialize the form
+  const { register, handleSubmit, formState: { errors } } = useForm<ServiceFormData>({
+    resolver: zodResolver(serviceSchema),
+    defaultValues: {
+      title: initialData?.title || '',
+      description: initialData?.description || '',
+      price: initialData?.price || 0,
+      pricing_model: initialData?.pricing_model || 'fixed',
+      category: initialData?.category || 'home',
+      location: initialData?.location || '',
+      features: initialData?.features || [],
+      tags: initialData?.tags || []
+    }
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formData.title && formData.description && formData.price && formData.pricing_model && formData.category) {
-      await onSubmit(formData as ServiceData);
-    } else {
-      alert('Please fill in all required fields.');
-    }
-  };
+  const pricingModels: PricingModel[] = ['fixed', 'hourly', 'daily', 'project', 'quote'];
+  const categories = ['home', 'repair', 'cleaning', 'electrical', 'plumbing', 'tutoring', 'transport', 'health', 'professional'];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Create New Service</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4">
-            <div>
-              <Label htmlFor="title">Title</Label>
-              <Input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title || ''}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={formData.description || ''}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="price">Price</Label>
-              <Input
-                type="number"
-                id="price"
-                name="price"
-                value={formData.price || 0}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="pricing_model">Pricing Model</Label>
-              <Select
-                onValueChange={(value) => handleSelectChange('pricing_model', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select pricing model" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fixed">Fixed</SelectItem>
-                  <SelectItem value="hourly">Hourly</SelectItem>
-                  <SelectItem value="quote">Quote</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="category">Category</Label>
-              <Select
-                onValueChange={(value) => handleSelectChange('category', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cleaning">Cleaning</SelectItem>
-                  <SelectItem value="repair">Repair</SelectItem>
-                  <SelectItem value="plumbing">Plumbing</SelectItem>
-                  <SelectItem value="electrical">Electrical</SelectItem>
-                  <SelectItem value="moving">Moving</SelectItem>
-                  <SelectItem value="painting">Painting</SelectItem>
-                  <SelectItem value="landscaping">Landscaping</SelectItem>
-                  <SelectItem value="tutoring">Tutoring</SelectItem>
-                  <SelectItem value="home">Home</SelectItem>
-                  <SelectItem value="errand">Errand</SelectItem>
-                  <SelectItem value="professional">Professional</SelectItem>
-                  <SelectItem value="freelance">Freelance</SelectItem>
-                  <SelectItem value="transport">Transport</SelectItem>
-                  <SelectItem value="health">Health</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Service'}
-            </Button>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="title" className="block text-sm font-medium">
+            Service Title
+          </label>
+          <input
+            {...register('title')}
+            id="title"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            placeholder="e.g. Professional House Cleaning"
+          />
+          {errors.title && (
+            <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="description" className="block text-sm font-medium">
+            Description
+          </label>
+          <textarea
+            {...register('description')}
+            id="description"
+            rows={4}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            placeholder="Detailed description of your service..."
+          />
+          {errors.description && (
+            <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="price" className="block text-sm font-medium">
+              Price
+            </label>
+            <input
+              {...register('price')}
+              type="number"
+              step="0.01"
+              id="price"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder="0.00"
+            />
+            {errors.price && (
+              <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>
+            )}
           </div>
-        </form>
-      </CardContent>
-    </Card>
+
+          <div>
+            <label htmlFor="pricing_model" className="block text-sm font-medium">
+              Pricing Model
+            </label>
+            <select
+              {...register('pricing_model')}
+              id="pricing_model"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            >
+              {pricingModels.map((model) => (
+                <option key={model} value={model}>
+                  {model.charAt(0).toUpperCase() + model.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium">
+              Category
+            </label>
+            <select
+              {...register('category')}
+              id="category"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            >
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="location" className="block text-sm font-medium">
+              Location
+            </label>
+            <input
+              {...register('location')}
+              id="location"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder="e.g. New York City"
+            />
+          </div>
+        </div>
+
+        {/* You can add more fields here for features, tags, etc. */}
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          disabled={loading}
+          className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+            loading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          {initialData ? 'Update Service' : 'Create Service'}
+        </button>
+      </div>
+    </form>
   );
 };
 

@@ -1,324 +1,251 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
-import { useServiceStore } from '@/store/serviceStore';
-import { useAuthStore } from '@/store/authStore';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarIcon, ChevronLeft, Edit, Star, MapPin, DollarSign, Clock, Users, Check, X } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tab, TabList, TabPanel, TabPanels, Tabs } from '@/components/ui/tabs';
+import { ServiceData } from '@/types/service';
+import { AlertCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Tag, CheckCircle, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useServiceStore } from '@/store/serviceStore';
 
 const ServiceDetail = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
-  
-  const { fetchServiceById, selectedService, isLoading, toggleServiceActive, deleteService } = useServiceStore();
-  const { user } = useAuthStore();
-  
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [service, setService] = useState<ServiceData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { services } = useServiceStore();
 
   useEffect(() => {
-    if (id) {
-      fetchServiceById(id);
+    // First check if the service exists in the store
+    const storeService = services.find(s => s.id === id);
+    if (storeService) {
+      setService(storeService);
+      setLoading(false);
+      return;
     }
-  }, [id, fetchServiceById]);
 
-  const handleStatusToggle = async () => {
-    if (!selectedService || !id) return;
-    
-    const newStatus = !selectedService.isActive;
-    const success = await toggleServiceActive(id, newStatus);
-    
-    if (success) {
-      toast.success(`Service ${newStatus ? 'activated' : 'deactivated'} successfully`);
-    }
-  };
-
-  const handleEdit = () => {
-    navigate(`/provider/services/edit/${id}`);
-  };
-
-  const handleDelete = async () => {
-    if (!id) return;
-    
-    setIsDeleting(true);
-    try {
-      const success = await deleteService(id);
-      if (success) {
-        toast.success('Service deleted successfully');
-        navigate('/provider/services');
+    // If not in store, fetch it from the database
+    const fetchService = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const { data, error: fetchError } = await supabase
+          .from('services')
+          .select('*')
+          .eq('id', id)
+          .single();
+        
+        if (fetchError) throw fetchError;
+        
+        if (data) {
+          setService(data as ServiceData);
+        } else {
+          setError('Service not found');
+        }
+      } catch (err: any) {
+        console.error('Error fetching service:', err);
+        setError(err.message || 'Failed to load service details');
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setIsDeleting(false);
-    }
+    };
+    
+    fetchService();
+  }, [id, services]);
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error || !service) {
+    return (
+      <DashboardLayout>
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error || 'Service not found'}</AlertDescription>
+        </Alert>
+        <Button onClick={() => navigate(-1)}>Go Back</Button>
+      </DashboardLayout>
+    );
+  }
+
+  const formatCategory = (category: string) => {
+    return category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ');
   };
 
   const formatPricingModel = (model: string) => {
-    switch (model.toLowerCase()) {
-      case 'hourly':
-        return 'per hour';
-      case 'daily':
-        return 'per day';
-      case 'fixed':
-        return 'fixed price';
-      case 'project':
-        return 'per project';
-      default:
-        return model;
+    switch (model) {
+      case 'hourly': return '/hour';
+      case 'daily': return '/day';
+      case 'fixed': return ' flat rate';
+      case 'project': return ' per project';
+      default: return '';
     }
   };
 
-  if (isLoading) {
-    return (
-      <DashboardLayout>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-10 w-24" />
-          </div>
-          <Skeleton className="h-64 w-full" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!selectedService) {
-    return (
-      <DashboardLayout>
-        <div className="flex flex-col items-center justify-center space-y-4 py-12">
-          <h2 className="text-2xl font-bold">Service Not Found</h2>
-          <p className="text-muted-foreground">The service you're looking for doesn't exist or has been removed.</p>
-          <Button onClick={() => navigate('/provider/services')}>Back to Services</Button>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  const isProvider = user?.role === 'provider' && user?.id === selectedService.providerId;
-
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header with back button */}
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-2xl font-bold">Service Details</h1>
-        </div>
-
-        {/* Service status banner */}
-        {!selectedService.isActive && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <AlertCircle className="h-5 w-5 text-yellow-400" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-yellow-700">
-                  This service is currently inactive and not visible to customers.
-                </p>
-              </div>
-            </div>
-          </div>
+      <div className="flex flex-col lg:flex-row gap-6 mb-6">
+        <Button variant="outline" onClick={() => navigate(-1)}>Back</Button>
+        <h1 className="text-2xl font-bold">{service.title}</h1>
+        <div className="flex-grow"></div>
+        <Badge variant={service.is_active ? "default" : "secondary"}>
+          {service.is_active ? "Active" : "Inactive"}
+        </Badge>
+        {service.featured && (
+          <Badge variant="outline" className="ml-2 bg-amber-50 text-amber-700 border-amber-200">
+            Featured
+          </Badge>
         )}
+      </div>
 
-        {/* Main content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Service image and details */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardContent className="p-0">
-                {selectedService.image ? (
-                  <div className="relative h-64 w-full">
-                    <img 
-                      src={selectedService.image} 
-                      alt={selectedService.title} 
-                      className="h-full w-full object-cover rounded-t-lg"
-                    />
-                    <div className="absolute top-3 right-3 flex gap-2">
-                      <Badge variant={selectedService.isActive ? "success" : "secondary"}>
-                        {selectedService.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                      <Badge>{selectedService.category}</Badge>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="h-64 w-full bg-muted flex items-center justify-center rounded-t-lg">
-                    <p className="text-muted-foreground">No image available</p>
-                  </div>
-                )}
-                
-                <div className="p-6 space-y-4">
-                  <div>
-                    <h2 className="text-2xl font-bold">{selectedService.title}</h2>
-                    {selectedService.rating !== undefined && (
-                      <div className="flex items-center mt-1">
-                        <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                        <span className="ml-1 text-sm font-medium">{selectedService.rating.toFixed(1)}</span>
-                        <span className="text-sm text-muted-foreground ml-1">
-                          ({selectedService.reviewCount || 0} reviews)
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <p className="text-muted-foreground">{selectedService.description}</p>
-                  
-                  <div className="flex flex-wrap gap-4">
-                    <div className="flex items-center">
-                      <DollarSign className="h-4 w-4 text-muted-foreground mr-1" />
-                      <span className="font-medium">
-                        N${selectedService.price} {formatPricingModel(selectedService.pricingModel)}
-                      </span>
-                    </div>
-                    
-                    {selectedService.location && (
-                      <div className="flex items-center">
-                        <MapPin className="h-4 w-4 text-muted-foreground mr-1" />
-                        <span>{selectedService.location}</span>
-                      </div>
-                    )}
-                  </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardContent className="pt-6">
+              {service.image ? (
+                <div className="mb-6 rounded-lg overflow-hidden h-64 w-full">
+                  <img 
+                    src={service.image} 
+                    alt={service.title} 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Features section */}
-            {selectedService.features && selectedService.features.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Features</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {selectedService.features.map((feature, index) => (
-                      <li key={index} className="flex items-start">
-                        <Check className="h-4 w-4 text-green-500 mr-2 mt-1" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          {/* Sidebar with provider info and actions */}
-          <div className="space-y-6">
-            {/* Provider info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Provider</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
+              ) : (
+                <div className="mb-6 bg-muted rounded-lg h-64 w-full flex items-center justify-center">
+                  <p className="text-muted-foreground">No image available</p>
+                </div>
+              )}
+              
+              <Tabs defaultValue="description">
+                <TabList>
+                  <Tab value="description">Description</Tab>
+                  <Tab value="features">Features</Tab>
+                  <Tab value="faqs">FAQs</Tab>
+                </TabList>
+                <TabPanels>
+                  <TabPanel value="description">
+                    <div className="py-4">
+                      <p className="whitespace-pre-wrap">{service.description}</p>
+                    </div>
+                  </TabPanel>
+                  <TabPanel value="features">
+                    <div className="py-4">
+                      {service.features && service.features.length > 0 ? (
+                        <ul className="space-y-2">
+                          {service.features.map((feature, index) => (
+                            <li key={index} className="flex items-start">
+                              <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-muted-foreground">No features specified</p>
+                      )}
+                    </div>
+                  </TabPanel>
+                  <TabPanel value="faqs">
+                    <div className="py-4">
+                      {service.faqs && Array.isArray(service.faqs) && service.faqs.length > 0 ? (
+                        <div className="space-y-4">
+                          {service.faqs.map((faq, index) => (
+                            <div key={index}>
+                              <h3 className="font-medium mb-1">{faq.question}</h3>
+                              <p className="text-muted-foreground">{faq.answer}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">No FAQs available</p>
+                      )}
+                    </div>
+                  </TabPanel>
+                </TabPanels>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="pt-6">
+              <h2 className="text-xl font-semibold mb-4">Pricing</h2>
+              <div className="text-3xl font-bold mb-6">
+                ${service.price}{' '}
+                <span className="text-lg font-normal text-muted-foreground">
+                  {formatPricingModel(service.pricing_model)}
+                </span>
+              </div>
+              
+              <Button className="w-full mb-4">Book Now</Button>
+              <Button variant="outline" className="w-full">Contact Provider</Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <div className="flex items-start">
+                <User className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
                 <div>
-                  <p className="font-medium">{selectedService.providerName}</p>
-                  <p className="text-sm text-muted-foreground">Since {selectedService.createdAt.toLocaleDateString()}</p>
+                  <p className="text-sm text-muted-foreground">Provider</p>
+                  <p>{service.provider_name || 'Unknown Provider'}</p>
                 </div>
-
-                {selectedService.location && (
-                  <div className="flex items-center">
-                    <MapPin className="h-4 w-4 text-muted-foreground mr-2" />
-                    <span className="text-sm">{selectedService.location}</span>
+              </div>
+              
+              <div className="flex items-start">
+                <Tag className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Category</p>
+                  <p>{formatCategory(service.category)}</p>
+                </div>
+              </div>
+              
+              {service.location && (
+                <div className="flex items-start">
+                  <MapPin className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Location</p>
+                    <p>{service.location}</p>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Actions for providers */}
-            {isProvider && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Manage Service</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Button 
-                    className="w-full"
-                    variant="outline" 
-                    onClick={handleEdit}
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Service
-                  </Button>
-                  
-                  <Button 
-                    className="w-full"
-                    variant={selectedService.isActive ? "destructive" : "default"}
-                    onClick={handleStatusToggle}
-                  >
-                    {selectedService.isActive ? (
-                      <>
-                        <X className="mr-2 h-4 w-4" />
-                        Deactivate
-                      </>
-                    ) : (
-                      <>
-                        <Check className="mr-2 h-4 w-4" />
-                        Activate
-                      </>
-                    )}
-                  </Button>
-                  
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button className="w-full" variant="destructive">
-                        Delete Service
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete this service and remove it from our servers.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          disabled={isDeleting}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleDelete();
-                          }}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          {isDeleting ? 'Deleting...' : 'Delete'}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Book now button for customers */}
-            {user?.role === 'customer' && selectedService.isActive && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Booking</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    className="w-full" 
-                    onClick={() => navigate(`/customer/book/${selectedService.id}`)}
-                  >
-                    Book Now
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                </div>
+              )}
+              
+              {service.created_at && (
+                <div className="flex items-start">
+                  <Calendar className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Created</p>
+                    <p>{new Date(service.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              )}
+              
+              {service.updated_at && (
+                <div className="flex items-start">
+                  <Clock className="h-5 w-5 mr-3 mt-0.5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Updated</p>
+                    <p>{new Date(service.updated_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </DashboardLayout>

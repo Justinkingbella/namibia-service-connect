@@ -1,16 +1,5 @@
 
-export interface ServiceCategory {
-  id: string;
-  name: string;
-  description?: string;
-  icon?: string;
-  slug?: string;
-  parentCategoryId?: string;
-  featured?: boolean;
-  isActive?: boolean;
-}
-
-// Using a string enum for ServiceCategory for better type safety
+// Using a regular enum instead of a string enum so it can be used as a value
 export enum ServiceCategoryEnum {
   cleaning = 'cleaning',
   repair = 'repair',
@@ -27,6 +16,17 @@ export enum ServiceCategoryEnum {
   transport = 'transport',
   health = 'health',
   all = 'all'
+}
+
+export interface ServiceCategory {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  slug?: string;
+  parentCategoryId?: string;
+  featured?: boolean;
+  isActive?: boolean;
 }
 
 export interface ServiceData {
@@ -104,6 +104,9 @@ export interface ServicePaymentMethod {
   processingFee?: number;
   processingFeeType?: 'fixed' | 'percentage';
 }
+
+// Explicitly export PaymentMethod to fix the import errors
+export type PaymentMethod = 'credit_card' | 'paypal' | 'bank_transfer' | 'crypto' | 'cash' | 'mobile_money' | 'wallet';
 
 // Interface for user's favorite services
 export interface FavoriteService {

@@ -1,21 +1,22 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { ServiceCategoryEnum } from '@/types';
+import { ServiceCategoryEnum } from '@/types/service';
 import { 
   Hammer, 
   Lightbulb, 
   Droplets, 
   Home, 
   Truck, 
-  Paintbrush2, 
-  Sprout, 
+  PaintBrush, 
+  Leaf, 
   GraduationCap, 
   ShoppingBag, 
   Users2, 
   Briefcase, 
   Car, 
-  Heart
+  Heart,
+  Power
 } from 'lucide-react';
 
 interface ServiceCategoryCardProps {
@@ -38,9 +39,9 @@ const ServiceCategoryCard: React.FC<ServiceCategoryCardProps> = ({ category, cou
       case ServiceCategoryEnum.moving:
         return <Truck className="h-5 w-5 text-indigo-600" />;
       case ServiceCategoryEnum.painting:
-        return <Paintbrush2 className="h-5 w-5 text-pink-600" />;
+        return <PaintBrush className="h-5 w-5 text-pink-600" />;
       case ServiceCategoryEnum.landscaping:
-        return <Sprout className="h-5 w-5 text-green-600" />;
+        return <Leaf className="h-5 w-5 text-green-600" />;
       case ServiceCategoryEnum.tutoring:
         return <GraduationCap className="h-5 w-5 text-purple-600" />;
       case ServiceCategoryEnum.errand:

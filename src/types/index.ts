@@ -43,22 +43,23 @@ export type {
   WalletVerification,
   Wallet,
   WalletPaymentType,
-  PaymentMethod as PaymentPaymentMethod,
-  Transaction as PaymentTransaction
+  Transaction as WalletTransaction
 } from './payment';
 
 // Explicitly re-export types with different names to resolve ambiguities
-export type { PaymentMethod as ServicePaymentMethod } from './service';
-export type { Transaction as BookingTransaction } from './booking';
+export { ServiceCategoryEnum } from './service';
 export type { 
   ServiceCategory, 
-  ServiceCategoryEnum,
   PricingModel, 
   ServiceListItem, 
   Service,
   ServiceData,
-  FavoriteService
+  FavoriteService,
+  ServicePaymentMethod,
+  PaymentMethod
 } from './service';
+export type { Transaction as BookingTransaction } from './booking';
+export type { ProviderEarnings as SubProviderEarnings } from './subscription';
 
 export interface IResponse<T> {
   success: boolean;
