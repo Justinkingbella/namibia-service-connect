@@ -265,7 +265,7 @@ const UserProfile: React.FC = () => {
                       <Input 
                         name="birthDate"
                         type="date"
-                        value={formData.birthDate || ''}
+                        value={typeof formData.birthDate === 'string' ? formData.birthDate : ''}
                         onChange={handleInputChange}
                       />
                     </div>

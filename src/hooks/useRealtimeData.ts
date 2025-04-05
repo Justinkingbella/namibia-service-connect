@@ -26,7 +26,8 @@ export function useRealtimeData<T>(options: UseRealtimeDataOptions<T>) {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
-        let query = supabase.from(table).select('*');
+        // Use type assertion to handle the dynamic table name
+        let query = supabase.from(table as any).select('*');
         
         if (column && value) {
           query = query.eq(column, value);
@@ -54,14 +55,14 @@ export function useRealtimeData<T>(options: UseRealtimeDataOptions<T>) {
     // Set up realtime subscription
     const channel = supabase
       .channel(`${table}-changes`)
-      .on('postgres_changes', 
+      .on('postgres_changes' as any, 
         { 
           event: event, 
           schema: 'public', 
           table: table,
           filter: filter
         },
-        (payload) => {
+        (payload: any) => {
           // Handle the realtime update
           if (payload.eventType === 'INSERT') {
             setData(prev => [...prev, payload.new as T]);

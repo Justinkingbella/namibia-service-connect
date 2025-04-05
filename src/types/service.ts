@@ -1,5 +1,5 @@
 
-// Using a regular enum instead of a string enum so it can be used as a value
+// Change from string enum to regular enum so it can be used as a value
 export enum ServiceCategoryEnum {
   cleaning = 'cleaning',
   repair = 'repair',
@@ -105,7 +105,7 @@ export interface ServicePaymentMethod {
   processingFeeType?: 'fixed' | 'percentage';
 }
 
-// Explicitly export PaymentMethod to fix the import errors
+// Payment method types
 export type PaymentMethod = 'credit_card' | 'paypal' | 'bank_transfer' | 'crypto' | 'cash' | 'mobile_money' | 'wallet';
 
 // Interface for user's favorite services

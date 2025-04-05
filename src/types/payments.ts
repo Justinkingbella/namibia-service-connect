@@ -1,52 +1,22 @@
 
-export interface PaymentHistory {
-  id: string;
-  userId: string;
-  amount: number;
-  description: string;
-  date: Date;
-  status: string;
-  type: string;
-  reference: string;
-}
+// Define Payment Method types to avoid confusion with other types
+export type PaymentMethod = 'credit_card' | 'paypal' | 'bank_transfer' | 'crypto' | 'cash' | 'mobile_money' | 'wallet';
 
-export interface ProviderEarnings {
+export interface PaymentProvider {
   id: string;
-  providerId: string;
-  periodStart: Date;
-  periodEnd: Date;
-  totalEarnings: number;
-  totalBookings: number;
-  commissionPaid: number;
-  netEarnings: number;
-  payoutStatus: string;
-  payoutDate?: Date;
-  payoutReference?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface ProviderPayout {
-  id: string;
-  providerId: string;
-  amount: number;
-  fee: number;
-  netAmount: number;
-  paymentMethod: string;
-  status: string;
-  reference: string;
-  bankDetails?: Record<string, any>;
-  mobilePaymentDetails?: Record<string, any>;
-  notes?: string;
-  processedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface PaymentMethod {
-  id: string;
-  type: string;
   name: string;
-  details: any;
-  isDefault: boolean;
+  type: PaymentMethod;
+  isActive: boolean;
+  config: Record<string, any>;
+}
+
+export interface PaymentTransaction {
+  id: string;
+  amount: number;
+  userId: string;
+  paymentMethod: PaymentMethod;
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  createdAt: Date;
+  reference: string;
+  description?: string;
 }

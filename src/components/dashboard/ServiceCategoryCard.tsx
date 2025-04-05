@@ -8,7 +8,7 @@ import {
   Droplets, 
   Home, 
   Truck, 
-  PaintBrush, 
+  Paintbrush, 
   Leaf, 
   GraduationCap, 
   ShoppingBag, 
@@ -28,33 +28,33 @@ interface ServiceCategoryCardProps {
 const ServiceCategoryCard: React.FC<ServiceCategoryCardProps> = ({ category, count, onClick }) => {
   const getIcon = () => {
     switch (category) {
-      case ServiceCategoryEnum.repair:
+      case 'repair':
         return <Hammer className="h-5 w-5 text-orange-600" />;
-      case ServiceCategoryEnum.electrical:
+      case 'electrical':
         return <Lightbulb className="h-5 w-5 text-yellow-600" />;
-      case ServiceCategoryEnum.plumbing:
+      case 'plumbing':
         return <Droplets className="h-5 w-5 text-blue-600" />;
-      case ServiceCategoryEnum.home:
+      case 'home':
         return <Home className="h-5 w-5 text-gray-600" />;
-      case ServiceCategoryEnum.moving:
+      case 'moving':
         return <Truck className="h-5 w-5 text-indigo-600" />;
-      case ServiceCategoryEnum.painting:
-        return <PaintBrush className="h-5 w-5 text-pink-600" />;
-      case ServiceCategoryEnum.landscaping:
+      case 'painting':
+        return <Paintbrush className="h-5 w-5 text-pink-600" />;
+      case 'landscaping':
         return <Leaf className="h-5 w-5 text-green-600" />;
-      case ServiceCategoryEnum.tutoring:
+      case 'tutoring':
         return <GraduationCap className="h-5 w-5 text-purple-600" />;
-      case ServiceCategoryEnum.errand:
+      case 'errand':
         return <ShoppingBag className="h-5 w-5 text-red-600" />;
-      case ServiceCategoryEnum.professional:
+      case 'professional':
         return <Users2 className="h-5 w-5 text-slate-600" />;
-      case ServiceCategoryEnum.freelance:
+      case 'freelance':
         return <Briefcase className="h-5 w-5 text-teal-600" />;
-      case ServiceCategoryEnum.transport:
+      case 'transport':
         return <Car className="h-5 w-5 text-cyan-600" />;
-      case ServiceCategoryEnum.health:
+      case 'health':
         return <Heart className="h-5 w-5 text-rose-600" />;
-      case ServiceCategoryEnum.cleaning:
+      case 'cleaning':
       default:
         return <Home className="h-5 w-5 text-emerald-600" />;
     }

@@ -59,7 +59,8 @@ export type {
   PaymentMethod
 } from './service';
 export type { Transaction as BookingTransaction } from './booking';
-export type { ProviderEarnings as SubProviderEarnings } from './subscription';
+// Explicitly resolve the ambiguity with ProviderEarnings
+export type { ProviderEarnings as SubscriptionProviderEarnings } from './subscription';
 
 export interface IResponse<T> {
   success: boolean;
