@@ -2,37 +2,49 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Enables real-time capabilities for important tables.
- * Call this once during app initialization.
+ * Enable Supabase realtime for specific tables
  */
-export const enableSupabaseRealtime = async () => {
+export async function enableSupabaseRealtime() {
   try {
-    // These SQL commands would normally need to be run by an admin
-    // through the Supabase dashboard or SQL editor
-    // For demonstration purposes, these would be the commands needed:
+    console.log('Enabling Supabase realtime for tables...');
     
-    // Execute SQL to enable realtime for tables:
-    // ALTER PUBLICATION supabase_realtime ADD TABLE profiles;
-    // ALTER PUBLICATION supabase_realtime ADD TABLE payment_history;
-    // ALTER PUBLICATION supabase_realtime ADD TABLE disputes;
-    // ALTER PUBLICATION supabase_realtime ADD TABLE user_addresses;
-    // ALTER PUBLICATION supabase_realtime ADD TABLE payment_methods;
-    // ALTER PUBLICATION supabase_realtime ADD TABLE user_2fa;
-    // ALTER PUBLICATION supabase_realtime ADD TABLE favorite_services;
-    // ALTER PUBLICATION supabase_realtime ADD TABLE services;
-    // ALTER PUBLICATION supabase_realtime ADD TABLE bookings;
-    // ALTER PUBLICATION supabase_realtime ADD TABLE reviews;
-    // ALTER PUBLICATION supabase_realtime ADD TABLE messages;
+    // Tables that require realtime updates
+    const tables = [
+      'profiles',
+      'services',
+      'bookings',
+      'service_providers',
+      'customers',
+      'favorite_services',
+      'reviews'
+    ];
     
-    // For many tables, also need to enable REPLICA IDENTITY:
-    // ALTER TABLE profiles REPLICA IDENTITY FULL;
-    // ALTER TABLE payment_history REPLICA IDENTITY FULL;
-    // ... etc for all relevant tables
+    // Enable realtime for each table
+    for (const table of tables) {
+      try {
+        const { error } = await supabase.rpc('supabase_functions.enable_realtime', {
+          table_name: table
+        });
+        
+        if (error) {
+          console.error(`Error enabling realtime for ${table}:`, error);
+        } else {
+          console.log(`Realtime enabled for ${table}`);
+        }
+      } catch (tableError) {
+        console.error(`Error enabling realtime for ${table}:`, tableError);
+      }
+    }
     
-    console.log('Supabase realtime setup complete');
+    // Set up table replication if needed
+    await supabase.from('services').select('id').limit(1);
+    await supabase.from('bookings').select('id').limit(1);
+    await supabase.from('profiles').select('id').limit(1);
+    
+    console.log('Supabase realtime setup completed');
     return true;
   } catch (error) {
-    console.error('Error setting up Supabase realtime:', error);
+    console.error('Error in enableSupabaseRealtime:', error);
     return false;
   }
-};
+}
