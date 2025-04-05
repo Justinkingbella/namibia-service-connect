@@ -1,291 +1,334 @@
 
 import { create } from 'zustand';
-import { BookingData, BookingStatus, PaymentStatus } from '@/types';
+import { persist } from 'zustand/middleware';
 import { supabase } from '@/integrations/supabase/client';
-import { transformKeysToCamel, transformKeysToSnake } from '@/lib/utils';
+import { BookingData, BookingStatus, PaymentStatus, UserRole } from '@/types';
+import { toast } from 'sonner';
 
 interface BookingState {
   bookings: BookingData[];
-  currentBooking: BookingData | null;
-  isLoading: boolean;
+  selectedBooking: BookingData | null;
+  loading: boolean;
   error: string | null;
   
   // Actions
-  fetchBookings: (userId: string, userRole: string) => Promise<void>;
-  fetchBookingById: (bookingId: string) => Promise<void>;
-  createBooking: (bookingData: Partial<BookingData>) => Promise<string | null>;
+  fetchBookings: (userId: string, role: UserRole) => Promise<void>;
+  fetchBookingById: (bookingId: string) => Promise<BookingData | null>;
   updateBookingStatus: (bookingId: string, status: BookingStatus) => Promise<boolean>;
-  updatePaymentStatus: (bookingId: string, status: PaymentStatus) => Promise<boolean>;
-  cancelBooking: (bookingId: string, reason: string, cancelledBy: string) => Promise<boolean>;
-  clearBookingState: () => void;
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
+  cancelBooking: (bookingId: string, reason: string) => Promise<boolean>;
+  createBooking: (bookingData: Partial<BookingData>) => Promise<boolean>;
+  clearBookings: () => void;
+  setSelectedBooking: (booking: BookingData | null) => void;
+  submitBookingRating: (bookingId: string, rating: number, feedback?: string) => Promise<boolean>;
 }
 
-export const useBookingStore = create<BookingState>()((set, get) => ({
-  bookings: [],
-  currentBooking: null,
-  isLoading: false,
-  error: null,
-  
-  fetchBookings: async (userId: string, userRole: string) => {
-    try {
-      set({ isLoading: true, error: null });
-      
-      // Determine which field to filter by based on user role
-      const filterField = userRole === 'provider' ? 'provider_id' : 'customer_id';
-      
-      // Fetch bookings with related data
-      const { data, error } = await supabase
-        .from('bookings')
-        .select(`
-          *,
-          services:service_id (
-            title,
-            image
-          ),
-          providers:provider_id (
-            business_name
-          ),
-          customers:customer_id (
-            first_name,
-            last_name
-          )
-        `)
-        .eq(filterField, userId)
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
-      
-      // Transform and enrich the data
-      const transformedBookings: BookingData[] = data.map(booking => {
-        const transformed = transformKeysToCamel(booking) as BookingData;
-        
-        // Add derived properties
-        transformed.serviceTitle = booking.services?.title;
-        transformed.serviceImage = booking.services?.image;
-        transformed.providerName = booking.providers?.business_name;
-        transformed.customerName = booking.customers
-          ? `${booking.customers.first_name} ${booking.customers.last_name}`
-          : 'Unknown Customer';
-        
-        return transformed;
-      });
-      
-      set({ bookings: transformedBookings, isLoading: false });
-    } catch (error: any) {
-      console.error('Error fetching bookings:', error);
-      set({ error: error.message, isLoading: false });
-    }
-  },
-  
-  fetchBookingById: async (bookingId: string) => {
-    try {
-      set({ isLoading: true, error: null });
-      
-      const { data, error } = await supabase
-        .from('bookings')
-        .select(`
-          *,
-          services:service_id (
-            title,
-            image,
-            price,
-            pricing_model
-          ),
-          providers:provider_id (
-            business_name,
-            avatar_url
-          ),
-          customers:customer_id (
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `)
-        .eq('id', bookingId)
-        .single();
-        
-      if (error) throw error;
-      
-      // Transform and enrich the data
-      const transformed = transformKeysToCamel(data) as BookingData;
-      
-      // Add derived properties
-      transformed.serviceTitle = data.services?.title;
-      transformed.serviceImage = data.services?.image;
-      transformed.providerName = data.providers?.business_name;
-      transformed.providerAvatar = data.providers?.avatar_url;
-      transformed.customerName = data.customers
-        ? `${data.customers.first_name} ${data.customers.last_name}`
-        : 'Unknown Customer';
-      transformed.customerAvatar = data.customers?.avatar_url;
-      
-      set({ currentBooking: transformed, isLoading: false });
-    } catch (error: any) {
-      console.error('Error fetching booking details:', error);
-      set({ error: error.message, isLoading: false });
-    }
-  },
-  
-  createBooking: async (bookingData: Partial<BookingData>) => {
-    try {
-      set({ isLoading: true, error: null });
-      
-      // Convert camelCase to snake_case for database
-      const dataToInsert = transformKeysToSnake(bookingData);
-      
-      const { data, error } = await supabase
-        .from('bookings')
-        .insert(dataToInsert)
-        .select()
-        .single();
-        
-      if (error) throw error;
-      
-      // Update local state
-      const newBooking = transformKeysToCamel(data) as BookingData;
-      set(state => ({ 
-        bookings: [newBooking, ...state.bookings],
-        currentBooking: newBooking,
-        isLoading: false 
-      }));
-      
-      return data.id;
-    } catch (error: any) {
-      console.error('Error creating booking:', error);
-      set({ error: error.message, isLoading: false });
-      return null;
-    }
-  },
-  
-  updateBookingStatus: async (bookingId: string, status: BookingStatus) => {
-    try {
-      set({ isLoading: true, error: null });
-      
-      const { error } = await supabase
-        .from('bookings')
-        .update({ 
-          status,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', bookingId);
-        
-      if (error) throw error;
-      
-      // Update local state
-      const bookings = get().bookings.map(booking => 
-        booking.id === bookingId ? { ...booking, status } : booking
-      );
-      
-      const currentBooking = get().currentBooking;
-      if (currentBooking && currentBooking.id === bookingId) {
-        set({ currentBooking: { ...currentBooking, status } });
-      }
-      
-      set({ bookings, isLoading: false });
-      return true;
-    } catch (error: any) {
-      console.error('Error updating booking status:', error);
-      set({ error: error.message, isLoading: false });
-      return false;
-    }
-  },
-  
-  updatePaymentStatus: async (bookingId: string, paymentStatus: PaymentStatus) => {
-    try {
-      set({ isLoading: true, error: null });
-      
-      const { error } = await supabase
-        .from('bookings')
-        .update({ 
-          payment_status: paymentStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', bookingId);
-        
-      if (error) throw error;
-      
-      // Update local state
-      const bookings = get().bookings.map(booking => 
-        booking.id === bookingId ? { ...booking, paymentStatus } : booking
-      );
-      
-      const currentBooking = get().currentBooking;
-      if (currentBooking && currentBooking.id === bookingId) {
-        set({ currentBooking: { ...currentBooking, paymentStatus } });
-      }
-      
-      set({ bookings, isLoading: false });
-      return true;
-    } catch (error: any) {
-      console.error('Error updating payment status:', error);
-      set({ error: error.message, isLoading: false });
-      return false;
-    }
-  },
-  
-  cancelBooking: async (bookingId: string, reason: string, cancelledBy: string) => {
-    try {
-      set({ isLoading: true, error: null });
-      
-      const { error } = await supabase
-        .from('bookings')
-        .update({ 
-          status: 'cancelled' as BookingStatus,
-          cancellation_reason: reason,
-          cancelled_by: cancelledBy,
-          cancellation_date: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', bookingId);
-        
-      if (error) throw error;
-      
-      // Update local state
-      const bookings = get().bookings.map(booking => 
-        booking.id === bookingId 
-          ? { 
-              ...booking, 
-              status: 'cancelled' as BookingStatus,
-              cancellationReason: reason,
-              cancelledBy: cancelledBy,
-              cancellationDate: new Date().toISOString()
-            } 
-          : booking
-      );
-      
-      const currentBooking = get().currentBooking;
-      if (currentBooking && currentBooking.id === bookingId) {
-        set({ 
-          currentBooking: { 
-            ...currentBooking, 
-            status: 'cancelled' as BookingStatus,
-            cancellationReason: reason,
-            cancelledBy: cancelledBy,
-            cancellationDate: new Date().toISOString()
-          } 
-        });
-      }
-      
-      set({ bookings, isLoading: false });
-      return true;
-    } catch (error: any) {
-      console.error('Error cancelling booking:', error);
-      set({ error: error.message, isLoading: false });
-      return false;
-    }
-  },
-  
-  clearBookingState: () => {
-    set({ 
+export const useBookingStore = create<BookingState>()(
+  persist(
+    (set, get) => ({
       bookings: [],
-      currentBooking: null,
-      isLoading: false,
-      error: null
-    });
-  },
-  
-  setLoading: (isLoading: boolean) => set({ isLoading }),
-  setError: (error: string | null) => set({ error })
-}));
+      selectedBooking: null,
+      loading: false,
+      error: null,
+      
+      fetchBookings: async (userId: string, role: UserRole) => {
+        try {
+          set({ loading: true, error: null });
+          
+          let query = supabase.from('bookings').select(`
+            *,
+            service:service_id(*),
+            provider:provider_id(*),
+            customer:customer_id(*)
+          `);
+          
+          // Filter by appropriate ID based on user role
+          if (role === 'provider') {
+            query = query.eq('provider_id', userId);
+          } else if (role === 'customer') {
+            query = query.eq('customer_id', userId);
+          }
+          
+          const { data, error } = await query.order('created_at', { ascending: false });
+          
+          if (error) throw error;
+          
+          // Map DB fields to match our BookingData interface
+          const mappedBookings: BookingData[] = data.map((booking: any) => {
+            const mappedBooking: BookingData = {
+              ...booking,
+              // Add UI display fields using related data
+              serviceName: booking.service?.title || 'Unknown Service',
+              serviceImage: booking.service?.image || null, 
+              providerName: booking.provider?.business_name || 'Unknown Provider',
+              customerName: booking.customer?.first_name 
+                ? `${booking.customer.first_name} ${booking.customer.last_name || ''}`
+                : 'Unknown Customer',
+              // Add camelCase alternates for component usage
+              serviceId: booking.service_id,
+              customerId: booking.customer_id,
+              providerId: booking.provider_id,
+              startTime: booking.start_time,
+              endTime: booking.end_time,
+              paymentStatus: booking.payment_status,
+              paymentMethod: booking.payment_method,
+              totalAmount: booking.total_amount,
+              isUrgent: booking.is_urgent,
+              createdAt: booking.created_at,
+              updatedAt: booking.updated_at,
+              cancellationReason: booking.cancellation_reason,
+              // For provider pages
+              providerAvatar: booking.provider?.avatar_url || null,
+              // For customer pages
+              customerAvatar: booking.customer?.avatar_url || null,
+              serviceTitle: booking.service?.title || 'Unknown Service',
+            };
+            
+            return mappedBooking;
+          });
+          
+          set({ bookings: mappedBookings, loading: false });
+        } catch (error) {
+          console.error('Error fetching bookings:', error);
+          set({ error: 'Failed to fetch bookings', loading: false });
+        }
+      },
+      
+      fetchBookingById: async (bookingId: string) => {
+        try {
+          set({ loading: true, error: null });
+          
+          const { data, error } = await supabase
+            .from('bookings')
+            .select(`
+              *,
+              service:service_id(*),
+              provider:provider_id(*),
+              customer:customer_id(*)
+            `)
+            .eq('id', bookingId)
+            .single();
+          
+          if (error) throw error;
+          
+          const booking: BookingData = {
+            ...data,
+            serviceName: data.service?.title || 'Unknown Service',
+            serviceImage: data.service?.image || null,
+            providerName: data.provider?.business_name || 'Unknown Provider',
+            customerName: data.customer?.first_name 
+              ? `${data.customer.first_name} ${data.customer.last_name || ''}`
+              : 'Unknown Customer',
+            // Add camelCase alternates
+            serviceId: data.service_id,
+            customerId: data.customer_id,
+            providerId: data.provider_id,
+            startTime: data.start_time,
+            endTime: data.end_time,
+            paymentStatus: data.payment_status,
+            totalAmount: data.total_amount,
+            isUrgent: data.is_urgent,
+            createdAt: data.created_at,
+            updatedAt: data.updated_at,
+            cancellationReason: data.cancellation_reason,
+            // For provider pages
+            providerAvatar: data.provider?.avatar_url || null,
+            // For customer pages
+            customerAvatar: data.customer?.avatar_url || null,
+            serviceTitle: data.service?.title || 'Unknown Service',
+          };
+          
+          set({ selectedBooking: booking, loading: false });
+          return booking;
+        } catch (error) {
+          console.error('Error fetching booking:', error);
+          set({ error: 'Failed to fetch booking details', loading: false });
+          return null;
+        }
+      },
+      
+      updateBookingStatus: async (bookingId: string, status: BookingStatus) => {
+        try {
+          const { data, error } = await supabase
+            .from('bookings')
+            .update({ 
+              status, 
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', bookingId)
+            .select();
+          
+          if (error) throw error;
+          
+          // Update local state
+          set(state => ({
+            bookings: state.bookings.map(booking => 
+              booking.id === bookingId ? { ...booking, status } : booking
+            )
+          }));
+          
+          if (get().selectedBooking?.id === bookingId) {
+            set(state => ({
+              selectedBooking: state.selectedBooking 
+                ? { ...state.selectedBooking, status } 
+                : null
+            }));
+          }
+          
+          toast.success(`Booking status updated to ${status}`);
+          return true;
+        } catch (error) {
+          console.error('Error updating booking status:', error);
+          toast.error('Failed to update booking status');
+          return false;
+        }
+      },
+      
+      cancelBooking: async (bookingId: string, reason: string) => {
+        try {
+          const { data, error } = await supabase
+            .from('bookings')
+            .update({ 
+              status: 'cancelled',
+              payment_status: 'refunded' as PaymentStatus,
+              cancellation_reason: reason,
+              cancellation_date: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', bookingId)
+            .select();
+          
+          if (error) throw error;
+          
+          // Update local state
+          set(state => ({
+            bookings: state.bookings.map(booking => 
+              booking.id === bookingId ? { 
+                ...booking, 
+                status: 'cancelled',
+                payment_status: 'refunded',
+                cancellation_reason: reason,
+              } : booking
+            )
+          }));
+          
+          // Update selected booking if it's the one being cancelled
+          if (get().selectedBooking?.id === bookingId) {
+            set(state => ({
+              selectedBooking: state.selectedBooking 
+                ? { 
+                    ...state.selectedBooking, 
+                    status: 'cancelled',
+                    payment_status: 'refunded',
+                    cancellation_reason: reason,
+                  } 
+                : null
+            }));
+          }
+          
+          toast.success('Booking cancelled successfully');
+          return true;
+        } catch (error) {
+          console.error('Error cancelling booking:', error);
+          toast.error('Failed to cancel booking');
+          return false;
+        }
+      },
+      
+      createBooking: async (bookingData: Partial<BookingData>) => {
+        try {
+          // Map any camelCase fields to snake_case for DB
+          const bookingDataForDb: any = {
+            ...bookingData,
+            service_id: bookingData.serviceId || bookingData.service_id,
+            customer_id: bookingData.customerId || bookingData.customer_id,
+            provider_id: bookingData.providerId || bookingData.provider_id,
+            start_time: bookingData.startTime || bookingData.start_time,
+            end_time: bookingData.endTime || bookingData.end_time,
+            payment_status: bookingData.paymentStatus || bookingData.payment_status || 'pending',
+            payment_method: bookingData.paymentMethod || bookingData.payment_method,
+            total_amount: bookingData.totalAmount || bookingData.total_amount,
+            is_urgent: bookingData.isUrgent || bookingData.is_urgent,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+
+          const { data, error } = await supabase
+            .from('bookings')
+            .insert(bookingDataForDb)
+            .select();
+          
+          if (error) throw error;
+          
+          // Add the new booking to state
+          if (data && data.length > 0) {
+            const newBooking = data[0] as BookingData;
+            set(state => ({
+              bookings: [newBooking, ...state.bookings]
+            }));
+          }
+          
+          toast.success('Booking created successfully');
+          return true;
+        } catch (error) {
+          console.error('Error creating booking:', error);
+          toast.error('Failed to create booking');
+          return false;
+        }
+      },
+      
+      submitBookingRating: async (bookingId: string, rating: number, feedback?: string) => {
+        try {
+          const { data, error } = await supabase
+            .from('bookings')
+            .update({ 
+              rating,
+              feedback,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', bookingId)
+            .select();
+          
+          if (error) throw error;
+          
+          // Update local state
+          set(state => ({
+            bookings: state.bookings.map(booking => 
+              booking.id === bookingId ? { ...booking, rating, feedback } : booking
+            )
+          }));
+          
+          // Update selected booking if it's the one being rated
+          if (get().selectedBooking?.id === bookingId) {
+            set(state => ({
+              selectedBooking: state.selectedBooking 
+                ? { ...state.selectedBooking, rating, feedback } 
+                : null
+            }));
+          }
+          
+          toast.success('Rating submitted successfully');
+          return true;
+        } catch (error) {
+          console.error('Error submitting rating:', error);
+          toast.error('Failed to submit rating');
+          return false;
+        }
+      },
+      
+      clearBookings: () => {
+        set({ bookings: [], selectedBooking: null });
+      },
+      
+      setSelectedBooking: (booking) => {
+        set({ selectedBooking: booking });
+      }
+    }),
+    {
+      name: 'bookings-storage',
+      // Only persist some fields to avoid storing too much data
+      partialize: (state) => ({
+        selectedBooking: state.selectedBooking
+      })
+    }
+  )
+);

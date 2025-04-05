@@ -22,15 +22,18 @@ export async function enableSupabaseRealtime() {
     // Enable realtime for each table
     for (const table of tables) {
       try {
-        const { error } = await supabase.rpc('supabase_functions.enable_realtime', {
-          table_name: table
-        });
-        
-        if (error) {
-          console.error(`Error enabling realtime for ${table}:`, error);
-        } else {
-          console.log(`Realtime enabled for ${table}`);
-        }
+        // Using direct channel subscriptions instead of RPC
+        const channel = supabase.channel(`table-${table}`)
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: table
+          }, (payload) => {
+            console.log(`Change in ${table}:`, payload);
+          })
+          .subscribe();
+          
+        console.log(`Realtime enabled for ${table}`);
       } catch (tableError) {
         console.error(`Error enabling realtime for ${table}:`, tableError);
       }

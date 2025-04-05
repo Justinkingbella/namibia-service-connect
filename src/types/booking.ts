@@ -50,6 +50,23 @@ export interface BookingData extends Booking {
   serviceImage?: string;
   providerName?: string;
   customerName?: string;
+  
+  // Added camelCase versions for component usage
+  serviceId?: string;
+  customerId?: string;
+  providerId?: string;
+  startTime?: string;
+  endTime?: string;
+  paymentStatus?: PaymentStatus;
+  paymentMethod?: string;
+  totalAmount?: number;
+  isUrgent?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  cancellationReason?: string;
+  serviceTitle?: string;
+  providerAvatar?: string;
+  customerAvatar?: string;
 }
 
 export interface BookingWithDetails {
@@ -125,7 +142,7 @@ export interface Transaction {
   reference?: string;
 }
 
-export interface WalletVerificationRequest {
+export interface WalletVerification {
   id: string;
   bookingId: string;
   amount: number;
@@ -137,3 +154,5 @@ export interface WalletVerificationRequest {
   referenceNumber: string;
   notes?: string;
 }
+
+export type WalletVerificationStatus = 'pending' | 'verified' | 'rejected';

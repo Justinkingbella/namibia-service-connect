@@ -12,7 +12,9 @@ export type {
   Dispute,
   DisputeStatus,
   DisputePriority,
-  Withdrawal
+  Withdrawal,
+  WalletVerification,
+  WalletVerificationStatus
 } from './booking';
 
 // Export payment types
@@ -37,11 +39,6 @@ export type {
 
 // Export wallet verification types
 export type {
-  WalletVerificationStatus,
-  NamibianMobileOperator,
-  NamibianBank,
-  WalletVerification,
-  Wallet,
   WalletPaymentType,
   PaymentMethod as PaymentPaymentMethod,
   Transaction as PaymentTransaction
@@ -69,3 +66,6 @@ export interface IResponse<T> {
 
 // Export conversation and message types
 export type { Conversation, Message } from './conversations';
+
+// Export provider earnings from subscription separately to avoid naming conflicts
+export { ProviderEarnings as SubscriptionProviderEarnings } from './subscription';

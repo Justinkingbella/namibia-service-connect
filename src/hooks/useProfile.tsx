@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,7 +23,7 @@ export function useProfile() {
 
         if (error) throw error;
         
-        // Transform snake_case database fields to camelCase for our frontend types
+        // Map snake_case from DB to camelCase for frontend use
         const transformedProfile: DbUserProfile = {
           id: data.id,
           firstName: data.first_name,
@@ -44,7 +43,19 @@ export function useProfile() {
           emailVerified: data.email_verified,
           role: data.role as UserRole,
           loyaltyPoints: data.loyalty_points,
-          notificationPreferences: data.notification_preferences as any
+          notificationPreferences: data.notification_preferences as any,
+          
+          // Keep the original snake_case fields for DB operations
+          first_name: data.first_name,
+          last_name: data.last_name,
+          phone_number: data.phone_number,
+          avatar_url: data.avatar_url,
+          birth_date: data.birth_date,
+          preferred_language: data.preferred_language,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+          loyalty_points: data.loyalty_points,
+          email_verified: data.email_verified,
         };
         
         setProfile(transformedProfile);
@@ -83,6 +94,15 @@ export function useProfile() {
       if (updates.loyaltyPoints !== undefined) snakeCaseUpdates.loyalty_points = updates.loyaltyPoints;
       if (updates.notificationPreferences !== undefined) snakeCaseUpdates.notification_preferences = updates.notificationPreferences;
       
+      // Or use the snake_case fields directly if provided
+      if (updates.first_name !== undefined) snakeCaseUpdates.first_name = updates.first_name;
+      if (updates.last_name !== undefined) snakeCaseUpdates.last_name = updates.last_name;
+      if (updates.phone_number !== undefined) snakeCaseUpdates.phone_number = updates.phone_number;
+      if (updates.avatar_url !== undefined) snakeCaseUpdates.avatar_url = updates.avatar_url;
+      if (updates.birth_date !== undefined) snakeCaseUpdates.birth_date = updates.birth_date;
+      if (updates.preferred_language !== undefined) snakeCaseUpdates.preferred_language = updates.preferred_language;
+      if (updates.loyalty_points !== undefined) snakeCaseUpdates.loyalty_points = updates.loyalty_points;
+      
       // Add updated_at
       snakeCaseUpdates.updated_at = new Date().toISOString();
 
@@ -93,7 +113,25 @@ export function useProfile() {
 
       if (error) throw error;
 
-      setProfile(prev => prev ? { ...prev, ...updates } : null);
+      // Update local state with both snake_case and camelCase versions
+      setProfile(prev => {
+        if (!prev) return null;
+        
+        const updatedProfile: DbUserProfile = { 
+          ...prev,
+          ...updates,
+          // Also update the snake_case versions
+          first_name: snakeCaseUpdates.first_name || prev.first_name,
+          last_name: snakeCaseUpdates.last_name || prev.last_name,
+          phone_number: snakeCaseUpdates.phone_number || prev.phone_number,
+          avatar_url: snakeCaseUpdates.avatar_url || prev.avatar_url,
+          birth_date: snakeCaseUpdates.birth_date || prev.birth_date,
+          preferred_language: snakeCaseUpdates.preferred_language || prev.preferred_language,
+          loyalty_points: snakeCaseUpdates.loyalty_points || prev.loyalty_points,
+        };
+        return updatedProfile;
+      });
+      
       toast.success('Profile updated successfully');
       return true;
     } catch (error) {

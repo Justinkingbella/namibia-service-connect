@@ -18,28 +18,7 @@ export const useRealtimeUpdates = () => {
   useEffect(() => {
     if (!user || !userRole) return;
 
-    // Enable Postgres changes for the tables we're interested in
-    const enableRealtimeForTables = async () => {
-      try {
-        const { error: servicesError } = await supabase.rpc('supabase_functions.enable_realtime', {
-          table_name: 'services'
-        });
-        
-        const { error: bookingsError } = await supabase.rpc('supabase_functions.enable_realtime', {
-          table_name: 'bookings'
-        });
-        
-        if (servicesError || bookingsError) {
-          console.error('Error enabling realtime:', servicesError || bookingsError);
-        }
-      } catch (error) {
-        console.error('Error enabling realtime:', error);
-      }
-    };
-
-    enableRealtimeForTables();
-
-    // Subscribe to service changes
+    // Using direct channel subscriptions instead of RPC
     const serviceChannel = supabase
       .channel('services-changes')
       .on('postgres_changes', { 
@@ -60,7 +39,10 @@ export const useRealtimeUpdates = () => {
           fetchServices();
           
           // Show toast notification
-          const serviceName = payload.new?.title || payload.old?.title || 'Service';
+          const newData = payload.new || {};
+          const oldData = payload.old || {};
+          const serviceName = newData.title || oldData.title || 'Service';
+          
           if (eventType === 'INSERT') {
             toast.success(`New service added: ${serviceName}`);
           } else if (eventType === 'UPDATE') {
@@ -92,21 +74,23 @@ export const useRealtimeUpdates = () => {
         
         // Show toast notification
         const eventType = payload.eventType;
-        const service = payload.new?.service_id || payload.old?.service_id || 'Unknown service';
+        const newData = payload.new || {};
+        const oldData = payload.old || {};
+        const serviceId = newData.service_id || oldData.service_id || 'Unknown service';
         
         if (eventType === 'INSERT' && userRole === 'provider') {
-          toast.success(`New booking received for service ${service}!`);
+          toast.success(`New booking received for service ${serviceId}!`);
         } else if (eventType === 'UPDATE') {
-          const newStatus = payload.new?.status;
-          const oldStatus = payload.old?.status;
+          const newStatus = newData.status;
+          const oldStatus = oldData.status;
           
           if (newStatus !== oldStatus) {
             if (newStatus === 'confirmed' && userRole === 'customer') {
-              toast.success(`Your booking for ${service} has been confirmed!`);
+              toast.success(`Your booking for ${serviceId} has been confirmed!`);
             } else if (newStatus === 'completed' && userRole === 'customer') {
-              toast.success(`Your booking for ${service} has been completed!`);
+              toast.success(`Your booking for ${serviceId} has been completed!`);
             } else if (newStatus === 'cancelled') {
-              toast.warning(`Booking for ${service} has been cancelled.`);
+              toast.warning(`Booking for ${serviceId} has been cancelled.`);
             }
           }
         }
@@ -115,8 +99,8 @@ export const useRealtimeUpdates = () => {
 
     // Cleanup function
     return () => {
-      supabase.channel('services-changes').unsubscribe();
-      supabase.channel('bookings-changes').unsubscribe();
+      supabase.removeChannel(serviceChannel);
+      supabase.removeChannel(bookingChannel);
     };
-  }, [user, userRole]);
+  }, [user, userRole, fetchBookings, fetchServices, fetchUserServices]);
 };

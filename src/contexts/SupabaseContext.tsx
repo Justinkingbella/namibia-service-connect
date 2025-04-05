@@ -34,7 +34,7 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
         supabase.removeChannel(channel);
       });
     };
-  }, [user?.id]);
+  }, [user?.id, channels]);
 
   const enableRealtime = async (): Promise<boolean> => {
     try {
@@ -66,9 +66,22 @@ export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) 
 
   const enableTableRealtime = async (tableName: string): Promise<boolean> => {
     try {
-      await supabase.rpc('supabase_functions.enable_realtime', {
-        table_name: tableName
-      });
+      // Enable realtime for this table using channel subscription
+      // instead of RPC function which isn't available
+      const channel = supabase
+        .channel(`table-${tableName}-changes`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: tableName
+        }, (payload) => {
+          console.log(`Table ${tableName} change detected:`, payload);
+        })
+        .subscribe();
+        
+      // Store the channel
+      setChannels(prev => ({ ...prev, [tableName]: channel }));
+      
       return true;
     } catch (error) {
       console.error(`Error enabling realtime for ${tableName}:`, error);

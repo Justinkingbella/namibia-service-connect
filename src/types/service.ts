@@ -1,4 +1,3 @@
-
 export interface ServiceCategory {
   id: string;
   name: string;
@@ -10,7 +9,7 @@ export interface ServiceCategory {
   isActive?: boolean;
 }
 
-// Using a string enum for ServiceCategory for better type safety
+// Change from type to enum so it can be used as values
 export enum ServiceCategoryEnum {
   cleaning = 'cleaning',
   repair = 'repair',
@@ -54,6 +53,14 @@ export interface ServiceData {
   }>;
   rating?: number;
   review_count?: number;
+  
+  // Added camelCase properties for easier component usage
+  pricingModel?: string;
+  providerId?: string;
+  providerName?: string;
+  isActive?: boolean;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }
 
 export interface Service {
