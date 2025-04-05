@@ -1,3 +1,4 @@
+
 export interface ServiceCategory {
   id: string;
   name: string;
@@ -9,7 +10,7 @@ export interface ServiceCategory {
   isActive?: boolean;
 }
 
-// Change from type to enum so it can be used as values
+// Change to string enum so it can be used as values
 export enum ServiceCategoryEnum {
   cleaning = 'cleaning',
   repair = 'repair',
@@ -61,6 +62,7 @@ export interface ServiceData {
   isActive?: boolean;
   createdAt?: string | Date;
   updatedAt?: string | Date;
+  reviewCount?: number;
 }
 
 export interface Service {
@@ -129,4 +131,5 @@ export interface FavoriteService {
     reviewCount?: number;
     location?: string;
   };
+  created_at: string;
 }

@@ -4,7 +4,6 @@ import Hero from '@/components/home/Hero';
 import Features from '@/components/home/Features';
 import ServiceCategories from '@/components/home/ServiceCategories';
 import CTASection from '@/components/home/CTASection';
-import Layout from '@/components/layout/DashboardLayout';
 
 const Home: React.FC = () => {
   return (

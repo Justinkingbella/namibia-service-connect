@@ -2,7 +2,9 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ServiceCategoryEnum } from '@/types/service';
-import { Home, Tools, Wrench, Zap, TruckMoving, Brush, Flower2, GraduationCap, ShoppingBag, Briefcase, Handshake, Car, Heart, Package, Grid3X3 } from 'lucide-react';
+import { Home, Wrench, Zap, Brush, Flower2, GraduationCap, ShoppingBag, Briefcase, Handshake, Car, Heart, Package, Grid3X3 } from 'lucide-react';
+import { Truck } from 'lucide-react';
+import { Hammer } from 'lucide-react';
 
 type ServiceCategoryCardProps = {
   category: string;
@@ -21,33 +23,33 @@ const ServiceCategoryCard: React.FC<ServiceCategoryCardProps> = ({
   const getCategoryIcon = () => {
     // Using string comparison since ServiceCategoryEnum is a string enum
     switch (category) {
-      case 'cleaning':
+      case ServiceCategoryEnum.cleaning:
         return <Home className="h-6 w-6" />;
-      case 'repair':
-        return <Tools className="h-6 w-6" />;
-      case 'plumbing':
+      case ServiceCategoryEnum.repair:
+        return <Hammer className="h-6 w-6" />;
+      case ServiceCategoryEnum.plumbing:
         return <Wrench className="h-6 w-6" />;
-      case 'electrical':
+      case ServiceCategoryEnum.electrical:
         return <Zap className="h-6 w-6" />;
-      case 'moving':
-        return <TruckMoving className="h-6 w-6" />;
-      case 'painting':
+      case ServiceCategoryEnum.moving:
+        return <Truck className="h-6 w-6" />;
+      case ServiceCategoryEnum.painting:
         return <Brush className="h-6 w-6" />;
-      case 'landscaping':
+      case ServiceCategoryEnum.landscaping:
         return <Flower2 className="h-6 w-6" />;
-      case 'tutoring':
+      case ServiceCategoryEnum.tutoring:
         return <GraduationCap className="h-6 w-6" />;
-      case 'home':
+      case ServiceCategoryEnum.home:
         return <Home className="h-6 w-6" />;
-      case 'errand':
+      case ServiceCategoryEnum.errand:
         return <ShoppingBag className="h-6 w-6" />;
-      case 'professional':
+      case ServiceCategoryEnum.professional:
         return <Briefcase className="h-6 w-6" />;
-      case 'freelance':
+      case ServiceCategoryEnum.freelance:
         return <Handshake className="h-6 w-6" />;
-      case 'transport':
+      case ServiceCategoryEnum.transport:
         return <Car className="h-6 w-6" />;
-      case 'health':
+      case ServiceCategoryEnum.health:
         return <Heart className="h-6 w-6" />;
       default:
         return <Grid3X3 className="h-6 w-6" />;

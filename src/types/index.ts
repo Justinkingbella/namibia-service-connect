@@ -68,4 +68,4 @@ export interface IResponse<T> {
 export type { Conversation, Message } from './conversations';
 
 // Export provider earnings from subscription separately to avoid naming conflicts
-export { ProviderEarnings as SubscriptionProviderEarnings } from './subscription';
+export { type ProviderEarnings as SubscriptionProviderEarnings } from './subscription';

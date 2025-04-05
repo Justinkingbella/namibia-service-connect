@@ -41,7 +41,7 @@ export const useRealtimeUpdates = () => {
           // Show toast notification
           const newData = payload.new || {};
           const oldData = payload.old || {};
-          const serviceName = newData.title || oldData.title || 'Service';
+          const serviceName = (newData as any)?.title || (oldData as any)?.title || 'Service';
           
           if (eventType === 'INSERT') {
             toast.success(`New service added: ${serviceName}`);
@@ -76,13 +76,13 @@ export const useRealtimeUpdates = () => {
         const eventType = payload.eventType;
         const newData = payload.new || {};
         const oldData = payload.old || {};
-        const serviceId = newData.service_id || oldData.service_id || 'Unknown service';
+        const serviceId = (newData as any)?.service_id || (oldData as any)?.service_id || 'Unknown service';
         
         if (eventType === 'INSERT' && userRole === 'provider') {
           toast.success(`New booking received for service ${serviceId}!`);
         } else if (eventType === 'UPDATE') {
-          const newStatus = newData.status;
-          const oldStatus = oldData.status;
+          const newStatus = (newData as any)?.status;
+          const oldStatus = (oldData as any)?.status;
           
           if (newStatus !== oldStatus) {
             if (newStatus === 'confirmed' && userRole === 'customer') {

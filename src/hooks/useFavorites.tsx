@@ -3,22 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-
-export interface FavoriteService {
-  id: string;
-  user_id: string;
-  service_id: string;
-  created_at: string;
-  service?: {
-    id: string;
-    title: string;
-    description: string;
-    price: number;
-    image?: string;
-    provider_id: string;
-    provider_name: string;
-  };
-}
+import { FavoriteService } from '@/types/service';
 
 export function useFavorites() {
   const { user } = useAuth();
@@ -43,7 +28,25 @@ export function useFavorites() {
           .eq('user_id', user.id);
 
         if (error) throw error;
-        setFavorites(data);
+        
+        // Create properly structured favorites with default values for missing properties
+        const processedFavorites: FavoriteService[] = (data || []).map((item: any) => ({
+          id: item.id,
+          user_id: item.user_id,
+          service_id: item.service_id,
+          created_at: item.created_at,
+          service: {
+            id: item.service?.id || '',
+            title: item.service?.title || '',
+            description: item.service?.description || '',
+            price: item.service?.price || 0,
+            image: item.service?.image,
+            provider_id: item.service?.provider_id || '',
+            provider_name: item.service?.provider_name || ''
+          }
+        }));
+        
+        setFavorites(processedFavorites);
       } catch (error) {
         console.error('Error fetching favorites:', error);
         toast.error('Failed to load favorite services');
@@ -81,7 +84,25 @@ export function useFavorites() {
 
       if (error) throw error;
 
-      setFavorites(prev => [...prev, data as FavoriteService]);
+      if (data) {
+        const newFavorite: FavoriteService = {
+          id: data.id,
+          user_id: data.user_id,
+          service_id: data.service_id,
+          created_at: data.created_at,
+          service: {
+            id: data.service?.id || '',
+            title: data.service?.title || '',
+            description: data.service?.description || '',
+            price: data.service?.price || 0,
+            image: data.service?.image,
+            provider_id: data.service?.provider_id || '',
+            provider_name: data.service?.provider_name || ''
+          }
+        };
+        setFavorites(prev => [...prev, newFavorite]);
+      }
+      
       toast.success('Added to favorites');
       return true;
     } catch (error) {
