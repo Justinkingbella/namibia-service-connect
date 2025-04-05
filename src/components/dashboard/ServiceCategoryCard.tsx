@@ -14,7 +14,6 @@ import {
   ShoppingBag, 
   Users2, 
   Briefcase, 
-  Wrench, 
   Car, 
   Heart
 } from 'lucide-react';
@@ -56,7 +55,7 @@ const ServiceCategoryCard: React.FC<ServiceCategoryCardProps> = ({ category, cou
         return <Heart className="h-5 w-5 text-rose-600" />;
       case ServiceCategoryEnum.cleaning:
       default:
-        return <Wrench className="h-5 w-5 text-emerald-600" />;
+        return <Home className="h-5 w-5 text-emerald-600" />;
     }
   };
 

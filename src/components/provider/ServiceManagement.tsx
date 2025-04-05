@@ -28,7 +28,7 @@ const ServiceManagement = () => {
       (pricingModel === 'hourly' ? '/hr' : pricingModel === 'quote' ? ' (estimate)' : '');
   };
 
-  const formatCategory = (category: string) => {
+  const formatCategory = (category: ServiceCategory) => {
     return category.charAt(0).toUpperCase() + category.slice(1);
   };
 

@@ -1,3 +1,4 @@
+
 import { Dispute } from '@/types/booking';
 import { PaymentHistory } from '@/types/payments';
 import { UserAddress } from '@/types/auth';
@@ -7,14 +8,14 @@ import { Message } from '@/types/conversations';
 const mockAddresses: UserAddress[] = [
   {
     id: '1',
-    user_id: 'user1',
+    userId: 'user1',
     name: 'Home',
     street: '123 Main St',
     city: 'Windhoek',
     region: 'Khomas',
-    postal_code: '10001',
+    postalCode: '10001',
     country: 'Namibia',
-    is_default: true,
+    isDefault: true,
     createdAt: new Date()
   }
 ];
@@ -71,20 +72,20 @@ const mockDisputes: Dispute[] = [
 
 // Mock functions for useAddresses
 export const fetchUserAddresses = async (userId: string): Promise<UserAddress[]> => {
-  return mockAddresses.filter(addr => addr.user_id === userId);
+  return mockAddresses.filter(addr => addr.userId === userId);
 };
 
 export const addUserAddress = async (address: Partial<UserAddress>): Promise<UserAddress> => {
   const newAddress: UserAddress = {
     id: Date.now().toString(),
-    user_id: address.user_id || '',
+    userId: address.userId || '',
     name: address.name || 'Default',
     street: address.street || '',
     city: address.city || '',
     region: address.region,
-    postal_code: address.postal_code,
+    postalCode: address.postalCode,
     country: address.country || 'Namibia',
-    is_default: address.is_default || false,
+    isDefault: address.isDefault || false,
     createdAt: new Date()
   };
   
@@ -132,7 +133,7 @@ export const sendMessage = async (message: Partial<Message>): Promise<Message> =
     senderId: message.senderId || '',
     content: message.content || '',
     createdAt: new Date(),
-    read: false,
+    isRead: false,
     ...message
   };
 };

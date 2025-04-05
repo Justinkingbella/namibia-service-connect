@@ -69,6 +69,3 @@ export interface IResponse<T> {
 
 // Export conversation and message types
 export type { Conversation, Message } from './conversations';
-
-// Explicitly re-export ProviderEarnings to resolve ambiguity
-export type { ProviderEarnings as SubscriptionProviderEarnings } from './subscription';
