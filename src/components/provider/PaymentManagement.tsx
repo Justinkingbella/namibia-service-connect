@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Check, CreditCard, Plus, Wallet, Trash2, Building as BankIcon } from 'lucide-react';
-import { PaymentPaymentMethod as PaymentMethod } from '@/types';
+import { PaymentMethod } from '@/types/payments';
 
 interface PaymentManagementProps {
   type?: string;

@@ -1,4 +1,3 @@
-// First 30 lines or so - we'll need to update the imports for Tab components
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
@@ -32,7 +31,6 @@ const ServiceDetail: React.FC = () => {
         setIsLoading(true);
         const fetchedService = await fetchServiceById(id);
         if (fetchedService) {
-          // Transform the fetched service to ServiceData
           const transformedServiceData: ServiceData = {
             id: fetchedService.id,
             title: fetchedService.title,
@@ -68,7 +66,6 @@ const ServiceDetail: React.FC = () => {
       const success = await deleteService(id);
       if (success) {
         toast.success('Service deleted successfully');
-        // Redirect to services page or dashboard
       } else {
         toast.error('Failed to delete service');
       }
@@ -85,7 +82,6 @@ const ServiceDetail: React.FC = () => {
       const success = await toggleServiceActive(id, !service.is_active);
       if (success) {
         toast.success(`Service ${service.is_active ? 'deactivated' : 'activated'} successfully`);
-        // Update the local state to reflect the change
         setService(prevService => prevService ? { ...prevService, is_active: !prevService.is_active } : null);
       } else {
         toast.error('Failed to toggle service status');

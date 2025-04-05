@@ -1,116 +1,65 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload, X, ImageIcon } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Input } from '@/components/ui/input';
+import { ImageIcon, TrashIcon, UploadIcon } from '@radix-ui/react-icons';
 
 export interface ImageUploadProps {
-  onImageUpload: (url: string) => void;
-  className?: string;
-  initialImage?: string;
+  onChange: (file: File) => void;
+  currentImage?: string;
 }
 
-export const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, className = '', initialImage = '' }) => {
-  const [previewUrl, setPreviewUrl] = useState<string>(initialImage);
-  const [uploading, setUploading] = useState(false);
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setUploading(true);
-      // Show preview
-      const fileReader = new FileReader();
-      fileReader.onload = (e) => {
-        setPreviewUrl(e.target?.result as string);
-      };
-      fileReader.readAsDataURL(file);
-
-      // Upload to Supabase
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-
-      // Check if services-images bucket exists
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some(bucket => bucket.name === 'services-images');
-      
-      if (!bucketExists) {
-        await supabase.storage.createBucket('services-images', {
-          public: true,
-          fileSizeLimit: 5242880, // 5MB
-        });
-      }
-
-      const { data, error } = await supabase.storage
-        .from('services-images')
-        .upload(fileName, file, {
-          upsert: true,
-          contentType: file.type,
-        });
-
-      if (error) throw error;
-
-      // Get public URL
-      const { data: publicUrlData } = supabase.storage
-        .from('services-images')
-        .getPublicUrl(fileName);
-
-      if (publicUrlData) {
-        onImageUpload(publicUrlData.publicUrl);
-      }
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Error uploading image');
-    } finally {
-      setUploading(false);
+const ImageUpload: React.FC<ImageUploadProps> = ({ onChange, currentImage }) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      onChange(event.target.files[0]);
     }
   };
 
-  const handleRemoveImage = () => {
-    setPreviewUrl('');
-    onImageUpload('');
-  };
-
   return (
-    <div className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center ${className}`}>
-      {previewUrl ? (
-        <div className="relative w-full h-full">
-          <img 
-            src={previewUrl} 
-            alt="Preview" 
-            className="w-full h-full object-cover rounded-lg"
+    <div className="flex flex-col items-center gap-2">
+      {currentImage ? (
+        <div className="relative w-full h-40 bg-slate-100 rounded-md overflow-hidden">
+          <img
+            src={currentImage}
+            alt="Preview"
+            className="w-full h-full object-cover"
           />
-          <button
-            type="button"
-            onClick={handleRemoveImage}
-            className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => onChange(new File([], ''))}
+            >
+              <TrashIcon className="mr-2 h-4 w-4" />
+              Remove
+            </Button>
+          </div>
         </div>
       ) : (
-        <>
-          <ImageIcon className="h-10 w-10 text-gray-300 mb-2" />
-          <p className="text-sm text-gray-500 mb-4">Upload service image</p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="relative"
-            disabled={uploading}
-          >
-            {uploading ? 'Uploading...' : 'Upload'}
-            <input
-              type="file"
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              onChange={handleFileChange}
-              accept="image/*"
-              disabled={uploading}
-            />
+        <div className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-md p-6 bg-slate-50 w-full">
+          <ImageIcon className="h-10 w-10 text-gray-400" />
+          <div className="space-y-1 text-center">
+            <p className="text-sm text-gray-600">Drag and drop an image, or click to select</p>
+            <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+          </div>
+          <Button type="button" variant="outline" size="sm" className="mt-2" asChild>
+            <label className="cursor-pointer">
+              <UploadIcon className="mr-2 h-4 w-4" />
+              Upload Image
+              <Input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+            </label>
           </Button>
-        </>
+        </div>
       )}
     </div>
   );
 };
+
+export default ImageUpload;

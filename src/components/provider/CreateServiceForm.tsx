@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { ServiceData, PricingModel } from '@/types/service';
@@ -20,13 +19,11 @@ const serviceSchema = z.object({
 type ServiceFormData = z.infer<typeof serviceSchema>;
 
 interface CreateServiceFormProps {
-  initialData?: ServiceData;
-  onSubmit: (data: ServiceFormData) => void;
-  loading?: boolean;
+  onSubmit: (serviceData: ServiceData) => Promise<void>;
+  loading: boolean;
 }
 
 const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
-  initialData,
   onSubmit,
   loading = false
 }) => {
@@ -34,14 +31,14 @@ const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
   const { register, handleSubmit, formState: { errors } } = useForm<ServiceFormData>({
     resolver: zodResolver(serviceSchema),
     defaultValues: {
-      title: initialData?.title || '',
-      description: initialData?.description || '',
-      price: initialData?.price || 0,
-      pricing_model: initialData?.pricing_model || 'fixed',
-      category: initialData?.category || 'home',
-      location: initialData?.location || '',
-      features: initialData?.features || [],
-      tags: initialData?.tags || []
+      title: '',
+      description: '',
+      price: 0,
+      pricing_model: 'fixed',
+      category: 'home',
+      location: '',
+      features: [],
+      tags: []
     }
   });
 

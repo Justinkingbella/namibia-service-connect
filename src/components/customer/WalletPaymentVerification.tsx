@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { WalletVerification, WalletVerificationStatus, NamibianMobileOperator, NamibianBank, WalletPaymentType } from '@/types/payment';
+import { WalletVerification, WalletPaymentType, NamibianMobileOperator, NamibianBank } from '@/types/payment';
 
 interface WalletPaymentVerificationProps {
   bookingId: string;
@@ -49,7 +49,7 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
       return;
     }
     
-    if (paymentMethod === 'e_wallet' && !mobileOperator) {
+    if (paymentMethod === "e_wallet" && !mobileOperator) {
       toast({
         variant: 'destructive',
         title: 'Missing information',
@@ -74,7 +74,7 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
         adminVerified: false,
       };
       
-      if (paymentMethod === 'e_wallet' && mobileOperator) {
+      if (paymentMethod === "e_wallet" && mobileOperator) {
         verificationData.mobileOperator = mobileOperator;
       }
       
@@ -123,7 +123,7 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
             </Select>
           </div>
           
-          {paymentMethod === 'e_wallet' && (
+          {paymentMethod === "e_wallet" && (
             <div>
               <label className="text-sm font-medium">Mobile Operator</label>
               <Select 
@@ -134,7 +134,7 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
                   <SelectValue placeholder="Select mobile operator" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MTC">MTC</SelectItem>
+                  <SelectItem value="MTN">MTC</SelectItem>
                   <SelectItem value="TN Mobile">TN Mobile</SelectItem>
                   <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>

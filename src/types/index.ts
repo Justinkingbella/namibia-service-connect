@@ -36,13 +36,15 @@ export type {
 } from './auth';
 
 // Export wallet verification types
-export type {
+export {
   WalletVerificationStatus,
+  WalletPaymentType,
   NamibianMobileOperator,
-  NamibianBank,
+  NamibianBank
+} from './payment';
+export type {
   WalletVerification,
   Wallet,
-  WalletPaymentType,
   Transaction as WalletTransaction
 } from './payment';
 
@@ -56,11 +58,16 @@ export type {
   ServiceData,
   FavoriteService,
   ServicePaymentMethod,
-  PaymentMethod
 } from './service';
+// Explicitly export PaymentMethod from both modules, giving them unique names
+export type { PaymentMethod as ServicePaymentMethod } from './service';
+export type { PaymentMethod } from './payments';
+
 export type { Transaction as BookingTransaction } from './booking';
 // Explicitly resolve the ambiguity with ProviderEarnings
 export type { ProviderEarnings as SubscriptionProviderEarnings } from './subscription';
+export type { ProviderEarnings } from './payments';
+export type { ProviderPayout, PaymentHistory } from './payments';
 
 export interface IResponse<T> {
   success: boolean;

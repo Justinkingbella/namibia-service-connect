@@ -1,460 +1,230 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/common/Button';
-import { useProfile } from '@/hooks/useProfile';
-import { useToast } from '@/hooks/use-toast';
-import { DbUserProfile } from '@/types/auth';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Key, Calendar, Heart, CreditCard, MapPin, Phone, Mail } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { CalendarIcon } from "@radix-ui/react-icons"
+import { cn } from "@/lib/utils"
+import { format } from "date-fns"
+import { DbCustomerProfile } from '@/types/auth';
 
-const UserProfile: React.FC = () => {
-  const { profile, loading, updateProfile } = useProfile();
-  const { toast } = useToast();
-  const [formData, setFormData] = useState<Partial<DbUserProfile>>({});
+const UserProfile = () => {
+  const { user, userProfile, setUserProfile } = useAuth();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+    avatarUrl: '',
+    birthDate: undefined as Date | undefined,
+  });
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [stats, setStats] = useState({
-    bookings: 0,
-    favorites: 0,
-    loyaltyPoints: 0
-  });
-
-  // Fetch additional customer data
-  useEffect(() => {
-    const fetchCustomerStats = async () => {
-      if (!profile?.id) return;
-      
-      try {
-        // Get booking count
-        const { count: bookingsCount, error: bookingsError } = await supabase
-          .from('bookings')
-          .select('*', { count: 'exact', head: true })
-          .eq('customer_id', profile.id);
-          
-        if (bookingsError) throw bookingsError;
-        
-        // Get favorites count
-        const { count: favoritesCount, error: favoritesError } = await supabase
-          .from('favorite_services')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', profile.id);
-          
-        if (favoritesError) throw favoritesError;
-        
-        setStats({
-          bookings: bookingsCount || 0,
-          favorites: favoritesCount || 0,
-          loyaltyPoints: profile.loyaltyPoints || 0
-        });
-      } catch (error) {
-        console.error('Error fetching customer stats:', error);
-      }
-    };
-    
-    fetchCustomerStats();
-  }, [profile?.id, profile?.loyaltyPoints]);
+  const [date, setDate] = React.useState<Date>();
 
   useEffect(() => {
-    if (profile && !isEditing) {
+    if (userProfile && userProfile.role === 'customer') {
+      const customerProfile = userProfile as DbCustomerProfile;
       setFormData({
-        firstName: profile.firstName || '',
-        lastName: profile.lastName || '',
-        phoneNumber: profile.phoneNumber || '',
-        email: profile.email || '',
-        address: profile.address || '',
-        city: profile.city || '',
-        country: profile.country || '',
-        birthDate: profile.birthDate ? new Date(profile.birthDate).toISOString().split('T')[0] : '',
-        preferredLanguage: profile.preferredLanguage || '',
+        firstName: customerProfile?.firstName || '',
+        lastName: customerProfile?.lastName || '',
+        phoneNumber: customerProfile?.phoneNumber || '',
+        avatarUrl: customerProfile?.avatarUrl || '',
+        birthDate: customerProfile?.birthDate ? new Date(customerProfile.birthDate) : undefined,
       });
+      setDate(customerProfile?.birthDate ? new Date(customerProfile.birthDate) : undefined);
     }
-  }, [profile, isEditing]);
+  }, [userProfile]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  const handleAvatarChange = async (file: File) => {
-    if (!profile?.id) return;
-    
-    try {
-      // Upload the avatar to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${profile.id}-avatar.${fileExt}`;
-      
-      // Check if avatars bucket exists, if not create one
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const avatarsBucketExists = buckets?.some(bucket => bucket.name === 'avatars');
-      
-      if (!avatarsBucketExists) {
-        await supabase.storage.createBucket('avatars', { public: true });
-      }
-      
-      const { data, error } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file, {
-          upsert: true,
-          contentType: file.type,
-        });
-        
-      if (error) throw error;
-      
-      // Get the public URL
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-        
-      const publicUrl = urlData.publicUrl;
-      
-      // Update profile with new avatar URL
-      await updateProfile({ 
-        avatarUrl: publicUrl 
-      });
-      
-      toast({
-        title: 'Avatar updated',
-        description: 'Your profile picture has been updated.',
-      });
-    } catch (error: any) {
-      console.error('Error updating avatar:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Avatar update failed',
-        description: error.message || 'Failed to update profile picture',
-      });
-    }
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const handleSave = async () => {
-    if (!profile) return;
-    
+    if (!user) {
+      toast.error('You must be logged in to update your profile');
+      navigate('/auth/sign-in');
+      return;
+    }
+
     setIsSaving(true);
+
     try {
-      await updateProfile(formData);
+      const updates = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone_number: formData.phoneNumber,
+        avatar_url: formData.avatarUrl,
+        updated_at: new Date().toISOString(),
+        birth_date: date ? date.toISOString() : null,
+      };
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update the user context
+      setUserProfile({
+        ...userProfile,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phoneNumber: formData.phoneNumber,
+        avatarUrl: formData.avatarUrl,
+        birthDate: date,
+      });
+
+      toast.success('Profile updated successfully!');
       setIsEditing(false);
-      toast({
-        title: "Profile updated",
-        description: "Your profile information has been updated successfully.",
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Update failed",
-        description: "There was an error updating your profile.",
-      });
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      toast.error(error.message || 'Failed to update profile.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleEdit = () => {
-    setFormData({
-      firstName: profile?.firstName || '',
-      lastName: profile?.lastName || '',
-      phoneNumber: profile?.phoneNumber || '',
-      email: profile?.email || '',
-      address: profile?.address || '',
-      city: profile?.city || '',
-      country: profile?.country || '',
-      birthDate: profile?.birthDate ? new Date(profile.birthDate).toISOString().split('T')[0] : '',
-      preferredLanguage: profile?.preferredLanguage || '',
-    });
-    setIsEditing(true);
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center p-8">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Your Profile</h1>
+      {userProfile && userProfile.role === 'customer' ? (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="avatarUrl">Avatar URL</Label>
+            <Avatar className="w-24 h-24">
+              {formData.avatarUrl ? (
+                <AvatarImage src={formData.avatarUrl} alt="Avatar" />
+              ) : (
+                <AvatarFallback>{formData.firstName?.[0]}{formData.lastName?.[0]}</AvatarFallback>
+              )}
+            </Avatar>
+            <Input
+              type="url"
+              id="avatarUrl"
+              name="avatarUrl"
+              value={formData.avatarUrl}
+              onChange={handleChange}
+              disabled={!isEditing}
+            />
+          </div>
+          <div>
+            <Label htmlFor="firstName">First Name</Label>
+            <Input
+              type="text"
+              id="firstName"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              disabled={!isEditing}
+            />
+          </div>
+          <div>
+            <Label htmlFor="lastName">Last Name</Label>
+            <Input
+              type="text"
+              id="lastName"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              disabled={!isEditing}
+            />
+          </div>
+          <div>
+            <Label htmlFor="phoneNumber">Phone Number</Label>
+            <Input
+              type="tel"
+              id="phoneNumber"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              disabled={!isEditing}
+            />
+          </div>
+          <div>
+            <Label>Birth Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-[240px] justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? format(date, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center" side="bottom">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  disabled={!isEditing}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
           <div className="flex justify-between">
-            <div>
-              <CardTitle>Customer Profile</CardTitle>
-              <CardDescription>
-                Manage your personal information and preferences
-              </CardDescription>
-            </div>
-            {!isEditing && (
-              <Button onClick={handleEdit} variant="outline">
+            {isEditing ? (
+              <div>
+                <Button
+                  type="submit"
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Saving...' : 'Save Profile'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setFormData({
+                      firstName: userProfile.firstName || '',
+                      lastName: userProfile.lastName || '',
+                      phoneNumber: userProfile.phoneNumber || '',
+                      avatarUrl: userProfile.avatarUrl || '',
+                      birthDate: userProfile.birthDate ? new Date(userProfile.birthDate) : undefined,
+                    });
+                    setDate(userProfile.birthDate ? new Date(userProfile.birthDate) : undefined);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                onClick={() => setIsEditing(true)}
+              >
                 Edit Profile
               </Button>
             )}
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex flex-col items-center">
-              <Avatar className="w-32 h-32 border-4 border-white shadow-md">
-                <AvatarImage src={profile?.avatarUrl || ''} alt="Profile" />
-                <AvatarFallback className="bg-primary text-white text-3xl">
-                  {profile?.firstName?.charAt(0) || 'C'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="mt-4 flex flex-col items-center">
-                <h3 className="font-medium text-lg">
-                  {profile?.firstName || ''} {profile?.lastName || ''}
-                </h3>
-                <p className="text-sm text-muted-foreground">Customer</p>
-                <label className="mt-3">
-                  <input 
-                    type="file" 
-                    className="hidden" 
-                    accept="image/*"
-                    onChange={(e) => {
-                      if (e.target.files?.[0]) {
-                        handleAvatarChange(e.target.files[0]);
-                      }
-                    }}
-                  />
-                  <span className="cursor-pointer px-3 py-1 text-sm border rounded-md hover:bg-gray-50">
-                    Change Avatar
-                  </span>
-                </label>
-              </div>
-            </div>
-            
-            <div className="flex-1">
-              {isEditing ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">First Name</label>
-                      <Input 
-                        name="firstName"
-                        value={formData.firstName || ''}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Last Name</label>
-                      <Input 
-                        name="lastName"
-                        value={formData.lastName || ''}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Email</label>
-                      <Input 
-                        name="email"
-                        value={formData.email || ''}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Phone Number</label>
-                      <Input 
-                        name="phoneNumber"
-                        value={formData.phoneNumber || ''}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Birth Date</label>
-                      <Input 
-                        name="birthDate"
-                        type="date"
-                        value={typeof formData.birthDate === 'string' ? formData.birthDate : ''}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Address</label>
-                      <Input 
-                        name="address"
-                        value={formData.address || ''}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">City</label>
-                      <Input 
-                        name="city"
-                        value={formData.city || ''}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Country</label>
-                      <Input 
-                        name="country"
-                        value={formData.country || ''}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Preferred Language</label>
-                      <Input 
-                        name="preferredLanguage"
-                        value={formData.preferredLanguage || ''}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end space-x-2 pt-4">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setIsEditing(false)}
-                      disabled={isSaving}
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={handleSave} 
-                      loading={isSaving}
-                    >
-                      Save Changes
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <h3 className="text-lg font-medium mb-4">Personal Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6">
-                    <div className="flex items-center">
-                      <User className="h-4 w-4 text-muted-foreground mr-2" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Full Name</p>
-                        <p>{profile?.firstName || ''} {profile?.lastName || ''}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <Mail className="h-4 w-4 text-muted-foreground mr-2" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Email</p>
-                        <p>{profile?.email || 'Not specified'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <Phone className="h-4 w-4 text-muted-foreground mr-2" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Phone</p>
-                        <p>{profile?.phoneNumber || 'Not specified'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Birth Date</p>
-                        <p>
-                          {profile?.birthDate 
-                            ? new Date(profile.birthDate).toLocaleDateString() 
-                            : 'Not specified'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 text-muted-foreground mr-2" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Address</p>
-                        <p>{profile?.address || 'Not specified'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 text-muted-foreground mr-2" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Location</p>
-                        <p>
-                          {profile?.city && profile?.country 
-                            ? `${profile.city}, ${profile.country}` 
-                            : 'Not specified'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center">
-              <div className="p-3 bg-blue-100 rounded-full mb-3">
-                <Calendar className="h-6 w-6 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-medium">Bookings</h3>
-              <p className="text-3xl font-bold mt-2">{stats.bookings}</p>
-              <p className="text-sm text-muted-foreground">Total bookings made</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center">
-              <div className="p-3 bg-pink-100 rounded-full mb-3">
-                <Heart className="h-6 w-6 text-pink-600" />
-              </div>
-              <h3 className="text-lg font-medium">Favorites</h3>
-              <p className="text-3xl font-bold mt-2">{stats.favorites}</p>
-              <p className="text-sm text-muted-foreground">Saved services</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center">
-              <div className="p-3 bg-green-100 rounded-full mb-3">
-                <CreditCard className="h-6 w-6 text-green-600" />
-              </div>
-              <h3 className="text-lg font-medium">Loyalty Points</h3>
-              <p className="text-3xl font-bold mt-2">{stats.loyaltyPoints}</p>
-              <p className="text-sm text-muted-foreground">Points earned</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Security Settings</CardTitle>
-          <CardDescription>
-            Manage your account security
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-primary/10 rounded-full">
-                  <Key className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-medium">Password</h3>
-                  <p className="text-sm text-muted-foreground">Update your account password</p>
-                </div>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => {
-                toast({
-                  title: "Password Reset",
-                  description: "Password reset link has been sent to your email.",
-                });
-                
-                supabase.auth.resetPasswordForEmail(profile?.email || '');
-              }}>
-                Change Password
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        </form>
+      ) : (
+        <p>Loading profile...</p>
+      )}
     </div>
   );
 };
