@@ -1,131 +1,87 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { RealtimeChannel } from '@supabase/supabase-js';
-import { useAuth } from './AuthContext';
+import { toast } from 'sonner';
 
 interface SupabaseContextType {
   isSubscribed: boolean;
-  enableRealtime: () => Promise<boolean>;
-  enableTableRealtime: (tableName: string) => Promise<boolean>;
-  subscribeToTable: (tableName: string, callback: (payload: any) => void) => RealtimeChannel;
+  enableRealtime: () => void;
+  disableRealtime: () => void;
 }
 
-const SupabaseContext = createContext<SupabaseContextType>({
-  isSubscribed: false,
-  enableRealtime: async () => false,
-  enableTableRealtime: async () => false,
-  subscribeToTable: () => ({} as RealtimeChannel)
-});
+const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined);
 
-interface SupabaseProviderProps {
-  children: ReactNode;
-}
-
-export const SupabaseProvider: React.FC<SupabaseProviderProps> = ({ children }) => {
+export const SupabaseProvider = ({ children }: { children: ReactNode }) => {
+  const [channel, setChannel] = useState<any>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [channels, setChannels] = useState<Record<string, RealtimeChannel>>({});
-  const { user } = useAuth();
 
-  // Cleanup subscriptions when component unmounts or user changes
-  useEffect(() => {
-    return () => {
-      Object.values(channels).forEach(channel => {
-        supabase.removeChannel(channel);
-      });
-    };
-  }, [user?.id, channels]);
+  const enableRealtime = () => {
+    if (isSubscribed) return;
 
-  const enableRealtime = async (): Promise<boolean> => {
-    try {
-      console.log('Enabling Supabase realtime...');
-      
-      // List of tables to enable realtime for
-      const tables = [
-        'profiles',
-        'services',
-        'bookings',
-        'service_providers',
-        'customers',
-        'favorite_services',
-        'reviews'
-      ];
-      
-      // Enable realtime for each table
-      for (const table of tables) {
-        await enableTableRealtime(table);
-      }
-      
-      setIsSubscribed(true);
-      return true;
-    } catch (error) {
-      console.error('Error enabling realtime:', error);
-      return false;
-    }
-  };
-
-  const enableTableRealtime = async (tableName: string): Promise<boolean> => {
-    try {
-      // Enable realtime for this table using channel subscription
-      // instead of RPC function which isn't available
-      const channel = supabase
-        .channel(`table-${tableName}-changes`)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: tableName
-        }, (payload) => {
-          console.log(`Table ${tableName} change detected:`, payload);
-        })
-        .subscribe();
-        
-      // Store the channel
-      setChannels(prev => ({ ...prev, [tableName]: channel }));
-      
-      return true;
-    } catch (error) {
-      console.error(`Error enabling realtime for ${tableName}:`, error);
-      return false;
-    }
-  };
-
-  const subscribeToTable = (
-    tableName: string, 
-    callback: (payload: any) => void
-  ): RealtimeChannel => {
-    // Remove existing subscription if any
-    if (channels[tableName]) {
-      supabase.removeChannel(channels[tableName]);
-    }
-
-    // Create new subscription
-    const channel = supabase
-      .channel(`${tableName}-changes`)
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: tableName 
-      }, payload => {
-        callback(payload);
-      })
+    // Subscribe to all relevant tables
+    const newChannel = supabase
+      .channel('global-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, 
+        (payload) => console.log('Profile change:', payload))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_history' }, 
+        (payload) => console.log('Payment history change:', payload))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'disputes' }, 
+        (payload) => console.log('Dispute change:', payload))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, 
+        (payload) => console.log('Booking change:', payload))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, 
+        (payload) => console.log('Service change:', payload))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'subscription_plans' }, 
+        (payload) => console.log('Subscription plan change:', payload))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_subscriptions' }, 
+        (payload) => console.log('User subscription change:', payload))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'favorite_services' }, 
+        (payload) => console.log('Favorite change:', payload))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_addresses' }, 
+        (payload) => console.log('Address change:', payload))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_methods' }, 
+        (payload) => console.log('Payment method change:', payload))
       .subscribe();
 
-    // Store the channel
-    setChannels(prev => ({ ...prev, [tableName]: channel }));
+    setChannel(newChannel);
+    setIsSubscribed(true);
+  };
 
-    return channel;
+  const disableRealtime = () => {
+    if (!isSubscribed || !channel) return;
+    
+    supabase.removeChannel(channel);
+    setChannel(null);
+    setIsSubscribed(false);
+  };
+
+  useEffect(() => {
+    // Enable realtime by default
+    enableRealtime();
+
+    // Cleanup on unmount
+    return () => {
+      disableRealtime();
+    };
+  }, []);
+
+  const value = {
+    isSubscribed,
+    enableRealtime,
+    disableRealtime
   };
 
   return (
-    <SupabaseContext.Provider value={{ 
-      isSubscribed, 
-      enableRealtime,
-      enableTableRealtime,
-      subscribeToTable
-    }}>
+    <SupabaseContext.Provider value={value}>
       {children}
     </SupabaseContext.Provider>
   );
 };
 
-export const useSupabase = () => useContext(SupabaseContext);
+export const useSupabase = () => {
+  const context = useContext(SupabaseContext);
+  if (context === undefined) {
+    throw new Error('useSupabase must be used within a SupabaseProvider');
+  }
+  return context;
+};

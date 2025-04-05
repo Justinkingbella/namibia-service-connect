@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PricingModel, ServiceData } from '@/types/service';
+import { PricingModel, ServiceCategory, ServiceData } from '@/types/service';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface CreateServiceFormProps {
@@ -19,7 +18,7 @@ const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmi
     description: '',
     price: 0,
     pricing_model: 'fixed' as PricingModel,
-    category: 'home',
+    category: 'home' as ServiceCategory,
     is_active: true,
   });
 

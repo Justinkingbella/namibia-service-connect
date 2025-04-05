@@ -1,88 +1,84 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { ServiceCategoryEnum } from '@/types/service';
-import { Home, Wrench, Zap, Brush, Flower2, GraduationCap, ShoppingBag, Briefcase, Handshake, Car, Heart, Package, Grid3X3 } from 'lucide-react';
-import { Truck } from 'lucide-react';
-import { Hammer } from 'lucide-react';
+import { ServiceCategoryEnum } from '@/types';
+import { 
+  Hammer, 
+  Lightbulb, 
+  Droplets, 
+  Home, 
+  Truck, 
+  Paintbrush2, 
+  Sprout, 
+  GraduationCap, 
+  ShoppingBag, 
+  Users2, 
+  Briefcase, 
+  Car, 
+  Heart
+} from 'lucide-react';
 
-type ServiceCategoryCardProps = {
+interface ServiceCategoryCardProps {
   category: string;
-  count?: number;
-  onClick?: (category: string) => void;
-  selected?: boolean;
-};
+  count: number;
+  onClick: () => void;
+}
 
-const ServiceCategoryCard: React.FC<ServiceCategoryCardProps> = ({ 
-  category, 
-  count = 0,
-  onClick,
-  selected = false
-}) => {
-  // Function to render the appropriate icon based on the category
-  const getCategoryIcon = () => {
-    // Using string comparison since ServiceCategoryEnum is a string enum
+const ServiceCategoryCard: React.FC<ServiceCategoryCardProps> = ({ category, count, onClick }) => {
+  const getIcon = () => {
     switch (category) {
-      case ServiceCategoryEnum.cleaning:
-        return <Home className="h-6 w-6" />;
       case ServiceCategoryEnum.repair:
-        return <Hammer className="h-6 w-6" />;
-      case ServiceCategoryEnum.plumbing:
-        return <Wrench className="h-6 w-6" />;
+        return <Hammer className="h-5 w-5 text-orange-600" />;
       case ServiceCategoryEnum.electrical:
-        return <Zap className="h-6 w-6" />;
-      case ServiceCategoryEnum.moving:
-        return <Truck className="h-6 w-6" />;
-      case ServiceCategoryEnum.painting:
-        return <Brush className="h-6 w-6" />;
-      case ServiceCategoryEnum.landscaping:
-        return <Flower2 className="h-6 w-6" />;
-      case ServiceCategoryEnum.tutoring:
-        return <GraduationCap className="h-6 w-6" />;
+        return <Lightbulb className="h-5 w-5 text-yellow-600" />;
+      case ServiceCategoryEnum.plumbing:
+        return <Droplets className="h-5 w-5 text-blue-600" />;
       case ServiceCategoryEnum.home:
-        return <Home className="h-6 w-6" />;
+        return <Home className="h-5 w-5 text-gray-600" />;
+      case ServiceCategoryEnum.moving:
+        return <Truck className="h-5 w-5 text-indigo-600" />;
+      case ServiceCategoryEnum.painting:
+        return <Paintbrush2 className="h-5 w-5 text-pink-600" />;
+      case ServiceCategoryEnum.landscaping:
+        return <Sprout className="h-5 w-5 text-green-600" />;
+      case ServiceCategoryEnum.tutoring:
+        return <GraduationCap className="h-5 w-5 text-purple-600" />;
       case ServiceCategoryEnum.errand:
-        return <ShoppingBag className="h-6 w-6" />;
+        return <ShoppingBag className="h-5 w-5 text-red-600" />;
       case ServiceCategoryEnum.professional:
-        return <Briefcase className="h-6 w-6" />;
+        return <Users2 className="h-5 w-5 text-slate-600" />;
       case ServiceCategoryEnum.freelance:
-        return <Handshake className="h-6 w-6" />;
+        return <Briefcase className="h-5 w-5 text-teal-600" />;
       case ServiceCategoryEnum.transport:
-        return <Car className="h-6 w-6" />;
+        return <Car className="h-5 w-5 text-cyan-600" />;
       case ServiceCategoryEnum.health:
-        return <Heart className="h-6 w-6" />;
+        return <Heart className="h-5 w-5 text-rose-600" />;
+      case ServiceCategoryEnum.cleaning:
       default:
-        return <Grid3X3 className="h-6 w-6" />;
+        return <Home className="h-5 w-5 text-emerald-600" />;
     }
   };
 
-  const getCategoryName = () => {
+  const getLabel = () => {
+    // Format the category string to have proper capitalization
     return category.charAt(0).toUpperCase() + category.slice(1);
-  };
-  
-  const handleClick = () => {
-    if (onClick) {
-      onClick(category);
-    }
   };
 
   return (
     <Card
-      onClick={handleClick}
-      className={`cursor-pointer hover:border-primary transition-colors ${
-        selected ? 'border-2 border-primary bg-primary/5' : ''
-      }`}
+      className="cursor-pointer hover:shadow-md transition-shadow"
+      onClick={onClick}
     >
-      <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-          selected ? 'bg-primary/10 text-primary' : 'bg-muted'
-        } mb-2`}>
-          {getCategoryIcon()}
+      <CardContent className="p-4 flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-gray-100 rounded-md">
+            {getIcon()}
+          </div>
+          <div>
+            <p className="font-medium">{getLabel()}</p>
+            <p className="text-sm text-muted-foreground">{count} services</p>
+          </div>
         </div>
-        <h3 className="font-medium">{getCategoryName()}</h3>
-        {count > 0 && (
-          <p className="text-sm text-muted-foreground">{count} services</p>
-        )}
       </CardContent>
     </Card>
   );

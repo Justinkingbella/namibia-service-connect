@@ -1,14 +1,31 @@
 
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import { SupabaseProvider } from './contexts/SupabaseContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 30000,
+    },
+  },
+});
+
+const container = document.getElementById('root');
+if (!container) {
+  throw new Error('No root element found');
+}
+
+const root = createRoot(container);
+root.render(
   <React.StrictMode>
-    <SupabaseProvider>
+    <QueryClientProvider client={queryClient}>
       <App />
-    </SupabaseProvider>
-  </React.StrictMode>,
+    </QueryClientProvider>
+  </React.StrictMode>
 );

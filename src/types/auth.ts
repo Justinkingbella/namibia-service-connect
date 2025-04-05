@@ -7,7 +7,7 @@ export interface Session {
   access_token: string;
   refresh_token: string;
   expires_at: number;
-  token_type?: string; // Added to support Supabase sessions
+  token_type?: string;
   user: {
     id: string;
     email: string;
@@ -17,7 +17,7 @@ export interface Session {
 
 export interface DbUserProfile {
   id: string;
-  firstName?: string; // camelCase for TypeScript
+  firstName?: string;
   lastName?: string;
   phoneNumber?: string;
   avatarUrl?: string;
@@ -39,18 +39,6 @@ export interface DbUserProfile {
     sms: boolean;
     push: boolean;
   };
-  
-  // DB column names for mapping
-  first_name?: string; // snake_case for DB
-  last_name?: string;
-  phone_number?: string;
-  avatar_url?: string;
-  birth_date?: string | Date;
-  preferred_language?: string;
-  created_at?: string | Date;
-  updated_at?: string | Date;
-  loyalty_points?: number;
-  email_verified?: boolean;
 }
 
 export interface DbCustomerProfile {
@@ -147,9 +135,6 @@ export interface Provider extends User {
   servicesCount?: number;
   bannerUrl?: string;
   isActive?: boolean;
-  categories?: string[];
-  isVerified?: boolean;
-  bankDetails?: Record<string, any>;
 }
 
 export interface Admin extends User {
@@ -159,7 +144,6 @@ export interface Admin extends User {
   lastLogin?: Date;
   isSuperAdmin?: boolean;
   isVerified?: boolean;
-  isActive?: boolean;
 }
 
 export interface AuthContextType {
@@ -168,12 +152,10 @@ export interface AuthContextType {
   userRole: UserRole | null;
   userProfile: Customer | Provider | Admin | null;
   loading: boolean;
-  isLoading: boolean; // Alias for loading
+  isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, role: UserRole, userData: Partial<Customer | Provider>) => Promise<{ error: any | null, data: any | null }>;
+  signUp: (email: string, password: string, data: any) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  forgotPassword: (email: string) => Promise<{ error: any | null }>;
-  resetPassword: (password: string) => Promise<{ error: any | null }>;
   updateProfile: (data: Partial<Customer | Provider | Admin>) => Promise<boolean>;
   isAuthenticated: boolean;
 }
