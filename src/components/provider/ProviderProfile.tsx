@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -175,6 +174,24 @@ const ProviderProfile: React.FC = () => {
   };
 
   const handleEdit = () => {
+    if (!providerData) return;
+
+    // Convert snake_case form to camelCase for our internal state
+    setEditData({
+      businessName: providerData.business_name || '',
+      businessDescription: providerData.business_description || '',
+      address: providerData.address || '',
+      city: providerData.city || '',
+      country: providerData.country || '',
+      website: providerData.website || '',
+      phone: providerData.phone_number || '',
+      email: providerData.email || '',
+      avatarUrl: providerData.avatar_url || '',
+      bannerUrl: providerData.banner_url || '',
+      // Use as assertion to match expected type
+      verificationStatus: providerData.verification_status as ProviderVerificationStatus || 'pending',
+    });
+    
     setIsEditing(true);
   };
 

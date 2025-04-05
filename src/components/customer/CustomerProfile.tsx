@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,13 +21,11 @@ const CustomerProfile: React.FC = () => {
     loyaltyPoints: 0
   });
 
-  // Fetch additional customer data
   React.useEffect(() => {
     const fetchCustomerStats = async () => {
       if (!profile?.id) return;
       
       try {
-        // Get booking count
         const { count: bookingsCount, error: bookingsError } = await supabase
           .from('bookings')
           .select('*', { count: 'exact', head: true })
@@ -36,7 +33,6 @@ const CustomerProfile: React.FC = () => {
           
         if (bookingsError) throw bookingsError;
         
-        // Get favorites count
         const { count: favoritesCount, error: favoritesError } = await supabase
           .from('favorite_services')
           .select('*', { count: 'exact', head: true })
@@ -86,14 +82,14 @@ const CustomerProfile: React.FC = () => {
 
   const handleEdit = () => {
     setFormData({
-      first_name: profile?.first_name || '',
-      last_name: profile?.last_name || '',
-      phone_number: profile?.phone_number || '',
+      firstName: profile?.firstName || '',
+      lastName: profile?.lastName || '',
+      phoneNumber: profile?.phoneNumber || '',
       address: profile?.address || '',
       city: profile?.city || '',
       country: profile?.country || '',
-      birth_date: profile?.birth_date ? new Date(profile.birth_date).toISOString().split('T')[0] : '',
-      preferred_language: profile?.preferred_language || '',
+      birthDate: profile?.birthDate ? new Date(profile.birthDate).toISOString().split('T')[0] : '',
+      preferredLanguage: profile?.preferredLanguage || '',
     });
     setIsEditing(true);
   };
@@ -132,13 +128,13 @@ const CustomerProfile: React.FC = () => {
                   <img src={profile.avatar_url} alt="Profile" />
                 ) : (
                   <div className="bg-primary text-white w-full h-full flex items-center justify-center text-3xl">
-                    {profile?.first_name?.charAt(0) || 'C'}
+                    {profile?.firstName?.charAt(0) || 'C'}
                   </div>
                 )}
               </Avatar>
               <div className="mt-4 flex flex-col items-center">
                 <h3 className="font-medium text-lg">
-                  {profile?.first_name || ''} {profile?.last_name || ''}
+                  {profile?.firstName || ''} {profile?.lastName || ''}
                 </h3>
                 <p className="text-sm text-muted-foreground">Customer</p>
                 <Button size="sm" variant="outline" className="mt-3">Change Avatar</Button>
@@ -152,33 +148,33 @@ const CustomerProfile: React.FC = () => {
                     <div className="space-y-2">
                       <label className="text-sm font-medium">First Name</label>
                       <Input 
-                        name="first_name"
-                        value={formData.first_name || ''}
+                        name="firstName"
+                        value={formData.firstName || ''}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Last Name</label>
                       <Input 
-                        name="last_name"
-                        value={formData.last_name || ''}
+                        name="lastName"
+                        value={formData.lastName || ''}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Phone Number</label>
                       <Input 
-                        name="phone_number"
-                        value={formData.phone_number || ''}
+                        name="phoneNumber"
+                        value={formData.phoneNumber || ''}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Birth Date</label>
                       <Input 
-                        name="birth_date"
+                        name="birthDate"
                         type="date"
-                        value={formData.birth_date || ''}
+                        value={formData.birthDate || ''}
                         onChange={handleInputChange}
                       />
                     </div>
@@ -209,8 +205,8 @@ const CustomerProfile: React.FC = () => {
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Preferred Language</label>
                       <Input 
-                        name="preferred_language"
-                        value={formData.preferred_language || ''}
+                        name="preferredLanguage"
+                        value={formData.preferredLanguage || ''}
                         onChange={handleInputChange}
                       />
                     </div>
@@ -240,7 +236,7 @@ const CustomerProfile: React.FC = () => {
                       <User className="h-4 w-4 text-muted-foreground mr-2" />
                       <div>
                         <p className="text-sm text-muted-foreground">Full Name</p>
-                        <p>{profile?.first_name || ''} {profile?.last_name || ''}</p>
+                        <p>{profile?.firstName || ''} {profile?.lastName || ''}</p>
                       </div>
                     </div>
                     <div className="flex items-center">
@@ -254,7 +250,7 @@ const CustomerProfile: React.FC = () => {
                       <Phone className="h-4 w-4 text-muted-foreground mr-2" />
                       <div>
                         <p className="text-sm text-muted-foreground">Phone</p>
-                        <p>{profile?.phone_number || 'Not specified'}</p>
+                        <p>{profile?.phoneNumber || 'Not specified'}</p>
                       </div>
                     </div>
                     <div className="flex items-center">
@@ -262,8 +258,8 @@ const CustomerProfile: React.FC = () => {
                       <div>
                         <p className="text-sm text-muted-foreground">Birth Date</p>
                         <p>
-                          {profile?.birth_date 
-                            ? new Date(profile.birth_date).toLocaleDateString() 
+                          {profile?.birthDate 
+                            ? new Date(profile.birthDate).toLocaleDateString() 
                             : 'Not specified'}
                         </p>
                       </div>

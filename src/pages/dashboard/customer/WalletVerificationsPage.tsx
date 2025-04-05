@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
+import { WalletVerificationStatus } from '@/types';
 
 const WalletVerificationsPage: React.FC = () => {
   const { user } = useAuth();
@@ -34,14 +34,12 @@ const WalletVerificationsPage: React.FC = () => {
     phoneNumber: user?.phoneNumber || '',
   });
   
-  // Mock bookings (in a real app, these would come from an API)
   const bookings = [
     { id: 'book-1', service: 'Professional Cleaning', date: '2023-04-15', amount: 250 },
     { id: 'book-2', service: 'Garden Maintenance', date: '2023-04-20', amount: 350 },
     { id: 'book-3', service: 'Plumbing Repair', date: '2023-04-25', amount: 500 },
   ];
 
-  // Mock verifications (in a real app, these would come from an API)
   const mockVerifications: WalletVerification[] = [
     {
       id: 'ver-1',
@@ -83,13 +81,10 @@ const WalletVerificationsPage: React.FC = () => {
   ];
 
   useEffect(() => {
-    // In a real app, fetch verifications from an API
-    // For now, we're using mock data
     const fetchVerifications = async () => {
       try {
         setLoading(true);
         
-        // Simulating API call delay
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         setVerifications(mockVerifications);
@@ -154,7 +149,6 @@ const WalletVerificationsPage: React.FC = () => {
         return;
       }
       
-      // In a real app, send this data to the server
       console.log('Submitting verification:', {
         bookingId: selectedBookingId,
         customerId: user?.id,
@@ -172,10 +166,8 @@ const WalletVerificationsPage: React.FC = () => {
         bankUsed: paymentMethod !== 'e_wallet' ? bankUsed : undefined,
       });
       
-      // Simulate successful submission
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Add the new verification to our local state
       const newVerification: WalletVerification = {
         id: `ver-${Date.now()}`,
         bookingId: selectedBookingId,
@@ -198,7 +190,6 @@ const WalletVerificationsPage: React.FC = () => {
       setVerifications(prev => [...prev, newVerification]);
       setIsSubmitDialogOpen(false);
       
-      // Reset form
       setSubmissionData({
         paymentMethod: 'e_wallet' as WalletPaymentType,
         mobileOperator: '' as NamibianMobileOperator | '',
@@ -399,7 +390,6 @@ const WalletVerificationsPage: React.FC = () => {
         </Tabs>
       </div>
       
-      {/* Submit Payment Verification Dialog */}
       <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -501,7 +491,6 @@ const WalletVerificationsPage: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Verification Details Dialog */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>

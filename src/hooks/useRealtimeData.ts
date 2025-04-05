@@ -28,9 +28,9 @@ export function useRealtimeData<T>(
       try {
         setLoading(true);
         
-        // The table name is passed directly to from() to avoid TypeScript issues
+        // Use type assertion to handle table name
         const { data: initialData, error: fetchError } = await supabase
-          .from(table)
+          .from(table as any)
           .select('*');
         
         if (fetchError) throw fetchError;
@@ -52,7 +52,7 @@ export function useRealtimeData<T>(
     const channel = supabase
       .channel(`${table}-changes`)
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event: options.event || '*',
           schema: 'public',

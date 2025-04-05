@@ -1,4 +1,3 @@
-
 export interface ServiceCategory {
   id: string;
   name: string;
@@ -28,6 +27,8 @@ export enum ServiceCategoryEnum {
   health = 'health',
   all = 'all'
 }
+
+export type ServiceCategory = string;
 
 export interface ServiceData {
   id?: string;

@@ -1,5 +1,5 @@
 
-import { ServiceData, Service, PricingModel, ServiceCategory } from '@/types/service';
+import { ServiceData, Service, PricingModel } from '@/types';
 
 // Convert from database ServiceData format to frontend Service format
 export function transformServiceData(data: ServiceData): Service {
@@ -31,8 +31,8 @@ export function reverseTransformServiceData(service: Service): ServiceData {
     title: service.title,
     description: service.description,
     price: service.price,
-    pricing_model: service.pricingModel as PricingModel,
-    category: service.category as ServiceCategory,
+    pricing_model: service.pricingModel as string,
+    category: service.category as string,
     provider_id: service.providerId,
     provider_name: service.providerName,
     image: service.image,
