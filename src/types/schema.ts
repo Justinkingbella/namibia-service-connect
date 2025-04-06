@@ -77,7 +77,9 @@ export type PaymentMethodType =
   | 'easy_wallet'
   | 'cash' 
   | 'mobile_money'
-  | 'payfast';
+  | 'payfast'
+  | 'MTC E-Wallet'
+  | 'Bank Transfer';
 
 // Define a type for wallet payment types
 export type WalletPaymentType = 
@@ -88,7 +90,9 @@ export type WalletPaymentType =
   | 'credit_card'
   | 'debit_card'
   | 'MTC E-Wallet'
-  | 'Bank Transfer';
+  | 'Bank Transfer'
+  | 'ewallet'
+  | 'payfast';
 
 // Define a type for payment status
 export type PaymentStatus = 
@@ -134,3 +138,4 @@ export type WalletVerificationStatus =
   | 'verified' 
   | 'rejected' 
   | 'expired';
+

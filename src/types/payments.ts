@@ -8,7 +8,7 @@ export interface PaymentMethod {
   type: PaymentMethodType;
   details: Record<string, any>;
   isDefault: boolean;
-  createdAt: Date;
+  createdAt: string;
 }
 
 export interface PaymentRecord {
@@ -40,12 +40,12 @@ export interface WalletVerification {
   rejection_reason?: string;
   
   // Additional properties from WalletVerificationRequest
-  bookingId: string;
-  customerId: string;
-  providerId: string;
-  paymentMethod: WalletPaymentType;
-  referenceNumber: string;
-  customerPhone: string;
+  bookingId?: string;
+  customerId?: string;
+  providerId?: string;
+  paymentMethod?: WalletPaymentType;
+  referenceNumber?: string;
+  customerPhone?: string;
   providerPhone?: string;
   dateSubmitted?: string;
   dateVerified?: string;
@@ -58,6 +58,7 @@ export interface WalletVerification {
   mobileOperator?: string;
   bankUsed?: string;
   rejectionReason?: string;
+  verifiedBy?: string;
 }
 
 export interface WalletVerificationRequest {
@@ -80,7 +81,6 @@ export interface WalletVerificationRequest {
   rejectionReason?: string;
 }
 
-// Add missing types that were referenced in other files
 export interface PaymentHistory {
   id: string;
   userId: string;

@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Booking, BookingStatus, PaymentStatus } from '@/types/booking';
+import { Booking, BookingStatus, PaymentStatus } from '@/types';
 import { Calendar, Clock, DollarSign, MapPin, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -64,7 +64,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, viewAs = 'cus
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm">{formatDate(booking.date)}</span>
           <Clock className="h-4 w-4 text-muted-foreground ml-2" />
-          <span className="text-sm">{booking.start_time}</span>
+          <span className="text-sm">{booking.startTime}</span>
         </div>
         
         {viewAs === 'provider' && booking.customerName && (
@@ -83,7 +83,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, viewAs = 'cus
         
         <div className="flex items-center gap-2">
           <DollarSign className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">{formatCurrency(booking.total_amount)}</span>
+          <span className="text-sm">{formatCurrency(booking.totalAmount)}</span>
         </div>
       </CardContent>
       <CardFooter className="pt-2 border-t flex justify-between">

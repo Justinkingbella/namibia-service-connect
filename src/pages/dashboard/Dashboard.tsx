@@ -1,13 +1,13 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '@/store/authStore';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabase } from '@/contexts/SupabaseContext';
 import { enableSupabaseRealtime } from '@/services/enableRealtimeSupabase';
 
 const Dashboard = () => {
-  const { user, isLoading } = useAuthStore();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isSubscribed, enableRealtime } = useSupabase();
@@ -18,8 +18,12 @@ const Dashboard = () => {
         if (user) {
           // Enable realtime features if needed
           if (!isSubscribed) {
-            await enableRealtime();
-            await enableSupabaseRealtime();
+            try {
+              await enableRealtime();
+              await enableSupabaseRealtime();
+            } catch (error) {
+              console.error("Failed to initialize realtime features:", error);
+            }
           }
 
           // Determine the correct dashboard path based on user role

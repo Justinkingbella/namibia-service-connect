@@ -1,6 +1,6 @@
 
 import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns';
-import { BookingStatus, PaymentStatus } from '@/types/schema';
+import { BookingStatus, PaymentStatus } from '@/types';
 
 // Format currency
 export const formatCurrency = (amount: number, currency = 'NAD') => {

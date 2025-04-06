@@ -1,164 +1,328 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { ServiceData, PricingModel } from '@/types/service';
+
+import React, { useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { ServiceCategoryEnum, PricingModelEnum } from '@/types';
+import { ImageUpload } from '@/components/ui/image-upload';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-// Create the form schema
-const serviceSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  price: z.coerce.number().positive('Price must be positive'),
-  pricing_model: z.string(),
-  category: z.string(),
+const schema = z.object({
+  title: z.string().min(5, { message: 'Title must be at least 5 characters' }),
+  description: z.string().min(20, { message: 'Description must be at least 20 characters' }),
+  price: z.coerceTo(z.number()).min(0, { message: 'Price must be a positive number' }),
+  category: z.string().min(1, { message: 'Please select a category' }),
+  pricing_model: z.enum(['FIXED', 'HOURLY', 'DAILY', 'PROJECT', 'QUOTE']),
+  image: z.string().optional(),
   location: z.string().optional(),
-  features: z.array(z.string()).optional(),
-  tags: z.array(z.string()).optional(),
+  features: z.string().optional(),
+  is_active: z.boolean().default(true),
 });
 
-type ServiceFormData = z.infer<typeof serviceSchema>;
+const pricingOptions = [
+  { label: 'Fixed Price', value: 'FIXED' },
+  { label: 'Hourly Rate', value: 'HOURLY' },
+  { label: 'Daily Rate', value: 'DAILY' },
+  { label: 'Project Based', value: 'PROJECT' },
+  { label: 'Quote Required', value: 'QUOTE' },
+];
 
-interface CreateServiceFormProps {
-  onSubmit: (serviceData: ServiceData) => Promise<void>;
-  loading: boolean;
+export interface CreateServiceFormProps {
+  onSubmit: (data: any) => void;
+  isLoading?: boolean;
+  initialData?: any;
 }
 
-const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
-  onSubmit,
-  loading = false
-}) => {
-  // Initialize the form
-  const { register, handleSubmit, formState: { errors } } = useForm<ServiceFormData>({
-    resolver: zodResolver(serviceSchema),
-    defaultValues: {
+const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isLoading = false, initialData = null }) => {
+  const [imageUrl, setImageUrl] = useState(initialData?.image || '');
+  const { toast } = useToast();
+  
+  const form = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: initialData || {
       title: '',
       description: '',
       price: 0,
-      pricing_model: 'fixed',
-      category: 'home',
+      category: '',
+      pricing_model: 'FIXED',
+      image: '',
       location: '',
-      features: [],
-      tags: []
-    }
+      features: '',
+      is_active: true,
+    },
   });
 
-  const pricingModels: PricingModel[] = ['fixed', 'hourly', 'daily', 'project', 'quote'];
-  const categories = ['home', 'repair', 'cleaning', 'electrical', 'plumbing', 'tutoring', 'transport', 'health', 'professional'];
+  const handleSubmit = (data: any) => {
+    if (!imageUrl) {
+      toast({
+        title: "Image Required",
+        description: "Please upload an image for your service",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const features = data.features ? data.features.split(',').map((item: string) => item.trim()) : [];
+    
+    const serviceData = {
+      ...data,
+      image: imageUrl,
+      features,
+    };
+    
+    onSubmit(serviceData);
+  };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium">
-            Service Title
-          </label>
-          <input
-            {...register('title')}
-            id="title"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            placeholder="e.g. Professional House Cleaning"
-          />
-          {errors.title && (
-            <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium">
-            Description
-          </label>
-          <textarea
-            {...register('description')}
-            id="description"
-            rows={4}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            placeholder="Detailed description of your service..."
-          />
-          {errors.description && (
-            <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="price" className="block text-sm font-medium">
-              Price
-            </label>
-            <input
-              {...register('price')}
-              type="number"
-              step="0.01"
-              id="price"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="0.00"
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+        <Tabs defaultValue="basic" className="w-full">
+          <TabsList className="grid grid-cols-3 mb-8">
+            <TabsTrigger value="basic">Basic Info</TabsTrigger>
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="media">Media</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="basic" className="space-y-6">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Service Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Professional House Cleaning" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    A clear title helps customers find your service
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.price && (
-              <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="pricing_model" className="block text-sm font-medium">
-              Pricing Model
-            </label>
-            <select
-              {...register('pricing_model')}
-              id="pricing_model"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            >
-              {pricingModels.map((model) => (
-                <option key={model} value={model}>
-                  {model.charAt(0).toUpperCase() + model.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="category" className="block text-sm font-medium">
-              Category
-            </label>
-            <select
-              {...register('category')}
-              id="category"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            >
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="location" className="block text-sm font-medium">
-              Location
-            </label>
-            <input
-              {...register('location')}
-              id="location"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="e.g. New York City"
+            
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Describe your service in detail..."
+                      className="resize-none min-h-[150px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Provide a detailed description of what your service includes
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Price</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="0" step="0.01" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Set the base price for your service
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="pricing_model"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pricing Model</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select pricing model" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {pricingOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      How you'll charge for this service
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="details" className="space-y-6">
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Categories</SelectLabel>
+                        {Object.keys(ServiceCategoryEnum)
+                          .filter((key) => key !== 'ALL')
+                          .map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {ServiceCategoryEnum[category as keyof typeof ServiceCategoryEnum]}
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Choose the category that best fits your service
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Windhoek, Namibia" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Where is this service available?
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="features"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Features</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Feature 1, Feature 2, Feature 3" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    List the key features of your service, separated by commas
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="is_active"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Active Status</FormLabel>
+                    <FormDescription>
+                      Set your service as active to make it visible to customers
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </TabsContent>
+          
+          <TabsContent value="media" className="space-y-6">
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Service Image</FormLabel>
+                  <FormControl>
+                    <ImageUpload
+                      initialImage={imageUrl || initialData?.image}
+                      onImageUpload={(url) => {
+                        setImageUrl(url);
+                        field.onChange(url);
+                      }}
+                      className="w-full max-w-xl mx-auto"
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Upload an image that showcases your service
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </TabsContent>
+        </Tabs>
+        
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : initialData ? 'Update Service' : 'Create Service'}
+          </Button>
         </div>
-
-        {/* You can add more fields here for features, tags, etc. */}
-      </div>
-
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={loading}
-          className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-            loading ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-        >
-          {initialData ? 'Update Service' : 'Create Service'}
-        </button>
-      </div>
-    </form>
+      </form>
+    </Form>
   );
 };
 

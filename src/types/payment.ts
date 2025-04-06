@@ -5,32 +5,33 @@ export interface WalletVerification {
   id: string;
   status: WalletVerificationStatus;
   amount: number;
-  date: Date;
+  date: string;
   reference: string;
   method: WalletPaymentType;
   user_id: string;
   receipt?: string;
   
   // Additional properties being used in components
-  verificationStatus: WalletVerificationStatus;
-  bookingId: string;
-  customerId: string;
-  providerId: string;
-  paymentMethod: WalletPaymentType;
-  referenceNumber: string;
-  customerPhone: string;
+  verificationStatus?: WalletVerificationStatus;
+  bookingId?: string;
+  customerId?: string;
+  providerId?: string;
+  paymentMethod?: WalletPaymentType;
+  referenceNumber?: string;
+  customerPhone?: string;
   providerPhone?: string;
-  dateSubmitted: Date;
-  dateVerified?: Date;
+  dateSubmitted?: string;
+  dateVerified?: string;
   notes?: string;
-  customerConfirmed: boolean;
-  providerConfirmed: boolean;
-  adminVerified: boolean;
+  customerConfirmed?: boolean;
+  providerConfirmed?: boolean;
+  adminVerified?: boolean;
   proofType?: 'receipt' | 'screenshot' | 'reference' | '';
   receiptImage?: string;
   mobileOperator?: string;
   bankUsed?: string;
   rejectionReason?: string;
+  verifiedBy?: string;
 }
 
 export interface Wallet {
@@ -54,4 +55,3 @@ export interface Transaction {
 
 // Re-export types from schema to ensure backward compatibility
 export { WalletPaymentType, WalletVerificationStatus } from './schema';
-export type { NamibianMobileOperator, NamibianBank } from './wallet';

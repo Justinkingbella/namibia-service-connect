@@ -1,5 +1,25 @@
 
-import { BookingStatus, PaymentStatus } from './schema';
+import { Json } from './schema';
+
+export type BookingStatus = 
+  | 'pending'
+  | 'confirmed'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+  | 'rejected'
+  | 'no_show'
+  | 'disputed'
+  | 'rescheduled';
+
+export type PaymentStatus = 
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'refunded'
+  | 'canceled'
+  | 'partially_refunded';
 
 export interface BookingData {
   id?: string;
@@ -33,6 +53,7 @@ export interface BookingData {
   endTime?: string;
   totalAmount?: number;
   createdAt?: string;
+  duration?: number;
 }
 
 export interface Booking {
@@ -85,6 +106,7 @@ export interface Dispute {
   adminNotes?: string;
   adminAssignedTo?: string;
   evidenceUrls?: string[];
+  reason?: string;
 }
 
 export type DisputeStatus = 'pending' | 'in_progress' | 'resolved' | 'closed' | 'escalated';

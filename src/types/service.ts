@@ -2,7 +2,7 @@
 import { Json } from './schema';
 
 export interface ServiceData {
-  id: string;
+  id?: string;
   title: string;
   description: string;
   price: number;
@@ -12,8 +12,8 @@ export interface ServiceData {
   image?: string;
   features?: string[];
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
   pricing_model: string;
   location?: string;
   rating?: number;
@@ -97,21 +97,21 @@ export interface FavoriteService {
 
 // Add enums for categories
 export enum ServiceCategoryEnum {
-  HOME = 'home',
-  CLEANING = 'cleaning',
-  REPAIR = 'repair',
-  PLUMBING = 'plumbing',
-  ELECTRICAL = 'electrical',
-  MOVING = 'moving',
-  PAINTING = 'painting',
-  LANDSCAPING = 'landscaping',
-  TUTORING = 'tutoring',
-  ERRAND = 'errand',
-  PROFESSIONAL = 'professional',
-  FREELANCE = 'freelance',
-  TRANSPORT = 'transport',
-  HEALTH = 'health',
-  ALL = 'all'
+  HOME = 'HOME',
+  CLEANING = 'CLEANING',
+  REPAIR = 'REPAIR',
+  PLUMBING = 'PLUMBING',
+  ELECTRICAL = 'ELECTRICAL',
+  MOVING = 'MOVING',
+  PAINTING = 'PAINTING',
+  LANDSCAPING = 'LANDSCAPING',
+  TUTORING = 'TUTORING',
+  ERRAND = 'ERRAND',
+  PROFESSIONAL = 'PROFESSIONAL',
+  FREELANCE = 'FREELANCE',
+  TRANSPORT = 'TRANSPORT',
+  HEALTH = 'HEALTH',
+  ALL = 'ALL'
 }
 
 // Export ServiceCategory type

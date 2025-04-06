@@ -3,28 +3,27 @@
 export * from './subscription';
 
 // Export booking types
+export type { Booking, BookingWithDetails, BookingData, Dispute, Withdrawal } from './booking';
+export { DisputeStatus, DisputePriority } from './booking';
+export type { Transaction as BookingTransaction } from './booking';
+// Export types from schema
 export type { 
   BookingStatus, 
-  PaymentStatus, 
-  Booking, 
-  BookingWithDetails,
-  BookingData,
-  Dispute,
-  DisputeStatus,
-  DisputePriority,
-  Withdrawal
-} from './booking';
+  PaymentStatus 
+} from './schema';
 
 // Export payment types
 export type {
   PaymentMethod,
   PaymentRecord,
-  WalletVerification,
-  WalletVerificationRequest,
   PaymentHistory,
   ProviderEarnings,
   ProviderPayout
 } from './payments';
+export type {
+  WalletVerification,
+  WalletVerificationRequest
+} from './payment';
 
 // Re-export Auth types
 export type { 
@@ -70,9 +69,6 @@ export type {
 // Explicitly export service payment method
 export type { ServicePaymentMethod } from './service';
 
-// Export transaction from booking
-export type { Transaction as BookingTransaction } from './booking';
-
 export interface IResponse<T> {
   success: boolean;
   data?: T;
@@ -82,3 +78,19 @@ export interface IResponse<T> {
 
 // Export conversation and message types
 export type { Conversation, Message } from './conversations';
+
+// Export wallet types from wallet.ts
+export type {
+  WalletVerificationRequest as WalletVerificationRequestDetail,
+  WalletVerificationFilters,
+  WalletVerificationStats,
+  WalletVerificationComment,
+  WalletProviderSettings,
+  WalletVerificationDashboard,
+  WalletVerificationSummary,
+  VerificationAction,
+  WalletVerificationReport,
+  VerificationStatus,
+  WalletProvider,
+  UserType
+} from './wallet';
