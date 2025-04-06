@@ -1,62 +1,55 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { format } from "date-fns"
-import { DbCustomerProfile } from '@/types/auth';
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+// Replace CalendarIcon from @radix-ui/react-icons with Calendar from lucide-react
+import { Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 const UserProfile = () => {
-  const { user, userProfile, setUserProfile } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     phoneNumber: '',
     avatarUrl: '',
-    birthDate: undefined as Date | undefined,
+    birthDate: undefined
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [date, setDate] = React.useState<Date>();
+  const [date, setDate] = React.useState<Date | undefined>();
 
   useEffect(() => {
-    if (userProfile && userProfile.role === 'customer') {
-      const customerProfile = userProfile as DbCustomerProfile;
+    if (user) {
       setFormData({
-        firstName: customerProfile?.first_name || '',
-        lastName: customerProfile?.last_name || '',
-        phoneNumber: customerProfile?.phone_number || '',
-        avatarUrl: customerProfile?.avatar_url || '',
-        birthDate: customerProfile?.birth_date ? new Date(customerProfile.birth_date) : undefined,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        phoneNumber: user.phoneNumber || '',
+        avatarUrl: user.avatarUrl || '',
+        birthDate: user.birthDate ? new Date(user.birthDate) : undefined
       });
-      setDate(customerProfile?.birth_date ? new Date(customerProfile.birth_date) : undefined);
+      setDate(user.birthDate ? new Date(user.birthDate) : undefined);
     }
-  }, [userProfile]);
+  }, [user]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [e.target.name]: e.target.value
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!user) {
       toast.error('You must be logged in to update your profile');
       navigate('/auth/sign-in');
@@ -64,7 +57,6 @@ const UserProfile = () => {
     }
 
     setIsSaving(true);
-
     try {
       const updates = {
         first_name: formData.firstName,
@@ -72,7 +64,7 @@ const UserProfile = () => {
         phone_number: formData.phoneNumber,
         avatar_url: formData.avatarUrl,
         updated_at: new Date().toISOString(),
-        birth_date: date ? date.toISOString() : null,
+        birth_date: date ? date.toISOString() : null
       };
 
       const { error } = await supabase
@@ -83,16 +75,6 @@ const UserProfile = () => {
       if (error) {
         throw error;
       }
-
-      // Update the user context
-      setUserProfile({
-        ...userProfile,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        phone_number: formData.phoneNumber,
-        avatar_url: formData.avatarUrl,
-        birth_date: date,
-      });
 
       toast.success('Profile updated successfully!');
       setIsEditing(false);
@@ -105,27 +87,33 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Your Profile</h1>
-      {userProfile && userProfile.role === 'customer' ? (
+    <div className="container mx-auto mt-10 p-6 bg-white shadow-md rounded-md">
+      <h2 className="text-2xl font-semibold mb-4">Your Profile</h2>
+      {user ? (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="avatarUrl">Avatar URL</Label>
-            <Avatar className="w-24 h-24">
-              {formData.avatarUrl ? (
-                <AvatarImage src={formData.avatarUrl} alt="Avatar" />
-              ) : (
-                <AvatarFallback>{formData.firstName?.[0]}{formData.lastName?.[0]}</AvatarFallback>
-              )}
-            </Avatar>
-            <Input
-              type="url"
-              id="avatarUrl"
-              name="avatarUrl"
-              value={formData.avatarUrl}
-              onChange={handleChange}
-              disabled={!isEditing}
-            />
+            <Label htmlFor="avatarUrl">Avatar</Label>
+            <div className="mt-2 flex items-center space-x-4">
+              <Avatar className="w-20 h-20">
+                {formData.avatarUrl ? (
+                  <AvatarImage src={formData.avatarUrl} alt="Avatar" />
+                ) : (
+                  <AvatarFallback>{formData.firstName?.charAt(0)}{formData.lastName?.charAt(0)}</AvatarFallback>
+                )}
+              </Avatar>
+              <div>
+                {isEditing ? (
+                  <Input
+                    type="url"
+                    id="avatarUrl"
+                    name="avatarUrl"
+                    value={formData.avatarUrl}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-md shadow-sm border-gray-300 focus:border-primary focus:ring focus:ring-primary/50"
+                  />
+                ) : null}
+              </div>
+            </div>
           </div>
           <div>
             <Label htmlFor="firstName">First Name</Label>
@@ -136,6 +124,7 @@ const UserProfile = () => {
               value={formData.firstName}
               onChange={handleChange}
               disabled={!isEditing}
+              className="mt-1 block w-full rounded-md shadow-sm border-gray-300 focus:border-primary focus:ring focus:ring-primary/50"
             />
           </div>
           <div>
@@ -147,6 +136,7 @@ const UserProfile = () => {
               value={formData.lastName}
               onChange={handleChange}
               disabled={!isEditing}
+              className="mt-1 block w-full rounded-md shadow-sm border-gray-300 focus:border-primary focus:ring focus:ring-primary/50"
             />
           </div>
           <div>
@@ -158,6 +148,7 @@ const UserProfile = () => {
               value={formData.phoneNumber}
               onChange={handleChange}
               disabled={!isEditing}
+              className="mt-1 block w-full rounded-md shadow-sm border-gray-300 focus:border-primary focus:ring focus:ring-primary/50"
             />
           </div>
           <div>
@@ -175,7 +166,7 @@ const UserProfile = () => {
                   {date ? format(date, "PPP") : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="center" side="bottom">
+              <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
                   selected={date}
@@ -186,40 +177,30 @@ const UserProfile = () => {
               </PopoverContent>
             </Popover>
           </div>
-          <div className="flex justify-between">
-            {isEditing ? (
-              <div>
-                <Button
-                  type="submit"
-                  disabled={isSaving}
-                >
-                  {isSaving ? 'Saving...' : 'Save Profile'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setIsEditing(false);
-                    setFormData({
-                      firstName: userProfile.first_name || '',
-                      lastName: userProfile.last_name || '',
-                      phoneNumber: userProfile.phone_number || '',
-                      avatarUrl: userProfile.avatar_url || '',
-                      birthDate: userProfile.birth_date ? new Date(userProfile.birth_date) : undefined,
-                    });
-                    setDate(userProfile.birth_date ? new Date(userProfile.birth_date) : undefined);
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            ) : (
-              <Button
-                type="button"
-                onClick={() => setIsEditing(true)}
-              >
+          <div className="flex justify-end space-x-2">
+            {!isEditing ? (
+              <Button type="button" variant="secondary" onClick={() => setIsEditing(true)}>
                 Edit Profile
               </Button>
+            ) : (
+              <>
+                <Button type="button" variant="ghost" onClick={() => {
+                  setIsEditing(false);
+                  setFormData({
+                    firstName: user.firstName || '',
+                    lastName: user.lastName || '',
+                    phoneNumber: user.phoneNumber || '',
+                    avatarUrl: user.avatarUrl || '',
+                    birthDate: user.birthDate ? new Date(user.birthDate) : undefined
+                  });
+                  setDate(user.birthDate ? new Date(user.birthDate) : undefined);
+                }}>
+                  Cancel
+                </Button>
+                <Button type="submit" isLoading={isSaving}>
+                  Save Changes
+                </Button>
+              </>
             )}
           </div>
         </form>

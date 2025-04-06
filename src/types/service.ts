@@ -1,59 +1,26 @@
 
-// Change from string enum to regular enum so it can be used as a value
-export enum ServiceCategoryEnum {
-  cleaning = 'cleaning',
-  repair = 'repair',
-  plumbing = 'plumbing',
-  electrical = 'electrical',
-  moving = 'moving',
-  painting = 'painting',
-  landscaping = 'landscaping',
-  tutoring = 'tutoring',
-  home = 'home',
-  errand = 'errand',
-  professional = 'professional',
-  freelance = 'freelance',
-  transport = 'transport',
-  health = 'health',
-  all = 'all'
-}
-
-export interface ServiceCategory {
-  id: string;
-  name: string;
-  description?: string;
-  icon?: string;
-  slug?: string;
-  parentCategoryId?: string;
-  featured?: boolean;
-  isActive?: boolean;
-}
+import { Json } from './schema';
 
 export interface ServiceData {
-  id?: string;
+  id: string;
   title: string;
   description: string;
   price: number;
-  pricing_model: string;
   category: string;
+  provider_id: string;
+  provider_name: string;
   image?: string;
-  location?: string;
-  provider_id?: string;
-  provider_name?: string;
   features?: string[];
-  tags?: string[];
-  is_active?: boolean;
-  created_at?: string;
-  updated_at?: string;
-  slug?: string;
-  featured?: boolean;
-  availability?: Record<string, any>;
-  faqs?: Array<{
-    question: string;
-    answer: string;
-  }>;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  pricing_model: string;
+  location?: string;
   rating?: number;
   review_count?: number;
+  availability?: Json;
+  featured?: boolean;
+  faqs?: Json;
 }
 
 export interface Service {
@@ -61,21 +28,21 @@ export interface Service {
   title: string;
   description: string;
   price: number;
-  pricingModel: string;
-  category: string;
-  image?: string;
-  location?: string;
+  category: string; 
   providerId: string;
   providerName: string;
-  features?: string[];
-  tags?: string[];
+  image?: string;
+  features: string[];
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  slug?: string;
-  featured?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  pricingModel: string;
+  location?: string;
   rating?: number;
   reviewCount?: number;
+  availability?: Record<string, any>;
+  featured?: boolean;
+  faqs?: Record<string, any>;
 }
 
 export interface ServiceListItem {
@@ -83,36 +50,33 @@ export interface ServiceListItem {
   title: string;
   description: string;
   price: number;
-  image?: string;
   category: string;
   pricingModel: string;
-  providerId: string;
   providerName: string;
+  providerId: string;
+  image?: string;
   rating?: number;
   reviewCount?: number;
   location?: string;
 }
 
-export type PricingModel = 'fixed' | 'hourly' | 'daily' | 'project' | 'quote';
-
-// Interface for service payment method information
-export interface ServicePaymentMethod {
-  id: string;
-  name: string;
-  description?: string;
-  enabled: boolean;
-  processingFee?: number;
-  processingFeeType?: 'fixed' | 'percentage';
+export interface ServiceBookingData {
+  serviceId: string;
+  serviceName: string;
+  providerId: string;
+  providerName: string;
+  price: number;
+  date: string;
+  startTime: string;
+  endTime: string;
+  notes?: string;
 }
 
-// Payment method types
-export type PaymentMethod = 'credit_card' | 'paypal' | 'bank_transfer' | 'crypto' | 'cash' | 'mobile_money' | 'wallet';
-
-// Interface for user's favorite services
 export interface FavoriteService {
   id: string;
   service_id: string;
   user_id: string;
+  created_at: string;
   service: {
     id: string;
     title: string;
@@ -121,10 +85,5 @@ export interface FavoriteService {
     image?: string;
     provider_id: string;
     provider_name: string;
-    category?: string;
-    pricingModel?: string;
-    rating?: number;
-    reviewCount?: number;
-    location?: string;
   };
 }

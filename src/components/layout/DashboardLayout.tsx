@@ -65,32 +65,34 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   };
 
   const getMobileNavItems = () => {
-    if (user?.role === 'admin') {
+    if (!user) return [];
+    
+    if (user.role === 'admin') {
       return [
-        { icon: Home, label: 'Dashboard', path: '/dashboard' },
-        { icon: Users, label: 'Users', path: '/dashboard/users' },
-        { icon: Package, label: 'Services', path: '/dashboard/services' },
-        { icon: PieChart, label: 'Analytics', path: '/dashboard/admin/analytics' },
-        { icon: User, label: 'Profile', path: '/dashboard/admin/profile' },
+        { icon: Home, label: 'Dashboard', path: '/admin/dashboard' },
+        { icon: Users, label: 'Users', path: '/admin/users' },
+        { icon: Package, label: 'Services', path: '/admin/services' },
+        { icon: PieChart, label: 'Analytics', path: '/admin/analytics' },
+        { icon: User, label: 'Profile', path: '/admin/profile' },
       ];
     }
     
-    if (user?.role === 'provider') {
+    if (user.role === 'provider') {
       return [
-        { icon: Home, label: 'Dashboard', path: '/dashboard' },
-        { icon: Package, label: 'Services', path: '/dashboard/services' },
-        { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
-        { icon: CreditCard, label: 'Payments', path: '/dashboard/provider/transactions' },
-        { icon: User, label: 'Profile', path: '/dashboard/provider/profile' },
+        { icon: Home, label: 'Dashboard', path: '/provider/dashboard' },
+        { icon: Package, label: 'Services', path: '/provider/services' },
+        { icon: Calendar, label: 'Bookings', path: '/provider/bookings' },
+        { icon: CreditCard, label: 'Payments', path: '/provider/transactions' },
+        { icon: User, label: 'Profile', path: '/provider/profile' },
       ];
     }
     
     return [
-      { icon: Home, label: 'Dashboard', path: '/dashboard' },
-      { icon: Package, label: 'Services', path: '/dashboard/services' },
-      { icon: Calendar, label: 'Bookings', path: '/dashboard/bookings' },
-      { icon: Heart, label: 'Favorites', path: '/dashboard/customer/favorites' },
-      { icon: User, label: 'Profile', path: '/dashboard/profile' },
+      { icon: Home, label: 'Dashboard', path: '/customer/dashboard' },
+      { icon: Package, label: 'Services', path: '/customer/services' },
+      { icon: Calendar, label: 'Bookings', path: '/customer/bookings' },
+      { icon: Heart, label: 'Favorites', path: '/customer/favorites' },
+      { icon: User, label: 'Profile', path: '/customer/profile' },
     ];
   };
 

@@ -1,69 +1,78 @@
 
-// Define Payment Method types to avoid confusion with other types
-export type PaymentMethod = 'credit_card' | 'paypal' | 'bank_transfer' | 'crypto' | 'cash' | 'mobile_money' | 'wallet';
+export type PaymentMethodType = 'credit_card' | 'debit_card' | 'bank_transfer' | 'e_wallet' | 'cash' | 'mobile_money';
 
-export interface PaymentProvider {
+export interface PaymentMethod {
   id: string;
+  userId: string;
   name: string;
-  type: PaymentMethod;
-  isActive: boolean;
-  config: Record<string, any>;
-}
-
-export interface PaymentTransaction {
-  id: string;
-  amount: number;
-  userId: string;
-  paymentMethod: PaymentMethod;
-  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  type: PaymentMethodType;
+  details: Record<string, any>;
+  isDefault: boolean;
   createdAt: Date;
-  reference: string;
-  description?: string;
 }
 
-// Add missing payment history type
-export interface PaymentHistory {
+export type PaymentStatus = 
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'refunded'
+  | 'canceled'
+  | 'partially_refunded';
+
+export type WalletPaymentType = 
+  | 'e_wallet'
+  | 'easy_wallet'
+  | 'mobile_money'
+  | 'bank_transfer'
+  | 'credit_card'
+  | 'debit_card';
+
+export interface PaymentRecord {
   id: string;
   userId: string;
+  bookingId: string;
   amount: number;
-  description: string;
-  date: Date;
-  status: string;
-  type: string;
-  reference: string;
+  currency: string;
+  status: PaymentStatus;
+  paymentMethod: PaymentMethodType;
+  paymentDate: string;
+  transactionId: string;
+  receiptUrl?: string;
+  metadata?: any;
 }
 
-// Add missing provider earnings type
-export interface ProviderEarnings {
+export interface WalletVerification {
   id: string;
-  providerId: string;
-  periodStart: Date;
-  periodEnd: Date;
-  totalEarnings: number;
-  totalBookings: number;
-  commissionPaid: number;
-  netEarnings: number;
-  payoutStatus: string;
-  payoutDate?: Date;
-  payoutReference?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// Add missing provider payout type
-export interface ProviderPayout {
-  id: string;
-  providerId: string;
+  user_id: string;
+  booking_id: string;
+  status: 'pending' | 'verified' | 'rejected';
+  date: string;
   amount: number;
-  fee: number;
-  netAmount: number;
-  paymentMethod: string;
-  status: string;
   reference: string;
-  bankDetails?: Record<string, any>;
-  mobilePaymentDetails?: Record<string, any>;
+  method: WalletPaymentType;
+  screenshot_url?: string;
+  receipt_url?: string;
   notes?: string;
-  processedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  rejection_reason?: string;
+}
+
+export interface WalletVerificationRequest {
+  id: string;
+  bookingId: string;
+  customerId: string;
+  providerId: string;
+  amount: number;
+  paymentMethod: WalletPaymentType;
+  referenceNumber: string;
+  customerPhone: string;
+  providerPhone: string;
+  screenshotUrl?: string;
+  receiptUrl?: string;
+  status: 'pending' | 'verified' | 'rejected';
+  notes?: string;
+  submittedAt: string;
+  verifiedAt?: string;
+  rejectedAt?: string;
+  rejectionReason?: string;
 }

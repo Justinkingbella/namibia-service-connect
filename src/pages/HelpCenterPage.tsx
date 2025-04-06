@@ -1,239 +1,174 @@
-
-import React, { useState } from 'react';
-import { Layout } from '@/components/common/Container';
-import { Search, ChevronDown, ChevronRight, Phone, Mail, MessageSquare } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import React from 'react';
+import Navbar from '@/components/layout/Navbar';
+import Container from '@/components/common/Container';
+import Footer from '@/components/layout/Footer';
+// Fix import issue
+import { Link } from 'react-router-dom';
+import { Search, ArrowRight, FileText, MessageSquare, HelpCircle, Phone, Calendar, CreditCard, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
 
-const HelpCenterPage: React.FC = () => {
-  const [expandedFaqs, setExpandedFaqs] = useState<Record<string, boolean>>({});
-
-  const toggleFaq = (id: string) => {
-    setExpandedFaqs((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
-
-  const faqCategories = [
-    {
-      id: 'general',
-      title: 'General Questions',
-      faqs: [
-        {
-          id: 'what-is',
-          question: 'What is NamibiaService.com?',
-          answer: 'NamibiaService.com is a platform that connects service providers in Namibia with customers who need their services. We make it easy to discover, book, and manage service appointments across various categories.'
-        },
-        {
-          id: 'cost',
-          question: 'How much does it cost to use the platform?',
-          answer: 'For customers, using our platform to find and book services is completely free. Service providers pay a small commission on completed bookings and have the option to subscribe to premium tiers for additional features.'
-        },
-        {
-          id: 'locations',
-          question: 'Which locations in Namibia do you serve?',
-          answer: 'We currently operate in major cities including Windhoek, Swakopmund, and Walvis Bay, with plans to expand to more locations across Namibia. Service availability may vary by location.'
-        }
-      ]
-    },
-    {
-      id: 'customers',
-      title: 'For Customers',
-      faqs: [
-        {
-          id: 'book-service',
-          question: 'How do I book a service?',
-          answer: 'Browse through our service categories or search for specific services, select a provider, choose your preferred date and time, and complete the booking process. You\'ll receive a confirmation once the provider accepts your booking.'
-        },
-        {
-          id: 'payments',
-          question: 'What payment methods are available?',
-          answer: 'We support multiple payment options including mobile money (MTC, TN Mobile), bank transfers, cash payments, and digital wallets. Choose your preferred method during checkout.'
-        },
-        {
-          id: 'cancel-booking',
-          question: 'How do I cancel or reschedule a booking?',
-          answer: 'You can cancel or reschedule bookings through your dashboard. Go to "My Bookings," select the booking you want to modify, and follow the prompts. Please note that cancellation policies may vary by provider.'
-        }
-      ]
-    },
-    {
-      id: 'providers',
-      title: 'For Service Providers',
-      faqs: [
-        {
-          id: 'become-provider',
-          question: 'How do I become a service provider?',
-          answer: 'Sign up for an account, choose "Service Provider" as your role, complete your profile information, add your services, and submit the necessary verification documents. Our team will review your application and activate your provider account.'
-        },
-        {
-          id: 'fees',
-          question: 'What fees do providers pay?',
-          answer: 'Providers pay a commission of 10-15% on completed bookings, depending on their subscription tier. We also offer subscription plans with reduced commission rates and additional features.'
-        },
-        {
-          id: 'get-paid',
-          question: 'How and when do I get paid?',
-          answer: 'Payments are processed within 24-48 hours after service completion and customer confirmation. You can withdraw funds to your bank account or mobile money wallet through your dashboard.'
-        }
-      ]
-    },
-    {
-      id: 'technical',
-      title: 'Technical Support',
-      faqs: [
-        {
-          id: 'account-issues',
-          question: 'I can\'t log into my account',
-          answer: 'Try resetting your password using the "Forgot Password" link. If you still can\'t access your account, contact our support team with your account email for assistance.'
-        },
-        {
-          id: 'app-problems',
-          question: 'The website/app is not working properly',
-          answer: 'Try clearing your browser cache or updating the app to the latest version. If problems persist, please report the specific issue to our technical support team with screenshots if possible.'
-        },
-        {
-          id: 'notifications',
-          question: 'I\'m not receiving notifications',
-          answer: 'Check your notification settings in your account preferences. Also verify that our emails aren\'t going to your spam folder. For app notifications, ensure that notifications are enabled in your device settings.'
-        }
-      ]
-    }
-  ];
-
+const HelpCenterPage = () => {
   return (
-    <Layout>
-      <div className="py-12 md:py-20">
-        <div className="container px-4 mx-auto">
-          <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Help Center</h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-              Find answers to common questions or reach out to our support team for assistance.
-            </p>
-            
-            <div className="relative max-w-2xl mx-auto">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-              <Input 
-                type="search" 
-                placeholder="Search for answers..." 
-                className="pl-12 py-6 text-lg rounded-full bg-white"
-              />
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-grow">
+        {/* Hero section */}
+        <section className="bg-blue-50 py-16 md:py-24">
+          <Container>
+            <div className="max-w-3xl mx-auto text-center">
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-blue-900 mb-4">
+                How can we help you?
+              </h1>
+              <p className="text-lg text-blue-700 mb-8">
+                Find answers, guides and resources to help you get the most out of our services.
+              </p>
+              <div className="relative mx-auto max-w-2xl">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Input 
+                  type="text" 
+                  placeholder="Search for help articles..." 
+                  className="pl-10 h-12 text-base"
+                />
+              </div>
             </div>
-          </div>
-          
-          <Tabs defaultValue="faqs" className="max-w-4xl mx-auto">
-            <TabsList className="grid grid-cols-2 mb-8">
-              <TabsTrigger value="faqs">Frequently Asked Questions</TabsTrigger>
-              <TabsTrigger value="contact">Contact Support</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="faqs">
-              <Card>
-                <CardContent className="pt-6">
-                  {faqCategories.map((category) => (
-                    <div key={category.id} className="mb-8">
-                      <h2 className="text-2xl font-semibold mb-4">{category.title}</h2>
-                      <div className="space-y-3">
-                        {category.faqs.map((faq) => (
-                          <div 
-                            key={faq.id} 
-                            className="border border-gray-200 rounded-lg overflow-hidden"
-                          >
-                            <button
-                              onClick={() => toggleFaq(faq.id)}
-                              className="flex justify-between items-center w-full text-left px-4 py-3 bg-white hover:bg-gray-50"
-                            >
-                              <span className="font-medium">{faq.question}</span>
-                              {expandedFaqs[faq.id] ? (
-                                <ChevronDown className="h-5 w-5 text-gray-500" />
-                              ) : (
-                                <ChevronRight className="h-5 w-5 text-gray-500" />
-                              )}
-                            </button>
-                            {expandedFaqs[faq.id] && (
-                              <div className="px-4 py-3 bg-gray-50 border-t">
-                                <p className="text-gray-700">{faq.answer}</p>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="contact">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="grid md:grid-cols-3 gap-8">
-                    <div className="flex flex-col items-center p-6 text-center border rounded-lg">
-                      <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                        <Phone className="h-6 w-6 text-primary" />
-                      </div>
-                      <h3 className="text-lg font-medium mb-2">Phone Support</h3>
-                      <p className="text-gray-600 mb-4">Available Mon-Fri, 8am to 5pm</p>
-                      <p className="font-medium">+264 61 123 4567</p>
-                    </div>
-                    
-                    <div className="flex flex-col items-center p-6 text-center border rounded-lg">
-                      <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                        <Mail className="h-6 w-6 text-primary" />
-                      </div>
-                      <h3 className="text-lg font-medium mb-2">Email Support</h3>
-                      <p className="text-gray-600 mb-4">Response within 24 hours</p>
-                      <p className="font-medium">support@namibiaservice.com</p>
-                    </div>
-                    
-                    <div className="flex flex-col items-center p-6 text-center border rounded-lg">
-                      <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                        <MessageSquare className="h-6 w-6 text-primary" />
-                      </div>
-                      <h3 className="text-lg font-medium mb-2">Live Chat</h3>
-                      <p className="text-gray-600 mb-4">Available 24/7</p>
-                      <Button variant="outline">Start Chat</Button>
-                    </div>
+          </Container>
+        </section>
+        
+        {/* Topic categories */}
+        <section className="py-16">
+          <Container>
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">Browse help topics</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[
+                {
+                  title: "Getting Started",
+                  description: "Learn the basics and set up your account",
+                  icon: FileText,
+                  link: "/help/getting-started"
+                },
+                {
+                  title: "Booking Services",
+                  description: "How to find and book the right services",
+                  icon: Calendar,
+                  link: "/help/booking"
+                },
+                {
+                  title: "Provider Guidelines",
+                  description: "Best practices for service providers",
+                  icon: HelpCircle,
+                  link: "/help/providers"
+                },
+                {
+                  title: "Payments & Billing",
+                  description: "Understand payment methods and issues",
+                  icon: CreditCard,
+                  link: "/help/payments"
+                },
+                {
+                  title: "Account & Security",
+                  description: "Manage your account and keep it secure",
+                  icon: User,
+                  link: "/help/account"
+                },
+                {
+                  title: "Contact Support",
+                  description: "Get in touch with our customer support team",
+                  icon: MessageSquare,
+                  link: "/contact"
+                },
+              ].map((topic, index) => (
+                <Link 
+                  key={index} 
+                  to={topic.link}
+                  className="flex flex-col items-center p-6 bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="p-3 rounded-full bg-blue-50 text-blue-600 mb-4">
+                    <topic.icon className="h-6 w-6" />
                   </div>
-                  
-                  <div className="mt-8 border rounded-lg p-6">
-                    <h3 className="text-xl font-medium mb-4">Send us a message</h3>
-                    <form className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label htmlFor="name" className="block text-sm font-medium mb-1">Your Name</label>
-                          <Input id="name" type="text" />
-                        </div>
-                        <div>
-                          <label htmlFor="email" className="block text-sm font-medium mb-1">Email Address</label>
-                          <Input id="email" type="email" />
-                        </div>
-                      </div>
-                      <div>
-                        <label htmlFor="subject" className="block text-sm font-medium mb-1">Subject</label>
-                        <Input id="subject" type="text" />
-                      </div>
-                      <div>
-                        <label htmlFor="message" className="block text-sm font-medium mb-1">Message</label>
-                        <textarea
-                          id="message"
-                          rows={4}
-                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        ></textarea>
-                      </div>
-                      <Button type="submit">Submit Request</Button>
-                    </form>
+                  <h3 className="font-semibold text-lg mb-2">{topic.title}</h3>
+                  <p className="text-gray-500 text-center">{topic.description}</p>
+                  <Button variant="ghost" size="sm" className="mt-4">
+                    Learn more <ArrowRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </Link>
+              ))}
+            </div>
+          </Container>
+        </section>
+
+        {/* FAQs section */}
+        <section className="py-16 bg-gray-50">
+          <Container>
+            <div className="max-w-3xl mx-auto">
+              <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">Frequently Asked Questions</h2>
+              <p className="text-center text-gray-600 mb-12">Quick answers to the most common questions</p>
+              
+              <div className="space-y-6">
+                {[
+                  {
+                    question: "How do I create an account?",
+                    answer: "You can create an account by clicking the 'Sign Up' button on the top right of the homepage. Fill out the required information and follow the verification steps sent to your email."
+                  },
+                  {
+                    question: "How do I book a service?",
+                    answer: "Browse through our available services, select a provider, choose a time slot that works for you, and complete the booking with payment. You'll receive a confirmation email with all the details."
+                  },
+                  {
+                    question: "What payment methods do you accept?",
+                    answer: "We accept multiple payment methods including PayToday, PayFast, E-Wallet, credit/debit cards, and bank transfers for your convenience."
+                  },
+                  {
+                    question: "Can I cancel or reschedule a booking?",
+                    answer: "Yes, you can reschedule or cancel a booking through your dashboard. Please note that cancellation policies may vary by service provider, and some may charge a cancellation fee."
+                  },
+                  {
+                    question: "How do I become a service provider?",
+                    answer: "To become a service provider, create an account and select 'Provider' as your account type. Complete your profile, add your services, and submit verification documents. Our team will review your application."
+                  }
+                ].map((faq, index) => (
+                  <div key={index} className="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 className="font-semibold text-lg mb-2">{faq.question}</h3>
+                    <p className="text-gray-600">{faq.answer}</p>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
-    </Layout>
+                ))}
+              </div>
+              
+              <div className="text-center mt-12">
+                <Button asChild>
+                  <Link to="/faq">View all FAQs <ArrowRight className="ml-1 h-4 w-4" /></Link>
+                </Button>
+              </div>
+            </div>
+          </Container>
+        </section>
+
+        {/* Contact section */}
+        <section className="py-16">
+          <Container>
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">Still need help?</h2>
+              <p className="text-gray-600 mb-8">Our support team is ready to assist you</p>
+              <div className="flex flex-col md:flex-row justify-center gap-4">
+                <Button asChild variant="outline" size="lg" className="flex gap-2 items-center">
+                  <Link to="/contact">
+                    <MessageSquare className="h-5 w-5" />
+                    <span>Send us a message</span>
+                  </Link>
+                </Button>
+                <Button asChild size="lg" className="flex gap-2 items-center">
+                  <a href="tel:+264612345678">
+                    <Phone className="h-5 w-5" />
+                    <span>Call Support: +264 61 234 5678</span>
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </Container>
+        </section>
+      </main>
+      <Footer />
+    </div>
   );
 };
 

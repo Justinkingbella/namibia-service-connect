@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, DollarSign, Check, AlertTriangle, BarChart, Settings, CreditCard, Receipt } from 'lucide-react';
+import { Users, DollarSign, Check, AlertTriangle, BarChart, Settings, CreditCard, Receipt, MessageSquare } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import StatsCard from '@/components/dashboard/StatsCard';
 import SettingsCard from '@/components/dashboard/SettingsCard';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import UserManagement from '@/components/admin/UserManagement';
 import ProviderVerification from '@/components/admin/ProviderVerification';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
