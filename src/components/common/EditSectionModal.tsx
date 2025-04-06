@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -13,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { updatePageSection, uploadImage, PageSection } from '@/services/contentService';
-import { ImageUpload } from '@/components/ui/image-upload';
+import ImageUpload from "@/components/ui/image-upload";
 
 interface EditSectionModalProps {
   section: PageSection;

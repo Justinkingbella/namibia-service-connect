@@ -54,13 +54,11 @@ const AdminProfile: React.FC = () => {
   useEffect(() => {
     if (profile && !isEditing) {
       setPersonalData({
-        firstName: profile.firstName || '',
-        lastName: profile.lastName || '',
-        phoneNumber: profile.phoneNumber || '',
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        phone_number: profile.phone_number || '',
         email: profile.email || '',
-        address: profile.address || '',
-        city: profile.city || '',
-        country: profile.country || '',
+        // These properties might not exist in DbUserProfile, so we're not setting them
       });
     }
   }, [profile, isEditing]);
@@ -78,7 +76,7 @@ const AdminProfile: React.FC = () => {
     if (!profile?.id) return;
     
     try {
-      await updateProfile({ avatarUrl: url });
+      await updateProfile({ avatar_url: url });
     } catch (error) {
       console.error('Error updating avatar:', error);
     }
@@ -142,16 +140,16 @@ const AdminProfile: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">First Name</label>
                     <Input 
-                      name="firstName"
-                      value={personalData.firstName || ''}
+                      name="first_name"
+                      value={personalData.first_name || ''}
                       onChange={handleInputChange}
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Last Name</label>
                     <Input 
-                      name="lastName"
-                      value={personalData.lastName || ''}
+                      name="last_name"
+                      value={personalData.last_name || ''}
                       onChange={handleInputChange}
                     />
                   </div>
@@ -166,32 +164,8 @@ const AdminProfile: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Phone Number</label>
                     <Input 
-                      name="phoneNumber"
-                      value={personalData.phoneNumber || ''}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Address</label>
-                    <Input 
-                      name="address"
-                      value={personalData.address || ''}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">City</label>
-                    <Input 
-                      name="city"
-                      value={personalData.city || ''}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Country</label>
-                    <Input 
-                      name="country"
-                      value={personalData.country || ''}
+                      name="phone_number"
+                      value={personalData.phone_number || ''}
                       onChange={handleInputChange}
                     />
                   </div>
@@ -220,12 +194,12 @@ const AdminProfile: React.FC = () => {
                 <div className="flex flex-col items-center">
                   <AvatarUpload 
                     userId={profile?.id || ''}
-                    currentAvatarUrl={profile?.avatarUrl}
+                    currentAvatarUrl={profile?.avatar_url}
                     onAvatarChange={handleAvatarChange}
                   />
                   <div className="mt-4 flex flex-col items-center">
                     <h3 className="font-medium text-lg">
-                      {profile?.firstName || ''} {profile?.lastName || ''}
+                      {profile?.first_name || ''} {profile?.last_name || ''}
                     </h3>
                     <p className="text-sm text-muted-foreground">Administrator</p>
                     <Badge className="mt-2 bg-purple-100 text-purple-800">
@@ -241,7 +215,7 @@ const AdminProfile: React.FC = () => {
                       <User className="h-4 w-4 text-muted-foreground mr-2" />
                       <div>
                         <p className="text-sm text-muted-foreground">Full Name</p>
-                        <p>{profile?.firstName || ''} {profile?.lastName || ''}</p>
+                        <p>{profile?.first_name || ''} {profile?.last_name || ''}</p>
                       </div>
                     </div>
                     <div className="flex items-center">
@@ -255,18 +229,7 @@ const AdminProfile: React.FC = () => {
                       <User className="h-4 w-4 text-muted-foreground mr-2" />
                       <div>
                         <p className="text-sm text-muted-foreground">Phone</p>
-                        <p>{profile?.phoneNumber || 'Not specified'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <User className="h-4 w-4 text-muted-foreground mr-2" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Location</p>
-                        <p>
-                          {profile?.city && profile?.country 
-                            ? `${profile.city}, ${profile.country}` 
-                            : 'Not specified'}
-                        </p>
+                        <p>{profile?.phone_number || 'Not specified'}</p>
                       </div>
                     </div>
                   </div>
@@ -367,3 +330,4 @@ const AdminProfile: React.FC = () => {
 };
 
 export default AdminProfile;
+

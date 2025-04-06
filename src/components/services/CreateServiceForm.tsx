@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ServiceData, PricingModel } from '@/types/service';
-import { ImageUpload } from '@/components/ui/image-upload';
+import ImageUpload from "@/components/ui/image-upload";
 
 interface CreateServiceFormProps {
   onSubmit: (data: Partial<ServiceData>) => Promise<void>;

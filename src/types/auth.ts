@@ -1,4 +1,3 @@
-
 import { Json } from "./schema";
 
 export type ProviderVerificationStatus = 'pending' | 'verified' | 'rejected' | 'unverified';
@@ -71,6 +70,7 @@ export interface DbUserProfile {
 export interface DbCustomerProfile extends DbUserProfile {
   preferred_categories: string[];
   saved_services: string[];
+  birth_date?: string;
   notification_preferences: {
     email: boolean;
     sms: boolean;

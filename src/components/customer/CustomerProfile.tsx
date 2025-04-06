@@ -14,7 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { CalendarIcon } from "@radix-ui/react-icons"
+import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
