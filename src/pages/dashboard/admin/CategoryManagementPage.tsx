@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { getServiceCategories, createServiceCategory, updateServiceCategory, deleteServiceCategory, uploadImage } from '@/services/contentService';
+import { getServiceCategories, createServiceCategory, updateServiceCategory, deleteServiceCategory } from '@/services/contentService';
+import { uploadImage } from '@/utils/imageUtils';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ImageUpload } from '@/components/ui/image-upload';
+import ImageUpload from '@/components/ui/image-upload';
 import { PencilIcon, PlusCircle, Trash } from 'lucide-react';
 import { ServiceCategory } from '@/services/contentService';
 

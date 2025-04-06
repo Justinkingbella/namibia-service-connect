@@ -21,6 +21,7 @@ export interface ServiceData {
   availability?: Json;
   featured?: boolean;
   faqs?: Json;
+  tags?: string[];
 }
 
 export interface Service {
@@ -43,6 +44,7 @@ export interface Service {
   availability?: Record<string, any>;
   featured?: boolean;
   faqs?: Record<string, any>;
+  tags?: string[];
 }
 
 export interface ServiceListItem {
@@ -85,5 +87,43 @@ export interface FavoriteService {
     image?: string;
     provider_id: string;
     provider_name: string;
+    category?: string;
+    pricingModel?: string;
+    rating?: number;
+    reviewCount?: number;
+    location?: string;
   };
 }
+
+// Add enums for categories
+export enum ServiceCategoryEnum {
+  HOME = 'home',
+  CLEANING = 'cleaning',
+  REPAIR = 'repair',
+  PLUMBING = 'plumbing',
+  ELECTRICAL = 'electrical',
+  MOVING = 'moving',
+  PAINTING = 'painting',
+  LANDSCAPING = 'landscaping',
+  TUTORING = 'tutoring',
+  ERRAND = 'errand',
+  PROFESSIONAL = 'professional',
+  FREELANCE = 'freelance',
+  TRANSPORT = 'transport',
+  HEALTH = 'health'
+}
+
+// Export ServiceCategory type
+export type ServiceCategory = keyof typeof ServiceCategoryEnum;
+
+// Pricing model enum
+export enum PricingModelEnum {
+  FIXED = 'fixed',
+  HOURLY = 'hourly',
+  DAILY = 'daily',
+  PROJECT = 'project',
+  QUOTE = 'quote'
+}
+
+// Export PricingModel type
+export type PricingModel = keyof typeof PricingModelEnum;

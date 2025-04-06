@@ -76,3 +76,52 @@ export interface WalletVerificationRequest {
   rejectedAt?: string;
   rejectionReason?: string;
 }
+
+// Add missing types that were referenced in other files
+export interface PaymentHistory {
+  id: string;
+  userId: string;
+  bookingId: string;
+  amount: number;
+  description: string;
+  status: PaymentStatus;
+  paymentMethod: PaymentMethodType;
+  transactionId: string;
+  createdAt: string;
+}
+
+export interface ProviderEarnings {
+  id: string;
+  providerId: string;
+  periodStart: string;
+  periodEnd: string;
+  totalEarnings: number;
+  commissionPaid: number;
+  netEarnings: number;
+  totalBookings: number;
+  payoutStatus: 'pending' | 'processing' | 'completed' | 'failed';
+  payoutDate?: string;
+  payoutReference?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProviderPayout {
+  id: string;
+  providerId: string;
+  amount: number;
+  fee: number;
+  netAmount: number;
+  paymentMethod: string;
+  status: string;
+  reference?: string;
+  processedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  bankDetails?: Record<string, any>;
+  mobileDetails?: Record<string, any>;
+  notes?: string;
+}
+
+// Add a type for ServicePaymentMethod
+export type ServicePaymentMethod = PaymentMethodType;

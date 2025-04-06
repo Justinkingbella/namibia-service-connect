@@ -1,19 +1,24 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ServiceData, PricingModel } from '@/types/service';
+import { ServiceData } from '@/types/service';
+import { PricingModelEnum } from '@/types/service';
 import ImageUpload from "@/components/ui/image-upload";
 
 interface CreateServiceFormProps {
   onSubmit: (data: Partial<ServiceData>) => Promise<void>;
   isSubmitting: boolean;
+  initialData?: Partial<ServiceData>;
 }
 
-export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmitting }) => {
-  const [formData, setFormData] = useState<Partial<ServiceData>>({
+export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ 
+  onSubmit, 
+  isSubmitting,
+  initialData = {
     title: '',
     description: '',
     price: 0,
@@ -21,9 +26,11 @@ export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, 
     category: 'home',
     features: [],
     is_active: true,
-  });
+  }
+}) => {
+  const [formData, setFormData] = useState<Partial<ServiceData>>(initialData);
 
-  const [imageUrl, setImageUrl] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string>(initialData.image || '');
   const [feature, setFeature] = useState<string>('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

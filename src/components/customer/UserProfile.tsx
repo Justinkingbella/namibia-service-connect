@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-// Replace CalendarIcon from @radix-ui/react-icons with Calendar from lucide-react
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -161,6 +160,7 @@ const UserProfile = () => {
                     "w-[240px] justify-start text-left font-normal",
                     !date && "text-muted-foreground"
                   )}
+                  disabled={!isEditing}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {date ? format(date, "PPP") : <span>Pick a date</span>}
@@ -197,8 +197,8 @@ const UserProfile = () => {
                 }}>
                   Cancel
                 </Button>
-                <Button type="submit" isLoading={isSaving}>
-                  Save Changes
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? 'Saving...' : 'Save Changes'}
                 </Button>
               </>
             )}

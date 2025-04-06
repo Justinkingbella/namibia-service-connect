@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ImageIcon, TrashIcon } from 'lucide-react';
@@ -7,21 +7,47 @@ import { ImageIcon, TrashIcon } from 'lucide-react';
 export interface ImageUploadProps {
   onChange: (file: File) => void;
   currentImage?: string;
+  // Add the props used in the CreateServiceForm component
+  initialImage?: string;
+  onImageUpload?: (url: string) => void;
+  className?: string;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ onChange, currentImage }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({ 
+  onChange, 
+  currentImage,
+  initialImage,
+  onImageUpload,
+  className
+}) => {
+  const [image, setImage] = useState<string>(initialImage || currentImage || '');
+  
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
-      onChange(event.target.files[0]);
+      const file = event.target.files[0];
+      onChange(file);
+      
+      // If this component is used with the onImageUpload prop pattern
+      if (onImageUpload) {
+        // Create a temporary URL for preview
+        const fileUrl = URL.createObjectURL(file);
+        setImage(fileUrl);
+        // This is a simplified example - in a real app, 
+        // you would upload the file to storage first
+        onImageUpload(fileUrl);
+      }
     }
   };
 
+  // Use either the image state or the currentImage prop
+  const displayImage = image || currentImage;
+
   return (
-    <div className="flex flex-col items-center gap-2">
-      {currentImage ? (
+    <div className={`flex flex-col items-center gap-2 ${className}`}>
+      {displayImage ? (
         <div className="relative w-full h-40 bg-slate-100 rounded-md overflow-hidden">
           <img
-            src={currentImage}
+            src={displayImage}
             alt="Preview"
             className="w-full h-full object-cover"
           />
@@ -30,7 +56,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onChange, currentImage }) => 
               type="button"
               variant="destructive"
               size="sm"
-              onClick={() => onChange(new File([], ''))}
+              onClick={() => {
+                onChange(new File([], ''));
+                setImage('');
+                if (onImageUpload) onImageUpload('');
+              }}
             >
               <TrashIcon className="mr-2 h-4 w-4" />
               Remove

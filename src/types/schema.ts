@@ -28,6 +28,11 @@ export interface Database {
             sms: boolean;
             push: boolean;
           };
+          birth_date?: string;
+          address?: string;
+          city?: string;
+          country?: string;
+          bio?: string;
         };
       };
       services: {
@@ -58,5 +63,53 @@ export interface Database {
   };
 }
 
+// Additional types
 export type ServiceCategory = string;
 export type PricingModel = string;
+
+// Define a type for payment method types
+export type PaymentMethodType = 'credit_card' | 'debit_card' | 'bank_transfer' | 'e_wallet' | 'cash' | 'mobile_money';
+
+// Define a type for wallet payment types
+export type WalletPaymentType = 
+  | 'e_wallet'
+  | 'easy_wallet'
+  | 'mobile_money'
+  | 'bank_transfer'
+  | 'credit_card'
+  | 'debit_card';
+
+// Define a type for payment status
+export type PaymentStatus = 
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'refunded'
+  | 'canceled'
+  | 'partially_refunded';
+
+// Define a type for booking status
+export type BookingStatus = 
+  | 'pending'
+  | 'confirmed'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+  | 'rejected'
+  | 'no_show'
+  | 'disputed'
+  | 'rescheduled';
+
+// Define a type for subscription tier
+export type SubscriptionTier = 
+  | 'basic'
+  | 'pro'
+  | 'premium'
+  | 'enterprise';
+
+// Define a type for provider verification status
+export type ProviderVerificationStatus = 
+  | 'pending'
+  | 'verified'
+  | 'rejected';
