@@ -110,7 +110,8 @@ export enum ServiceCategoryEnum {
   PROFESSIONAL = 'professional',
   FREELANCE = 'freelance',
   TRANSPORT = 'transport',
-  HEALTH = 'health'
+  HEALTH = 'health',
+  ALL = 'all'
 }
 
 // Export ServiceCategory type
@@ -118,12 +119,15 @@ export type ServiceCategory = keyof typeof ServiceCategoryEnum;
 
 // Pricing model enum
 export enum PricingModelEnum {
-  FIXED = 'fixed',
-  HOURLY = 'hourly',
-  DAILY = 'daily',
-  PROJECT = 'project',
-  QUOTE = 'quote'
+  FIXED = 'FIXED',
+  HOURLY = 'HOURLY',
+  DAILY = 'DAILY',
+  PROJECT = 'PROJECT',
+  QUOTE = 'QUOTE'
 }
 
 // Export PricingModel type
 export type PricingModel = keyof typeof PricingModelEnum;
+
+// Export payment method type
+export type ServicePaymentMethod = string;

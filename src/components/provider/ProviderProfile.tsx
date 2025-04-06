@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,34 +16,35 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { ProviderVerificationStatus, DbProviderProfile } from '@/types/auth';
+import { ProviderVerificationStatus } from '@/types/schema';
 
 const ProviderProfile = () => {
   const { user, userProfile, setUserProfile } = useAuth();
-  const [providerData, setProviderData] = useState<Partial<DbProviderProfile>>({
-    address: '',
-    avatar_url: '',
-    banner_url: '',
-    business_description: '',
+  const [providerData, setProviderData] = useState({
     business_name: '',
-    city: '',
+    business_description: '',
+    banner_url: '',
+    website: '',
     commission_rate: 0,
+    verification_status: 'pending' as ProviderVerificationStatus,
     completed_bookings: 0,
-    country: '',
     email: '',
     email_verified: false,
     id: '',
     is_active: false,
     phone_number: '',
-    postal_code: '',
     rating: 0,
     rating_count: 0,
     rejection_reason: '',
-    state: '',
     subscription_tier: 'free',
-    website: '',
-    verification_status: 'pending'
+    // Address fields
+    address: '',
+    city: '',
+    country: '',
+    state: '',
+    postal_code: ''
   });
+  
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -64,9 +66,11 @@ const ProviderProfile = () => {
           return;
         }
 
-        setProviderData({ ...providerData, verification_status: data.verification_status as ProviderVerificationStatus });
-
-        setProviderData(data);
+        setProviderData({
+          ...providerData,
+          ...data,
+          verification_status: data.verification_status as ProviderVerificationStatus
+        });
       } catch (error) {
         console.error('Error fetching provider data:', error);
         toast.error('Failed to load provider profile.');
@@ -95,7 +99,16 @@ const ProviderProfile = () => {
       setIsLoading(true);
       const { error } = await supabase
         .from('service_providers')
-        .update(providerData)
+        .update({
+          business_name: providerData.business_name,
+          business_description: providerData.business_description,
+          website: providerData.website,
+          address: providerData.address,
+          city: providerData.city,
+          state: providerData.state,
+          postal_code: providerData.postal_code,
+          country: providerData.country
+        })
         .eq('id', user.id);
 
       if (error) {
@@ -110,6 +123,10 @@ const ProviderProfile = () => {
           ...userProfile,
           businessName: providerData.business_name || '',
           businessDescription: providerData.business_description || '',
+          website: providerData.website || '',
+          address: providerData.address || '',
+          city: providerData.city || '',
+          country: providerData.country || ''
         });
       }
 

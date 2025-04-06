@@ -1,7 +1,5 @@
 
-export type WalletVerificationStatus = 'pending' | 'submitted' | 'verified' | 'rejected' | 'expired';
-
-export type WalletPaymentType = 'mobile_money' | 'bank_transfer' | 'cash' | 'e_wallet' | 'easy_wallet';
+import { WalletVerificationStatus, WalletPaymentType } from './schema';
 
 export interface WalletVerification {
   id: string;
@@ -9,7 +7,7 @@ export interface WalletVerification {
   amount: number;
   date: Date;
   reference: string;
-  method: string;
+  method: WalletPaymentType;
   user_id: string;
   receipt?: string;
   
@@ -28,16 +26,12 @@ export interface WalletVerification {
   customerConfirmed: boolean;
   providerConfirmed: boolean;
   adminVerified: boolean;
-  proofType?: 'receipt' | 'screenshot' | 'reference';
+  proofType?: 'receipt' | 'screenshot' | 'reference' | '';
   receiptImage?: string;
   mobileOperator?: string;
   bankUsed?: string;
   rejectionReason?: string;
 }
-
-export type NamibianMobileOperator = 'MTN' | 'TN Mobile' | 'Other';
-
-export type NamibianBank = 'bank_windhoek' | 'standard_bank' | 'fnb_namibia' | 'nedbank_namibia' | 'other';
 
 export interface Wallet {
   id: string;
@@ -57,3 +51,7 @@ export interface Transaction {
   description?: string;
   reference?: string;
 }
+
+// Re-export types from schema to ensure backward compatibility
+export { WalletPaymentType, WalletVerificationStatus } from './schema';
+export type { NamibianMobileOperator, NamibianBank } from './wallet';

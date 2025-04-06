@@ -16,7 +16,15 @@ export type {
 } from './booking';
 
 // Export payment types
-export * from './payments';
+export type {
+  PaymentMethod,
+  PaymentRecord,
+  WalletVerification,
+  WalletVerificationRequest,
+  PaymentHistory,
+  ProviderEarnings,
+  ProviderPayout
+} from './payments';
 
 // Re-export Auth types
 export type { 
@@ -30,44 +38,40 @@ export type {
   Provider,
   Admin,
   Session,
-  SubscriptionTier,
   UserAddress,
   AuthContextType
 } from './auth';
+export { SubscriptionTier } from './auth';
 
 // Export wallet verification types
-export {
-  WalletVerificationStatus,
-  WalletPaymentType,
-  NamibianMobileOperator,
-  NamibianBank
-} from './payment';
 export type {
-  WalletVerification,
+  WalletVerificationStatus,
+  WalletPaymentType
+} from './schema';
+export type {
   Wallet,
   Transaction as WalletTransaction
 } from './payment';
 
-// Explicitly re-export types with different names to resolve ambiguities
-export { ServiceCategoryEnum } from './service';
+// Export schema types
+export type { Json } from './schema';
+
+// Explicitly re-export types from service
+export { ServiceCategoryEnum, PricingModelEnum } from './service';
 export type { 
   ServiceCategory, 
   PricingModel, 
   ServiceListItem, 
   Service,
   ServiceData,
-  FavoriteService,
-  ServicePaymentMethod,
+  FavoriteService
 } from './service';
-// Explicitly export PaymentMethod from both modules, giving them unique names
-export type { PaymentMethod as ServicePaymentMethod } from './service';
-export type { PaymentMethod } from './payments';
 
+// Explicitly export service payment method
+export type { ServicePaymentMethod } from './service';
+
+// Export transaction from booking
 export type { Transaction as BookingTransaction } from './booking';
-// Explicitly resolve the ambiguity with ProviderEarnings
-export type { ProviderEarnings as SubscriptionProviderEarnings } from './subscription';
-export type { ProviderEarnings } from './payments';
-export type { ProviderPayout, PaymentHistory } from './payments';
 
 export interface IResponse<T> {
   success: boolean;

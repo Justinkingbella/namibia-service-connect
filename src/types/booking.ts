@@ -1,22 +1,8 @@
 
-export type BookingStatus = 
-  | 'pending' 
-  | 'confirmed' 
-  | 'in_progress' 
-  | 'completed' 
-  | 'cancelled' 
-  | 'disputed' 
-  | 'no_show'
-  | 'rescheduled'
-  | 'rejected';
+import { BookingStatus, PaymentStatus } from './schema';
 
-export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partial' | 'completed';
-
-export type DisputeStatus = 'pending' | 'in_review' | 'resolved' | 'rejected';
-export type DisputePriority = 'low' | 'medium' | 'high' | 'urgent';
-
-export interface Booking {
-  id: string;
+export interface BookingData {
+  id?: string;
   service_id: string;
   customer_id: string;
   provider_id: string;
@@ -29,30 +15,27 @@ export interface Booking {
   total_amount: number;
   commission: number;
   notes?: string;
-  created_at: string;
-  updated_at: string;
-  is_urgent?: boolean;
-}
-
-export interface BookingData extends Booking {
+  created_at?: string;
+  updated_at?: string;
   customer_notes?: string;
   provider_notes?: string;
   cancellation_reason?: string;
-  cancellation_date?: string;
   cancelled_by?: string;
-  duration?: number;
-  rating?: number;
-  feedback?: string;
-  refund_amount?: number;
-  payment_receipt?: string;
-  // Additional properties for UI display
+  cancellation_date?: string;
+  serviceId?: string;
   serviceName?: string;
   serviceImage?: string;
+  providerId?: string;
   providerName?: string;
+  customerId?: string;
   customerName?: string;
+  startTime?: string;
+  endTime?: string;
+  totalAmount?: number;
+  createdAt?: string;
 }
 
-export interface BookingWithDetails {
+export interface Booking {
   id: string;
   serviceId: string;
   customerId: string;
@@ -66,23 +49,23 @@ export interface BookingWithDetails {
   totalAmount: number;
   commission: number;
   notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  isUrgent?: boolean;
-  customerNotes?: string;
-  providerNotes?: string;
-  cancellationReason?: string;
-  cancellationDate?: Date;
-  cancelledBy?: string;
-  duration?: number;
-  rating?: number;
-  feedback?: string;
-  refundAmount?: number;
-  paymentReceipt?: string;
-  serviceName?: string;
-  serviceImage?: string;
-  providerName?: string;
-  customerName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BookingWithDetails extends Booking {
+  service?: {
+    title: string;
+    image?: string;
+  };
+  provider?: {
+    businessName: string;
+    avatarUrl?: string;
+  };
+  customer?: {
+    name: string;
+    avatarUrl?: string;
+  };
 }
 
 export interface Dispute {
@@ -93,47 +76,43 @@ export interface Dispute {
   subject: string;
   description: string;
   status: DisputeStatus;
-  resolution?: string;
-  createdAt: Date;
-  updatedAt: Date;
   priority: DisputePriority;
-  evidenceUrls?: string[];
+  createdAt: string;
+  updatedAt?: string;
+  resolutionDate?: string;
+  resolution?: string;
   refundAmount?: number;
-  reason?: string;
+  adminNotes?: string;
+  adminAssignedTo?: string;
+  evidenceUrls?: string[];
+}
+
+export type DisputeStatus = 'pending' | 'in_progress' | 'resolved' | 'closed' | 'escalated';
+export type DisputePriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface Transaction {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  createdAt: string;
+  type: 'payment' | 'refund' | 'payout';
+  description: string;
 }
 
 export interface Withdrawal {
   id: string;
-  providerId: string;
   amount: number;
   status: string;
-  date: Date;
+  createdAt: string;
   paymentMethod: string;
   reference?: string;
-  notes?: string;
 }
 
-export interface Transaction {
-  id: string;
-  bookingId?: string;
-  userId: string;
-  amount: number;
-  type: 'payout' | 'refund' | 'payment' | 'deposit' | 'withdrawal';
-  status: string;
-  date: Date;
-  description: string;
-  reference?: string;
-}
-
-export interface WalletVerificationRequest {
-  id: string;
+export interface FeedbackData {
   bookingId: string;
-  amount: number;
-  status: string;
-  dateSubmitted: Date;
-  verifiedBy?: string;
-  dateVerified?: Date;
-  paymentMethod: string;
-  referenceNumber: string;
-  notes?: string;
+  rating: number;
+  comment: string;
+  providerId: string;
+  customerId: string;
 }

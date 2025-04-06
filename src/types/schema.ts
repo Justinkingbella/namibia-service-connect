@@ -33,6 +33,7 @@ export interface Database {
           city?: string;
           country?: string;
           bio?: string;
+          loyalty_points?: number;
         };
       };
       services: {
@@ -68,7 +69,15 @@ export type ServiceCategory = string;
 export type PricingModel = string;
 
 // Define a type for payment method types
-export type PaymentMethodType = 'credit_card' | 'debit_card' | 'bank_transfer' | 'e_wallet' | 'cash' | 'mobile_money';
+export type PaymentMethodType = 
+  | 'credit_card' 
+  | 'debit_card' 
+  | 'bank_transfer' 
+  | 'e_wallet' 
+  | 'easy_wallet'
+  | 'cash' 
+  | 'mobile_money'
+  | 'payfast';
 
 // Define a type for wallet payment types
 export type WalletPaymentType = 
@@ -77,7 +86,9 @@ export type WalletPaymentType =
   | 'mobile_money'
   | 'bank_transfer'
   | 'credit_card'
-  | 'debit_card';
+  | 'debit_card'
+  | 'MTC E-Wallet'
+  | 'Bank Transfer';
 
 // Define a type for payment status
 export type PaymentStatus = 
@@ -102,14 +113,24 @@ export type BookingStatus =
   | 'rescheduled';
 
 // Define a type for subscription tier
-export type SubscriptionTier = 
+export type SubscriptionTierType = 
+  | 'free'
   | 'basic'
-  | 'pro'
+  | 'pro' 
   | 'premium'
+  | 'professional'
   | 'enterprise';
 
 // Define a type for provider verification status
 export type ProviderVerificationStatus = 
   | 'pending'
   | 'verified'
-  | 'rejected';
+  | 'rejected'
+  | 'unverified';
+
+export type WalletVerificationStatus = 
+  | 'pending' 
+  | 'submitted' 
+  | 'verified' 
+  | 'rejected' 
+  | 'expired';

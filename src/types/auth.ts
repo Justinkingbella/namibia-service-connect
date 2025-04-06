@@ -1,3 +1,4 @@
+
 import { Json } from "./schema";
 
 export type ProviderVerificationStatus = 'pending' | 'verified' | 'rejected' | 'unverified';
@@ -41,6 +42,9 @@ export interface User {
   isActive?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  birthDate?: string;
+  bio?: string;
+  loyaltyPoints?: number;
   notificationPreferences?: {
     email: boolean;
     sms: boolean;
@@ -60,6 +64,12 @@ export interface DbUserProfile {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  bio?: string;
+  birth_date?: string;
+  loyalty_points?: number;
   notification_preferences: {
     email: boolean;
     sms: boolean;
@@ -94,6 +104,11 @@ export interface DbProviderProfile extends DbUserProfile {
   business_license?: string;
   id_document_url?: string;
   proof_of_address_url?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  state?: string;
+  postal_code?: string;
 }
 
 export interface Provider extends User {
@@ -107,6 +122,8 @@ export interface Provider extends User {
   bannerUrl?: string;
   website?: string;
   taxId?: string;
+  reviewCount?: number;
+  subscriptionTier?: string;
 }
 
 export interface Customer extends User {
@@ -117,28 +134,36 @@ export interface Customer extends User {
 export interface Admin extends User {
   permissions: string[];
   adminLevel: number;
+  isVerified?: boolean;
+  accessLevel?: number;
 }
 
 export enum SubscriptionTier {
   FREE = 'free',
   BASIC = 'basic',
+  PRO = 'pro',
   PREMIUM = 'premium',
-  PROFESSIONAL = 'professional'
+  PROFESSIONAL = 'professional',
+  ENTERPRISE = 'enterprise'
 }
 
 export interface AuthContextType {
   user: User | null;
+  userProfile: Customer | Provider | Admin | null;
+  userRole: UserRole | null;
   isLoading: boolean;
+  loading?: boolean;
   isAuthenticated: boolean;
+  session: Session | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, userData: Partial<User>) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
+  setUserProfile: (profile: Customer | Provider | Admin | null) => void;
   uploadAvatar: (file: File) => Promise<string>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
   sendVerificationEmail: () => Promise<void>;
   checkAuth: () => Promise<User | null>;
-  session: Session | null;
 }

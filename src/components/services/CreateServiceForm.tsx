@@ -5,8 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ServiceData } from '@/types/service';
-import { PricingModelEnum } from '@/types/service';
+import { ServiceData, PricingModelEnum } from '@/types/service';
 import ImageUpload from "@/components/ui/image-upload";
 
 interface CreateServiceFormProps {
@@ -22,7 +21,7 @@ export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
     title: '',
     description: '',
     price: 0,
-    pricing_model: 'hourly',
+    pricing_model: 'HOURLY',
     category: 'home',
     features: [],
     is_active: true,
@@ -76,6 +75,11 @@ export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
     });
   };
 
+  const handleImageChange = (file: File) => {
+    // Handle file upload logic if needed
+    console.log("File selected:", file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await onSubmit(formData);
@@ -99,11 +103,11 @@ export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
   ];
 
   const pricingModels = [
-    { value: 'fixed', label: 'Fixed Price' },
-    { value: 'hourly', label: 'Hourly Rate' },
-    { value: 'daily', label: 'Daily Rate' },
-    { value: 'project', label: 'Project-Based' },
-    { value: 'quote', label: 'Quote Required' },
+    { value: 'FIXED', label: 'Fixed Price' },
+    { value: 'HOURLY', label: 'Hourly Rate' },
+    { value: 'DAILY', label: 'Daily Rate' },
+    { value: 'PROJECT', label: 'Project-Based' },
+    { value: 'QUOTE', label: 'Quote Required' },
   ];
 
   return (
@@ -117,6 +121,7 @@ export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
                 <ImageUpload
                   initialImage={imageUrl}
                   onImageUpload={handleImageUpload}
+                  onChange={handleImageChange}
                   className="h-64"
                 />
               </div>

@@ -1,5 +1,8 @@
+
+import { WalletPaymentType, WalletVerificationStatus } from './schema';
+
 export type VerificationStatus = 'pending' | 'approved' | 'rejected' | 'expired';
-export type WalletProvider = 'eWallet' | 'BlueWallet' | 'PayToday' | 'DOP' | 'EasyWallet' | 'OtherWallet';
+export type WalletProvider = 'eWallet' | 'BlueWallet' | 'PayToday' | 'DOP' | 'EasyWallet' | 'OtherWallet' | 'MTC E-Wallet';
 export type UserType = 'customer' | 'provider';
 
 export interface WalletVerificationRequest {

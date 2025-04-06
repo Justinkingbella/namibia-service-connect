@@ -1,5 +1,5 @@
 
-export type PaymentMethodType = 'credit_card' | 'debit_card' | 'bank_transfer' | 'e_wallet' | 'cash' | 'mobile_money';
+import { PaymentMethodType, PaymentStatus, WalletPaymentType } from './schema';
 
 export interface PaymentMethod {
   id: string;
@@ -10,23 +10,6 @@ export interface PaymentMethod {
   isDefault: boolean;
   createdAt: Date;
 }
-
-export type PaymentStatus = 
-  | 'pending'
-  | 'processing'
-  | 'completed'
-  | 'failed'
-  | 'refunded'
-  | 'canceled'
-  | 'partially_refunded';
-
-export type WalletPaymentType = 
-  | 'e_wallet'
-  | 'easy_wallet'
-  | 'mobile_money'
-  | 'bank_transfer'
-  | 'credit_card'
-  | 'debit_card';
 
 export interface PaymentRecord {
   id: string;
@@ -55,6 +38,26 @@ export interface WalletVerification {
   receipt_url?: string;
   notes?: string;
   rejection_reason?: string;
+  
+  // Additional properties from WalletVerificationRequest
+  bookingId: string;
+  customerId: string;
+  providerId: string;
+  paymentMethod: WalletPaymentType;
+  referenceNumber: string;
+  customerPhone: string;
+  providerPhone?: string;
+  dateSubmitted?: string;
+  dateVerified?: string;
+  verificationStatus?: string;
+  customerConfirmed?: boolean;
+  providerConfirmed?: boolean;
+  adminVerified?: boolean;
+  proofType?: 'receipt' | 'screenshot' | 'reference' | '';
+  receiptImage?: string;
+  mobileOperator?: string;
+  bankUsed?: string;
+  rejectionReason?: string;
 }
 
 export interface WalletVerificationRequest {
@@ -88,6 +91,8 @@ export interface PaymentHistory {
   paymentMethod: PaymentMethodType;
   transactionId: string;
   createdAt: string;
+  type?: string;
+  date?: string;
 }
 
 export interface ProviderEarnings {
@@ -122,6 +127,3 @@ export interface ProviderPayout {
   mobileDetails?: Record<string, any>;
   notes?: string;
 }
-
-// Add a type for ServicePaymentMethod
-export type ServicePaymentMethod = PaymentMethodType;
