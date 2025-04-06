@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -13,7 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { CalendarIcon } from "@radix-ui/react-icons"
+import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { DbCustomerProfile } from '@/types/auth';
@@ -36,13 +37,13 @@ const UserProfile = () => {
     if (userProfile && userProfile.role === 'customer') {
       const customerProfile = userProfile as DbCustomerProfile;
       setFormData({
-        firstName: customerProfile?.firstName || '',
-        lastName: customerProfile?.lastName || '',
-        phoneNumber: customerProfile?.phoneNumber || '',
-        avatarUrl: customerProfile?.avatarUrl || '',
-        birthDate: customerProfile?.birthDate ? new Date(customerProfile.birthDate) : undefined,
+        firstName: customerProfile?.first_name || '',
+        lastName: customerProfile?.last_name || '',
+        phoneNumber: customerProfile?.phone_number || '',
+        avatarUrl: customerProfile?.avatar_url || '',
+        birthDate: customerProfile?.birth_date ? new Date(customerProfile.birth_date) : undefined,
       });
-      setDate(customerProfile?.birthDate ? new Date(customerProfile.birthDate) : undefined);
+      setDate(customerProfile?.birth_date ? new Date(customerProfile.birth_date) : undefined);
     }
   }, [userProfile]);
 
@@ -86,11 +87,11 @@ const UserProfile = () => {
       // Update the user context
       setUserProfile({
         ...userProfile,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phoneNumber: formData.phoneNumber,
-        avatarUrl: formData.avatarUrl,
-        birthDate: date,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone_number: formData.phoneNumber,
+        avatar_url: formData.avatarUrl,
+        birth_date: date,
       });
 
       toast.success('Profile updated successfully!');
@@ -200,13 +201,13 @@ const UserProfile = () => {
                   onClick={() => {
                     setIsEditing(false);
                     setFormData({
-                      firstName: userProfile.firstName || '',
-                      lastName: userProfile.lastName || '',
-                      phoneNumber: userProfile.phoneNumber || '',
-                      avatarUrl: userProfile.avatarUrl || '',
-                      birthDate: userProfile.birthDate ? new Date(userProfile.birthDate) : undefined,
+                      firstName: userProfile.first_name || '',
+                      lastName: userProfile.last_name || '',
+                      phoneNumber: userProfile.phone_number || '',
+                      avatarUrl: userProfile.avatar_url || '',
+                      birthDate: userProfile.birth_date ? new Date(userProfile.birth_date) : undefined,
                     });
-                    setDate(userProfile.birthDate ? new Date(userProfile.birthDate) : undefined);
+                    setDate(userProfile.birth_date ? new Date(userProfile.birth_date) : undefined);
                   }}
                 >
                   Cancel
