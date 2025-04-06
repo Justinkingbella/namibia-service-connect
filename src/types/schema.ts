@@ -78,6 +78,7 @@ export type PaymentMethodType =
   | 'cash' 
   | 'mobile_money'
   | 'payfast'
+  | 'ewallet'
   | 'MTC E-Wallet'
   | 'Bank Transfer';
 
@@ -138,4 +139,3 @@ export type WalletVerificationStatus =
   | 'verified' 
   | 'rejected' 
   | 'expired';
-

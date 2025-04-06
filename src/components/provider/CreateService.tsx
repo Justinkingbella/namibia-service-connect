@@ -56,7 +56,7 @@ const CreateService = () => {
     <div className="space-y-6">
       <CreateServiceForm 
         onSubmit={handleCreateService}
-        loading={isSubmitting}
+        isLoading={isSubmitting}
       />
     </div>
   );

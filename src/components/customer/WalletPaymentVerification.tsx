@@ -68,7 +68,7 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
         referenceNumber,
         customerPhone: phoneNumber,
         verificationStatus: 'submitted',
-        dateSubmitted: new Date(),
+        dateSubmitted: new Date().toISOString(),
         customerConfirmed: true,
         providerConfirmed: false,
         adminVerified: false,

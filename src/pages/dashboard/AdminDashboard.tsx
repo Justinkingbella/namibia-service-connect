@@ -1,333 +1,259 @@
 
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Users, DollarSign, Check, AlertTriangle, BarChart, Settings, CreditCard, Receipt, MessageSquare } from 'lucide-react';
+import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import StatsCard from '@/components/dashboard/StatsCard';
-import SettingsCard from '@/components/dashboard/SettingsCard';
-import { Button } from '@/components/ui/button';
-import UserManagement from '@/components/admin/UserManagement';
-import ProviderVerification from '@/components/admin/ProviderVerification';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import StatsCard from '@/components/dashboard/StatsCard';
+import { BarChart, LineChart, PieChart } from '@/components/ui/chart';
+import { Users, CreditCard, DollarSign, Activity } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [timeRange, setTimeRange] = useState('7d');
   
-  // Mock data for pending approvals
-  const pendingProviders = [
-    {
-      id: '1',
-      name: 'Michael Plumbers',
-      email: 'michael@example.com',
-      category: 'Home Services',
-      date: '2023-06-15',
-      documents: 3
-    },
-    {
-      id: '2',
-      name: 'Swift Errands',
-      email: 'swift@example.com',
-      category: 'Errand Services',
-      date: '2023-06-14',
-      documents: 2
-    },
-    {
-      id: '3',
-      name: 'Eagle Security',
-      email: 'security@example.com',
-      category: 'Professional Services',
-      date: '2023-06-13',
-      documents: 4
-    }
-  ];
+  // Sample data for stats
+  const userStats = {
+    total: 1205,
+    growth: 12.5,
+    newUsers: 124,
+    activeUsers: 982
+  };
+  
+  const revenueStats = {
+    total: 47250,
+    growth: 8.2,
+    transactions: 432,
+    averageValue: 109.38
+  };
 
-  // Mock data for recent disputes
-  const recentDisputes = [
-    {
-      id: '1',
-      customer: 'Sarah Johnson',
-      provider: 'CleanHome Pro',
-      service: 'Home Cleaning',
-      amount: 450,
-      reason: 'Service not completed',
-      date: '2023-06-15'
-    },
-    {
-      id: '2',
-      customer: 'James Morris',
-      provider: 'Plumb Perfect',
-      service: 'Plumbing Repair',
-      amount: 650,
-      reason: 'Quality issues',
-      date: '2023-06-14'
-    }
+  // Sample data for charts
+  const serviceUsageData = [
+    { name: 'Cleaning', value: 125 },
+    { name: 'Repair', value: 86 },
+    { name: 'Plumbing', value: 103 },
+    { name: 'Electrical', value: 72 },
+    { name: 'Moving', value: 53 },
+    { name: 'Others', value: 118 },
+  ];
+  
+  const revenueData = [
+    { name: 'Jan', value: 4200 },
+    { name: 'Feb', value: 3800 },
+    { name: 'Mar', value: 5100 },
+    { name: 'Apr', value: 5800 },
+    { name: 'May', value: 7200 },
+    { name: 'Jun', value: 6800 },
+    { name: 'Jul', value: 7800 },
   ];
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Overview of platform performance and management tools.</p>
-        </div>
-        
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatsCard
-            title="Total Users"
-            value="2,456"
-            icon={Users}
-            trend={{ value: 8, positive: true }}
-            description="vs. last month"
-          />
-          <StatsCard
-            title="Total Revenue"
-            value="N$124,350"
-            icon={DollarSign}
-            trend={{ value: 12, positive: true }}
-            description="vs. last month"
-          />
-          <StatsCard
-            title="Completed Bookings"
-            value="1,287"
-            icon={Check}
-            trend={{ value: 5, positive: true }}
-            description="vs. last month"
-          />
-          <StatsCard
-            title="Active Disputes"
-            value="5"
-            icon={AlertTriangle}
-            description="Requiring resolution"
-          />
-        </div>
-        
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="providers">Providers</TabsTrigger>
-            <TabsTrigger value="disputes">Disputes</TabsTrigger>
-          </TabsList>
-          
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl border shadow-sm p-6">
-                <h2 className="text-lg font-medium mb-6">Revenue Overview</h2>
-                <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                  <div className="text-center">
-                    <BarChart className="h-10 w-10 mx-auto text-gray-400" />
-                    <p className="mt-2 text-sm text-muted-foreground">Revenue chart will be displayed here</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-xl border shadow-sm p-6">
-                <h2 className="text-lg font-medium mb-6">Booking Analytics</h2>
-                <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                  <div className="text-center">
-                    <BarChart className="h-10 w-10 mx-auto text-gray-400" />
-                    <p className="mt-2 text-sm text-muted-foreground">Booking analytics chart will be displayed here</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Pending Provider Approvals */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Pending Provider Approvals</h2>
-                <Button 
-                  as="a"
-                  onClick={() => navigate('/admin/provider-verification')}
-                  variant="outline" 
-                  size="sm"
-                >
-                  View All
-                </Button>
-              </div>
-              
-              {/* Provider verification table preview */}
-              <div className="max-h-[400px] overflow-hidden">
-                <ProviderVerification />
-              </div>
-            </div>
-            
-            {/* Recent Disputes */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Recent Disputes</h2>
-                <Button 
-                  as="a" 
-                  onClick={() => navigate('/admin/disputes')} 
-                  variant="outline" 
-                  size="sm"
-                >
-                  View All
-                </Button>
-              </div>
-              
-              <div className="bg-white shadow-sm rounded-xl border overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Parties
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Service
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Amount
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Reason
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Date
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {recentDisputes.map((dispute) => (
-                        <tr key={dispute.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="font-medium text-gray-900">{dispute.customer}</div>
-                            <div className="text-sm text-gray-500">vs. {dispute.provider}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-gray-500">{dispute.service}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-gray-500">N${dispute.amount}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-gray-500">{dispute.reason}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-gray-500">{dispute.date}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                            <Button 
-                              size="xs" 
-                              onClick={() => navigate(`/admin/disputes/${dispute.id}`)}
-                            >
-                              Resolve
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-          
-          {/* Users Tab */}
-          <TabsContent value="users">
-            <UserManagement />
-          </TabsContent>
-          
-          {/* Providers Tab */}
-          <TabsContent value="providers">
-            <div className="space-y-6">
-              <ProviderVerification />
-            </div>
-          </TabsContent>
-          
-          {/* Disputes Tab */}
-          <TabsContent value="disputes">
-            <div className="bg-white rounded-xl border shadow-sm p-6">
-              <h2 className="text-lg font-medium mb-4">Dispute Resolution</h2>
-              <p className="text-muted-foreground">Handle disputes between customers and service providers.</p>
-              <p className="text-sm text-muted-foreground mt-4">This feature is under development.</p>
-            </div>
-          </TabsContent>
-        </Tabs>
-        
-        {/* Quick Actions */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Admin Actions</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <SettingsCard
-              title="Manage Users"
-              description="View and manage all users"
-              icon={<Users className="h-5 w-5" />}
-              onClick={() => navigate('/admin/users')}
-            />
-            
-            <SettingsCard
-              title="Provider Verification"
-              description="Review provider applications"
-              onClick={() => navigate('/admin/provider-verification')}
-            />
-            
-            <SettingsCard
-              title="Platform Analytics"
-              description="View detailed platform metrics"
-              icon={<BarChart className="h-5 w-5" />}
-              onClick={() => navigate('/admin/analytics')}
-            />
-            
-            <SettingsCard
-              title="Subscription Plans"
-              description="Manage subscription plans"
-              icon={<Receipt className="h-5 w-5" />}
-              onClick={() => navigate('/admin/subscription-management')}
-            />
-            
-            <SettingsCard
-              title="Platform Settings"
-              description="Configure global settings"
-              icon={<Settings className="h-5 w-5" />}
-              onClick={() => navigate('/admin/platform-controls')}
-            />
-            
-            <SettingsCard
-              title="Manage Services"
-              description="Review and manage services"
-              icon={<CreditCard className="h-5 w-5" />}
-              onClick={() => navigate('/admin/services')}
-            />
-            
-            <SettingsCard
-              title="Messages"
-              description="Monitor user messages"
-              icon={<Users className="h-5 w-5" />}
-              onClick={() => navigate('/admin/messages')}
-            />
-            
-            <SettingsCard
-              title="Payment Settings"
-              description="Configure payment methods"
-              icon={<DollarSign className="h-5 w-5" />}
-              onClick={() => navigate('/admin/payment-settings')}
-            />
-            
-            <SettingsCard
-              title="Wallet Verification"
-              description="Verify payment confirmations"
-              icon={<AlertTriangle className="h-5 w-5" />}
-              onClick={() => navigate('/admin/wallet-verification')}
-            />
-            
-            <SettingsCard
-              title="Site Settings"
-              description="Manage website settings"
-              icon={<Settings className="h-5 w-5" />}
-              onClick={() => navigate('/admin/site-settings')}
-            />
+      <div className="space-y-4">
+        <div className="flex justify-between">
+          <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" onClick={() => setTimeRange('7d')} className={timeRange === '7d' ? 'bg-primary/10' : ''}>
+              7d
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setTimeRange('30d')} className={timeRange === '30d' ? 'bg-primary/10' : ''}>
+              30d
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setTimeRange('90d')} className={timeRange === '90d' ? 'bg-primary/10' : ''}>
+              90d
+            </Button>
           </div>
         </div>
+        
+        <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="services">Services</TabsTrigger>
+            <TabsTrigger value="revenue">Revenue</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <StatsCard
+                title="Total Users"
+                value={userStats.total.toString()}
+                icon={<Users className="h-4 w-4" />}
+                trend="up"
+                percentage={`+${userStats.growth}%`}
+                description="vs. previous period"
+              />
+              <StatsCard
+                title="Active Providers"
+                value="287"
+                icon={<Users className="h-4 w-4" />}
+                trend="up"
+                percentage="+4.3%"
+                description="vs. previous period"
+              />
+              <StatsCard
+                title="Total Revenue"
+                value={`$${revenueStats.total}`}
+                icon={<DollarSign className="h-4 w-4" />}
+                trend="up"
+                percentage={`+${revenueStats.growth}%`}
+                description="vs. previous period"
+              />
+              <StatsCard
+                title="Successful Bookings"
+                value="954"
+                icon={<Activity className="h-4 w-4" />}
+                trend="neutral"
+                description="This month"
+              />
+            </div>
+            
+            <div className="grid gap-4 md:grid-cols-2 mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Revenue Over Time</CardTitle>
+                  <CardDescription>Monthly revenue for the current year</CardDescription>
+                </CardHeader>
+                <CardContent className="px-2">
+                  <LineChart data={revenueData} height={300} />
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Service Usage</CardTitle>
+                  <CardDescription>Distribution of service categories</CardDescription>
+                </CardHeader>
+                <CardContent className="px-2">
+                  <PieChart data={serviceUsageData} height={300} />
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="mt-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-base font-normal">Recent Activities</CardTitle>
+                  <Button variant="outline" size="sm" asChild>
+                    <span onClick={() => alert('View all activities')}>View all</span>
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {Array.from({length: 5}).map((_, i) => (
+                      <div key={i} className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-500 mr-3"></div>
+                        <div className="flex-1">
+                          <p className="text-sm">
+                            {['New service created', 'Booking completed', 'New user registered', 'Payment processed', 'Dispute resolved'][i]}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {['2 minutes ago', '15 minutes ago', '1 hour ago', '3 hours ago', '5 hours ago'][i]}
+                          </p>
+                        </div>
+                        <Button variant="outline" size="sm" asChild>
+                          <span onClick={() => alert('View details')}>View</span>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="services">
+            <Card>
+              <CardHeader>
+                <CardTitle>Service Management</CardTitle>
+                <CardDescription>Manage all services on the platform</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium">Top Performing Services</h3>
+                    <Button size="sm">Add New Service</Button>
+                  </div>
+                  
+                  <div className="border rounded-md">
+                    <div className="grid grid-cols-4 bg-muted p-3 rounded-t-md font-medium text-sm">
+                      <div>Service Name</div>
+                      <div>Provider</div>
+                      <div>Bookings</div>
+                      <div>Rating</div>
+                    </div>
+                    {Array.from({length: 5}).map((_, i) => (
+                      <div key={i} className="grid grid-cols-4 p-3 border-t">
+                        <div className="font-medium">Service {i+1}</div>
+                        <div>Provider {i+1}</div>
+                        <div>{Math.floor(Math.random() * 100)}</div>
+                        <div>⭐ {(3 + Math.random() * 2).toFixed(1)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="revenue">
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue Analytics</CardTitle>
+                <CardDescription>Detailed breakdown of platform revenue</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BarChart data={[
+                  { name: 'Jan', value: 4200 },
+                  { name: 'Feb', value: 3800 },
+                  { name: 'Mar', value: 5100 },
+                  { name: 'Apr', value: 5800 },
+                  { name: 'May', value: 7200 },
+                  { name: 'Jun', value: 6800 },
+                  { name: 'Jul', value: 7800 },
+                ]} height={350} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="users">
+            <Card>
+              <CardHeader>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>Manage users and their permissions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium">Recent Users</h3>
+                    <Button size="sm">Add User</Button>
+                  </div>
+                  
+                  <div className="border rounded-md">
+                    <div className="grid grid-cols-5 bg-muted p-3 rounded-t-md font-medium text-sm">
+                      <div>Name</div>
+                      <div>Email</div>
+                      <div>Role</div>
+                      <div>Joined</div>
+                      <div>Actions</div>
+                    </div>
+                    {Array.from({length: 5}).map((_, i) => (
+                      <div key={i} className="grid grid-cols-5 p-3 border-t">
+                        <div className="font-medium">User {i+1}</div>
+                        <div>user{i+1}@example.com</div>
+                        <div>{['Customer', 'Provider', 'Admin', 'Customer', 'Provider'][i]}</div>
+                        <div>{['2 days ago', '1 week ago', '2 weeks ago', '1 month ago', '2 months ago'][i]}</div>
+                        <div>
+                          <Button variant="outline" size="sm">View</Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

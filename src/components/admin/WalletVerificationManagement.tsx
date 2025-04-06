@@ -140,8 +140,12 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
     }
   };
   
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
+  const formatDate = (dateStr: string | Date | undefined) => {
+    if (!dateStr) return '';
+    
+    const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+    
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -171,7 +175,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
                 <tr key={verification.id} className="border-b hover:bg-slate-50">
                   <td className="py-3 px-4">{formatDate(verification.dateSubmitted)}</td>
                   <td className="py-3 px-4">{verification.referenceNumber}</td>
-                  <td className="py-3 px-4">{verification.bookingId.substring(0, 8)}</td>
+                  <td className="py-3 px-4">{verification.bookingId?.substring(0, 8)}</td>
                   <td className="py-3 px-4">{verification.customerPhone}</td>
                   <td className="py-3 px-4">N${verification.amount.toLocaleString()}</td>
                   <td className="py-3 px-4">{getStatusBadge(verification.verificationStatus)}</td>
@@ -265,7 +269,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
                 <div>
                   <Label>Booking ID</Label>
                   <Input 
-                    value={selectedVerification.bookingId} 
+                    value={selectedVerification.bookingId || ''} 
                     readOnly 
                     className="bg-gray-50 mt-1"
                   />
@@ -273,7 +277,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
                 <div>
                   <Label>Customer Phone</Label>
                   <Input 
-                    value={selectedVerification.customerPhone} 
+                    value={selectedVerification.customerPhone || ''} 
                     readOnly 
                     className="bg-gray-50 mt-1"
                   />

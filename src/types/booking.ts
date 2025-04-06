@@ -109,7 +109,7 @@ export interface Dispute {
   reason?: string;
 }
 
-export type DisputeStatus = 'pending' | 'in_progress' | 'resolved' | 'closed' | 'escalated';
+export type DisputeStatus = 'pending' | 'in_progress' | 'in_review' | 'resolved' | 'closed' | 'escalated' | 'rejected';
 export type DisputePriority = 'low' | 'medium' | 'high' | 'urgent';
 
 export interface Transaction {

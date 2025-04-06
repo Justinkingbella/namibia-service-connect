@@ -55,8 +55,12 @@ const WalletVerificationPanel: React.FC<WalletVerificationPanelProps> = ({
     }, 1000);
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
+  const formatDate = (dateStr: string | Date | undefined) => {
+    if (!dateStr) return '';
+    
+    const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+    
+    return date.toLocaleDateString('en-US', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -120,7 +124,7 @@ const WalletVerificationPanel: React.FC<WalletVerificationPanelProps> = ({
                           <div>
                             <div className="flex items-center">
                               <h3 className="font-medium">
-                                Booking #{verification.bookingId.substring(0, 8)}
+                                Booking #{verification.bookingId?.substring(0, 8)}
                               </h3>
                               <span className="ml-2">
                                 {getStatusBadge(verification.verificationStatus)}
@@ -267,7 +271,7 @@ const WalletVerificationPanel: React.FC<WalletVerificationPanelProps> = ({
                     {verifiedPayments.map((verification) => (
                       <tr key={verification.id} className="hover:bg-muted/50 border-b">
                         <td className="py-3 px-4">{formatDate(verification.dateVerified || verification.dateSubmitted)}</td>
-                        <td className="py-3 px-4">#{verification.bookingId.substring(0, 8)}</td>
+                        <td className="py-3 px-4">#{verification.bookingId?.substring(0, 8)}</td>
                         <td className="py-3 px-4 font-medium">N${verification.amount.toFixed(2)}</td>
                         <td className="py-3 px-4">{verification.referenceNumber}</td>
                         <td className="py-3 px-4">{verification.customerPhone}</td>

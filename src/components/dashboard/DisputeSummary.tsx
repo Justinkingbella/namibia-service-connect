@@ -32,7 +32,7 @@ export function DisputeSummary() {
     );
   }
   
-  const pendingCount = disputes.filter(d => d.status === 'pending' || d.status === 'in_review').length;
+  const pendingCount = disputes.filter(d => d.status === 'pending' || d.status === 'in_progress' || d.status === 'in_review').length;
   const resolvedCount = disputes.filter(d => d.status === 'resolved').length;
   
   return (
@@ -84,7 +84,7 @@ export function DisputeSummary() {
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       dispute.status === 'resolved' 
                         ? 'bg-green-100 text-green-700' 
-                        : dispute.status === 'in_review' 
+                        : dispute.status === 'in_progress' || dispute.status === 'in_review'
                         ? 'bg-blue-100 text-blue-700'
                         : 'bg-amber-100 text-amber-700'
                     }`}>

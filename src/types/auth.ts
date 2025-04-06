@@ -1,5 +1,6 @@
 
 import { Json } from "./schema";
+import { SubscriptionTierType } from "./schema";
 
 export type ProviderVerificationStatus = 'pending' | 'verified' | 'rejected' | 'unverified';
 
@@ -123,7 +124,8 @@ export interface Provider extends User {
   website?: string;
   taxId?: string;
   reviewCount?: number;
-  subscriptionTier?: string;
+  subscriptionTier?: SubscriptionTierType | 'free';
+  isVerified?: boolean;
 }
 
 export interface Customer extends User {

@@ -1,15 +1,17 @@
 
 // Export base types but exclude those with name conflicts
-export type { SubscriptionTier } from './subscription';
+export type { SubscriptionTierType } from './schema';
 
 // Export booking types
 export type { Booking, BookingWithDetails, BookingData, Dispute, Withdrawal } from './booking';
 export { DisputeStatus, DisputePriority } from './booking';
 export type { Transaction as BookingTransaction } from './booking';
+
 // Export types from schema
 export type { 
   BookingStatus, 
-  PaymentStatus 
+  PaymentStatus,
+  PaymentMethodType
 } from './schema';
 
 // Export payment types
@@ -20,6 +22,7 @@ export type {
   ProviderEarnings,
   ProviderPayout
 } from './payments';
+
 export type {
   WalletVerification,
   WalletVerificationRequest,
@@ -49,6 +52,7 @@ export type {
   WalletVerificationStatus,
   WalletPaymentType
 } from './schema';
+
 export type {
   Wallet,
   Transaction as WalletTransaction
@@ -67,9 +71,6 @@ export type {
   ServiceData,
   FavoriteService
 } from './service';
-
-// Explicitly export service payment method
-export type { ServicePaymentMethod } from './service';
 
 export interface IResponse<T> {
   success: boolean;
