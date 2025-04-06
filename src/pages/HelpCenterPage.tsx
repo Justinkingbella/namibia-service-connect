@@ -46,7 +46,7 @@ const HelpCenterPage: React.FC = () => {
         {
           id: 'book-service',
           question: 'How do I book a service?',
-          answer: 'Browse through our service categories or search for specific services, select a provider, choose your preferred date and time, and complete the booking process. You'll receive a confirmation once the provider accepts your booking.'
+          answer: 'Browse through our service categories or search for specific services, select a provider, choose your preferred date and time, and complete the booking process. You\'ll receive a confirmation once the provider accepts your booking.'
         },
         {
           id: 'payments',
