@@ -1,5 +1,6 @@
 
 import { Json } from './schema';
+import { PaymentMethodType } from './schema';
 
 export interface ServiceData {
   id?: string;
@@ -130,4 +131,4 @@ export enum PricingModelEnum {
 export type PricingModel = keyof typeof PricingModelEnum;
 
 // Export payment method type
-export type ServicePaymentMethod = string;
+export type ServicePaymentMethod = PaymentMethodType;

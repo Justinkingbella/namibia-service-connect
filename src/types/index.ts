@@ -1,6 +1,6 @@
 
 // Export base types but exclude those with name conflicts
-export * from './subscription';
+export type { SubscriptionTier } from './subscription';
 
 // Export booking types
 export type { Booking, BookingWithDetails, BookingData, Dispute, Withdrawal } from './booking';
@@ -22,7 +22,9 @@ export type {
 } from './payments';
 export type {
   WalletVerification,
-  WalletVerificationRequest
+  WalletVerificationRequest,
+  NamibianMobileOperator,
+  NamibianBank
 } from './payment';
 
 // Re-export Auth types

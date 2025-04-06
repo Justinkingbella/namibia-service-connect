@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { SupabaseProvider } from './contexts/SupabaseContext';
+import { SiteProvider } from './contexts/SiteContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import RoleBasedRoute from './components/auth/RoleBasedRoute';
 import { useAuthSync } from './hooks/useAuthSync';
@@ -452,7 +453,9 @@ const AppContent = () => {
 const App = () => {
   return (
     <SupabaseProvider>
-      <AppContent />
+      <SiteProvider>
+        <AppContent />
+      </SiteProvider>
     </SupabaseProvider>
   );
 };

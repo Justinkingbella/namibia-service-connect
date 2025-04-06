@@ -1,13 +1,13 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabase } from '@/contexts/SupabaseContext';
 import { enableSupabaseRealtime } from '@/services/enableRealtimeSupabase';
+import { useAuthStore } from '@/store/authStore';
 
 const Dashboard = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading } = useAuthStore(); // Updated to use authStore instead of AuthContext
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isSubscribed, enableRealtime } = useSupabase();

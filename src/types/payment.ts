@@ -1,5 +1,6 @@
 
 import { WalletVerificationStatus, WalletPaymentType } from './schema';
+import { Json } from './schema'; 
 
 export interface WalletVerification {
   id: string;
@@ -53,5 +54,29 @@ export interface Transaction {
   reference?: string;
 }
 
+export interface WalletVerificationRequest {
+  id: string;
+  bookingId: string;
+  customerId: string;
+  providerId: string;
+  amount: number;
+  paymentMethod: WalletPaymentType;
+  referenceNumber: string;
+  customerPhone: string;
+  providerPhone: string;
+  screenshotUrl?: string;
+  receiptUrl?: string;
+  status: WalletVerificationStatus;
+  notes?: string;
+  submittedAt: string;
+  verifiedAt?: string;
+  rejectedAt?: string;
+  rejectionReason?: string;
+}
+
+// Types for Namibian payment system
+export type NamibianMobileOperator = 'MTC' | 'TN Mobile' | 'Leo' | 'Other';
+export type NamibianBank = 'Bank Windhoek' | 'First National Bank' | 'Nedbank' | 'Standard Bank' | 'Other';
+
 // Re-export types from schema to ensure backward compatibility
-export { WalletPaymentType, WalletVerificationStatus } from './schema';
+export type { WalletPaymentType, WalletVerificationStatus } from './schema';
