@@ -30,7 +30,8 @@ export type {
   WalletVerificationRequest,
   NamibianMobileOperator,
   NamibianBank,
-  WalletPaymentType // Ensure this is exported
+  WalletPaymentType, // Now properly exported
+  WalletVerificationStatus
 } from './payment';
 
 // Re-export Auth types

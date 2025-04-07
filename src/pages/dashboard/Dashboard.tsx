@@ -47,8 +47,7 @@ const Dashboard = () => {
           console.log('No authenticated user found, redirecting to sign-in');
           toast({
             title: "Authentication Required",
-            description: "Please sign in to access your dashboard",
-            variant: "destructive"
+            description: "Please sign in to access your dashboard"
           });
           navigate('/auth/sign-in', { replace: true });
         }

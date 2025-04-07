@@ -2,7 +2,8 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
-import { User, UserRole, Provider, Customer, Admin, SubscriptionTier } from '@/types';
+import { User, UserRole, Provider, Customer, Admin } from '@/types';
+import { useNavigate } from 'react-router-dom';
 
 export const useAuthSync = () => {
   const { 
@@ -12,20 +13,26 @@ export const useAuthSync = () => {
     setIsLoading,
     setIsAuthenticated
   } = useAuthStore();
+  
+  const navigate = useNavigate();
 
   useEffect(() => {
     const initAuth = async () => {
       try {
         setIsLoading(true);
+        console.log("Initial session check");
         
         // Get current session
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          throw sessionError;
+          console.error('Error getting session:', sessionError);
+          setIsLoading(false);
+          return;
         }
 
         if (sessionData?.session) {
+          console.log("Session exists");
           setSession(sessionData.session);
           
           // Get user data
@@ -40,6 +47,12 @@ export const useAuthSync = () => {
             emailVerified: false,
           };
 
+          // Get user role from metadata
+          if (sessionData.session.user.user_metadata) {
+            userData.role = sessionData.session.user.user_metadata.role || 'customer';
+            console.log("Setting user role from metadata:", userData.role);
+          }
+
           // Fetch user profile from 'profiles' table
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
@@ -48,7 +61,7 @@ export const useAuthSync = () => {
             .single();
 
           if (profileError) {
-            console.error('Error fetching user profile:', profileError);
+            console.info('Profile not found, user may need to complete registration');
           } else if (profileData) {
             // Update user data with profile data
             userData.firstName = profileData.first_name || '';
@@ -82,6 +95,7 @@ export const useAuthSync = () => {
                 },
               };
               setUserProfile(customerProfile);
+              navigate('/customer/dashboard', { replace: true });
             }
           } else if (userData.role === 'provider') {
             const { data: providerData, error: providerError } = await supabase
@@ -95,19 +109,21 @@ export const useAuthSync = () => {
                 ...userData,
                 businessName: providerData.business_name || '',
                 businessDescription: providerData.business_description || '',
-                categories: providerData.categories || [],
-                services: providerData.services || [],
+                categories: [],
+                services: [],
                 rating: providerData.rating || 0,
                 commission: providerData.commission_rate || 0,
-                verificationStatus: providerData.verification_status as any || 'unverified',
+                verificationStatus: providerData.verification_status || 'unverified',
                 bannerUrl: providerData.banner_url || '',
                 website: providerData.website || '',
-                taxId: providerData.tax_id || '',
-                reviewCount: providerData.review_count || 0,
-                subscriptionTier: providerData.subscription_tier as any || 'free',
+                taxId: '',
+                reviewCount: 0,
+                subscriptionTier: providerData.subscription_tier || 'free',
                 isVerified: providerData.verification_status === 'verified',
               };
               setUserProfile(providerProfile);
+              console.log("Redirecting to provider dashboard");
+              navigate('/provider/dashboard', { replace: true });
             }
           } else if (userData.role === 'admin') {
             const { data: adminData, error: adminError } = await supabase
@@ -125,6 +141,7 @@ export const useAuthSync = () => {
                 accessLevel: 1,
               };
               setUserProfile(adminProfile);
+              navigate('/admin/dashboard', { replace: true });
             }
           }
         } else {
@@ -154,29 +171,32 @@ export const useAuthSync = () => {
       if (event === 'SIGNED_IN' && session) {
         // Update auth state with new user data
         setSession(session);
-        const user = session.user;
+        const userMeta = session.user?.user_metadata || {};
+        const userRole = userMeta.role || 'customer';
+        console.log("Setting user role from metadata:", userRole);
         
-        setUser({
-          id: user?.id || '',
-          email: user?.email || '',
-          firstName: '',
-          lastName: '',
-          role: 'customer' as UserRole,
-          phoneNumber: user?.phone || '',
-          createdAt: user?.created_at || '',
+        const user: User = {
+          id: session.user?.id || '',
+          email: session.user?.email || '',
+          firstName: userMeta.first_name || '',
+          lastName: userMeta.last_name || '',
+          role: userRole as UserRole,
+          phoneNumber: session.user?.phone || '',
+          createdAt: session.user?.created_at || '',
           emailVerified: false,
-        });
+        };
         
+        setUser(user);
         setIsAuthenticated(true);
         
-        // Fetch additional user data...
-        // This would replicate the data fetching logic from initAuth
+        // Redirect will happen in initAuth which reruns on session change
         
       } else if (event === 'SIGNED_OUT') {
         setSession(null);
         setUser(null);
         setUserProfile(null);
         setIsAuthenticated(false);
+        navigate('/auth/sign-in', { replace: true });
       }
     });
 
@@ -184,5 +204,5 @@ export const useAuthSync = () => {
     return () => {
       authListener?.subscription.unsubscribe();
     };
-  }, [setUser, setUserProfile, setSession, setIsLoading, setIsAuthenticated]);
+  }, [setUser, setUserProfile, setSession, setIsLoading, setIsAuthenticated, navigate]);
 };

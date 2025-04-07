@@ -1,7 +1,8 @@
 
 import { create } from 'zustand';
-import { User, Customer, Provider, Admin } from '@/types';
+import { User, Customer, Provider, Admin, UserRole } from '@/types';
 import { Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthState {
   user: User | null;
@@ -15,11 +16,12 @@ interface AuthState {
   setIsLoading: (isLoading: boolean) => void;
   setIsAuthenticated: (isAuthenticated: boolean) => void;
   setSession: (session: Session | null) => void;
-  signIn: (email: string, password: string) => Promise<{error: any | null}>;
-  signUp: (email: string, password: string, userData: Partial<User>) => Promise<{error: any | null, data: any | null}>;
+  signIn: (email: string, password: string) => Promise<{error: any | null, data?: any}>;
+  signUp: (email: string, password: string, userData: Partial<User>) => Promise<{error: any | null, data?: any | null}>;
+  signOut: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   userProfile: null,
   isLoading: true,
@@ -31,13 +33,64 @@ export const useAuthStore = create<AuthState>((set) => ({
   setIsLoading: (isLoading) => set({ isLoading }),
   setIsAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
   setSession: (session) => set({ session }),
+  
   signIn: async (email, password) => {
-    // This will be implemented in auth pages
-    return { error: null };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { error };
+      }
+
+      return { error: null, data };
+    } catch (error) {
+      console.error('Error in signIn:', error);
+      return { error };
+    }
   },
+  
   signUp: async (email, password, userData) => {
-    // This will be implemented in auth pages
-    return { error: null, data: null };
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+            role: userData.role || 'customer',
+          },
+        },
+      });
+
+      if (error) {
+        return { error, data: null };
+      }
+
+      return { error: null, data };
+    } catch (error) {
+      console.error('Error in signUp:', error);
+      return { error, data: null };
+    }
+  },
+  
+  signOut: async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      set({
+        user: null,
+        userProfile: null,
+        isAuthenticated: false,
+        session: null
+      });
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   }
 }));
 

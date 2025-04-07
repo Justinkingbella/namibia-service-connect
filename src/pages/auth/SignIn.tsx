@@ -15,7 +15,7 @@ const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { setIsAuthenticated } = useAuthStore();
+  const { setUser, setSession, setIsAuthenticated } = useAuthStore();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +33,7 @@ const SignIn = () => {
           title: 'Sign In Failed',
           description: error.message,
         });
+        setIsLoading(false);
         return;
       }
 
@@ -42,9 +43,8 @@ const SignIn = () => {
         description: 'Welcome back!',
       });
       
-      // Redirect based on user role (will be determined by auth provider)
-      setIsAuthenticated(true);
-      navigate('/dashboard');
+      // Don't navigate here - the auth listener in useAuthSync will handle the redirect
+      // based on the user's role after properly loading the profile
     } catch (err) {
       console.error('Sign in error:', err);
       toast({
@@ -52,7 +52,6 @@ const SignIn = () => {
         title: 'Unexpected Error',
         description: 'An unexpected error occurred. Please try again later.',
       });
-    } finally {
       setIsLoading(false);
     }
   };

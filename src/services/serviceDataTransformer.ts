@@ -18,8 +18,9 @@ export function transformServiceData(data: ServiceData): Service {
     location: data.location,
     rating: data.rating,
     reviewCount: data.review_count,
-    createdAt: data.created_at ? new Date(data.created_at) : new Date(),
-    updatedAt: data.updated_at ? new Date(data.updated_at) : new Date(),
+    // Handle date conversion properly
+    createdAt: data.created_at || '',
+    updatedAt: data.updated_at || '',
     featured: data.featured || false
   };
 }
@@ -41,7 +42,8 @@ export function reverseTransformServiceData(service: Service): ServiceData {
     location: service.location,
     rating: service.rating,
     review_count: service.reviewCount,
-    created_at: service.createdAt instanceof Date ? service.createdAt.toISOString() : service.createdAt || '',
-    updated_at: service.updatedAt instanceof Date ? service.updatedAt.toISOString() : service.updatedAt || '',
+    // Handle string dates properly
+    created_at: service.createdAt || '',
+    updated_at: service.updatedAt || '',
   };
 }
