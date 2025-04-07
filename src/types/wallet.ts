@@ -1,5 +1,5 @@
 
-import { WalletVerificationStatus } from './schema';
+import { WalletVerificationStatus, WalletPaymentType } from './payment';
 
 export interface WalletVerificationRequest {
   id: string;
@@ -41,6 +41,10 @@ export interface WalletVerificationFilters {
     max: number;
   };
   search?: string;
+  // Add missing properties used in WalletService
+  walletProvider?: string;
+  userType?: string;
+  searchTerm?: string;
 }
 
 export interface WalletVerificationStats {
@@ -49,6 +53,8 @@ export interface WalletVerificationStats {
   verified: number;
   rejected: number;
   totalAmount: number;
+  // Add missing property used in WalletService
+  approved?: number;
 }
 
 export interface WalletVerificationComment {
@@ -58,6 +64,8 @@ export interface WalletVerificationComment {
   adminName: string;
   comment: string;
   timestamp: string;
+  // Add missing property used in WalletService
+  verificationId?: string;
 }
 
 export interface WalletProviderSettings {
@@ -70,6 +78,8 @@ export interface WalletProviderSettings {
   minimumAmount?: number;
   maximumAmount?: number;
   instructions?: string;
+  // Add missing property used in WalletService
+  providerName?: string;
 }
 
 export interface WalletVerificationDashboard {

@@ -1,5 +1,9 @@
 
-import { Json, WalletPaymentType, WalletVerificationStatus } from './schema';
+import { Json } from './schema';
+
+// Export this type to fix WalletPaymentType not being exported
+export type WalletPaymentType = 'e_wallet' | 'easy_wallet' | 'bank_transfer';
+export type WalletVerificationStatus = 'pending' | 'submitted' | 'verified' | 'rejected' | 'expired';
 
 export interface WalletVerification {
   id: string;
@@ -10,6 +14,29 @@ export interface WalletVerification {
   method: WalletPaymentType;
   user_id: string;
   receipts?: string[];
+  
+  // Add all the properties being used in components
+  bookingId?: string;
+  customerId?: string;
+  providerId?: string;
+  verificationStatus?: WalletVerificationStatus;
+  dateSubmitted?: string | Date;
+  dateVerified?: string | Date;
+  customerPhone?: string;
+  providerPhone?: string;
+  referenceNumber?: string;
+  paymentMethod?: WalletPaymentType;
+  customerConfirmed?: boolean;
+  providerConfirmed?: boolean;
+  adminVerified?: boolean;
+  verifiedBy?: string;
+  adminComments?: any[];
+  mobileOperator?: string;
+  bank?: string;
+  proofType?: string;
+  receiptImage?: string;
+  notes?: string;
+  rejectionReason?: string;
 }
 
 export interface WalletVerificationRequest {
@@ -36,6 +63,17 @@ export interface WalletVerificationRequest {
   receiptImage?: string;
   notes?: string;
   rejectionReason?: string;
+  // Add missing properties used in WalletService
+  userId?: string;
+  walletProvider?: string;
+  userType?: string;
+  userName?: string;
+  userEmail?: string;
+  walletNumber?: string;
+  transactionReference?: string;
+  reviewerId?: string;
+  reviewerName?: string;
+  reviewDate?: string;
 }
 
 export interface NamibianMobileOperator {

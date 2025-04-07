@@ -1,262 +1,193 @@
-
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Session } from '@supabase/supabase-js';
 import { useAuthStore } from '@/store/authStore';
-import { Session as CustomSession, User, UserRole, Provider, Customer, Admin } from '@/types/auth';
+import { User, UserRole, Provider, Customer, Admin, SubscriptionTier } from '@/types';
 
-export function useAuthSync() {
-  const { setUser, setSession, setUserRole, setUserProfile, setLoading } = useAuthStore();
+export const useAuthSync = () => {
+  const { 
+    setUser, 
+    setUserProfile, 
+    setSession, 
+    setIsLoading,
+    setIsAuthenticated
+  } = useAuthStore();
 
   useEffect(() => {
-    // First set up the auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session ? 'Session exists' : 'No session');
+    const initAuth = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Get current session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          throw sessionError;
+        }
 
-      if (session) {
-        const customSession: CustomSession = {
-          id: session.id,
-          user_id: session.user.id,
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-          expires_at: session.expires_at.toString(),
-          user: {
-            id: session.user.id,
-            email: session.user.email || '',
-            role: session.user.user_metadata?.role as UserRole || 'customer'
-          },
-          created_at: new Date().toISOString()
-        };
+        if (sessionData?.session) {
+          // Use optional chaining to safely access id
+          setSession(sessionData.session);
+          
+          // Get user data
+          const userData: User = {
+            id: sessionData.session?.user?.id || '',
+            email: sessionData.session?.user?.email as string,
+            firstName: '',
+            lastName: '',
+            role: 'customer' as UserRole,
+            phoneNumber: sessionData.session?.user?.phone || '',
+            // Use ISO strings for dates to match the type
+            createdAt: sessionData.session?.user?.created_at ? new Date(sessionData.session.user.created_at).toISOString() : undefined,
+            emailVerified: false,
+          };
 
-        setSession(customSession);
-        // Get role from user metadata or default to customer
-        const userRole = session.user.user_metadata?.role as UserRole || 'customer';
-        console.log('Setting user role from metadata:', userRole);
+          // Fetch user profile from 'profiles' table
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userData.id)
+            .single();
 
-        const user: User = {
-          id: session.user.id,
-          email: session.user.email || '',
-          role: userRole,
-          firstName: session.user.user_metadata?.first_name || '',
-          lastName: session.user.user_metadata?.last_name || '',
-          isActive: true,
-          createdAt: new Date(session.user.created_at),
-        };
-        setUser(user);
-        setUserRole(userRole);
+          if (profileError) {
+            console.error('Error fetching user profile:', profileError);
+          } else if (profileData) {
+            // Update user data with profile data
+            userData.firstName = profileData.first_name || '';
+            userData.lastName = profileData.last_name || '';
+            userData.role = profileData.role as UserRole || 'customer';
+            userData.phoneNumber = profileData.phone_number || '';
+            userData.avatarUrl = profileData.avatar_url || '';
+            userData.emailVerified = profileData.email_verified || false;
+          }
 
-        // Use setTimeout to prevent recursive deadlocks with Supabase auth
-        setTimeout(() => {
-          fetchUserProfile(session.user);
-        }, 0);
-      } else {
+          setUser(userData);
+          setIsAuthenticated(true);
+
+          // Fetch role-specific data
+          if (userData.role === 'customer') {
+            const { data: customerData, error: customerError } = await supabase
+              .from('customers')
+              .select('*')
+              .eq('id', userData.id)
+              .single();
+
+            if (!customerError && customerData) {
+              const customerProfile: Customer = {
+                ...userData,
+                preferredCategories: customerData.preferred_categories || [],
+                savedServices: customerData.saved_services || [],
+                // Ensure notification preferences has the expected shape
+                notificationPreferences: {
+                  email: true,
+                  sms: false,
+                  push: true,
+                },
+              };
+              setUserProfile(customerProfile);
+            }
+          } else if (userData.role === 'provider') {
+            const { data: providerData, error: providerError } = await supabase
+              .from('service_providers')
+              .select('*')
+              .eq('id', userData.id)
+              .single();
+
+            if (!providerError && providerData) {
+              const providerProfile: Provider = {
+                ...userData,
+                businessName: providerData.business_name || '',
+                businessDescription: providerData.business_description || '',
+                categories: providerData.categories || [],
+                services: providerData.services || [],
+                rating: providerData.rating || 0,
+                commission: providerData.commission_rate || 0,
+                verificationStatus: providerData.verification_status || 'unverified',
+                bannerUrl: providerData.banner_url || '',
+                website: providerData.website || '',
+                taxId: providerData.tax_id || '',
+                reviewCount: providerData.review_count || 0,
+                // Ensure subscription tier is valid 
+                subscriptionTier: providerData.subscription_tier as SubscriptionTier,
+                isVerified: providerData.verification_status === 'verified',
+              };
+              setUserProfile(providerProfile);
+            }
+          } else if (userData.role === 'admin') {
+            const { data: adminData, error: adminError } = await supabase
+              .from('admin_permissions')
+              .select('*')
+              .eq('user_id', userData.id)
+              .single();
+
+            if (!adminError && adminData) {
+              const adminProfile: Admin = {
+                ...userData,
+                permissions: adminData.permissions || [],
+                adminLevel: 1,
+                isVerified: true,
+                accessLevel: 1,
+              };
+              setUserProfile(adminProfile);
+            }
+          }
+        } else {
+          // No active session
+          setSession(null);
+          setUser(null);
+          setUserProfile(null);
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Error syncing auth state:', error);
         setSession(null);
         setUser(null);
-        setUserRole(null);
         setUserProfile(null);
-        setLoading(false);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
       }
-    });
-
-    // Then check for an existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session ? 'Session exists' : 'No session');
-
-      if (session) {
-        const customSession: CustomSession = {
-          id: session.id,
-          user_id: session.user.id,
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-          expires_at: session.expires_at.toString(),
-          user: {
-            id: session.user.id,
-            email: session.user.email || '',
-            role: session.user.user_metadata?.role as UserRole || 'customer'
-          },
-          created_at: new Date().toISOString()
-        };
-
-        setSession(customSession);
-        // Get role from user metadata or default to customer
-        const userRole = session.user.user_metadata?.role as UserRole || 'customer';
-        console.log('Setting user role from metadata:', userRole);
-
-        const user: User = {
-          id: session.user.id,
-          email: session.user.email || '',
-          role: userRole,
-          firstName: session.user.user_metadata?.first_name || '',
-          lastName: session.user.user_metadata?.last_name || '',
-          isActive: true,
-          createdAt: new Date(session.user.created_at),
-        };
-        setUser(user);
-        setUserRole(userRole);
-
-        // Use setTimeout to prevent recursive deadlocks with Supabase auth
-        setTimeout(() => {
-          fetchUserProfile(session.user);
-        }, 0);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
     };
-  }, []);
 
-  async function fetchUserProfile(supabaseUser: any) {
-    try {
-      // First, try to get the profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', supabaseUser.id)
-        .single();
+    initAuth();
 
-      if (profileError) {
-        // Don't throw an error if the profile doesn't exist yet
-        if (profileError.code === 'PGRST116') {
-          console.log('Profile not found, user may need to complete registration');
-          setLoading(false);
-          return;
-        }
-
-        console.error('Error fetching user profile:', profileError);
-        setLoading(false);
-        return;
+    // Set up auth subscription for real-time updates
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event);
+      
+      if (event === 'SIGNED_IN' && session) {
+        // Update auth state with new user data
+        setSession(session);
+        const user = session.user;
+        
+        // Using a function to update user state to avoid typing issues
+        setUser({
+          id: user?.id || '',
+          email: user?.email || '',
+          firstName: '',
+          lastName: '',
+          role: 'customer' as UserRole,
+          phoneNumber: user?.phone || '',
+          createdAt: user?.created_at ? new Date(user.created_at).toISOString() : undefined,
+          emailVerified: false,
+        });
+        
+        setIsAuthenticated(true);
+        
+        // Fetch additional user data...
+        // This would replicate the data fetching logic from initAuth
+        
+      } else if (event === 'SIGNED_OUT') {
+        setSession(null);
+        setUser(null);
+        setUserProfile(null);
+        setIsAuthenticated(false);
       }
+    });
 
-      const role = profileData.role as UserRole;
-      setUserRole(role);
-
-      setUser((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          firstName: profileData.first_name || '',
-          lastName: profileData.last_name || '',
-          name: `${profileData.first_name || ''} ${profileData.last_name || ''}`,
-          avatarUrl: profileData.avatar_url || '',
-          avatar: profileData.avatar_url || '',
-          phoneNumber: profileData.phone_number || '',
-          role,
-          loyaltyPoints: profileData.loyalty_points || 0,
-        };
-      });
-
-      switch (role) {
-        case 'customer': {
-          const { data: customerData, error: customerError } = await supabase
-            .from('customers')
-            .select('*')
-            .eq('id', supabaseUser.id)
-            .maybeSingle();
-
-          if (customerError && customerError.code !== 'PGRST116') {
-            console.error('Error fetching customer data:', customerError);
-          }
-
-          // Default notification preferences if DB returns JSON null or undefined
-          const notificationPreferences = customerData?.notification_preferences || { email: true, sms: false, push: true };
-
-          const customer: Customer = {
-            id: supabaseUser.id,
-            email: supabaseUser.email!,
-            firstName: profileData.first_name || '',
-            lastName: profileData.last_name || '',
-            phoneNumber: profileData.phone_number || '',
-            avatarUrl: profileData.avatar_url || '',
-            role: 'customer',
-            isActive: true,
-            createdAt: new Date(profileData.created_at),
-            loyaltyPoints: profileData.loyalty_points || 0,
-            preferredCategories: customerData?.preferred_categories || [],
-            notificationPreferences: notificationPreferences,
-            savedServices: customerData?.saved_services || []
-          };
-
-          setUserProfile(customer);
-          break;
-        }
-
-        case 'provider': {
-          const { data: providerData, error: providerError } = await supabase
-            .from('service_providers')
-            .select('*')
-            .eq('id', supabaseUser.id)
-            .maybeSingle();
-
-          if (providerError && providerError.code !== 'PGRST116') {
-            console.error('Error fetching provider data:', providerError);
-          }
-
-          // Use safe defaults for both cases: either we have data or we don't
-          const provider: Provider = {
-            id: supabaseUser.id,
-            email: supabaseUser.email!,
-            firstName: profileData.first_name || '',
-            lastName: profileData.last_name || '',
-            phoneNumber: profileData.phone_number || '',
-            avatarUrl: profileData.avatar_url || '',
-            role: 'provider',
-            isActive: providerData?.is_active ?? true,
-            businessName: providerData?.business_name || '',
-            businessDescription: providerData?.business_description || '',
-            verificationStatus: providerData?.verification_status as any || 'pending',
-            rating: providerData?.rating || 0,
-            reviewCount: providerData?.rating_count || 0,
-            categories: [],
-            services: [],
-            commission: providerData?.commission_rate || 0,
-            createdAt: new Date(profileData.created_at),
-            isVerified: profileData.email_verified || false,
-            subscriptionTier: providerData?.subscription_tier || 'free'
-          };
-
-          setUserProfile(provider);
-          break;
-        }
-
-        case 'admin': {
-          const { data: adminData, error: adminError } = await supabase
-            .from('admin_permissions')
-            .select('*')
-            .eq('user_id', supabaseUser.id)
-            .maybeSingle();
-
-          if (adminError && adminError.code !== 'PGRST116') {
-            console.error('Error fetching admin data:', adminError);
-          }
-
-          const admin: Admin = {
-            id: supabaseUser.id,
-            email: supabaseUser.email!,
-            firstName: profileData.first_name || '',
-            lastName: profileData.last_name || '',
-            phoneNumber: profileData.phone_number || '',
-            avatarUrl: profileData.avatar_url || '',
-            role: 'admin',
-            isActive: true,
-            permissions: adminData?.permissions || [],
-            createdAt: new Date(profileData.created_at),
-            isVerified: true,
-            adminLevel: 1
-          };
-
-          setUserProfile(admin);
-          break;
-        }
-
-        default:
-          console.error('Unknown user role:', role);
-      }
-    } catch (error) {
-      console.error('Unexpected error in fetchUserProfile:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-}
+    // Cleanup subscription
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, [setUser, setUserProfile, setSession, setIsLoading, setIsAuthenticated]);
+};

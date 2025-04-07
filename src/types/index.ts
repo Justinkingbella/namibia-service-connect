@@ -1,4 +1,5 @@
 
+// Fix the re-exporting issues with isolatedModules enabled
 // Export base types but exclude those with name conflicts
 export type { SubscriptionTierType } from './schema';
 
@@ -23,11 +24,13 @@ export type {
   ProviderPayout
 } from './payments';
 
+// Fix exports for wallet types
 export type {
   WalletVerification,
   WalletVerificationRequest,
   NamibianMobileOperator,
-  NamibianBank
+  NamibianBank,
+  WalletPaymentType // Ensure this is exported
 } from './payment';
 
 // Re-export Auth types
@@ -47,11 +50,11 @@ export type {
 } from './auth';
 export { SubscriptionTier } from './auth';
 
-// Export wallet verification types
+// Export wallet verification status types
 export type {
-  WalletVerificationStatus,
-  WalletPaymentType
-} from './schema';
+  WalletVerificationStatus
+} from './payment';
+export type { WalletPaymentType } from './payment';
 
 export type {
   Wallet,

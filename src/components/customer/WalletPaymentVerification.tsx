@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { WalletVerification, WalletPaymentType, NamibianMobileOperator, NamibianBank } from '@/types/payment';
+import { WalletVerification, WalletPaymentType, NamibianMobileOperator, NamibianBank } from '@/types';
 
 interface WalletPaymentVerificationProps {
   bookingId: string;
@@ -25,7 +25,7 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<WalletPaymentType>("e_wallet");
   const [referenceNumber, setReferenceNumber] = useState('');
   const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
-  const [mobileOperator, setMobileOperator] = useState<NamibianMobileOperator | ''>('');
+  const [mobileOperator, setMobileOperator] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,13 +62,16 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
 
     try {
       const verificationData: Partial<WalletVerification> = {
-        bookingId,
         amount,
-        paymentMethod,
-        referenceNumber,
+        reference: referenceNumber,
+        method: paymentMethod,
         customerPhone: phoneNumber,
-        verificationStatus: 'submitted',
+        status: 'submitted',
+        date: new Date().toISOString(),
+        bookingId,
         dateSubmitted: new Date().toISOString(),
+        referenceNumber,
+        paymentMethod,
         customerConfirmed: true,
         providerConfirmed: false,
         adminVerified: false,
@@ -111,7 +114,7 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
             <label className="text-sm font-medium">Payment Method</label>
             <Select 
               value={paymentMethod}
-              onValueChange={(value: WalletPaymentType) => setPaymentMethod(value)}
+              onValueChange={(value) => setPaymentMethod(value as WalletPaymentType)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select payment method" />
@@ -128,7 +131,7 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
               <label className="text-sm font-medium">Mobile Operator</label>
               <Select 
                 value={mobileOperator}
-                onValueChange={(value: NamibianMobileOperator) => setMobileOperator(value)}
+                onValueChange={(value) => setMobileOperator(value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select mobile operator" />

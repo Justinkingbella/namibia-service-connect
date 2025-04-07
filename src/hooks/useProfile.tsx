@@ -2,106 +2,127 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { DbUserProfile, UserRole } from '@/types/auth';
-import { toast } from 'sonner';
+import { DbUserProfile } from '@/types';
+import { useToast } from './use-toast';
 
 export function useProfile() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<DbUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user) {
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
 
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
+        const { data, error: fetchError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single();
 
-        if (error) throw error;
-        
-        // Transform snake_case database fields to camelCase for our frontend types
-        const transformedProfile: DbUserProfile = {
+        if (fetchError) {
+          throw fetchError;
+        }
+
+        // Convert the data format to match DbUserProfile
+        const mappedProfile: DbUserProfile = {
           id: data.id,
-          firstName: data.first_name,
-          lastName: data.last_name,
-          phoneNumber: data.phone_number,
-          avatarUrl: data.avatar_url,
+          email: data.email,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          phone_number: data.phone_number,
+          avatar_url: data.avatar_url,
+          email_verified: data.email_verified,
+          role: data.role,
+          is_active: data.is_active,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
           address: data.address,
           city: data.city,
           country: data.country,
-          active: data.active,
-          preferredLanguage: data.preferred_language,
           bio: data.bio,
-          createdAt: data.created_at ? new Date(data.created_at) : undefined,
-          updatedAt: data.updated_at ? new Date(data.updated_at) : undefined,
-          birthDate: data.birth_date ? new Date(data.birth_date) : undefined,
-          email: data.email,
-          emailVerified: data.email_verified,
-          role: data.role as UserRole,
-          loyaltyPoints: data.loyalty_points,
-          notificationPreferences: data.notification_preferences as any
+          birth_date: data.birth_date,
+          loyalty_points: data.loyalty_points,
+          // Ensure notification_preferences is correctly typed
+          notification_preferences: data.notification_preferences || {
+            email: true,
+            sms: false,
+            push: true
+          },
         };
-        
-        setProfile(transformedProfile);
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-        toast.error('Failed to load profile data');
+
+        setProfile(mappedProfile);
+      } catch (err) {
+        setError(err as Error);
+        console.error('Error fetching profile:', err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [user?.id]);
+  }, [user]);
 
-  const updateProfile = async (updates: Partial<DbUserProfile>) => {
-    if (!user?.id) return false;
+  const updateProfile = async (data: Partial<DbUserProfile>) => {
+    if (!user) return false;
 
     try {
-      // Convert camelCase to snake_case for database
-      const snakeCaseUpdates: Record<string, any> = {};
-      
-      if (updates.firstName !== undefined) snakeCaseUpdates.first_name = updates.firstName;
-      if (updates.lastName !== undefined) snakeCaseUpdates.last_name = updates.lastName;
-      if (updates.phoneNumber !== undefined) snakeCaseUpdates.phone_number = updates.phoneNumber;
-      if (updates.avatarUrl !== undefined) snakeCaseUpdates.avatar_url = updates.avatarUrl;
-      if (updates.address !== undefined) snakeCaseUpdates.address = updates.address;
-      if (updates.city !== undefined) snakeCaseUpdates.city = updates.city;
-      if (updates.country !== undefined) snakeCaseUpdates.country = updates.country;
-      if (updates.active !== undefined) snakeCaseUpdates.active = updates.active;
-      if (updates.preferredLanguage !== undefined) snakeCaseUpdates.preferred_language = updates.preferredLanguage;
-      if (updates.bio !== undefined) snakeCaseUpdates.bio = updates.bio;
-      if (updates.birthDate !== undefined) snakeCaseUpdates.birth_date = updates.birthDate;
-      if (updates.email !== undefined) snakeCaseUpdates.email = updates.email;
-      if (updates.emailVerified !== undefined) snakeCaseUpdates.email_verified = updates.emailVerified;
-      if (updates.role !== undefined) snakeCaseUpdates.role = updates.role;
-      if (updates.loyaltyPoints !== undefined) snakeCaseUpdates.loyalty_points = updates.loyaltyPoints;
-      if (updates.notificationPreferences !== undefined) snakeCaseUpdates.notification_preferences = updates.notificationPreferences;
-      
-      // Add updated_at
-      snakeCaseUpdates.updated_at = new Date().toISOString();
-
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
-        .update(snakeCaseUpdates)
+        .update({
+          first_name: data.first_name || profile?.first_name,
+          last_name: data.last_name || profile?.last_name,
+          phone_number: data.phone_number || profile?.phone_number,
+          avatar_url: data.avatar_url || profile?.avatar_url,
+          bio: data.bio || profile?.bio,
+          address: data.address || profile?.address,
+          city: data.city || profile?.city,
+          country: data.country || profile?.country,
+          is_active: data.is_active !== undefined ? data.is_active : profile?.is_active,
+          birth_date: data.birth_date || profile?.birth_date,
+          email_verified: data.email_verified !== undefined ? data.email_verified : profile?.email_verified,
+          loyalty_points: data.loyalty_points !== undefined ? data.loyalty_points : profile?.loyalty_points,
+          notification_preferences: data.notification_preferences || profile?.notification_preferences,
+        })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (updateError) {
+        throw updateError;
+      }
 
-      setProfile(prev => prev ? { ...prev, ...updates } : null);
-      toast.success('Profile updated successfully');
+      toast({
+        title: 'Profile Updated',
+        description: 'Your profile has been updated successfully.',
+      });
+
+      // Update local state
+      if (profile) {
+        setProfile({
+          ...profile,
+          ...data,
+        });
+      }
+
       return true;
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
+    } catch (err) {
+      setError(err as Error);
+      console.error('Error updating profile:', err);
+      toast({
+        title: 'Update Failed',
+        description: 'Failed to update your profile. Please try again.',
+        variant: 'destructive',
+      });
       return false;
     }
   };
 
-  return { profile, loading, updateProfile };
+  return { profile, loading, error, updateProfile };
 }

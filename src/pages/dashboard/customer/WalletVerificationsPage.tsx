@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { WalletVerification, NamibianMobileOperator, NamibianBank, WalletPaymentType } from '@/types/payment';
+import { WalletVerification, WalletPaymentType, NamibianMobileOperator, NamibianBank, WalletVerificationStatus } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -26,8 +26,8 @@ const WalletVerificationsPage: React.FC = () => {
   const [selectedVerification, setSelectedVerification] = useState<WalletVerification | null>(null);
   const [submissionData, setSubmissionData] = useState({
     paymentMethod: 'e_wallet' as WalletPaymentType,
-    mobileOperator: '' as NamibianMobileOperator | '',
-    bankUsed: '' as NamibianBank | '',
+    mobileOperator: '' as string,
+    bankUsed: '' as string,
     referenceNumber: '',
     amount: 0,
     notes: '',
@@ -45,34 +45,44 @@ const WalletVerificationsPage: React.FC = () => {
   const mockVerifications: WalletVerification[] = [
     {
       id: 'ver-1',
+      status: 'verified' as WalletVerificationStatus,
+      date: '2023-04-16T10:30:00',
+      amount: 250,
+      reference: 'EW12345678',
+      method: 'e_wallet' as WalletPaymentType,
+      user_id: user?.id || '',
       bookingId: 'book-1',
       customerId: user?.id || '',
       providerId: 'prov-1',
-      amount: 250,
       paymentMethod: 'MTC E-Wallet',
       referenceNumber: 'EW12345678',
       customerPhone: '0811234567',
       providerPhone: '0812345678',
-      dateSubmitted: new Date('2023-04-16T10:30:00'),
+      dateSubmitted: '2023-04-16T10:30:00',
       verificationStatus: 'verified',
       customerConfirmed: true,
       providerConfirmed: true,
       adminVerified: true,
-      dateVerified: new Date('2023-04-17T14:20:00'),
+      dateVerified: '2023-04-17T14:20:00',
       verifiedBy: 'admin-user',
       proofType: 'screenshot',
       mobileOperator: 'MTC',
     },
     {
       id: 'ver-2',
+      status: 'pending' as WalletVerificationStatus,
+      date: '2023-04-22T09:15:00',
+      amount: 350,
+      reference: 'BT98765432',
+      method: 'bank_transfer' as WalletPaymentType,
+      user_id: user?.id || '',
       bookingId: 'book-2',
       customerId: user?.id || '',
       providerId: 'prov-2',
-      amount: 350,
       paymentMethod: 'Bank Transfer',
       referenceNumber: 'BT98765432',
       customerPhone: '0811234567',
-      dateSubmitted: new Date('2023-04-22T09:15:00'),
+      dateSubmitted: '2023-04-22T09:15:00',
       verificationStatus: 'pending',
       customerConfirmed: true,
       providerConfirmed: false,
@@ -178,20 +188,25 @@ const WalletVerificationsPage: React.FC = () => {
       // Add the new verification to our local state
       const newVerification: WalletVerification = {
         id: `ver-${Date.now()}`,
+        status: 'pending' as WalletVerificationStatus,
+        date: new Date().toISOString(),
+        amount,
+        reference: referenceNumber,
+        method: paymentMethod,
+        user_id: user?.id || '',
         bookingId: selectedBookingId,
         customerId: user?.id || '',
-        amount,
         paymentMethod,
         referenceNumber,
         customerPhone: phoneNumber,
-        dateSubmitted: new Date(),
+        dateSubmitted: new Date().toISOString(),
         verificationStatus: 'pending',
         customerConfirmed: true,
         providerConfirmed: false,
         adminVerified: false,
         notes,
-        mobileOperator: paymentMethod === 'e_wallet' ? mobileOperator as NamibianMobileOperator : undefined,
-        bankUsed: paymentMethod !== 'e_wallet' ? bankUsed as NamibianBank : undefined,
+        mobileOperator: paymentMethod === 'e_wallet' ? mobileOperator : undefined,
+        bankUsed: paymentMethod !== 'e_wallet' ? bankUsed : undefined,
         proofType: '',
       };
       
@@ -201,8 +216,8 @@ const WalletVerificationsPage: React.FC = () => {
       // Reset form
       setSubmissionData({
         paymentMethod: 'e_wallet' as WalletPaymentType,
-        mobileOperator: '' as NamibianMobileOperator | '',
-        bankUsed: '' as NamibianBank | '',
+        mobileOperator: '' as string,
+        bankUsed: '' as string,
         referenceNumber: '',
         amount: 0,
         notes: '',
@@ -228,7 +243,7 @@ const WalletVerificationsPage: React.FC = () => {
     setIsDetailsDialogOpen(true);
   };
 
-  const getStatusBadge = (status: WalletVerificationStatus) => {
+  const getStatusBadge = (status: WalletVerificationStatus | string | undefined) => {
     switch (status) {
       case 'pending':
         return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
@@ -243,8 +258,12 @@ const WalletVerificationsPage: React.FC = () => {
     }
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
+  const formatDate = (date: Date | string) => {
+    if (!date) return '';
+    
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    
+    return dateObj.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -307,10 +326,10 @@ const WalletVerificationsPage: React.FC = () => {
                                 {booking?.service || 'Unknown Service'}
                               </h3>
                               <p className="text-sm text-muted-foreground">
-                                Submitted on {formatDate(verification.dateSubmitted)}
+                                Submitted on {formatDate(verification.dateSubmitted || verification.date)}
                               </p>
                             </div>
-                            {getStatusBadge(verification.verificationStatus)}
+                            {getStatusBadge(verification.verificationStatus || verification.status)}
                           </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -324,7 +343,7 @@ const WalletVerificationsPage: React.FC = () => {
                             </div>
                             <div>
                               <p className="text-muted-foreground">Reference</p>
-                              <p className="font-medium">{verification.referenceNumber}</p>
+                              <p className="font-medium">{verification.referenceNumber || verification.reference}</p>
                             </div>
                           </div>
                           
@@ -513,7 +532,7 @@ const WalletVerificationsPage: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Status:</span>
                 <span className="font-medium">
-                  {getStatusBadge(selectedVerification.verificationStatus)}
+                  {getStatusBadge(selectedVerification.verificationStatus || selectedVerification.status)}
                 </span>
               </div>
               
@@ -545,12 +564,12 @@ const WalletVerificationsPage: React.FC = () => {
               
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Reference Number:</span>
-                <span className="font-medium">{selectedVerification.referenceNumber}</span>
+                <span className="font-medium">{selectedVerification.referenceNumber || selectedVerification.reference}</span>
               </div>
               
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Date Submitted:</span>
-                <span className="font-medium">{formatDate(selectedVerification.dateSubmitted)}</span>
+                <span className="font-medium">{formatDate(selectedVerification.dateSubmitted || selectedVerification.date)}</span>
               </div>
               
               {selectedVerification.dateVerified && (
@@ -561,18 +580,18 @@ const WalletVerificationsPage: React.FC = () => {
               )}
               
               {selectedVerification.verificationStatus === 'rejected' && selectedVerification.rejectionReason && (
-                <div>
+                <div className="mt-4">
                   <span className="text-muted-foreground">Rejection Reason:</span>
-                  <p className="mt-1 p-2 bg-red-50 rounded text-sm">
+                  <p className="mt-1 text-sm bg-red-50 p-3 rounded border border-red-100">
                     {selectedVerification.rejectionReason}
                   </p>
                 </div>
               )}
               
               {selectedVerification.notes && (
-                <div>
+                <div className="mt-4">
                   <span className="text-muted-foreground">Notes:</span>
-                  <p className="mt-1 p-2 bg-gray-50 rounded text-sm">
+                  <p className="mt-1 text-sm bg-gray-50 p-3 rounded border border-gray-100">
                     {selectedVerification.notes}
                   </p>
                 </div>

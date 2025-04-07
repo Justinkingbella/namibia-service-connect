@@ -1,671 +1,445 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthContextType, User, Customer, Provider, Admin, Session, UserRole, DbUserProfile, ProviderVerificationStatus, SubscriptionTier } from '@/types/auth';
-import { toast } from 'sonner';
+import { Session } from '@supabase/supabase-js';
+import { User, UserRole, Provider, Customer, Admin, SubscriptionTier } from '@/types';
 
-// Create the context
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  session: null,
-  userRole: null,
-  userProfile: null,
-  loading: true,
-  isLoading: true,
-  signIn: async () => ({ error: null }),
-  signUp: async () => ({ error: null }),
-  signOut: async () => {},
-  updateProfile: async () => false,
-  isAuthenticated: false
-});
+// Define the AuthContext type
+interface AuthContextType {
+  user: User | null;
+  userProfile: Customer | Provider | Admin | null;
+  userRole: UserRole | null;
+  isLoading: boolean;
+  loading?: boolean;
+  isAuthenticated: boolean;
+  session: Session | null;
+  signIn: (email: string, password: string) => Promise<{error: any | null}>;
+  signUp: (email: string, password: string, userData: Partial<User>) => Promise<{error: any | null, data: any | null}>;
+  signOut: () => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<boolean>;
+  setUserProfile: (profile: Customer | Provider | Admin | null) => void;
+  uploadAvatar: (file: File) => Promise<string>;
+  resetPassword: (email: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
+  verifyEmail: (token: string) => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
+  checkAuth: () => Promise<User | null>;
+}
 
-// AuthProvider component that wraps the application
+// Create the AuthContext
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// AuthProvider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [userProfile, setUserProfile] = useState<Customer | Provider | Admin | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const isAuthenticated = !!user;
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Initialize auth state on component mount
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
-        console.log('Auth event:', event);
-        
-        if (currentSession) {
-          // Process and set session data
-          const customSession: Session = {
-            access_token: currentSession.access_token,
-            refresh_token: currentSession.refresh_token,
-            expires_at: currentSession.expires_at,
-            user: {
-              id: currentSession.user.id,
-              email: currentSession.user.email || '',
-              role: currentSession.user.user_metadata?.role || 'customer'
-            }
-          };
-          
-          setSession(customSession);
-          
-          // Process and set user data
-          const userData: User = {
-            id: currentSession.user.id,
-            email: currentSession.user.email || '',
-            firstName: currentSession.user.user_metadata?.first_name || '',
-            lastName: currentSession.user.user_metadata?.last_name || '',
-            role: currentSession.user.user_metadata?.role || 'customer',
-            emailVerified: currentSession.user.email_confirmed_at ? true : false,
-            isActive: true,
-            createdAt: new Date(currentSession.user.created_at)
-          };
-          
-          setUser(userData);
-          setUserRole(userData.role);
-          
-          // Fetch complete profile data
-          await fetchUserProfile(currentSession.user.id, userData.role);
-        } else {
-          // Clear all auth data on sign out or session expiry
-          setUser(null);
-          setSession(null);
-          setUserRole(null);
-          setUserProfile(null);
-          setLoading(false);
-        }
-      }
-    );
-
-    // Initial session check
     const initAuth = async () => {
       try {
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        // Get current session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) throw error;
-        
-        if (initialSession) {
-          // Process and set session data
-          const customSession: Session = {
-            access_token: initialSession.access_token,
-            refresh_token: initialSession.refresh_token,
-            expires_at: initialSession.expires_at,
-            user: {
-              id: initialSession.user.id,
-              email: initialSession.user.email || '',
-              role: initialSession.user.user_metadata?.role || 'customer'
-            }
+        if (sessionError) {
+          throw sessionError;
+        }
+
+        if (sessionData?.session) {
+          setSession(sessionData.session);
+          
+          // Get user data
+          const userData = {
+            id: sessionData.session.user.id,
+            email: sessionData.session.user.email as string,
+            firstName: '',
+            lastName: '',
+            role: 'customer' as UserRole,
+            phoneNumber: sessionData.session.user.phone as string,
+            // Convert to string to fix type errors
+            createdAt: sessionData.session.user.created_at ? new Date(sessionData.session.user.created_at).toISOString() : undefined,
+            emailVerified: false,
           };
-          
-          setSession(customSession);
-          
-          // Process and set user data
-          const userData: User = {
-            id: initialSession.user.id,
-            email: initialSession.user.email || '',
-            firstName: initialSession.user.user_metadata?.first_name || '',
-            lastName: initialSession.user.user_metadata?.last_name || '',
-            role: initialSession.user.user_metadata?.role || 'customer',
-            emailVerified: initialSession.user.email_confirmed_at ? true : false,
-            isActive: true,
-            createdAt: new Date(initialSession.user.created_at)
-          };
-          
+
+          // Fetch user profile from 'profiles' table
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userData.id)
+            .single();
+
+          if (profileError) {
+            console.error('Error fetching user profile:', profileError);
+          } else if (profileData) {
+            // Update user data with profile data
+            userData.firstName = profileData.first_name || '';
+            userData.lastName = profileData.last_name || '';
+            userData.role = profileData.role as UserRole || 'customer';
+            userData.phoneNumber = profileData.phone_number || '';
+            userData.avatarUrl = profileData.avatar_url || '';
+            userData.emailVerified = profileData.email_verified || false;
+          }
+
           setUser(userData);
           setUserRole(userData.role);
-          
-          // Fetch complete profile data
-          await fetchUserProfile(initialSession.user.id, userData.role);
-        } else {
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-        setLoading(false);
-      }
-    };
 
-    initAuth();
-
-    // Clean up the subscription
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  // Fetch user profile information
-  const fetchUserProfile = async (userId: string, role: UserRole) => {
-    try {
-      // First try to load the profile data
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (profileError) {
-        console.error('Error fetching profile data:', profileError);
-        setLoading(false);
-        return;
-      }
-
-      // Update user with profile data
-      setUser(prevUser => {
-        if (!prevUser) return null;
-        
-        return {
-          ...prevUser,
-          firstName: profileData.first_name || '',
-          lastName: profileData.last_name || '',
-          phoneNumber: profileData.phone_number || '',
-          avatarUrl: profileData.avatar_url || '',
-          address: profileData.address || '',
-          city: profileData.city || '',
-          country: profileData.country || '',
-          isActive: profileData.active || true,
-          emailVerified: profileData.email_verified || false,
-          loyaltyPoints: profileData.loyalty_points || 0
-        };
-      });
-
-      // Based on role, fetch additional data and create specialized profile
-      switch (role) {
-        case 'customer': {
-          try {
+          // Fetch role-specific data
+          if (userData.role === 'customer') {
             const { data: customerData, error: customerError } = await supabase
               .from('customers')
               .select('*')
-              .eq('id', userId)
-              .maybeSingle();
-            
-            if (customerError && customerError.code !== 'PGRST116') {
-              console.error('Error fetching customer data:', customerError);
-            }
-            
-            // Default notification preferences structure
-            const notificationPreferences = customerData?.notification_preferences || { 
-              email: true, 
-              sms: false, 
-              push: true 
-            };
-            
-            const customerProfile: Customer = {
-              id: userId,
-              email: profileData.email || '',
-              firstName: profileData.first_name || '',
-              lastName: profileData.last_name || '',
-              phoneNumber: profileData.phone_number || '',
-              avatarUrl: profileData.avatar_url || '',
-              emailVerified: profileData.email_verified || false,
-              address: profileData.address || '',
-              city: profileData.city || '',
-              country: profileData.country || '',
-              role: 'customer',
-              isActive: profileData.active || true,
-              createdAt: profileData.created_at ? new Date(profileData.created_at) : new Date(),
-              updatedAt: profileData.updated_at ? new Date(profileData.updated_at) : new Date(),
-              loyaltyPoints: profileData.loyalty_points || 0,
-              preferredCategories: customerData?.preferred_categories || [],
-              savedServices: customerData?.saved_services || [],
-              notificationPreferences
-            };
-            
-            setUserProfile(customerProfile);
-          } catch (error) {
-            console.error('Error processing customer data:', error);
-          }
-          break;
-        }
+              .eq('id', userData.id)
+              .single();
 
-        case 'provider': {
-          try {
+            if (!customerError && customerData) {
+              const customerProfile: Customer = {
+                ...userData,
+                preferredCategories: customerData.preferred_categories || [],
+                savedServices: customerData.saved_services || [],
+                loyaltyPoints: 0, // Converting to string to match the type
+                notificationPreferences: {
+                  email: true,
+                  sms: false,
+                  push: true,
+                },
+              };
+              setUserProfile(customerProfile);
+            }
+          } else if (userData.role === 'provider') {
             const { data: providerData, error: providerError } = await supabase
               .from('service_providers')
               .select('*')
-              .eq('id', userId)
+              .eq('id', userData.id)
               .single();
-            
-            if (providerError) {
-              console.error('Error fetching provider data:', providerError);
-            }
-            
-            const providerVerificationStatus: ProviderVerificationStatus = 
-              (providerData?.verification_status as ProviderVerificationStatus) || 'pending';
-            
-            const providerSubscriptionTier: SubscriptionTier = 
-              (providerData?.subscription_tier as SubscriptionTier) || 'free';
-            
-            const providerProfile: Provider = {
-              id: userId,
-              email: profileData.email || '',
-              firstName: profileData.first_name || '',
-              lastName: profileData.last_name || '',
-              phoneNumber: profileData.phone_number || '',
-              avatarUrl: profileData.avatar_url || '',
-              emailVerified: profileData.email_verified || false,
-              address: profileData.address || '',
-              city: profileData.city || '',
-              country: profileData.country || '',
-              role: 'provider',
-              isActive: providerData?.is_active ?? true,
-              createdAt: profileData.created_at ? new Date(profileData.created_at) : new Date(),
-              updatedAt: profileData.updated_at ? new Date(profileData.updated_at) : new Date(),
-              businessName: providerData?.business_name || '',
-              businessDescription: providerData?.business_description || '',
-              website: providerData?.website || '',
-              verificationStatus: providerVerificationStatus,
-              subscriptionTier: providerSubscriptionTier,
-              commissionRate: providerData?.commission_rate || 10,
-              completedBookings: providerData?.completed_bookings || 0,
-              rating: providerData?.rating || 0,
-              ratingCount: providerData?.rating_count || 0,
-              servicesCount: providerData?.services_count || 0,
-              bannerUrl: providerData?.banner_url || ''
-            };
-            
-            setUserProfile(providerProfile);
-          } catch (error) {
-            console.error('Error processing provider data:', error);
-          }
-          break;
-        }
 
-        case 'admin': {
-          try {
+            if (!providerError && providerData) {
+              const providerProfile: Provider = {
+                ...userData,
+                businessName: providerData.business_name || '',
+                businessDescription: providerData.business_description || '',
+                categories: providerData.categories || [],
+                services: providerData.services || [],
+                rating: providerData.rating || 0,
+                commission: providerData.commission_rate || 0,
+                verificationStatus: providerData.verification_status || 'unverified',
+                bannerUrl: providerData.banner_url || '',
+                website: providerData.website || '',
+                taxId: providerData.tax_id || '',
+                reviewCount: providerData.review_count || 0,
+                // Handle subscription tier, ensure it's a valid enum value
+                subscriptionTier: (providerData.subscription_tier || 'free') as SubscriptionTier,
+              };
+              setUserProfile(providerProfile);
+            }
+          } else if (userData.role === 'admin') {
             const { data: adminData, error: adminError } = await supabase
               .from('admin_permissions')
               .select('*')
-              .eq('user_id', userId)
-              .maybeSingle();
-            
-            if (adminError && adminError.code !== 'PGRST116') {
-              console.error('Error fetching admin data:', adminError);
+              .eq('user_id', userData.id)
+              .single();
+
+            if (!adminError && adminData) {
+              const adminProfile: Admin = {
+                ...userData,
+                permissions: adminData.permissions || [],
+                adminLevel: 1, // Default admin level
+                isVerified: true,
+                accessLevel: 1,
+              };
+              setUserProfile(adminProfile);
             }
-            
-            const adminProfile: Admin = {
-              id: userId,
-              email: profileData.email || '',
-              firstName: profileData.first_name || '',
-              lastName: profileData.last_name || '',
-              phoneNumber: profileData.phone_number || '',
-              avatarUrl: profileData.avatar_url || '',
-              emailVerified: true,
-              address: profileData.address || '',
-              city: profileData.city || '',
-              country: profileData.country || '',
-              role: 'admin',
-              isActive: true,
-              createdAt: profileData.created_at ? new Date(profileData.created_at) : new Date(),
-              updatedAt: profileData.updated_at ? new Date(profileData.updated_at) : new Date(),
-              permissions: adminData?.permissions || [],
-              accessLevel: 'standard',
-              isSuperAdmin: false,
-              isVerified: true
-            };
-            
-            setUserProfile(adminProfile);
-          } catch (error) {
-            console.error('Error processing admin data:', error);
           }
-          break;
         }
-
-        default:
-          console.warn(`Unknown user role: ${role}`);
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  // Sign in function
+    // Set up auth subscription
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event);
+      if (event === 'SIGNED_IN') {
+        setSession(session);
+        // Fetch user data as above
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setUserProfile(null);
+        setSession(null);
+      }
+    });
+
+    initAuth();
+
+    // Cleanup subscription
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Sign in method
   const signIn = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        console.error('Sign in error:', error);
-        toast.error('Sign in failed', {
-          description: error.message
-        });
-        return { error };
-      }
-      
-      toast.success('Signed in successfully');
-      return { error: null };
-    } catch (error: any) {
-      console.error('Unexpected sign in error:', error);
-      toast.error('Sign in failed', {
-        description: error.message || 'An unexpected error occurred'
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
+
+      if (error) {
+        throw error;
+      }
+
+      // Session will be set by the auth subscription
+      return { error: null };
+    } catch (error) {
+      console.error('Error signing in:', error);
       return { error };
     }
   };
 
-  // Sign up function
-  const signUp = async (email: string, password: string, userData: any) => {
+  // Sign up method
+  const signUp = async (email: string, password: string, userData: Partial<User>) => {
     try {
-      // Register the user
       const { data, error } = await supabase.auth.signUp({
-        email, 
+        email,
         password,
         options: {
           data: {
             first_name: userData.firstName,
             last_name: userData.lastName,
-            role: userData.role || 'customer'
-          }
-        }
-      });
-      
-      if (error) {
-        console.error('Sign up error:', error);
-        toast.error('Sign up failed', {
-          description: error.message
-        });
-        return { error };
-      }
-      
-      // If successful, create profile entry
-      if (data.user) {
-        // Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email: email,
-            first_name: userData.firstName,
-            last_name: userData.lastName,
-            phone_number: userData.phoneNumber,
             role: userData.role || 'customer',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-        
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          toast.error('Profile creation failed', {
-            description: 'Account was created but profile setup failed.'
-          });
-        }
-        
-        // Create role-specific entry
-        if (userData.role === 'customer') {
-          const { error: customerError } = await supabase
-            .from('customers')
-            .insert({
-              id: data.user.id,
-              notification_preferences: {
-                email: true,
-                sms: false,
-                push: true
-              },
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
-          
-          if (customerError) {
-            console.error('Customer data creation error:', customerError);
-          }
-        } else if (userData.role === 'provider') {
-          const { error: providerError } = await supabase
-            .from('service_providers')
-            .insert({
-              id: data.user.id,
-              email: email,
-              business_name: userData.businessName || '',
-              business_description: userData.businessDescription || '',
-              verification_status: 'pending',
-              subscription_tier: 'free',
-              commission_rate: 10,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              is_active: true
-            });
-          
-          if (providerError) {
-            console.error('Provider data creation error:', providerError);
-          }
-        }
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
       }
-      
-      toast.success('Account created successfully!', {
-        description: 'Check your email to confirm your account.'
-      });
-      
-      return { error: null };
-    } catch (error: any) {
-      console.error('Unexpected sign up error:', error);
-      toast.error('Sign up failed', {
-        description: error.message || 'An unexpected error occurred'
-      });
-      return { error };
+
+      // Session will be set by the auth subscription
+      return { error: null, data };
+    } catch (error) {
+      console.error('Error signing up:', error);
+      return { error, data: null };
     }
   };
 
-  // Sign out function
+  // Sign out method
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
-      
       if (error) {
-        console.error('Sign out error:', error);
-        toast.error('Sign out failed', {
-          description: error.message
-        });
-        return;
+        throw error;
       }
-      
-      // Clear auth state
-      setUser(null);
-      setSession(null);
-      setUserRole(null);
-      setUserProfile(null);
-      
-      toast.success('Signed out successfully');
-    } catch (error: any) {
-      console.error('Unexpected sign out error:', error);
-      toast.error('Sign out failed', {
-        description: error.message || 'An unexpected error occurred'
-      });
+      // State will be cleared by the auth subscription
+    } catch (error) {
+      console.error('Error signing out:', error);
     }
   };
 
-  // Update profile function
-  const updateProfile = async (data: Partial<Customer | Provider | Admin>): Promise<boolean> => {
-    if (!user?.id) return false;
-    
+  // Update profile method
+  const updateProfile = async (data: Partial<User>) => {
+    if (!user) return false;
+
     try {
-      // Prepare data for profiles table (snake_case)
-      const profileData: Record<string, any> = {};
-      
-      if ('firstName' in data && data.firstName !== undefined) profileData.first_name = data.firstName;
-      if ('lastName' in data && data.lastName !== undefined) profileData.last_name = data.lastName;
-      if ('phoneNumber' in data && data.phoneNumber !== undefined) profileData.phone_number = data.phoneNumber;
-      if ('avatarUrl' in data && data.avatarUrl !== undefined) profileData.avatar_url = data.avatarUrl;
-      if ('address' in data && data.address !== undefined) profileData.address = data.address;
-      if ('city' in data && data.city !== undefined) profileData.city = data.city;
-      if ('country' in data && data.country !== undefined) profileData.country = data.country;
-      if ('isActive' in data && data.isActive !== undefined) profileData.active = data.isActive;
-      if ('loyaltyPoints' in data && data.loyaltyPoints !== undefined) profileData.loyalty_points = data.loyaltyPoints;
-      if ('preferredLanguage' in data && data.preferredLanguage !== undefined) profileData.preferred_language = data.preferredLanguage;
-      if ('email' in data && data.email !== undefined) profileData.email = data.email;
-      if ('emailVerified' in data && data.emailVerified !== undefined) profileData.email_verified = data.emailVerified;
-      if ('role' in data && data.role !== undefined) profileData.role = data.role;
-      
-      profileData.updated_at = new Date().toISOString();
-      
-      // Update profiles table
-      const { error: profileError } = await supabase
+      // Update in Supabase
+      const { error } = await supabase
         .from('profiles')
-        .update(profileData)
+        .update({
+          first_name: data.firstName || user.firstName,
+          last_name: data.lastName || user.lastName,
+          phone_number: data.phoneNumber || user.phoneNumber,
+          avatar_url: data.avatarUrl || user.avatarUrl,
+          bio: data.bio || (userProfile as any)?.bio,
+          address: data.address || (userProfile as any)?.address,
+          city: data.city || (userProfile as any)?.city,
+          country: data.country || (userProfile as any)?.country,
+          active: data.isActive !== undefined ? data.isActive : (userProfile as any)?.active,
+          preferred_language: 'English',
+          // Handle date conversion
+          birth_date: data.birthDate ? new Date(data.birthDate).toISOString() : (userProfile as any)?.birth_date,
+          updated_at: new Date().toISOString(),
+          email_verified: data.emailVerified !== undefined ? data.emailVerified : user.emailVerified,
+          // Convert loyalty points to number if necessary
+          loyalty_points: data.loyaltyPoints !== undefined ? Number(data.loyaltyPoints) : (userProfile as any)?.loyalty_points,
+          notification_preferences: data.notificationPreferences || (userProfile as any)?.notification_preferences,
+        })
         .eq('id', user.id);
-      
-      if (profileError) {
-        console.error('Profile update error:', profileError);
-        toast.error('Profile update failed');
-        return false;
+
+      if (error) {
+        throw error;
       }
-      
-      // Role-specific updates
-      if (userRole === 'customer' && ('preferredCategories' in data || 'savedServices' in data || 'notificationPreferences' in data)) {
-        const customerData: Record<string, any> = {};
-        
-        if ('preferredCategories' in data && data.preferredCategories !== undefined) 
-          customerData.preferred_categories = data.preferredCategories;
-          
-        if ('savedServices' in data && data.savedServices !== undefined) 
-          customerData.saved_services = data.savedServices;
-          
-        if ('notificationPreferences' in data && data.notificationPreferences !== undefined) 
-          customerData.notification_preferences = data.notificationPreferences;
-          
-        customerData.updated_at = new Date().toISOString();
-        
-        const { error: customerError } = await supabase
-          .from('customers')
-          .update(customerData)
-          .eq('id', user.id);
-        
-        if (customerError) {
-          console.error('Customer update error:', customerError);
-          toast.error('Customer preference update failed');
-          return false;
-        }
-      } else if (userRole === 'provider') {
-        const providerData: Record<string, any> = {};
-        
-        if ('businessName' in data && data.businessName !== undefined) 
-          providerData.business_name = data.businessName;
-          
-        if ('businessDescription' in data && data.businessDescription !== undefined) 
-          providerData.business_description = data.businessDescription;
-          
-        if ('website' in data && data.website !== undefined) 
-          providerData.website = data.website;
-          
-        if ('bannerUrl' in data && data.bannerUrl !== undefined) 
-          providerData.banner_url = data.bannerUrl;
-          
-        if (Object.keys(providerData).length > 0) {
-          providerData.updated_at = new Date().toISOString();
-          
-          const { error: providerError } = await supabase
-            .from('service_providers')
-            .update(providerData)
-            .eq('id', user.id);
-          
-          if (providerError) {
-            console.error('Provider update error:', providerError);
-            toast.error('Provider profile update failed');
-            return false;
-          }
-        }
-      }
-      
+
       // Update local state
-      setUser(prev => {
-        if (!prev) return null;
-        
-        const updatedUser = { ...prev };
-        
-        if ('firstName' in data && data.firstName !== undefined) updatedUser.firstName = data.firstName;
-        if ('lastName' in data && data.lastName !== undefined) updatedUser.lastName = data.lastName;
-        if ('phoneNumber' in data && data.phoneNumber !== undefined) updatedUser.phoneNumber = data.phoneNumber;
-        if ('avatarUrl' in data && data.avatarUrl !== undefined) updatedUser.avatarUrl = data.avatarUrl;
-        if ('address' in data && data.address !== undefined) updatedUser.address = data.address;
-        if ('city' in data && data.city !== undefined) updatedUser.city = data.city;
-        if ('country' in data && data.country !== undefined) updatedUser.country = data.country;
-        if ('isActive' in data && data.isActive !== undefined) updatedUser.isActive = data.isActive;
-        if ('email' in data && data.email !== undefined) updatedUser.email = data.email;
-        if ('emailVerified' in data && data.emailVerified !== undefined) updatedUser.emailVerified = data.emailVerified;
-        if ('loyaltyPoints' in data && data.loyaltyPoints !== undefined) updatedUser.loyaltyPoints = data.loyaltyPoints;
-        
-        return updatedUser;
+      setUser({
+        ...user,
+        ...data,
       });
-      
-      setUserProfile(prev => {
-        if (!prev) return null;
-        
-        const updatedProfile = { ...prev };
-        
-        // Update base User properties
-        Object.keys(data).forEach(key => {
-          if (key in updatedProfile && data[key as keyof typeof data] !== undefined) {
-            (updatedProfile as any)[key] = data[key as keyof typeof data];
-          }
+
+      if (userProfile) {
+        setUserProfile({
+          ...userProfile,
+          ...data,
         });
-        
-        if (userRole === 'customer' && updatedProfile.role === 'customer') {
-          if ('preferredCategories' in data && data.preferredCategories !== undefined)
-            (updatedProfile as Customer).preferredCategories = data.preferredCategories;
-            
-          if ('savedServices' in data && data.savedServices !== undefined)
-            (updatedProfile as Customer).savedServices = data.savedServices;
-            
-          if ('notificationPreferences' in data && data.notificationPreferences !== undefined)
-            (updatedProfile as Customer).notificationPreferences = data.notificationPreferences;
-        }
-        else if (userRole === 'provider' && updatedProfile.role === 'provider') {
-          if ('businessName' in data && data.businessName !== undefined)
-            (updatedProfile as Provider).businessName = data.businessName;
-            
-          if ('businessDescription' in data && data.businessDescription !== undefined)
-            (updatedProfile as Provider).businessDescription = data.businessDescription;
-            
-          if ('website' in data && data.website !== undefined)
-            (updatedProfile as Provider).website = data.website;
-            
-          if ('bannerUrl' in data && data.bannerUrl !== undefined)
-            (updatedProfile as Provider).bannerUrl = data.bannerUrl;
-        }
-        
-        return updatedProfile;
-      });
-      
-      toast.success('Profile updated successfully');
+      }
+
       return true;
-    } catch (error: any) {
-      console.error('Profile update error:', error);
-      toast.error('Profile update failed', {
-        description: error.message || 'An unexpected error occurred'
-      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
       return false;
     }
   };
 
-  // Create auth context value
-  const authContextValue: AuthContextType = {
+  // Upload avatar method
+  const uploadAvatar = async (file: File): Promise<string> => {
+    if (!user) throw new Error('User not authenticated');
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('user_avatars')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data } = supabase.storage.from('user_avatars').getPublicUrl(filePath);
+      const avatarUrl = data.publicUrl;
+
+      // Update user profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: avatarUrl })
+        .eq('id', user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Update local state
+      setUser({
+        ...user,
+        avatarUrl,
+      });
+
+      if (userProfile) {
+        setUserProfile({
+          ...userProfile,
+          avatarUrl,
+        });
+      }
+
+      return avatarUrl;
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      throw error;
+    }
+  };
+
+  // Reset password method
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      throw error;
+    }
+  };
+
+  // Update password method
+  const updatePassword = async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error updating password:', error);
+      throw error;
+    }
+  };
+
+  // Verify email method
+  const verifyEmail = async (token: string) => {
+    try {
+      // This would depend on how your email verification is set up in Supabase
+      // Placeholder implementation
+      console.log('Verifying email with token:', token);
+    } catch (error) {
+      console.error('Error verifying email:', error);
+      throw error;
+    }
+  };
+
+  // Send verification email method
+  const sendVerificationEmail = async () => {
+    try {
+      // This would depend on how your email verification is set up in Supabase
+      // Placeholder implementation
+      console.log('Sending verification email');
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      throw error;
+    }
+  };
+
+  // Check auth method
+  const checkAuth = async (): Promise<User | null> => {
+    try {
+      const { data: sessionData, error } = await supabase.auth.getSession();
+      if (error || !sessionData.session) {
+        throw error;
+      }
+      return user;
+    } catch (error) {
+      console.error('Error checking auth:', error);
+      return null;
+    }
+  };
+
+  const value = {
     user,
-    session,
-    userRole,
     userProfile,
-    loading,
-    isLoading: loading,
+    userRole,
+    isLoading,
+    loading: isLoading,
+    isAuthenticated: !!user,
+    session,
     signIn,
     signUp,
     signOut,
     updateProfile,
-    isAuthenticated
+    setUserProfile,
+    uploadAvatar,
+    resetPassword,
+    updatePassword,
+    verifyEmail,
+    sendVerificationEmail,
+    checkAuth,
   };
 
-  // Return provider with value
-  return (
-    <AuthContext.Provider value={authContextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Hook for using auth context
-export const useAuth = () => {
+// Custom hook to use the AuthContext
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
   return context;
 };
