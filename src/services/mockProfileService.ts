@@ -151,7 +151,7 @@ export const mockMessages: Message[] = [
     conversation_id: 'conv1',
     sender_id: 'user123',
     recipient_id: 'provider123',
-    content: 'Hi Jane! Tuesday at 10am would be perfect if you're available.',
+    content: 'Hi Jane! Tuesday at 10am would be perfect if youre available.',
     read: true,
     created_at: new Date(Date.now() - 3400000).toISOString(), // 56 minutes ago
     message_type: 'text',
@@ -163,7 +163,7 @@ export const mockMessages: Message[] = [
     conversation_id: 'conv1',
     sender_id: 'provider123',
     recipient_id: 'user123',
-    content: 'Tuesday at 10am works for me. I'll be there! Do you have any specific cleaning products preferences?',
+    content: 'Tuesday at 10am works for me. Ill be there! Do you have any specific cleaning products preferences?',
     read: true,
     created_at: new Date(Date.now() - 3200000).toISOString(), // 53 minutes ago
     message_type: 'text',
