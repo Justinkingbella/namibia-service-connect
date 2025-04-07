@@ -1,10 +1,10 @@
 
 import { 
   User, 
+  UserRole, 
   UserAddress, 
   Provider, 
-  Customer, 
-  UserRole 
+  Customer
 } from '@/types';
 import { Message } from '@/types/conversations';
 import { Dispute, DisputeStatus, DisputePriority } from '@/types';
@@ -290,4 +290,12 @@ export const createDispute = async (data: Partial<Dispute>): Promise<boolean> =>
     console.error('Error creating dispute:', error);
     return false;
   }
+};
+
+// Function to fetch provider disputes
+export const fetchProviderDisputes = async (providerId: string): Promise<Dispute[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 600));
+  
+  return mockDisputes.filter(dispute => dispute.providerId === providerId);
 };
