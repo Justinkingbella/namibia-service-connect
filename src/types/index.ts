@@ -24,13 +24,13 @@ export type {
   ProviderPayout
 } from './payments';
 
-// Fix exports for wallet types
+// Fix exports for wallet types using 'export type'
 export type {
   WalletVerification,
   WalletVerificationRequest,
   NamibianMobileOperator,
   NamibianBank,
-  WalletPaymentType, // Now properly exported
+  WalletPaymentType,
   WalletVerificationStatus
 } from './payment';
 

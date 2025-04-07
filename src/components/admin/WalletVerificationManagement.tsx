@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { WalletVerification } from '@/types/payment';
+import { WalletVerification, WalletVerificationStatus } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { CheckCircle, XCircle, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,7 +60,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
             payment_status: 'completed',
             updated_at: new Date().toISOString()
           })
-          .eq('id', selectedVer.bookingId);
+          .eq('id', selectedVer.booking_id);
         
         if (bookingError) throw bookingError;
       }
@@ -123,7 +123,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
     rejectMutation.mutate({ id, reason: rejectReason });
   };
   
-  const getStatusBadge = (status: WalletVerification['verificationStatus']) => {
+  const getStatusBadge = (status: WalletVerificationStatus | string) => {
     switch (status) {
       case 'pending':
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-700">Pending</Badge>;
@@ -173,12 +173,12 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
             <tbody>
               {verifications.map((verification) => (
                 <tr key={verification.id} className="border-b hover:bg-slate-50">
-                  <td className="py-3 px-4">{formatDate(verification.dateSubmitted)}</td>
-                  <td className="py-3 px-4">{verification.referenceNumber}</td>
-                  <td className="py-3 px-4">{verification.bookingId?.substring(0, 8)}</td>
+                  <td className="py-3 px-4">{formatDate(verification.dateSubmitted || verification.date)}</td>
+                  <td className="py-3 px-4">{verification.referenceNumber || verification.reference}</td>
+                  <td className="py-3 px-4">{verification.booking_id?.substring(0, 8) || ''}</td>
                   <td className="py-3 px-4">{verification.customerPhone}</td>
                   <td className="py-3 px-4">N${verification.amount.toLocaleString()}</td>
-                  <td className="py-3 px-4">{getStatusBadge(verification.verificationStatus)}</td>
+                  <td className="py-3 px-4">{getStatusBadge(verification.verificationStatus || verification.status)}</td>
                   <td className="py-3 px-4">
                     <div className="flex gap-2">
                       <Button 
@@ -192,7 +192,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
                         <Eye className="h-4 w-4" />
                       </Button>
                       
-                      {verification.verificationStatus === 'submitted' && (
+                      {(verification.verificationStatus === 'submitted' || verification.status === 'submitted') && (
                         <>
                           <Button 
                             variant="default" 
@@ -247,7 +247,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
                 <div>
                   <Label>Status</Label>
                   <div className="mt-1 py-2 px-3 bg-gray-50 rounded border">
-                    {getStatusBadge(selectedVerification.verificationStatus)}
+                    {getStatusBadge(selectedVerification.verificationStatus || selectedVerification.status)}
                   </div>
                 </div>
                 <div>
@@ -261,7 +261,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
                 <div>
                   <Label>Reference Number</Label>
                   <Input 
-                    value={selectedVerification.referenceNumber} 
+                    value={selectedVerification.referenceNumber || selectedVerification.reference} 
                     readOnly 
                     className="bg-gray-50 mt-1"
                   />
@@ -269,7 +269,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
                 <div>
                   <Label>Booking ID</Label>
                   <Input 
-                    value={selectedVerification.bookingId || ''} 
+                    value={selectedVerification.booking_id || ''} 
                     readOnly 
                     className="bg-gray-50 mt-1"
                   />
@@ -285,7 +285,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
                 <div>
                   <Label>Date Submitted</Label>
                   <Input 
-                    value={formatDate(selectedVerification.dateSubmitted)} 
+                    value={formatDate(selectedVerification.dateSubmitted || selectedVerification.date)} 
                     readOnly 
                     className="bg-gray-50 mt-1"
                   />
@@ -326,7 +326,8 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
                 </div>
               )}
               
-              {selectedVerification.verificationStatus === 'rejected' && selectedVerification.rejectionReason && (
+              {(selectedVerification.verificationStatus === 'rejected' || selectedVerification.status === 'rejected') && 
+                selectedVerification.rejectionReason && (
                 <div className="mt-4">
                   <Label>Rejection Reason</Label>
                   <Textarea
@@ -338,7 +339,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
               )}
               
               <DialogFooter>
-                {selectedVerification.verificationStatus === 'submitted' && (
+                {(selectedVerification.verificationStatus === 'submitted' || selectedVerification.status === 'submitted') && (
                   <div className="flex space-x-2">
                     <Button
                       variant="default"

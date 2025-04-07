@@ -1,6 +1,6 @@
 
 import { Json } from "./schema";
-export type WalletVerificationStatus = 'pending' | 'approved' | 'rejected' | 'expired';
+export type WalletVerificationStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'submitted' | 'verified';
 
 // Use string literal union type instead of enum for better TypeScript support
 export type WalletPaymentType = 'bank_transfer' | 'mobile_money' | 'cash' | 'credit_card' | 'e_wallet' | 'pay_today' | 'pay_fast' | 'easy_wallet' | 'dop';
@@ -46,10 +46,10 @@ export interface NamibianBank {
 export interface WalletVerification {
   id: string;
   user_id: string;
-  status: string;
+  status: WalletVerificationStatus;
   date: string;
   reference: string;
-  method: string;
+  method: WalletPaymentType;
   amount: number;
   provider_id?: string;
   customer_id?: string;
@@ -110,7 +110,7 @@ export interface WalletVerificationRequest {
   reviewerId?: string;
   reviewerName?: string;
   reviewDate?: string;
-  walletName?: string;
+  walletName?: string; // Added to fix property errors
 }
 
 export interface WalletVerificationFilters {
@@ -137,7 +137,7 @@ export interface WalletVerificationStats {
   totalApproved?: number;
   totalRejected?: number;
   totalExpired?: number;
-  totalAmountPending?: number;
+  totalAmountPending?: number; // Added to fix property errors
 }
 
 export interface WalletVerificationComment {
@@ -146,7 +146,7 @@ export interface WalletVerificationComment {
   content: string;
   createdAt: string;
   userId?: string;
-  userName?: string;
+  userName?: string; // Added to fix property errors
 }
 
 export interface WalletProviderSettings {
@@ -157,8 +157,8 @@ export interface WalletProviderSettings {
   endpoint?: string;
   isActive: boolean;
   // Additional fields used
-  displayName?: string;
+  displayName?: string; // Added to fix property errors
   isEnabled?: boolean;
 }
 
-export { WalletPaymentType };
+// Fix export conflict by removing the duplicate export

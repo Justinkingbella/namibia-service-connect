@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, CheckCircle, Clock, Wallet } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { WalletVerification, WalletPaymentType } from '@/types';
+import { WalletVerification, WalletPaymentType, WalletVerificationStatus } from '@/types';
 
 // Move the date formatting function to module level
 const formatDate = (date: string | Date | undefined) => {
@@ -69,7 +69,37 @@ const AdminWalletVerificationPage = () => {
           throw new Error(error.message);
         }
 
-        setVerifications(data);
+        // Transform the data to match WalletVerification type
+        const transformedData: WalletVerification[] = data.map(item => ({
+          id: item.id,
+          user_id: item.customer_id || item.provider_id,
+          status: item.verification_status as WalletVerificationStatus,
+          date: item.date_submitted,
+          reference: item.reference_number,
+          method: item.payment_method as WalletPaymentType,
+          amount: item.amount,
+          provider_id: item.provider_id,
+          customer_id: item.customer_id,
+          booking_id: item.booking_id,
+          paymentMethod: item.payment_method as WalletPaymentType,
+          customerPhone: item.customer_phone,
+          providerPhone: item.provider_phone,
+          referenceNumber: item.reference_number,
+          dateSubmitted: item.date_submitted,
+          dateVerified: item.date_verified,
+          verificationStatus: item.verification_status as WalletVerificationStatus,
+          rejectionReason: item.rejection_reason,
+          notes: item.notes,
+          receiptImage: item.receipt_image,
+          mobileOperator: item.mobile_operator,
+          bankUsed: item.bank_used,
+          customerConfirmed: item.customer_confirmed,
+          providerConfirmed: item.provider_confirmed,
+          adminVerified: item.admin_verified,
+          adminComments: item.admin_comments,
+        }));
+
+        setVerifications(transformedData);
       } catch (error: any) {
         toast({
           title: 'Error',
@@ -84,34 +114,19 @@ const AdminWalletVerificationPage = () => {
     loadVerifications();
   }, [toast]);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700">Pending</Badge>;
-      case 'submitted':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700">Submitted</Badge>;
-      case 'verified':
-        return <Badge variant="outline" className="bg-green-50 text-green-700">Verified</Badge>;
-      case 'rejected':
-        return <Badge variant="outline" className="bg-red-50 text-red-700">Rejected</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-
   const handleApprove = async (verification: WalletVerification) => {
     try {
       // Optimistically update the UI
       setVerifications((prevVerifications) =>
         prevVerifications.map((v) =>
-          v.id === verification.id ? { ...v, status: 'verified' } : v
+          v.id === verification.id ? { ...v, status: 'verified' as WalletVerificationStatus, verificationStatus: 'verified' as WalletVerificationStatus } : v
         )
       );
 
       // Call Supabase function to verify payment
       const { error } = await supabase
         .from('wallet_verification_requests')
-        .update({ status: 'verified' })
+        .update({ verification_status: 'verified' })
         .eq('id', verification.id);
 
       if (error) {
@@ -126,7 +141,7 @@ const AdminWalletVerificationPage = () => {
       // Revert the UI on error
       setVerifications((prevVerifications) =>
         prevVerifications.map((v) =>
-          v.id === verification.id ? { ...v, status: 'pending' } : v
+          v.id === verification.id ? { ...v, status: 'pending' as WalletVerificationStatus, verificationStatus: 'pending' as WalletVerificationStatus } : v
         )
       );
 
@@ -143,14 +158,14 @@ const AdminWalletVerificationPage = () => {
       // Optimistically update the UI
       setVerifications((prevVerifications) =>
         prevVerifications.map((v) =>
-          v.id === verification.id ? { ...v, status: 'rejected' } : v
+          v.id === verification.id ? { ...v, status: 'rejected' as WalletVerificationStatus, verificationStatus: 'rejected' as WalletVerificationStatus } : v
         )
       );
 
       // Call Supabase function to reject payment
       const { error } = await supabase
         .from('wallet_verification_requests')
-        .update({ status: 'rejected' })
+        .update({ verification_status: 'rejected' })
         .eq('id', verification.id);
 
       if (error) {
@@ -165,7 +180,7 @@ const AdminWalletVerificationPage = () => {
       // Revert the UI on error
       setVerifications((prevVerifications) =>
         prevVerifications.map((v) =>
-          v.id === verification.id ? { ...v, status: 'pending' } : v
+          v.id === verification.id ? { ...v, status: 'pending' as WalletVerificationStatus, verificationStatus: 'pending' as WalletVerificationStatus } : v
         )
       );
 
@@ -179,7 +194,22 @@ const AdminWalletVerificationPage = () => {
 
   const filteredVerifications = activeTab === 'all'
     ? verifications
-    : verifications.filter((verification) => verification.status === activeTab);
+    : verifications.filter((verification) => (verification.status === activeTab || verification.verificationStatus === activeTab));
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700">Pending</Badge>;
+      case 'submitted':
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700">Submitted</Badge>;
+      case 'verified':
+        return <Badge variant="outline" className="bg-green-50 text-green-700">Verified</Badge>;
+      case 'rejected':
+        return <Badge variant="outline" className="bg-red-50 text-red-700">Rejected</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -240,7 +270,7 @@ const AdminWalletVerificationPage = () => {
                             <td className="py-3 px-4">N${verification.amount.toLocaleString()}</td>
                             <td className="py-3 px-4">{getStatusBadge(verification.status)}</td>
                             <td className="py-3 px-4">
-                              {verification.status === 'submitted' && (
+                              {(verification.status === 'submitted' || verification.verificationStatus === 'submitted') && (
                                 <div className="flex space-x-2">
                                   <Button
                                     size="sm"
@@ -258,13 +288,13 @@ const AdminWalletVerificationPage = () => {
                                   </Button>
                                 </div>
                               )}
-                              {verification.status === 'verified' && (
+                              {(verification.status === 'verified' || verification.verificationStatus === 'verified') && (
                                 <div className="flex items-center">
                                   <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
                                   <span className="text-sm">Verified</span>
                                 </div>
                               )}
-                              {verification.status === 'rejected' && (
+                              {(verification.status === 'rejected' || verification.verificationStatus === 'rejected') && (
                                 <div className="flex items-center">
                                   <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
                                   <span className="text-sm">Rejected</span>
