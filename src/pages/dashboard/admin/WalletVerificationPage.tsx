@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +10,24 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, CheckCircle, Clock, Wallet } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { WalletVerification, WalletPaymentType } from '@/types';
+
+// Move the date formatting function to module level
+const formatDate = (date: string | Date | undefined) => {
+  if (!date) return 'N/A';
+  
+  try {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Invalid Date';
+  }
+};
 
 interface WalletVerificationRequest {
   id: string;
@@ -64,24 +83,6 @@ const AdminWalletVerificationPage = () => {
 
     loadVerifications();
   }, [toast]);
-
-  // Only updating the date formatting functions
-export const formatDate = (date: string | Date | undefined) => {
-  if (!date) return 'N/A';
-  
-  try {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return 'Invalid Date';
-  }
-};
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -234,7 +235,7 @@ export const formatDate = (date: string | Date | undefined) => {
                           <tr key={verification.id} className="border-b hover:bg-slate-50">
                             <td className="py-3 px-4">{formatDate(verification.date)}</td>
                             <td className="py-3 px-4">{verification.reference}</td>
-                            <td className="py-3 px-4">{verification.bookingId.substring(0, 8)}</td>
+                            <td className="py-3 px-4">{verification.booking_id?.substring(0, 8) || ''}</td>
                             <td className="py-3 px-4">{verification.customerPhone}</td>
                             <td className="py-3 px-4">N${verification.amount.toLocaleString()}</td>
                             <td className="py-3 px-4">{getStatusBadge(verification.status)}</td>
