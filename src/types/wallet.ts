@@ -33,6 +33,7 @@ export interface WalletVerificationRequest {
   userName?: string;
   userEmail?: string;
   walletNumber?: string;
+  walletName?: string; // Added missing property
   transactionReference?: string;
   reviewerId?: string;
   reviewerName?: string;
@@ -66,6 +67,7 @@ export interface WalletVerificationStats {
   // Add missing property used in WalletService
   approved?: number;
   expired?: number;
+  totalAmountPending?: number; // Added missing property
 }
 
 export interface WalletVerificationComment {
@@ -78,6 +80,7 @@ export interface WalletVerificationComment {
   // Add missing property used in WalletService
   verificationId?: string;
   userId?: string;
+  userName?: string; // Added missing property
 }
 
 export interface WalletProviderSettings {
@@ -92,6 +95,7 @@ export interface WalletProviderSettings {
   instructions?: string;
   // Add missing property used in WalletService
   providerName?: string;
+  displayName?: string; // Added missing property
   isEnabled?: boolean;
 }
 

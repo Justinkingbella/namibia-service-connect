@@ -3,7 +3,7 @@
 // Export base types but exclude those with name conflicts
 export type { SubscriptionTierType } from './schema';
 
-// Export booking types
+// Export booking types with proper 'export type' syntax
 export type { Booking, BookingWithDetails, BookingData, Dispute, Withdrawal } from './booking';
 export { DisputeStatus, DisputePriority } from './booking';
 export type { Transaction as BookingTransaction } from './booking';

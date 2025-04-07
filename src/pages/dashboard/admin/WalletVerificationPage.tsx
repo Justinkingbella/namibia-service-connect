@@ -31,22 +31,22 @@ const formatDate = (date: string | Date | undefined) => {
 
 interface WalletVerificationRequest {
   id: string;
-  bookingId: string;
-  providerId: string;
-  customerId: string;
+  booking_id: string;
+  provider_id: string;
+  customer_id: string;
   amount: number;
-  paymentMethod: WalletPaymentType;
-  referenceNumber: string;
-  customerPhone: string;
-  providerPhone: string;
-  screenshotUrl?: string;
-  receiptUrl?: string;
+  payment_method: WalletPaymentType;
+  reference_number: string;
+  customer_phone: string;
+  provider_phone: string;
+  screenshot_url?: string;
+  receipt_url?: string;
   status: string;
   notes?: string;
-  submittedAt: string;
-  verifiedAt?: string;
-  rejectedAt?: string;
-  rejectionReason?: string;
+  date_submitted: string;
+  date_verified?: string;
+  rejected_at?: string;
+  rejection_reason?: string;
 }
 
 const AdminWalletVerificationPage = () => {

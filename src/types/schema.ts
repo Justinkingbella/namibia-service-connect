@@ -80,9 +80,12 @@ export type PaymentMethodType =
   | 'payfast'
   | 'ewallet'
   | 'MTC E-Wallet'
-  | 'Bank Transfer';
+  | 'Bank Transfer'
+  | 'pay_today'
+  | 'pay_fast'
+  | 'dop';
 
-// Define a type for wallet payment types
+// Define a type for wallet payment types - expanded to include all variants
 export type WalletPaymentType = 
   | 'e_wallet'
   | 'easy_wallet'
@@ -93,7 +96,10 @@ export type WalletPaymentType =
   | 'MTC E-Wallet'
   | 'Bank Transfer'
   | 'ewallet'
-  | 'payfast';
+  | 'payfast'
+  | 'pay_today'
+  | 'pay_fast'
+  | 'dop';
 
 // Define a type for payment status
 export type PaymentStatus = 

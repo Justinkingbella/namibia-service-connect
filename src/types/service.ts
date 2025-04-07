@@ -88,11 +88,15 @@ export interface FavoriteService {
     image?: string;
     provider_id: string;
     provider_name: string;
+    // Additional fields needed by components
     category?: string;
     pricingModel?: string;
     rating?: number;
     reviewCount?: number;
     location?: string;
+    // Additional fields with property names used in components
+    providerId?: string;
+    providerName?: string;
   };
 }
 

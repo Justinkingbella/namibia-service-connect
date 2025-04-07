@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
-import { User, UserRole, Provider, Customer, Admin } from '@/types';
+import { User, UserRole, Provider, Customer, Admin, ProviderVerificationStatus } from '@/types';
 import { useNavigate } from 'react-router-dom';
 
 export const useAuthSync = () => {
@@ -105,21 +105,22 @@ export const useAuthSync = () => {
               .single();
 
             if (!providerError && providerData) {
+              const verificationStatus = providerData.verification_status as ProviderVerificationStatus;
               const providerProfile: Provider = {
                 ...userData,
                 businessName: providerData.business_name || '',
                 businessDescription: providerData.business_description || '',
-                categories: [],
-                services: [],
+                categories: providerData.categories || [],
+                services: providerData.services || [],
                 rating: providerData.rating || 0,
                 commission: providerData.commission_rate || 0,
-                verificationStatus: providerData.verification_status || 'unverified',
+                verificationStatus: verificationStatus || 'unverified',
                 bannerUrl: providerData.banner_url || '',
                 website: providerData.website || '',
-                taxId: '',
-                reviewCount: 0,
+                taxId: providerData.tax_id || '',
+                reviewCount: providerData.review_count || 0,
                 subscriptionTier: providerData.subscription_tier || 'free',
-                isVerified: providerData.verification_status === 'verified',
+                isVerified: verificationStatus === 'verified',
               };
               setUserProfile(providerProfile);
               console.log("Redirecting to provider dashboard");

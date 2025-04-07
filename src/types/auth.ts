@@ -48,8 +48,8 @@ export interface User {
   city?: string;
   country?: string;
   isActive?: boolean;
-  createdAt?: string;  // Changed from Date to string
-  updatedAt?: string;  // Changed from Date to string
+  createdAt?: string;
+  updatedAt?: string;
   birthDate?: string;
   bio?: string;
   loyaltyPoints?: number;
@@ -99,16 +99,16 @@ export interface DbCustomerProfile extends DbUserProfile {
 export interface DbProviderProfile extends DbUserProfile {
   business_name: string;
   business_description: string;
-  categories: string[];
-  services: string[];
+  categories: string[];  // Added missing property
+  services: string[];    // Added missing property
   rating: number;
-  review_count: number;
+  review_count: number;  // Added missing property
   completed_bookings: number;
   commission_rate: number;
   verification_status: ProviderVerificationStatus;
   banner_url?: string;
   website?: string;
-  tax_id?: string;
+  tax_id?: string;      // Added missing property
   business_license?: string;
   id_document_url?: string;
   proof_of_address_url?: string;
