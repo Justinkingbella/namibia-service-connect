@@ -27,6 +27,16 @@ export interface WalletVerificationRequest {
   receiptImage?: string;
   notes?: string;
   rejectionReason?: string;
+  userId?: string;
+  walletProvider?: string;
+  userType?: string;
+  userName?: string;
+  userEmail?: string;
+  walletNumber?: string;
+  transactionReference?: string;
+  reviewerId?: string;
+  reviewerName?: string;
+  reviewDate?: string;
 }
 
 export interface WalletVerificationFilters {
@@ -55,6 +65,7 @@ export interface WalletVerificationStats {
   totalAmount: number;
   // Add missing property used in WalletService
   approved?: number;
+  expired?: number;
 }
 
 export interface WalletVerificationComment {
@@ -66,6 +77,7 @@ export interface WalletVerificationComment {
   timestamp: string;
   // Add missing property used in WalletService
   verificationId?: string;
+  userId?: string;
 }
 
 export interface WalletProviderSettings {
@@ -80,6 +92,7 @@ export interface WalletProviderSettings {
   instructions?: string;
   // Add missing property used in WalletService
   providerName?: string;
+  isEnabled?: boolean;
 }
 
 export interface WalletVerificationDashboard {
@@ -125,7 +138,9 @@ export enum VerificationStatus {
   PENDING = 'pending',
   VERIFIED = 'verified',
   REJECTED = 'rejected',
-  EXPIRED = 'expired'
+  EXPIRED = 'expired',
+  SUBMITTED = 'submitted',
+  IN_REVIEW = 'in_review'
 }
 
 export interface WalletProvider {

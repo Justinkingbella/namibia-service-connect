@@ -1,6 +1,6 @@
+
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Session } from '@supabase/supabase-js';
 import { useAuthStore } from '@/store/authStore';
 import { User, UserRole, Provider, Customer, Admin, SubscriptionTier } from '@/types';
 
@@ -26,19 +26,17 @@ export const useAuthSync = () => {
         }
 
         if (sessionData?.session) {
-          // Use optional chaining to safely access id
           setSession(sessionData.session);
           
           // Get user data
           const userData: User = {
-            id: sessionData.session?.user?.id || '',
-            email: sessionData.session?.user?.email as string,
+            id: sessionData.session.user.id,
+            email: sessionData.session.user.email as string,
             firstName: '',
             lastName: '',
             role: 'customer' as UserRole,
-            phoneNumber: sessionData.session?.user?.phone || '',
-            // Use ISO strings for dates to match the type
-            createdAt: sessionData.session?.user?.created_at ? new Date(sessionData.session.user.created_at).toISOString() : undefined,
+            phoneNumber: sessionData.session.user.phone || '',
+            createdAt: sessionData.session.user.created_at || '',
             emailVerified: false,
           };
 
@@ -77,7 +75,6 @@ export const useAuthSync = () => {
                 ...userData,
                 preferredCategories: customerData.preferred_categories || [],
                 savedServices: customerData.saved_services || [],
-                // Ensure notification preferences has the expected shape
                 notificationPreferences: {
                   email: true,
                   sms: false,
@@ -102,13 +99,12 @@ export const useAuthSync = () => {
                 services: providerData.services || [],
                 rating: providerData.rating || 0,
                 commission: providerData.commission_rate || 0,
-                verificationStatus: providerData.verification_status || 'unverified',
+                verificationStatus: providerData.verification_status as any || 'unverified',
                 bannerUrl: providerData.banner_url || '',
                 website: providerData.website || '',
                 taxId: providerData.tax_id || '',
                 reviewCount: providerData.review_count || 0,
-                // Ensure subscription tier is valid 
-                subscriptionTier: providerData.subscription_tier as SubscriptionTier,
+                subscriptionTier: providerData.subscription_tier as any || 'free',
                 isVerified: providerData.verification_status === 'verified',
               };
               setUserProfile(providerProfile);
@@ -160,7 +156,6 @@ export const useAuthSync = () => {
         setSession(session);
         const user = session.user;
         
-        // Using a function to update user state to avoid typing issues
         setUser({
           id: user?.id || '',
           email: user?.email || '',
@@ -168,7 +163,7 @@ export const useAuthSync = () => {
           lastName: '',
           role: 'customer' as UserRole,
           phoneNumber: user?.phone || '',
-          createdAt: user?.created_at ? new Date(user.created_at).toISOString() : undefined,
+          createdAt: user?.created_at || '',
           emailVerified: false,
         });
         

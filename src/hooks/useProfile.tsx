@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { DbUserProfile } from '@/types';
+import { DbUserProfile, UserRole } from '@/types';
 import { useToast } from './use-toast';
 
 export function useProfile() {
@@ -41,8 +41,8 @@ export function useProfile() {
           phone_number: data.phone_number,
           avatar_url: data.avatar_url,
           email_verified: data.email_verified,
-          role: data.role,
-          is_active: data.is_active,
+          role: data.role as UserRole,
+          is_active: data.active || false,
           created_at: data.created_at,
           updated_at: data.updated_at,
           address: data.address,

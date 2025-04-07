@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSession(sessionData.session);
           
           // Get user data
-          const userData = {
+          const userData: User = {
             id: sessionData.session.user.id,
             email: sessionData.session.user.email as string,
             firstName: '',
@@ -60,8 +60,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             role: 'customer' as UserRole,
             phoneNumber: sessionData.session.user.phone as string,
             // Convert to string to fix type errors
-            createdAt: sessionData.session.user.created_at ? new Date(sessionData.session.user.created_at).toISOString() : undefined,
+            createdAt: sessionData.session.user.created_at ? sessionData.session.user.created_at : undefined,
             emailVerified: false,
+            avatarUrl: '',
           };
 
           // Fetch user profile from 'profiles' table
@@ -99,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 ...userData,
                 preferredCategories: customerData.preferred_categories || [],
                 savedServices: customerData.saved_services || [],
-                loyaltyPoints: 0, // Converting to string to match the type
+                loyaltyPoints: 0,
                 notificationPreferences: {
                   email: true,
                   sms: false,
@@ -124,13 +125,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 services: providerData.services || [],
                 rating: providerData.rating || 0,
                 commission: providerData.commission_rate || 0,
-                verificationStatus: providerData.verification_status || 'unverified',
+                verificationStatus: providerData.verification_status as any || 'unverified',
                 bannerUrl: providerData.banner_url || '',
                 website: providerData.website || '',
                 taxId: providerData.tax_id || '',
                 reviewCount: providerData.review_count || 0,
                 // Handle subscription tier, ensure it's a valid enum value
-                subscriptionTier: (providerData.subscription_tier || 'free') as SubscriptionTier,
+                subscriptionTier: (providerData.subscription_tier || 'free') as any,
               };
               setUserProfile(providerProfile);
             }
@@ -261,12 +262,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           active: data.isActive !== undefined ? data.isActive : (userProfile as any)?.active,
           preferred_language: 'English',
           // Handle date conversion
-          birth_date: data.birthDate ? new Date(data.birthDate).toISOString() : (userProfile as any)?.birth_date,
+          birth_date: data.birthDate ? data.birthDate : (userProfile as any)?.birth_date,
           updated_at: new Date().toISOString(),
           email_verified: data.emailVerified !== undefined ? data.emailVerified : user.emailVerified,
           // Convert loyalty points to number if necessary
           loyalty_points: data.loyaltyPoints !== undefined ? Number(data.loyaltyPoints) : (userProfile as any)?.loyalty_points,
-          notification_preferences: data.notificationPreferences || (userProfile as any)?.notification_preferences,
+          notification_preferences: data.notificationPreferences || (userProfile as any)?.notification_preferences || {
+            email: true,
+            sms: false,
+            push: true,
+          },
         })
         .eq('id', user.id);
 

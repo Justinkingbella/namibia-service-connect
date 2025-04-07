@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { WalletVerification, WalletPaymentType, NamibianMobileOperator, NamibianBank } from '@/types';
+import { WalletVerification, WalletPaymentType } from '@/types';
 
 interface WalletPaymentVerificationProps {
   bookingId: string;
@@ -68,18 +68,14 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
         customerPhone: phoneNumber,
         status: 'submitted',
         date: new Date().toISOString(),
-        bookingId,
         dateSubmitted: new Date().toISOString(),
         referenceNumber,
         paymentMethod,
         customerConfirmed: true,
         providerConfirmed: false,
         adminVerified: false,
+        mobileOperator
       };
-      
-      if (paymentMethod === "e_wallet" && mobileOperator) {
-        verificationData.mobileOperator = mobileOperator;
-      }
       
       await onVerificationSubmitted(verificationData);
       
@@ -137,7 +133,7 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
                   <SelectValue placeholder="Select mobile operator" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MTN">MTC</SelectItem>
+                  <SelectItem value="MTC">MTC</SelectItem>
                   <SelectItem value="TN Mobile">TN Mobile</SelectItem>
                   <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>

@@ -1,141 +1,116 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 
 const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn, user, isLoading } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   const navigate = useNavigate();
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (user && !isLoading) {
-      navigate('/dashboard');
-    }
-  }, [user, isLoading, navigate]);
+  const { setIsAuthenticated } = useAuthStore();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!email || !password) {
-      toast.error('Please fill in all required fields', {
-        description: 'Email and password are required',
-      });
-      return;
-    }
+    setIsLoading(true);
 
-    setIsSubmitting(true);
-    
     try {
-      const { error } = await signIn(email, password);
-      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
       if (error) {
-        console.error('Sign in error:', error);
-        if (error.status === 400) {
-          toast.error('Sign in failed', {
-            description: 'Incorrect email or password.',
-          });
-        } else if (error.status === 422) {
-          toast.error('Sign in failed', {
-            description: 'Invalid email format.',
-          });
-        } else {
-          toast.error('Sign in failed', {
-            description: error.message || 'Please check your credentials and try again.',
-          });
-        }
-      } else {
-        toast.success('Sign in successful', {
-          description: 'Redirecting to your dashboard...',
+        toast({
+          variant: 'destructive',
+          title: 'Sign In Failed',
+          description: error.message,
         });
-        navigate('/dashboard');
+        return;
       }
+
+      // Authentication successful
+      toast({
+        title: 'Sign In Successful',
+        description: 'Welcome back!',
+      });
+      
+      // Redirect based on user role (will be determined by auth provider)
+      setIsAuthenticated(true);
+      navigate('/dashboard');
     } catch (err) {
-      console.error('Unexpected sign in error:', err);
-      toast.error('Sign in failed', {
-        description: 'An unexpected error occurred. Please try again.',
+      console.error('Sign in error:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Unexpected Error',
+        description: 'An unexpected error occurred. Please try again later.',
       });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
-          <CardDescription>Enter your email and password to sign in to your account</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSignIn}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="name@example.com" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link 
-                  to="/auth/forgot-password" 
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  Forgot password?
-                </Link>
+    <div className="flex min-h-screen items-center justify-center p-4 bg-slate-50">
+      <div className="w-full max-w-md">
+        <Card>
+          <CardHeader className="space-y-1 text-center">
+            <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
+            <CardDescription>
+              Enter your email and password to access your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSignIn} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="name@example.com" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required 
+                />
               </div>
-              <Input 
-                id="password" 
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <div className="flex items-center">
-                  <span className="animate-spin mr-2">⚙️</span> Signing In...
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Link 
+                    to="/auth/forgot-password" 
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
                 </div>
-              ) : 'Sign In'}
-            </Button>
-            <p className="text-center text-sm text-muted-foreground">
+                <Input 
+                  id="password" 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required 
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
+            <div className="mt-4 text-center text-sm">
               Don't have an account?{' '}
-              <Link to="/auth/sign-up" className="text-blue-600 hover:text-blue-800 font-medium">
+              <Link to="/auth/sign-up" className="text-primary hover:underline">
                 Sign up
               </Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

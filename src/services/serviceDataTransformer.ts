@@ -41,7 +41,7 @@ export function reverseTransformServiceData(service: Service): ServiceData {
     location: service.location,
     rating: service.rating,
     review_count: service.reviewCount,
-    created_at: service.createdAt?.toISOString(),
-    updated_at: service.updatedAt?.toISOString()
+    created_at: service.createdAt instanceof Date ? service.createdAt.toISOString() : service.createdAt || '',
+    updated_at: service.updatedAt instanceof Date ? service.updatedAt.toISOString() : service.updatedAt || '',
   };
 }

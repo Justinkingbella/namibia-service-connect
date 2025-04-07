@@ -15,6 +15,8 @@ interface AuthState {
   setIsLoading: (isLoading: boolean) => void;
   setIsAuthenticated: (isAuthenticated: boolean) => void;
   setSession: (session: Session | null) => void;
+  signIn: (email: string, password: string) => Promise<{error: any | null}>;
+  signUp: (email: string, password: string, userData: Partial<User>) => Promise<{error: any | null, data: any | null}>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -29,6 +31,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   setIsLoading: (isLoading) => set({ isLoading }),
   setIsAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
   setSession: (session) => set({ session }),
+  signIn: async (email, password) => {
+    // This will be implemented in auth pages
+    return { error: null };
+  },
+  signUp: async (email, password, userData) => {
+    // This will be implemented in auth pages
+    return { error: null, data: null };
+  }
 }));
 
 // Add hooks for selectors

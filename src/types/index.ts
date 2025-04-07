@@ -54,7 +54,6 @@ export { SubscriptionTier } from './auth';
 export type {
   WalletVerificationStatus
 } from './payment';
-export type { WalletPaymentType } from './payment';
 
 export type {
   Wallet,

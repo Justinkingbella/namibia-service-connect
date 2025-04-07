@@ -48,8 +48,8 @@ export interface User {
   city?: string;
   country?: string;
   isActive?: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: string;  // Changed from Date to string
+  updatedAt?: string;  // Changed from Date to string
   birthDate?: string;
   bio?: string;
   loyaltyPoints?: number;

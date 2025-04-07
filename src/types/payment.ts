@@ -2,7 +2,18 @@
 import { Json } from './schema';
 
 // Export this type to fix WalletPaymentType not being exported
-export type WalletPaymentType = 'e_wallet' | 'easy_wallet' | 'bank_transfer';
+export type WalletPaymentType = 
+  | 'e_wallet' 
+  | 'easy_wallet' 
+  | 'bank_transfer'
+  | 'mobile_money'
+  | 'credit_card'
+  | 'debit_card'
+  | 'MTC E-Wallet'
+  | 'Bank Transfer'
+  | 'ewallet'
+  | 'payfast';
+
 export type WalletVerificationStatus = 'pending' | 'submitted' | 'verified' | 'rejected' | 'expired';
 
 export interface WalletVerification {
@@ -20,8 +31,8 @@ export interface WalletVerification {
   customerId?: string;
   providerId?: string;
   verificationStatus?: WalletVerificationStatus;
-  dateSubmitted?: string | Date;
-  dateVerified?: string | Date;
+  dateSubmitted?: string;
+  dateVerified?: string;
   customerPhone?: string;
   providerPhone?: string;
   referenceNumber?: string;
@@ -37,6 +48,7 @@ export interface WalletVerification {
   receiptImage?: string;
   notes?: string;
   rejectionReason?: string;
+  bankUsed?: string;
 }
 
 export interface WalletVerificationRequest {
@@ -109,8 +121,15 @@ export interface Transaction {
   createdAt: string;
 }
 
-export interface PaymentMethodType {
-  id: string;
-  name: string;
-  type: string;
-}
+export type PaymentMethodType = 
+  | 'credit_card' 
+  | 'debit_card' 
+  | 'bank_transfer' 
+  | 'e_wallet' 
+  | 'easy_wallet'
+  | 'cash' 
+  | 'mobile_money'
+  | 'payfast'
+  | 'ewallet'
+  | 'MTC E-Wallet'
+  | 'Bank Transfer';

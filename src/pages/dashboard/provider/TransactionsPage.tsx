@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/common/Button';
-import { Download, Filter, Search, ArrowUpDown, ChevronDown } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { PaymentPaymentMethod } from '@/types';
-import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';
+import { PaymentMethodType, PaymentStatus } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Transaction {
   id: string;
@@ -24,8 +19,8 @@ interface Transaction {
   amount: number;
   fee: number;
   net: number;
-  paymentMethod: PaymentPaymentMethod;
-  status: 'completed' | 'pending' | 'failed' | 'refunded';
+  paymentMethod: PaymentMethodType;
+  status: PaymentStatus;
   date: Date;
   description: string;
 }
@@ -105,6 +100,7 @@ const mockTransactions: Transaction[] = [
 
 const TransactionsPage: React.FC = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -141,7 +137,7 @@ const TransactionsPage: React.FC = () => {
       }
     });
 
-  const getPaymentMethodName = (method: PaymentPaymentMethod): string => {
+  const getPaymentMethodName = (method: PaymentMethodType): string => {
     switch (method) {
       case 'pay_today':
         return 'PayToday';
@@ -162,7 +158,7 @@ const TransactionsPage: React.FC = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: PaymentStatus) => {
     switch (status) {
       case 'completed':
         return <Badge className="bg-green-100 text-green-800">Completed</Badge>;

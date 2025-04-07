@@ -1,17 +1,19 @@
-
 import React, { useState } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import { CreateServiceForm } from '@/components/services/CreateServiceForm';
-import { ServiceData } from '@/types/service';
-import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import CreateServiceForm from '@/components/provider/CreateServiceForm';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Service, Provider } from '@/types';
+import { ServiceData } from '@/types/service';
+import { transformServiceData } from '@/services/serviceDataTransformer';
 
 const CreateServicePage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const handleSubmit = async (serviceData: Partial<ServiceData>) => {
     if (!user) {
@@ -22,18 +24,16 @@ const CreateServicePage = () => {
     setIsSubmitting(true);
 
     try {
-      // Prepare data for submission
       const newService = {
         ...serviceData,
         provider_id: user.id,
         provider_name: `${user.firstName} ${user.lastName}`,
         is_active: true,
-        category: serviceData.category || '', // Ensure category is not undefined
+        category: serviceData.category || '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
-      // Submit to Supabase
       const { data, error } = await supabase
         .from('services')
         .insert(newService)
