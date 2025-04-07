@@ -51,11 +51,7 @@ export type {
 } from './auth';
 export { SubscriptionTier } from './auth';
 
-// Export wallet verification status types
-export type {
-  WalletVerificationStatus
-} from './payment';
-
+// Export wallet types
 export type {
   Wallet,
   Transaction as WalletTransaction
