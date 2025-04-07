@@ -139,7 +139,7 @@ export const mockMessages: Message[] = [
     conversation_id: 'conv1',
     sender_id: 'provider123',
     recipient_id: 'user123',
-    content: 'Hello! I'm available to provide my cleaning services next week. When would be a good time?',
+    content: 'Hello! Im available to provide my cleaning services next week. When would be a good time?',
     read: false,
     created_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
     message_type: 'text',
