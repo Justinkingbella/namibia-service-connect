@@ -3,22 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-
-export interface FavoriteService {
-  id: string;
-  user_id: string;
-  service_id: string;
-  created_at: string;
-  service?: {
-    id: string;
-    title: string;
-    description: string;
-    price: number;
-    image?: string;
-    provider_id: string;
-    provider_name: string;
-  };
-}
+import { FavoriteService } from '@/types/favorites';
 
 export function useFavorites() {
   const { user } = useAuth();
@@ -37,13 +22,45 @@ export function useFavorites() {
           .select(`
             *,
             service:service_id (
-              id, title, description, price, image, provider_id, provider_name
+              id, title, description, price, image, provider_id, provider_name,
+              category, pricing_model, rating, review_count, location
             )
           `)
           .eq('user_id', user.id);
 
         if (error) throw error;
-        setFavorites(data);
+        
+        // Check if data is an array and handle errors properly
+        if (Array.isArray(data) && data.length > 0) {
+          // Transform the data to match our FavoriteService interface
+          const transformedData: FavoriteService[] = data.map(item => {
+            // If service is missing or has an error, provide a fallback
+            const serviceData = item.service && 
+                               typeof item.service === 'object' && 
+                               !('error' in item.service) ? 
+                               item.service : 
+                               {
+                                 id: '',
+                                 title: 'Service unavailable',
+                                 description: '',
+                                 price: 0,
+                                 provider_id: '',
+                                 provider_name: '',
+                               };
+                                
+            return {
+              id: item.id,
+              user_id: item.user_id,
+              service_id: item.service_id,
+              created_at: item.created_at,
+              service: serviceData
+            };
+          });
+          
+          setFavorites(transformedData);
+        } else {
+          setFavorites([]);
+        }
       } catch (error) {
         console.error('Error fetching favorites:', error);
         toast.error('Failed to load favorite services');
@@ -74,15 +91,47 @@ export function useFavorites() {
         .select(`
           *,
           service:service_id (
-            id, title, description, price, image, provider_id, provider_name
+            id, title, description, price, image, provider_id, provider_name,
+            category, pricing_model, rating, review_count, location
           )
         `)
         .single();
 
       if (error) throw error;
 
-      setFavorites(prev => [...prev, data as FavoriteService]);
-      toast.success('Added to favorites');
+      // Handle the case where data.service might be an error object
+      if (data && data.service && typeof data.service === 'object' && !('error' in data.service)) {
+        const newFavorite: FavoriteService = {
+          id: data.id,
+          user_id: data.user_id,
+          service_id: data.service_id,
+          created_at: data.created_at,
+          service: data.service
+        };
+        
+        setFavorites(prev => [...prev, newFavorite]);
+        toast.success('Added to favorites');
+      } else {
+        // Even if the service details aren't available, still add the favorite
+        const newFavorite: FavoriteService = {
+          id: data.id,
+          user_id: data.user_id,
+          service_id: data.service_id,
+          created_at: data.created_at,
+          service: {
+            id: serviceId,
+            title: 'Service details unavailable',
+            description: '',
+            price: 0,
+            provider_id: '',
+            provider_name: ''
+          }
+        };
+        
+        setFavorites(prev => [...prev, newFavorite]);
+        toast.success('Added to favorites');
+      }
+      
       return true;
     } catch (error) {
       console.error('Error adding favorite:', error);

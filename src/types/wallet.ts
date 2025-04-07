@@ -33,11 +33,12 @@ export interface WalletVerificationRequest {
   userName?: string;
   userEmail?: string;
   walletNumber?: string;
-  walletName?: string; // Added missing property
+  walletName?: string;
   transactionReference?: string;
   reviewerId?: string;
   reviewerName?: string;
   reviewDate?: string;
+  currency?: string;
 }
 
 export interface WalletVerificationFilters {
@@ -67,7 +68,8 @@ export interface WalletVerificationStats {
   // Add missing property used in WalletService
   approved?: number;
   expired?: number;
-  totalAmountPending?: number; // Added missing property
+  totalAmountPending?: number;
+  totalAmountProcessed?: number;
 }
 
 export interface WalletVerificationComment {
@@ -80,7 +82,8 @@ export interface WalletVerificationComment {
   // Add missing property used in WalletService
   verificationId?: string;
   userId?: string;
-  userName?: string; // Added missing property
+  userName?: string;
+  userRole?: string;
 }
 
 export interface WalletProviderSettings {
@@ -90,12 +93,13 @@ export interface WalletProviderSettings {
   isActive: boolean;
   logo?: string;
   processingTime?: string;
+  processingFee?: number;
   minimumAmount?: number;
   maximumAmount?: number;
   instructions?: string;
   // Add missing property used in WalletService
   providerName?: string;
-  displayName?: string; // Added missing property
+  displayName?: string;
   isEnabled?: boolean;
 }
 

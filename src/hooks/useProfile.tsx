@@ -51,8 +51,7 @@ export function useProfile() {
           bio: data.bio,
           birth_date: data.birth_date,
           loyalty_points: data.loyalty_points,
-          // Ensure notification_preferences is correctly typed
-          notification_preferences: data.notification_preferences || {
+          notification_preferences: data.user_preferences?.notification_preferences || {
             email: true,
             sms: false,
             push: true
@@ -90,7 +89,9 @@ export function useProfile() {
           birth_date: data.birth_date || profile?.birth_date,
           email_verified: data.email_verified !== undefined ? data.email_verified : profile?.email_verified,
           loyalty_points: data.loyalty_points !== undefined ? data.loyalty_points : profile?.loyalty_points,
-          notification_preferences: data.notification_preferences || profile?.notification_preferences,
+          user_preferences: {
+            notification_preferences: data.notification_preferences || profile?.notification_preferences
+          }
         })
         .eq('id', user.id);
 

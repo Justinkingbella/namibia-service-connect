@@ -99,16 +99,16 @@ export interface DbCustomerProfile extends DbUserProfile {
 export interface DbProviderProfile extends DbUserProfile {
   business_name: string;
   business_description: string;
-  categories: string[];  // Added missing property
-  services: string[];    // Added missing property
+  categories: string[];
+  services: string[];
   rating: number;
-  review_count: number;  // Added missing property
+  review_count: number;
   completed_bookings: number;
   commission_rate: number;
   verification_status: ProviderVerificationStatus;
   banner_url?: string;
   website?: string;
-  tax_id?: string;      // Added missing property
+  tax_id?: string;
   business_license?: string;
   id_document_url?: string;
   proof_of_address_url?: string;

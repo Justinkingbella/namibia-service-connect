@@ -4,11 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
+type TableName = string;
+type GenericData = Record<string, any>;
+
 /**
  * A type-safe hook for querying Supabase data with proper error handling
  */
 export function useSafeSupabaseQuery<T>(
-  tableName: string,
+  tableName: TableName,
   options: {
     select?: string;
     whereEqual?: Record<string, any>;
@@ -32,7 +35,8 @@ export function useSafeSupabaseQuery<T>(
     
     try {
       // Start building the query
-      let query = supabase.from(tableName).select(options.select || '*');
+      // Using any here to work around the type issue with dynamic table names
+      let query = supabase.from(tableName as any).select(options.select || '*');
       
       // Add equality conditions
       if (options.whereEqual) {
@@ -109,7 +113,7 @@ export function useSafeSupabaseQuery<T>(
 /**
  * Helper hook for mutating data in Supabase with proper error handling
  */
-export function useSafeSupabaseMutation<T>(tableName: string) {
+export function useSafeSupabaseMutation<T extends GenericData>(tableName: TableName) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<PostgrestError | null>(null);
 
@@ -118,11 +122,12 @@ export function useSafeSupabaseMutation<T>(tableName: string) {
     setError(null);
     
     try {
-      const { data: result, error: queryError } = await supabase
-        .from(tableName)
+      // Use any to work around type issues with dynamic table names
+      const { data: result, error: queryError } = await (supabase
+        .from(tableName as any)
         .insert([data])
         .select()
-        .single();
+        .single() as any);
       
       if (queryError) {
         setError(queryError);
@@ -145,12 +150,13 @@ export function useSafeSupabaseMutation<T>(tableName: string) {
     setError(null);
     
     try {
-      const { data: result, error: queryError } = await supabase
-        .from(tableName)
+      // Use any to work around type issues with dynamic table names
+      const { data: result, error: queryError } = await (supabase
+        .from(tableName as any)
         .update(data)
         .eq('id', id)
         .select()
-        .single();
+        .single() as any);
       
       if (queryError) {
         setError(queryError);
@@ -173,10 +179,11 @@ export function useSafeSupabaseMutation<T>(tableName: string) {
     setError(null);
     
     try {
-      const { error: queryError } = await supabase
-        .from(tableName)
+      // Use any to work around type issues with dynamic table names
+      const { error: queryError } = await (supabase
+        .from(tableName as any)
         .delete()
-        .eq('id', id);
+        .eq('id', id) as any);
       
       if (queryError) {
         setError(queryError);

@@ -105,7 +105,9 @@ export const useAuthSync = () => {
               .single();
 
             if (!providerError && providerData) {
-              const verificationStatus = providerData.verification_status as ProviderVerificationStatus;
+              // Cast to ProviderVerificationStatus to ensure type safety
+              const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'unverified';
+              
               const providerProfile: Provider = {
                 ...userData,
                 businessName: providerData.business_name || '',
@@ -114,7 +116,7 @@ export const useAuthSync = () => {
                 services: providerData.services || [],
                 rating: providerData.rating || 0,
                 commission: providerData.commission_rate || 0,
-                verificationStatus: verificationStatus || 'unverified',
+                verificationStatus: verificationStatus,
                 bannerUrl: providerData.banner_url || '',
                 website: providerData.website || '',
                 taxId: providerData.tax_id || '',
@@ -122,6 +124,7 @@ export const useAuthSync = () => {
                 subscriptionTier: providerData.subscription_tier || 'free',
                 isVerified: verificationStatus === 'verified',
               };
+              
               setUserProfile(providerProfile);
               console.log("Redirecting to provider dashboard");
               navigate('/provider/dashboard', { replace: true });

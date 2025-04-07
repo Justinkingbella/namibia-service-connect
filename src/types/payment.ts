@@ -1,9 +1,24 @@
 
 import { Json } from "./schema";
-export type WalletVerificationStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'submitted' | 'verified';
+
+// Define enum or type for wallet verification status
+export type WalletVerificationStatus = 'pending' | 'submitted' | 'approved' | 'verified' | 'rejected' | 'expired';
 
 // Use string literal union type instead of enum for better TypeScript support
-export type WalletPaymentType = 'bank_transfer' | 'mobile_money' | 'cash' | 'credit_card' | 'e_wallet' | 'pay_today' | 'pay_fast' | 'easy_wallet' | 'dop';
+export type WalletPaymentType = 
+  | 'bank_transfer' 
+  | 'Bank Transfer'
+  | 'mobile_money' 
+  | 'cash' 
+  | 'credit_card' 
+  | 'e_wallet' 
+  | 'pay_today' 
+  | 'pay_fast' 
+  | 'easy_wallet' 
+  | 'MTC E-Wallet'
+  | 'ewallet'
+  | 'payfast'
+  | 'dop';
 
 export interface Wallet {
   id: string;
@@ -110,7 +125,8 @@ export interface WalletVerificationRequest {
   reviewerId?: string;
   reviewerName?: string;
   reviewDate?: string;
-  walletName?: string; // Added to fix property errors
+  walletName?: string;
+  currency?: string;
 }
 
 export interface WalletVerificationFilters {
@@ -137,7 +153,8 @@ export interface WalletVerificationStats {
   totalApproved?: number;
   totalRejected?: number;
   totalExpired?: number;
-  totalAmountPending?: number; // Added to fix property errors
+  totalAmountPending?: number;
+  totalAmountProcessed?: number;
 }
 
 export interface WalletVerificationComment {
@@ -146,7 +163,8 @@ export interface WalletVerificationComment {
   content: string;
   createdAt: string;
   userId?: string;
-  userName?: string; // Added to fix property errors
+  userName?: string;
+  userRole?: string;
 }
 
 export interface WalletProviderSettings {
@@ -157,8 +175,8 @@ export interface WalletProviderSettings {
   endpoint?: string;
   isActive: boolean;
   // Additional fields used
-  displayName?: string; // Added to fix property errors
+  displayName?: string;
   isEnabled?: boolean;
+  processingTime?: string;
+  processingFee?: number;
 }
-
-// Fix export conflict by removing the duplicate export

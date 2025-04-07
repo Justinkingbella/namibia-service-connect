@@ -2,106 +2,124 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { PaymentMethod } from '@/types/payments';
-import { toast } from 'sonner';
+import { PaymentMethod, PaymentMethodType } from '@/types';
 
 export function usePaymentMethods() {
   const { user } = useAuth();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
-  const fetchPaymentMethods = async () => {
-    if (!user) {
-      setPaymentMethods([]);
-      setLoading(false);
-      return;
-    }
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchPaymentMethods = async () => {
+      try {
+        setLoading(true);
+        
+        const { data, error } = await supabase
+          .from('payment_methods')
+          .select('*')
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        // Transform the data to match the PaymentMethod interface
+        const transformedData: PaymentMethod[] = data.map(item => ({
+          id: item.id,
+          userId: item.user_id,
+          name: item.name,
+          type: item.type as PaymentMethodType, // Apply type assertion
+          details: item.details,
+          isDefault: item.is_default || false,
+          createdAt: item.created_at,
+        }));
+        
+        setPaymentMethods(transformedData);
+      } catch (error) {
+        console.error('Error fetching payment methods:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPaymentMethods();
+  }, [user?.id]);
+
+  const addPaymentMethod = async (method: Omit<PaymentMethod, 'id' | 'userId' | 'createdAt'>) => {
+    if (!user?.id) return null;
 
     try {
       setLoading(true);
+      
+      // Check if this should be the default method
+      let isDefault = method.isDefault;
+      if (isDefault && paymentMethods.some(m => m.isDefault)) {
+        // We need to update the existing default method
+        const { error: updateError } = await supabase
+          .from('payment_methods')
+          .update({ is_default: false })
+          .eq('user_id', user.id)
+          .eq('is_default', true);
+          
+        if (updateError) throw updateError;
+      }
+
       const { data, error } = await supabase
         .from('payment_methods')
-        .select('*')
-        .eq('user_id', user.id);
+        .insert({
+          user_id: user.id,
+          name: method.name,
+          type: method.type,
+          details: method.details,
+          is_default: isDefault,
+        })
+        .select();
 
       if (error) throw error;
-
-      // Convert database response to our PaymentMethod type
-      const typedPaymentMethods = data.map(method => ({
-        id: method.id,
-        userId: method.user_id,
-        name: method.name,
-        type: method.type,
-        details: method.details as unknown as Record<string, any>, // Type conversion for compatibility
-        isDefault: method.is_default,
-        createdAt: new Date(method.created_at)
-      }));
-
-      setPaymentMethods(typedPaymentMethods);
-    } catch (err) {
-      console.error('Error fetching payment methods:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch payment methods'));
+      
+      const newMethod: PaymentMethod = {
+        id: data[0].id,
+        userId: user.id,
+        name: data[0].name,
+        type: data[0].type as PaymentMethodType, // Apply type assertion
+        details: data[0].details,
+        isDefault: data[0].is_default,
+        createdAt: data[0].created_at,
+      };
+      
+      setPaymentMethods([...paymentMethods, newMethod]);
+      return newMethod;
+    } catch (error) {
+      console.error('Error adding payment method:', error);
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
-  const addPaymentMethod = async (
-    paymentMethodData: Omit<PaymentMethod, 'id' | 'userId' | 'createdAt'>
-  ) => {
-    if (!user) {
-      toast.error('You must be logged in to add a payment method');
-      return null;
-    }
+  const updatePaymentMethod = async (id: string, method: Partial<Omit<PaymentMethod, 'id' | 'userId' | 'createdAt'>>) => {
+    if (!user?.id) return false;
 
     try {
-      const newPaymentMethod = {
-        user_id: user.id,
-        name: paymentMethodData.name,
-        type: paymentMethodData.type,
-        details: paymentMethodData.details as any, // Type conversion for compatibility
-        is_default: paymentMethodData.isDefault
-      };
-
-      const { data, error } = await supabase
-        .from('payment_methods')
-        .insert([newPaymentMethod])
-        .select();
-
-      if (error) throw error;
-
-      // If this is set as default, update other payment methods
-      if (paymentMethodData.isDefault) {
-        await setDefaultPaymentMethod(data[0].id);
+      setLoading(true);
+      
+      // Check if this should be the default method
+      if (method.isDefault) {
+        // We need to update the existing default method
+        const { error: updateError } = await supabase
+          .from('payment_methods')
+          .update({ is_default: false })
+          .eq('user_id', user.id)
+          .eq('is_default', true);
+          
+        if (updateError) throw updateError;
       }
 
-      toast.success('Payment method added successfully');
-      
-      // Refetch payment methods to get the updated list
-      await fetchPaymentMethods();
-      
-      return data[0];
-    } catch (err) {
-      console.error('Error adding payment method:', err);
-      toast.error('Failed to add payment method');
-      return null;
-    }
-  };
-
-  const updatePaymentMethod = async (id: string, updates: Partial<PaymentMethod>) => {
-    if (!user) {
-      toast.error('You must be logged in to update a payment method');
-      return false;
-    }
-
-    try {
-      const updateData: any = {};
-      
-      if (updates.name) updateData.name = updates.name;
-      if (updates.type) updateData.type = updates.type;
-      if (updates.details) updateData.details = updates.details;
-      if (updates.isDefault !== undefined) updateData.is_default = updates.isDefault;
+      const updateData: Record<string, any> = {};
+      if (method.name) updateData.name = method.name;
+      if (method.type) updateData.type = method.type;
+      if (method.details) updateData.details = method.details;
+      if (method.isDefault !== undefined) updateData.is_default = method.isDefault;
 
       const { error } = await supabase
         .from('payment_methods')
@@ -110,32 +128,31 @@ export function usePaymentMethods() {
         .eq('user_id', user.id);
 
       if (error) throw error;
-
-      // If this is set as default, update other payment methods
-      if (updates.isDefault) {
-        await setDefaultPaymentMethod(id);
-      }
-
-      toast.success('Payment method updated successfully');
       
-      // Refetch payment methods to get the updated list
-      await fetchPaymentMethods();
+      // Update the local state
+      setPaymentMethods(methods => 
+        methods.map(m => 
+          m.id === id 
+            ? { ...m, ...method, type: method.type as PaymentMethodType || m.type } 
+            : method.isDefault ? { ...m, isDefault: false } : m
+        )
+      );
       
       return true;
-    } catch (err) {
-      console.error('Error updating payment method:', err);
-      toast.error('Failed to update payment method');
+    } catch (error) {
+      console.error('Error updating payment method:', error);
       return false;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const deletePaymentMethod = async (id: string) => {
-    if (!user) {
-      toast.error('You must be logged in to delete a payment method');
-      return false;
-    }
+  const removePaymentMethod = async (id: string) => {
+    if (!user?.id) return false;
 
     try {
+      setLoading(true);
+      
       const { error } = await supabase
         .from('payment_methods')
         .delete()
@@ -143,70 +160,24 @@ export function usePaymentMethods() {
         .eq('user_id', user.id);
 
       if (error) throw error;
-
-      toast.success('Payment method deleted successfully');
       
-      // Update local state without refetching
-      setPaymentMethods(current => current.filter(method => method.id !== id));
+      // Update the local state
+      setPaymentMethods(methods => methods.filter(m => m.id !== id));
       
       return true;
-    } catch (err) {
-      console.error('Error deleting payment method:', err);
-      toast.error('Failed to delete payment method');
+    } catch (error) {
+      console.error('Error removing payment method:', error);
       return false;
+    } finally {
+      setLoading(false);
     }
   };
-
-  const setDefaultPaymentMethod = async (id: string) => {
-    if (!user) {
-      toast.error('You must be logged in to set a default payment method');
-      return false;
-    }
-
-    try {
-      // First, set all payment methods to non-default
-      const { error: updateError } = await supabase
-        .from('payment_methods')
-        .update({ is_default: false })
-        .eq('user_id', user.id);
-
-      if (updateError) throw updateError;
-
-      // Then, set the selected one as default
-      const { error } = await supabase
-        .from('payment_methods')
-        .update({ is_default: true })
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      toast.success('Default payment method updated');
-      
-      // Refetch payment methods to get the updated list
-      await fetchPaymentMethods();
-      
-      return true;
-    } catch (err) {
-      console.error('Error setting default payment method:', err);
-      toast.error('Failed to set default payment method');
-      return false;
-    }
-  };
-
-  // Load payment methods when the user changes
-  useEffect(() => {
-    fetchPaymentMethods();
-  }, [user?.id]);
 
   return {
     paymentMethods,
     loading,
-    error,
-    fetchPaymentMethods,
     addPaymentMethod,
     updatePaymentMethod,
-    deletePaymentMethod,
-    setDefaultPaymentMethod
+    removePaymentMethod,
   };
 }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
@@ -46,8 +47,8 @@ const ServiceDetail: React.FC = () => {
             location: fetchedService.location,
             rating: fetchedService.rating,
             review_count: fetchedService.reviewCount,
-            created_at: fetchedService.createdAt?.toISOString(),
-            updated_at: fetchedService.updatedAt?.toISOString(),
+            created_at: fetchedService.createdAt,
+            updated_at: fetchedService.updatedAt,
           };
           setService(transformedServiceData);
         }

@@ -30,9 +30,11 @@ export type {
   WalletVerificationRequest,
   NamibianMobileOperator,
   NamibianBank,
-  WalletPaymentType,
-  WalletVerificationStatus
+  WalletPaymentType
 } from './payment';
+
+// Export wallet verification status from schema
+export type { WalletVerificationStatus } from './schema';
 
 // Re-export Auth types
 export type { 

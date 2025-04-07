@@ -117,11 +117,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .single();
 
             if (!providerError && providerData) {
+              // Convert properties based on data availability to avoid undefined issues
               const providerProfile: Provider = {
                 ...userData,
                 businessName: providerData.business_name || '',
                 businessDescription: providerData.business_description || '',
-                // Use empty arrays as fallbacks for missing properties
                 categories: providerData.categories || [],
                 services: providerData.services || [], 
                 rating: providerData.rating || 0,
@@ -131,7 +131,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 website: providerData.website || '',
                 taxId: providerData.tax_id || '',
                 reviewCount: providerData.review_count || 0,
-                // Handle subscription tier, ensure it's a valid enum value
                 subscriptionTier: (providerData.subscription_tier || 'free') as any,
               };
               setUserProfile(providerProfile);
