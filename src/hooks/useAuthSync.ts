@@ -14,14 +14,17 @@ export function useAuthSync() {
 
       if (session) {
         const customSession: CustomSession = {
+          id: session.id,
+          user_id: session.user.id,
           access_token: session.access_token,
           refresh_token: session.refresh_token,
-          expires_at: session.expires_at,
+          expires_at: session.expires_at.toString(),
           user: {
             id: session.user.id,
             email: session.user.email || '',
             role: session.user.user_metadata?.role as UserRole || 'customer'
-          }
+          },
+          created_at: new Date().toISOString()
         };
 
         setSession(customSession);
@@ -60,14 +63,17 @@ export function useAuthSync() {
 
       if (session) {
         const customSession: CustomSession = {
+          id: session.id,
+          user_id: session.user.id,
           access_token: session.access_token,
           refresh_token: session.refresh_token,
-          expires_at: session.expires_at,
+          expires_at: session.expires_at.toString(),
           user: {
             id: session.user.id,
             email: session.user.email || '',
             role: session.user.user_metadata?.role as UserRole || 'customer'
-          }
+          },
+          created_at: new Date().toISOString()
         };
 
         setSession(customSession);
@@ -126,7 +132,7 @@ export function useAuthSync() {
       const role = profileData.role as UserRole;
       setUserRole(role);
 
-      setUser(prev => {
+      setUser((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
@@ -203,10 +209,11 @@ export function useAuthSync() {
             rating: providerData?.rating || 0,
             reviewCount: providerData?.rating_count || 0,
             categories: [],
+            services: [],
+            commission: providerData?.commission_rate || 0,
             createdAt: new Date(profileData.created_at),
             isVerified: profileData.email_verified || false,
-            subscriptionTier: providerData?.subscription_tier as any || 'free',
-            bankDetails: {}
+            subscriptionTier: providerData?.subscription_tier || 'free'
           };
 
           setUserProfile(provider);
@@ -235,7 +242,8 @@ export function useAuthSync() {
             isActive: true,
             permissions: adminData?.permissions || [],
             createdAt: new Date(profileData.created_at),
-            isVerified: true
+            isVerified: true,
+            adminLevel: 1
           };
 
           setUserProfile(admin);

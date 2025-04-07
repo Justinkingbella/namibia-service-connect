@@ -51,14 +51,17 @@ export const useAuthStore = create<AuthState>()(
           if (!error) {
             console.info('Sign in successful');
             const customSession: Session = {
+              id: data.session.id,
+              user_id: data.user.id,
               access_token: data.session.access_token,
               refresh_token: data.session.refresh_token,
-              expires_at: data.session.expires_at,
+              expires_at: data.session.expires_at.toString(),
               user: {
                 id: data.user.id,
                 email: data.user.email || '',
                 role: data.user.user_metadata?.role as UserRole || 'customer'
-              }
+              },
+              created_at: new Date().toISOString()
             };
             
             set({ session: customSession });

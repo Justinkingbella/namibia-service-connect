@@ -68,6 +68,7 @@ const SignUp = () => {
       const userData = {
         firstName,
         lastName,
+        role,
         ...(role === 'provider' ? { businessName } : {})
       };
 
@@ -75,11 +76,11 @@ const SignUp = () => {
       
       if (error) {
         console.error('Sign up error:', error);
-        if (error.message.includes('already registered')) {
+        if (error.message?.includes('already registered')) {
           toast.error('Sign up failed', {
             description: 'This email is already registered. Please sign in instead.',
           });
-        } else if (error.message.includes('Invalid email')) {
+        } else if (error.message?.includes('Invalid email')) {
           toast.error('Sign up failed', {
             description: 'Please enter a valid email address.',
           });
@@ -94,10 +95,10 @@ const SignUp = () => {
         });
         navigate('/dashboard');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Unexpected sign up error:', err);
       toast.error('Sign up failed', {
-        description: 'An unexpected error occurred. Please try again.',
+        description: err.message || 'An unexpected error occurred. Please try again.',
       });
     } finally {
       setIsSubmitting(false);

@@ -26,6 +26,13 @@ export interface Session {
   expires_at: string;
   user_agent?: string;
   ip_address?: string;
+  access_token?: string;
+  refresh_token?: string;
+  user?: {
+    id: string;
+    email: string;
+    role: UserRole;
+  }
 }
 
 export interface User {
@@ -71,7 +78,7 @@ export interface DbUserProfile {
   bio?: string;
   birth_date?: string;
   loyalty_points?: number;
-  notification_preferences: {
+  notification_preferences?: {
     email: boolean;
     sms: boolean;
     push: boolean;
@@ -82,7 +89,7 @@ export interface DbCustomerProfile extends DbUserProfile {
   preferred_categories: string[];
   saved_services: string[];
   birth_date?: string;
-  notification_preferences: {
+  notification_preferences?: {
     email: boolean;
     sms: boolean;
     push: boolean;
@@ -124,8 +131,9 @@ export interface Provider extends User {
   website?: string;
   taxId?: string;
   reviewCount?: number;
-  subscriptionTier?: SubscriptionTierType | 'free';
+  subscriptionTier?: string;
   isVerified?: boolean;
+  bankDetails?: Record<string, any>;
 }
 
 export interface Customer extends User {
@@ -157,10 +165,10 @@ export interface AuthContextType {
   loading?: boolean;
   isAuthenticated: boolean;
   session: Session | null;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: Partial<User>) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{error: any | null}>;
+  signUp: (email: string, password: string, userData: Partial<User>) => Promise<{error: any | null, data: any | null}>;
   signOut: () => Promise<void>;
-  updateProfile: (data: Partial<User>) => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<boolean>;
   setUserProfile: (profile: Customer | Provider | Admin | null) => void;
   uploadAvatar: (file: File) => Promise<string>;
   resetPassword: (email: string) => Promise<void>;

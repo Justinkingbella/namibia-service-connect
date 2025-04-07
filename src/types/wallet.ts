@@ -1,158 +1,131 @@
 
-import { WalletPaymentType, WalletVerificationStatus } from './schema';
-
-export type VerificationStatus = 'pending' | 'approved' | 'rejected' | 'expired';
-export type WalletProvider = 'eWallet' | 'BlueWallet' | 'PayToday' | 'DOP' | 'EasyWallet' | 'OtherWallet' | 'MTC E-Wallet';
-export type UserType = 'customer' | 'provider';
+import { WalletVerificationStatus } from './schema';
 
 export interface WalletVerificationRequest {
   id: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  userType: UserType;
-  walletProvider: WalletProvider;
-  walletNumber: string;
-  walletName: string;
+  bookingId: string;
+  customerId: string;
+  providerId: string;
+  customerPhone: string;
+  providerPhone?: string;
+  paymentMethod: string;
   amount: number;
-  currency: string;
-  transactionReference: string;
+  referenceNumber: string;
+  status: string;
   dateSubmitted: string;
-  status: VerificationStatus;
-  reviewerId?: string;
-  reviewerName?: string;
-  reviewDate?: string;
+  dateVerified?: string;
+  customerName?: string;
+  providerName?: string;
+  customerConfirmed: boolean;
+  providerConfirmed: boolean;
+  adminVerified: boolean;
+  verifiedBy?: string;
+  adminComments?: any[];
+  mobileOperator?: string;
+  bank?: string;
+  proofType?: string;
+  receiptImage?: string;
   notes?: string;
-  attachments?: string[];
-  bookingId?: string;
-  paymentPurpose: string;
-  isPayout: boolean;
+  rejectionReason?: string;
 }
 
 export interface WalletVerificationFilters {
-  status?: VerificationStatus[];
-  walletProvider?: WalletProvider[];
-  userType?: UserType[];
+  status?: string;
+  paymentMethod?: string;
   dateRange?: {
-    start: string;
-    end: string;
+    start: Date;
+    end: Date;
   };
-  amountRange?: {
+  amount?: {
     min: number;
     max: number;
   };
-  searchTerm?: string;
+  search?: string;
 }
 
 export interface WalletVerificationStats {
   total: number;
   pending: number;
-  approved: number;
+  verified: number;
   rejected: number;
-  expired: number;
-  totalAmountPending: number;
-  totalAmountProcessed: number;
-  averageProcessingTime: number;
+  totalAmount: number;
 }
 
 export interface WalletVerificationComment {
   id: string;
-  verificationId: string;
-  userId: string;
-  userName: string;
-  userRole: string;
+  requestId: string;
+  adminId: string;
+  adminName: string;
   comment: string;
-  createdAt: string;
-  isInternal: boolean;
+  timestamp: string;
 }
 
 export interface WalletProviderSettings {
   id: string;
-  providerName: WalletProvider;
-  isEnabled: boolean;
-  displayName: string;
-  logo: string;
-  processingFee: number;
-  processingFeeType: 'fixed' | 'percentage';
-  minAmount: number;
-  maxAmount: number;
-  verificationRequired: boolean;
-  supportedCurrencies: string[];
-  apiIntegration: boolean;
-  apiEndpoint?: string;
-  apiKey?: string;
-  webhookUrl?: string;
+  name: string;
+  type: 'bank' | 'mobile';
+  isActive: boolean;
+  logo?: string;
+  processingTime?: string;
+  minimumAmount?: number;
+  maximumAmount?: number;
+  instructions?: string;
 }
 
 export interface WalletVerificationDashboard {
-  stats: {
-    pending: number;
-    approved: number;
-    rejected: number;
-    total: number;
-    totalAmount: number;
-    pendingAmount: number;
-  };
-  recentVerifications: WalletVerificationRequest[];
-  processingTime: {
-    average: number;
-    min: number;
-    max: number;
-  };
-  byProvider: {
-    provider: WalletProvider;
-    count: number;
-    amount: number;
-  }[];
-  byUserType: {
-    userType: UserType;
-    count: number;
-    amount: number;
-  }[];
+  stats: WalletVerificationStats;
+  recentRequests: WalletVerificationRequest[];
 }
 
 export interface WalletVerificationSummary {
-  totalVerifications: number;
-  pendingVerifications: number;
-  approvedVerifications: number;
-  rejectedVerifications: number;
+  totalRequests: number;
   totalAmount: number;
-  pendingAmount: number;
-  averageProcessingTime: number;
-  recentVerifications: WalletVerificationRequest[];
+  verificationRatePercentage: number;
+  averageProcessingTime: string;
+  mostCommonPaymentMethod: string;
+  mostCommonMobileOperator?: string;
+  mostCommonBank?: string;
 }
 
-export interface VerificationAction {
-  id: string;
-  verificationId: string;
-  action: 'approve' | 'reject' | 'request_info' | 'resubmit';
-  performedBy: string;
-  performedByName: string;
-  performedByRole: string;
-  reason?: string;
-  createdAt: string;
-  additionalData?: Record<string, any>;
+export enum VerificationAction {
+  APPROVE = 'approve',
+  REJECT = 'reject',
+  REQUEST_MORE_INFO = 'request_more_info'
 }
 
 export interface WalletVerificationReport {
-  period: 'daily' | 'weekly' | 'monthly';
-  startDate: string;
-  endDate: string;
-  totalVerifications: number;
-  approvedVerifications: number;
-  rejectedVerifications: number;
-  totalAmount: number;
-  byProvider: {
-    provider: WalletProvider;
+  dailyStats: {
+    date: string;
     count: number;
     amount: number;
-    percentageOfTotal: number;
   }[];
-  byUserType: {
-    userType: UserType;
+  methodBreakdown: {
+    method: string;
     count: number;
     amount: number;
-    percentageOfTotal: number;
   }[];
-  averageProcessingTime: number;
+  statusBreakdown: {
+    status: string;
+    count: number;
+    percentage: number;
+  }[];
+}
+
+export enum VerificationStatus {
+  PENDING = 'pending',
+  VERIFIED = 'verified',
+  REJECTED = 'rejected',
+  EXPIRED = 'expired'
+}
+
+export interface WalletProvider {
+  id: string;
+  name: string;
+  logo?: string;
+  type: 'bank' | 'mobile';
+}
+
+export enum UserType {
+  CUSTOMER = 'customer',
+  PROVIDER = 'provider'
 }

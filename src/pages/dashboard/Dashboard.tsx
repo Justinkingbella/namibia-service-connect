@@ -7,7 +7,7 @@ import { enableSupabaseRealtime } from '@/services/enableRealtimeSupabase';
 import { useAuthStore } from '@/store/authStore';
 
 const Dashboard = () => {
-  const { user, isLoading } = useAuthStore(); // Updated to use authStore instead of AuthContext
+  const { user, isLoading } = useAuthStore();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isSubscribed, enableRealtime } = useSupabase();

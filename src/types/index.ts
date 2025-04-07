@@ -62,7 +62,6 @@ export type {
 export type { Json } from './schema';
 
 // Explicitly re-export types from service
-export { ServiceCategoryEnum, PricingModelEnum } from './service';
 export type { 
   ServiceCategory, 
   PricingModel, 
@@ -71,6 +70,7 @@ export type {
   ServiceData,
   FavoriteService
 } from './service';
+export { ServiceCategoryEnum, PricingModelEnum } from './service';
 
 export interface IResponse<T> {
   success: boolean;
