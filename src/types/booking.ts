@@ -96,8 +96,8 @@ export interface Dispute {
   providerId: string;
   subject: string;
   description: string;
-  status: DisputeStatus;
-  priority: DisputePriority;
+  status: string;
+  priority: string;
   createdAt: string;
   updatedAt?: string;
   resolutionDate?: string;
@@ -107,10 +107,27 @@ export interface Dispute {
   adminAssignedTo?: string;
   evidenceUrls?: string[];
   reason?: string;
+  customerName?: string;
+  providerName?: string;
+  attachments?: string[];
 }
 
-export type DisputeStatus = 'pending' | 'in_progress' | 'in_review' | 'resolved' | 'closed' | 'escalated' | 'rejected';
-export type DisputePriority = 'low' | 'medium' | 'high' | 'urgent';
+export enum DisputeStatus {
+  PENDING = 'pending',
+  IN_PROGRESS = 'in_progress',
+  IN_REVIEW = 'in_review',
+  RESOLVED = 'resolved',
+  CLOSED = 'closed',
+  ESCALATED = 'escalated',
+  REJECTED = 'rejected'
+}
+
+export enum DisputePriority {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  URGENT = 'urgent'
+}
 
 export interface Transaction {
   id: string;

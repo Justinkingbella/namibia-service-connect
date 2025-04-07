@@ -1,5 +1,5 @@
 
-import { Dispute, DisputeStatus, DisputePriority } from '@/types';
+import { Dispute } from '@/types/booking';
 
 // Mock disputes
 export const mockDisputes: Dispute[] = [
@@ -10,9 +10,9 @@ export const mockDisputes: Dispute[] = [
     providerId: "provider123",
     subject: "Service quality issue",
     description: "The cleaning service didn't cover all the agreed areas.",
-    status: DisputeStatus.PENDING,
-    dateCreated: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-    priority: DisputePriority.MEDIUM,
+    status: 'pending',
+    createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+    priority: 'medium',
     customerName: "John Doe",
     providerName: "Jane's Cleaning Services",
     refundAmount: 250,
@@ -26,9 +26,9 @@ export const mockDisputes: Dispute[] = [
     providerId: "provider456",
     subject: "Late arrival",
     description: "Provider was 2 hours late without prior notice.",
-    status: DisputeStatus.IN_REVIEW,
-    dateCreated: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-    priority: DisputePriority.LOW,
+    status: 'in_review',
+    createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+    priority: 'low',
     customerName: "John Doe",
     providerName: "Plumbing Experts",
     refundAmount: 0,
@@ -42,9 +42,9 @@ export const mockDisputes: Dispute[] = [
     providerId: "provider123",
     subject: "Payment dispute",
     description: "Customer claims service wasn't completed as agreed.",
-    status: DisputeStatus.RESOLVED,
-    dateCreated: new Date(Date.now() - 432000000).toISOString(), // 5 days ago
-    priority: DisputePriority.HIGH,
+    status: 'resolved',
+    createdAt: new Date(Date.now() - 432000000).toISOString(), // 5 days ago
+    priority: 'high',
     customerName: "Sarah Johnson",
     providerName: "Jane's Cleaning Services",
     refundAmount: 150,
@@ -92,9 +92,9 @@ export const createDispute = async (data: Partial<Dispute>): Promise<boolean> =>
       providerId: data.providerId || '',
       subject: data.subject || '',
       description: data.description || '',
-      status: DisputeStatus.PENDING,
-      dateCreated: new Date().toISOString(),
-      priority: data.priority || DisputePriority.MEDIUM,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      priority: data.priority || 'medium',
       customerName: data.customerName || '',
       providerName: data.providerName || '',
       refundAmount: data.refundAmount || 0,

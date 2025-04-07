@@ -1,35 +1,43 @@
 
+import { Json } from './schema';
+
 export interface Conversation {
   id: string;
-  participants: {
-    id: string;
-    name?: string;
-    avatar?: string;
-  }[];
+  participants: string[];
   lastMessage?: string;
-  lastMessageDate?: Date;
-  createdAt: Date;
-  unreadCount: number;
+  lastMessageDate?: string;
+  unreadCount?: number;
+  createdAt: string;
+  updatedAt?: string;
   serviceId?: string;
-  serviceName?: string;
   bookingId?: string;
-  status?: 'active' | 'archived';
-  recipientId?: string;
-  recipientName?: string;
-  recipientAvatar?: string;
-  lastSenderId?: string;
+  isActive?: boolean;
 }
 
-// Define the Message interface here to avoid conflict
 export interface Message {
   id: string;
-  conversationId: string; 
+  conversationId: string;
   senderId: string;
-  recipientId?: string;
+  recipientId: string;
   content: string;
-  createdAt: Date;
   read: boolean;
-  messageType?: 'text' | 'image' | 'file' | 'system';
-  attachments?: string[];
-  isSystemMessage?: boolean;
+  created_at: string;
+  message_type: 'text' | 'image' | 'file' | 'system';
+  is_system_message: boolean;
+  attachments: string[];
+  metadata?: Json;
+}
+
+export interface ConversationWithDetails extends Conversation {
+  otherParticipant?: {
+    id: string;
+    name: string;
+    avatarUrl?: string;
+    role?: string;
+  };
+  service?: {
+    id: string;
+    title: string;
+    image?: string;
+  };
 }
