@@ -96,27 +96,41 @@ export interface DbCustomerProfile extends DbUserProfile {
   };
 }
 
-export interface DbProviderProfile extends Omit<DbUserProfile, 'is_active'> {
+export interface DbProviderProfile {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone_number?: string;
+  avatar_url?: string;
+  email_verified: boolean;
+  role: UserRole;
+  is_active?: boolean;
+  created_at: string;
+  updated_at: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  bio?: string;
   business_name?: string;
   business_description?: string;
   banner_url?: string;
   website?: string;
-  address?: string;
-  city?: string;
-  country?: string;
   commission_rate?: number;
   verification_status?: string;
   completed_bookings?: number;
   rating?: number;
   rating_count?: number;
   services_count?: number;
-  is_active?: boolean;
-  created_at?: string;
-  updated_at?: string;
   categories?: string[];
   services?: string[];
   tax_id?: string;
   review_count?: number;
+  notification_preferences?: {
+    email: boolean;
+    sms: boolean;
+    push: boolean;
+  };
 }
 
 export interface Provider extends User {

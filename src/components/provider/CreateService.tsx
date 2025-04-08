@@ -10,7 +10,7 @@ import { ServiceData } from '@/types/service';
 const CreateService = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateService = async (serviceData: ServiceData) => {
     if (!user) {
@@ -24,7 +24,7 @@ const CreateService = () => {
       return;
     }
 
-    setIsSubmitting(true);
+    setIsLoading(true);
 
     try {
       // Ensure the provider_id is set to the current user's ID
@@ -48,7 +48,7 @@ const CreateService = () => {
       console.error('Error creating service:', error);
       toast.error(error.message || 'Failed to create service.');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
@@ -56,7 +56,7 @@ const CreateService = () => {
     <div className="space-y-6">
       <CreateServiceForm 
         onSubmit={handleCreateService}
-        isLoading={isSubmitting}
+        isLoading={isLoading}
       />
     </div>
   );

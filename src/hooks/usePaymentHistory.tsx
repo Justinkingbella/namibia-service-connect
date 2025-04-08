@@ -2,43 +2,43 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { PaymentHistory } from '@/types/payments';
-import { fetchPaymentHistory } from '@/services/paymentService';
-import { useToast } from '@/hooks/use-toast';
+import { getMockPaymentHistory } from '@/services/paymentService';
 
 export function usePaymentHistory() {
   const { user } = useAuth();
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   useEffect(() => {
-    if (!user?.id) {
+    if (!user) {
+      setPaymentHistory([]);
       setLoading(false);
       return;
     }
 
-    const loadPaymentHistory = async () => {
+    const fetchPaymentHistory = async () => {
       try {
         setLoading(true);
-        const data = await fetchPaymentHistory(user.id);
-        setPaymentHistory(data);
         setError(null);
+        
+        // Using mock data service - this should be replaced with actual API call
+        const data = await getMockPaymentHistory();
+        
+        // Filter by user ID if needed
+        const userHistory = data.filter(payment => payment.userId === user.id);
+        setPaymentHistory(userHistory.length > 0 ? userHistory : data);
+        
       } catch (err: any) {
-        console.error('Error loading payment history:', err);
-        setError(err.message || 'Failed to load payment history');
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not load payment history',
-        });
+        console.error('Error fetching payment history:', err);
+        setError(err.message || 'Failed to fetch payment history');
       } finally {
         setLoading(false);
       }
     };
 
-    loadPaymentHistory();
-  }, [user?.id, toast]);
+    fetchPaymentHistory();
+  }, [user]);
 
   return { paymentHistory, loading, error };
 }

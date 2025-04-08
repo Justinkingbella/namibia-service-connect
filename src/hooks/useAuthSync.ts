@@ -105,7 +105,7 @@ export const useAuthSync = () => {
 
             if (!providerError && providerData) {
               // Cast to ProviderVerificationStatus to ensure type safety
-              const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'unverified';
+              const verificationStatus = (providerData.verification_status as ProviderVerificationStatus) || 'unverified';
               
               const providerProfile: Provider = {
                 ...userData,

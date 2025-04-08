@@ -16,8 +16,30 @@ export interface WalletVerificationRequest {
   customer_phone: string;
   provider_phone?: string;
   rejection_reason?: string;
-  paymentPurpose?: string; // Add missing property
-  walletNumber?: string; // Add missing property
+  customer_confirmed: boolean;
+  provider_confirmed: boolean;
+  admin_verified: boolean;
+  admin_comments: any;
+  created_at: string;
+  updated_at: string;
+  proof_type?: string;
+  mobile_operator?: string;
+  bank_used?: string;
+  receipt_image?: string;
+  notes?: string;
+  // Additional fields used in components
+  paymentPurpose?: string;
+  walletNumber?: string;
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
+  transactionReference?: string;
+  walletProvider?: string;
+  userType?: string;
+  reviewerId?: string;
+  reviewerName?: string;
+  reviewDate?: string;
+  status?: string;
 }
 
 export interface WalletVerificationFilters {
@@ -28,6 +50,9 @@ export interface WalletVerificationFilters {
   amountMin?: number;
   amountMax?: number;
   searchTerm?: string;
+  // Additional fields used in filters
+  walletProvider?: string;
+  userType?: string;
 }
 
 export interface WalletVerificationStats {
@@ -37,7 +62,14 @@ export interface WalletVerificationStats {
   rejected: number;
   totalAmount: number;
   averageAmount: number;
-  averageProcessingTime?: string; // Add missing property
+  // Additional fields
+  averageProcessingTime?: string;
+  totalPending?: number;
+  totalApproved?: number;
+  totalRejected?: number;
+  totalExpired?: number;
+  totalAmountPending?: number;
+  totalAmountProcessed?: number;
 }
 
 export interface WalletVerificationComment {
@@ -47,7 +79,10 @@ export interface WalletVerificationComment {
   user_role: string;
   comment: string;
   timestamp: string;
-  createdAt?: string; // Add missing property
+  // Additional fields
+  verificationId?: string;
+  content?: string;
+  createdAt?: string;
 }
 
 export interface WalletProviderSettings {
@@ -58,10 +93,17 @@ export interface WalletProviderSettings {
   accountNumber?: string;
   phoneNumber?: string;
   processingFee: number;
-  processingFeeType?: string; // Add this property
+  processingFeeType?: string;
   currency: string;
   notes?: string;
   updatedAt: string;
+  // Additional fields
+  providerName?: string;
+  apiKey?: string;
+  secretKey?: string;
+  endpoint?: string;
+  displayName?: string;
+  processingTime?: string;
 }
 
 export interface WalletVerificationDashboard {

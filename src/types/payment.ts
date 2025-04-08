@@ -75,105 +75,18 @@ export interface WalletVerification {
   paymentPurpose?: string;
 }
 
-// Separate interface to represent the wallet verification request from the database
-export interface WalletVerificationRequest {
+// Updated PaymentHistory type to include date field
+export interface PaymentHistory {
   id: string;
-  booking_id: string;
-  customer_id: string;
-  provider_id: string;
+  userId: string;
+  bookingId?: string;
   amount: number;
-  payment_method: WalletPaymentType;
-  reference_number: string;
-  customer_phone: string;
-  provider_phone?: string;
-  proof_type?: string;
-  mobile_operator?: string;
-  bank_used?: string;
-  receipt_image?: string;
-  notes?: string;
-  date_submitted: string;
-  date_verified?: string;
-  verified_by?: string;
-  customer_confirmed: boolean;
-  provider_confirmed: boolean;
-  admin_verified: boolean;
-  verification_status: WalletVerificationStatus;
-  rejection_reason?: string;
-  admin_comments: Json;
-  created_at: string;
-  updated_at: string;
-  // Add any missing fields used by the wallet service
-  walletNumber?: string;
-  transactionReference?: string;
-  userId?: string;
-  userName?: string;
-  userEmail?: string;
-  walletProvider?: string;
-  userType?: string;
-  reviewerId?: string;
-  reviewerName?: string;
-  reviewDate?: string;
-  walletName?: string;
-  currency?: string;
-  paymentPurpose?: string;
-  status?: string;
-}
-
-export interface WalletVerificationFilters {
-  status?: WalletVerificationStatus;
-  fromDate?: string;
-  toDate?: string;
-  minAmount?: number;
-  maxAmount?: number;
-  userId?: string;
-  // Add additional fields used in filtering
-  walletProvider?: string;
-  userType?: string;
-  searchTerm?: string;
-}
-
-export interface WalletVerificationStats {
-  total: number;
-  pending: number;
-  approved: number;
-  rejected: number;
-  expired?: number;
-  averageProcessingTime?: string;
-  // Fields used in service
-  totalPending?: number;
-  totalApproved?: number;
-  totalRejected?: number;
-  totalExpired?: number;
-  totalAmountPending?: number;
-  totalAmountProcessed?: number;
-}
-
-export interface WalletVerificationComment {
-  id: string;
-  verification_id?: string;
-  verificationId?: string;
-  content: string;
-  createdAt?: string;
-  created_at?: string;
-  userId?: string;
-  userName?: string;
-  userRole?: string;
-}
-
-export interface WalletProviderSettings {
-  id: string;
-  providerName?: string;
-  provider_id?: string;
-  apiKey?: string;
-  secretKey?: string;
-  endpoint?: string;
-  isActive: boolean;
-  processingFee: number;
-  processingFeeType?: string;
-  // Additional fields used
-  displayName?: string;
-  isEnabled?: boolean;
-  processingTime?: string;
-  updatedAt: string;
-  currency?: string;
+  description: string;
+  createdAt: string; // Use string instead of Date
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  type: string;
+  reference: string;
+  paymentMethod: string;
+  transactionId: string;
+  date?: string; // Added date field that was missing
 }

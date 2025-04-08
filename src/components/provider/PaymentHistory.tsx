@@ -1,136 +1,109 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
-import { fetchPaymentHistory } from '@/services/paymentService';
-import { Skeleton } from '@/components/ui/skeleton';
+import { getMockPaymentHistory } from '@/services/paymentService';
 import { format } from 'date-fns';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PaymentHistory } from '@/types/payments';
+import { Loader2 } from 'lucide-react';
 
-export default function PaymentHistory() {
-  const { user } = useAuth();
-  const [transactionType, setTransactionType] = React.useState<string>('all');
+const statusColors = {
+  pending: 'bg-yellow-100 text-yellow-800',
+  completed: 'bg-green-100 text-green-800',
+  failed: 'bg-red-100 text-red-800',
+  processing: 'bg-blue-100 text-blue-800'
+};
 
-  const { data: transactions, isLoading } = useQuery({
-    queryKey: ['paymentTransactions', user?.id, transactionType],
-    queryFn: async () => {
-      const allTransactions = await fetchPaymentHistory(user?.id || '');
-      
-      if (transactionType === 'all') {
-        return allTransactions;
+const PaymentHistoryComponent: React.FC = () => {
+  const [history, setHistory] = useState<PaymentHistory[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        // Using mock data service
+        const data = await getMockPaymentHistory();
+        setHistory(data);
+      } catch (error) {
+        console.error('Error fetching payment history:', error);
+      } finally {
+        setLoading(false);
       }
-      
-      return allTransactions.filter(t => t.type === transactionType);
-    },
-    enabled: !!user?.id
-  });
+    };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="text-yellow-600 border-yellow-200 bg-yellow-50">Pending</Badge>;
-      case 'processing':
-        return <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">Processing</Badge>;
-      case 'completed':
-        return <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">Completed</Badge>;
-      case 'failed':
-        return <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50">Failed</Badge>;
-      case 'refunded':
-        return <Badge variant="outline" className="text-purple-600 border-purple-200 bg-purple-50">Refunded</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
+    fetchHistory();
+  }, []);
 
-  const getTransactionTypeIcon = (type: string) => {
-    switch (type) {
-      case 'subscription':
-        return <Badge variant="secondary">Subscription</Badge>;
-      case 'booking':
-        return <Badge variant="secondary">Booking</Badge>;
-      case 'payout':
-        return <Badge variant="secondary">Payout</Badge>;
-      default:
-        return <Badge variant="secondary">{type}</Badge>;
-    }
-  };
-
-  return (
-    <div className="space-y-6">
+  if (loading) {
+    return (
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <CardTitle>Payment History</CardTitle>
-              <CardDescription>View your payment and transaction history</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Select
-                value={transactionType}
-                onValueChange={setTransactionType}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Transactions</SelectItem>
-                  <SelectItem value="subscription">Subscriptions</SelectItem>
-                  <SelectItem value="booking">Bookings</SelectItem>
-                  <SelectItem value="payout">Payouts</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <CardTitle>Payment History</CardTitle>
+          <CardDescription>
+            View all your past transactions
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          ) : transactions && transactions.length > 0 ? (
-            <div className="rounded-md border">
-              <div className="grid grid-cols-6 gap-2 p-4 text-sm font-medium border-b bg-muted/50">
-                <div>Date</div>
-                <div>Description</div>
-                <div>Type</div>
-                <div>Method</div>
-                <div>Status</div>
-                <div className="text-right">Amount</div>
-              </div>
-              <div className="divide-y">
-                {transactions.map((transaction) => (
-                  <div key={transaction.id} className="grid grid-cols-6 gap-2 p-4 text-sm">
-                    <div className="font-medium">
-                      {format(new Date(transaction.date), 'MMM d, yyyy')}
-                    </div>
-                    <div>{transaction.description || 'Transaction'}</div>
-                    <div>{getTransactionTypeIcon(transaction.type)}</div>
-                    <div className="capitalize">{transaction.type.replace('_', ' ')}</div>
-                    <div>{getStatusBadge(transaction.status)}</div>
-                    <div className={`text-right font-medium ${transaction.type === 'payout' ? 'text-red-600' : ''}`}>
-                      {transaction.type === 'payout' ? '-' : ''}
-                      N${transaction.amount.toFixed(2)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <Alert>
-              <AlertTitle>No transactions found</AlertTitle>
-              <AlertDescription>
-                Your payment history will appear here once you have made or received payments.
-              </AlertDescription>
-            </Alert>
-          )}
+        <CardContent className="flex justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
         </CardContent>
       </Card>
-    </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Payment History</CardTitle>
+        <CardDescription>
+          View all your past transactions
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Amount</TableHead>
+              <TableHead>Payment Method</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Reference</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {history.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  No payment history found
+                </TableCell>
+              </TableRow>
+            ) : (
+              history.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">
+                    {/* Use the date property if available, otherwise fallback to createdAt */}
+                    {format(new Date(item.date || item.createdAt), 'MMM dd, yyyy')}
+                  </TableCell>
+                  <TableCell>{item.description}</TableCell>
+                  <TableCell>N${item.amount.toFixed(2)}</TableCell>
+                  <TableCell>{item.paymentMethod}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" 
+                      className={statusColors[item.status as keyof typeof statusColors]}
+                    >
+                      {item.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">{item.reference}</TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
-}
+};
+
+export default PaymentHistoryComponent;

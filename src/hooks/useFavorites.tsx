@@ -1,25 +1,32 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { FavoriteService } from '@/types/favorites';
-import { Service, ServiceData } from '@/types/service';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { transformServiceData } from '@/services/serviceDataTransformer';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { FavoriteService } from '@/types';
 
-export const useFavorites = () => {
-  const { user } = useAuth();
+export function useFavorites() {
   const [favorites, setFavorites] = useState<FavoriteService[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const fetchFavorites = useCallback(async () => {
+  useEffect(() => {
     if (!user) {
-      setFavorites([]);
       setLoading(false);
       return;
     }
+    
+    fetchFavorites();
+  }, [user]);
 
+  const fetchFavorites = async () => {
+    if (!user) return;
+    
     try {
       setLoading(true);
+      
+      // Fetch favorite services with service details
       const { data, error } = await supabase
         .from('favorite_services')
         .select(`
@@ -27,134 +34,183 @@ export const useFavorites = () => {
           user_id,
           service_id,
           created_at,
-          services:service_id(*)
+          service:service_id (
+            id, title, description, price, image, provider_id, provider_name, 
+            category, pricing_model, rating, review_count, location
+          )
         `)
         .eq('user_id', user.id);
+        
+      if (error) {
+        throw error;
+      }
 
-      if (error) throw error;
-
-      // Map the data and handle potentially null service
+      // Map to FavoriteService type and ensure service is handled properly
       const mappedFavorites: FavoriteService[] = data.map(item => {
-        // Handle the service data safely
-        let serviceData = null;
-        if (item.services) {
-          // Cast the service data to appropriate type
-          const serviceItem = item.services as unknown as ServiceData;
-          if (serviceItem) {
-            serviceData = transformServiceData(serviceItem);
-          }
-        }
-
+        // Create service object with proper null handling
+        const serviceData = item.service || {};
+        
         return {
           id: item.id,
           user_id: item.user_id,
           service_id: item.service_id,
           created_at: item.created_at,
-          // Add camelCase fields for compatibility with components
+          // Add compatible property names
           userId: item.user_id,
           serviceId: item.service_id,
           createdAt: item.created_at,
-          service: serviceData
+          service: {
+            id: serviceData.id || '',
+            title: serviceData.title || '',
+            description: serviceData.description || '',
+            price: serviceData.price || 0,
+            image: serviceData.image || '',
+            provider_id: serviceData.provider_id || '',
+            provider_name: serviceData.provider_name || '',
+            // Add camelCase variants for compatibility
+            providerId: serviceData.provider_id || '',
+            providerName: serviceData.provider_name || '',
+            category: serviceData.category || '',
+            pricingModel: serviceData.pricing_model || '',
+            rating: serviceData.rating || 0,
+            reviewCount: serviceData.review_count || 0,
+            location: serviceData.location || ''
+          }
         };
       });
-
+      
       setFavorites(mappedFavorites);
-    } catch (error) {
-      console.error('Error fetching favorites:', error);
+    } catch (err) {
+      console.error('Error fetching favorites:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch favorite services',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  };
 
-  // Initial fetch
-  useEffect(() => {
-    fetchFavorites();
-  }, [fetchFavorites]);
-
-  // Add to favorites
-  const addFavorite = useCallback(async (serviceId: string): Promise<boolean> => {
+  const addFavorite = async (serviceId: string) => {
     if (!user) return false;
-
+    
     try {
+      const newFavorite = {
+        user_id: user.id,
+        service_id: serviceId
+      };
+      
       const { data, error } = await supabase
         .from('favorite_services')
-        .insert({
-          user_id: user.id,
-          service_id: serviceId
-        })
+        .insert(newFavorite)
         .select(`
           id,
           user_id,
           service_id,
           created_at,
-          services:service_id(*)
+          service:service_id (
+            id, title, description, price, image, provider_id, provider_name, 
+            category, pricing_model, rating, review_count, location
+          )
         `)
         .single();
-
+        
       if (error) throw error;
-
-      // Handle the service data safely
-      let serviceData = null;
-      if (data.services) {
-        // Cast the service data to appropriate type
-        const serviceItem = data.services as unknown as ServiceData;
-        if (serviceItem) {
-          serviceData = transformServiceData(serviceItem);
-        }
-      }
-
-      const newFavorite: FavoriteService = {
+      
+      // Add to state with proper mapping
+      // Create service object with proper null handling
+      const serviceData = data.service || {};
+      
+      const mappedFavorite: FavoriteService = {
         id: data.id,
         user_id: data.user_id,
         service_id: data.service_id,
         created_at: data.created_at,
-        // Add camelCase fields for compatibility with components
+        // Add compatible property names
         userId: data.user_id,
         serviceId: data.service_id,
         createdAt: data.created_at,
-        service: serviceData
+        service: {
+          id: serviceData.id || '',
+          title: serviceData.title || '',
+          description: serviceData.description || '',
+          price: serviceData.price || 0,
+          image: serviceData.image || '',
+          provider_id: serviceData.provider_id || '',
+          provider_name: serviceData.provider_name || '',
+          // Add camelCase variants for compatibility
+          providerId: serviceData.provider_id || '',
+          providerName: serviceData.provider_name || '',
+          category: serviceData.category || '',
+          pricingModel: serviceData.pricing_model || '',
+          rating: serviceData.rating || 0,
+          reviewCount: serviceData.review_count || 0,
+          location: serviceData.location || ''
+        }
       };
-
-      setFavorites(prev => [...prev, newFavorite]);
+      
+      setFavorites([...favorites, mappedFavorite]);
+      
+      toast({
+        title: 'Success',
+        description: 'Added to favorites',
+      });
+      
       return true;
-    } catch (error) {
-      console.error('Error adding favorite:', error);
+    } catch (err) {
+      console.error('Error adding favorite:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to add to favorites',
+        variant: 'destructive'
+      });
       return false;
     }
-  }, [user]);
+  };
 
-  // Remove from favorites
-  const removeFavorite = useCallback(async (serviceId: string): Promise<boolean> => {
+  const removeFavorite = async (serviceId: string) => {
     if (!user) return false;
-
+    
     try {
       const { error } = await supabase
         .from('favorite_services')
         .delete()
         .eq('user_id', user.id)
         .eq('service_id', serviceId);
-
+        
       if (error) throw error;
-
-      setFavorites(prev => prev.filter(fav => fav.service_id !== serviceId && fav.serviceId !== serviceId));
+      
+      // Update state
+      setFavorites(favorites.filter(fav => fav.service_id !== serviceId));
+      
+      toast({
+        title: 'Success',
+        description: 'Removed from favorites',
+      });
+      
       return true;
-    } catch (error) {
-      console.error('Error removing favorite:', error);
+    } catch (err) {
+      console.error('Error removing favorite:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to remove from favorites',
+        variant: 'destructive'
+      });
       return false;
     }
-  }, [user]);
+  };
 
-  // Check if service is favorite
-  const isFavorite = useCallback((serviceId: string): boolean => {
-    return favorites.some(fav => fav.service_id === serviceId || fav.serviceId === serviceId);
-  }, [favorites]);
+  const isFavorite = (serviceId: string) => {
+    return favorites.some(fav => fav.service_id === serviceId);
+  };
 
   return {
     favorites,
     loading,
+    fetchFavorites,
     addFavorite,
     removeFavorite,
-    isFavorite,
-    refreshFavorites: fetchFavorites
+    isFavorite
   };
-};
+}

@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,10 +12,11 @@ import { Badge } from '@/components/ui/badge';
 
 export interface CreateServiceFormProps {
   onSubmit: (data: Partial<ServiceData>) => Promise<void>;
-  isSubmitting?: boolean; // Add isSubmitting prop
+  isSubmitting?: boolean;
+  isLoading?: boolean; // Add isLoading for compatibility
 }
 
-const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmitting = false }) => {
+const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmitting = false, isLoading = false }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState<number>(0);
@@ -48,6 +50,9 @@ const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmi
   const removeFeature = (featureToRemove: string) => {
     setFeatures(features.filter(feature => feature !== featureToRemove));
   };
+
+  // Use either isSubmitting or isLoading
+  const loading = isSubmitting || isLoading;
 
   return (
     <form onSubmit={handleSubmit}>
@@ -156,8 +161,8 @@ const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmi
       </Card>
       
       <div className="flex justify-end mt-6">
-        <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
-          {isSubmitting ? (
+        <Button type="submit" disabled={loading} className="w-full md:w-auto">
+          {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Creating...

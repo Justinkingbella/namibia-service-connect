@@ -59,7 +59,7 @@ export interface Database {
           faqs?: Json;
         };
       };
-      // Add service_providers table definition
+      // Service providers table with the missing fields
       service_providers: {
         Row: {
           id: string;
