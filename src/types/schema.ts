@@ -59,7 +59,37 @@ export interface Database {
           faqs?: Json;
         };
       };
-      // ... additional tables can be defined here
+      // Add service_providers table definition
+      service_providers: {
+        Row: {
+          id: string;
+          email: string;
+          first_name?: string;
+          last_name?: string;
+          phone_number?: string;
+          avatar_url?: string;
+          business_name?: string;
+          business_description?: string;
+          banner_url?: string;
+          website?: string;
+          address?: string;
+          city?: string;
+          country?: string;
+          commission_rate?: number;
+          verification_status?: string;
+          completed_bookings?: number;
+          rating?: number;
+          rating_count?: number;
+          services_count?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+          categories?: string[];
+          services?: string[];
+          tax_id?: string;
+          review_count?: number;
+        };
+      };
     };
   };
 }
@@ -143,5 +173,6 @@ export type WalletVerificationStatus =
   | 'pending' 
   | 'submitted' 
   | 'verified' 
+  | 'approved'
   | 'rejected' 
   | 'expired';

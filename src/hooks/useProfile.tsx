@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,11 +50,18 @@ export function useProfile() {
           bio: data.bio,
           birth_date: data.birth_date,
           loyalty_points: data.loyalty_points,
-          notification_preferences: data.user_preferences?.notification_preferences || {
-            email: true,
-            sms: false,
-            push: true
-          },
+          // Parse JSON data safely
+          notification_preferences: data.user_preferences && 
+            typeof data.user_preferences === 'object' ? 
+              data.user_preferences.notification_preferences || {
+                email: true,
+                sms: false,
+                push: true
+              } : {
+                email: true,
+                sms: false,
+                push: true
+              }
         };
 
         setProfile(mappedProfile);

@@ -1,5 +1,6 @@
 
 import { Json } from './schema';
+import { PaymentMethodType } from './schema';
 
 export interface PaymentMethod {
   id: string;

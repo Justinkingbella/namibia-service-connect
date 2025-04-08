@@ -1,9 +1,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { FavoriteService, Service } from '@/types';
+import { FavoriteService } from '@/types/favorites';
+import { Service, ServiceData } from '@/types/service';
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceData } from '@/types/service';
+import { transformServiceData } from '@/services/serviceDataTransformer';
 
 export const useFavorites = () => {
   const { user } = useAuth();
@@ -26,34 +27,36 @@ export const useFavorites = () => {
           user_id,
           service_id,
           created_at,
-          service:services(*)
+          services:service_id(*)
         `)
         .eq('user_id', user.id);
 
       if (error) throw error;
 
-      // Map the data and handle possibly null service
-      const mappedFavorites: FavoriteService[] = data.map(item => ({
-        id: item.id,
-        userId: item.user_id,
-        serviceId: item.service_id,
-        createdAt: item.created_at,
-        // Only access properties if service is not null
-        service: item.service ? {
-          id: item.service.id,
-          title: item.service.title,
-          description: item.service.description || '',
-          price: item.service.price || 0,
-          image: item.service.image || '',
-          provider_id: item.service.provider_id || '',
-          provider_name: item.service.provider_name || '',
-          category: item.service.category || '',
-          pricingModel: item.service.pricing_model || '',
-          rating: item.service.rating || 0,
-          reviewCount: item.service.review_count || 0,
-          location: item.service.location || ''
-        } : null
-      }));
+      // Map the data and handle potentially null service
+      const mappedFavorites: FavoriteService[] = data.map(item => {
+        // Handle the service data safely
+        let serviceData = null;
+        if (item.services) {
+          // Cast the service data to appropriate type
+          const serviceItem = item.services as unknown as ServiceData;
+          if (serviceItem) {
+            serviceData = transformServiceData(serviceItem);
+          }
+        }
+
+        return {
+          id: item.id,
+          user_id: item.user_id,
+          service_id: item.service_id,
+          created_at: item.created_at,
+          // Add camelCase fields for compatibility with components
+          userId: item.user_id,
+          serviceId: item.service_id,
+          createdAt: item.created_at,
+          service: serviceData
+        };
+      });
 
       setFavorites(mappedFavorites);
     } catch (error) {
@@ -84,32 +87,32 @@ export const useFavorites = () => {
           user_id,
           service_id,
           created_at,
-          service:services(*)
+          services:service_id(*)
         `)
         .single();
 
       if (error) throw error;
 
+      // Handle the service data safely
+      let serviceData = null;
+      if (data.services) {
+        // Cast the service data to appropriate type
+        const serviceItem = data.services as unknown as ServiceData;
+        if (serviceItem) {
+          serviceData = transformServiceData(serviceItem);
+        }
+      }
+
       const newFavorite: FavoriteService = {
         id: data.id,
+        user_id: data.user_id,
+        service_id: data.service_id,
+        created_at: data.created_at,
+        // Add camelCase fields for compatibility with components
         userId: data.user_id,
         serviceId: data.service_id,
         createdAt: data.created_at,
-        // Safely handle potentially null service data
-        service: data.service ? {
-          id: data.service.id,
-          title: data.service.title,
-          description: data.service.description || '',
-          price: data.service.price || 0,
-          image: data.service.image || '',
-          provider_id: data.service.provider_id || '',
-          provider_name: data.service.provider_name || '',
-          category: data.service.category || '',
-          pricingModel: data.service.pricing_model || '',
-          rating: data.service.rating || 0,
-          reviewCount: data.service.review_count || 0,
-          location: data.service.location || ''
-        } : null
+        service: serviceData
       };
 
       setFavorites(prev => [...prev, newFavorite]);
@@ -133,7 +136,7 @@ export const useFavorites = () => {
 
       if (error) throw error;
 
-      setFavorites(prev => prev.filter(fav => fav.serviceId !== serviceId));
+      setFavorites(prev => prev.filter(fav => fav.service_id !== serviceId && fav.serviceId !== serviceId));
       return true;
     } catch (error) {
       console.error('Error removing favorite:', error);
@@ -143,7 +146,7 @@ export const useFavorites = () => {
 
   // Check if service is favorite
   const isFavorite = useCallback((serviceId: string): boolean => {
-    return favorites.some(fav => fav.serviceId === serviceId);
+    return favorites.some(fav => fav.service_id === serviceId || fav.serviceId === serviceId);
   }, [favorites]);
 
   return {

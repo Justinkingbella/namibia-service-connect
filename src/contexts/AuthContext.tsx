@@ -1,10 +1,8 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
 import { User, UserRole, Provider, Customer, Admin, SubscriptionTier, ProviderVerificationStatus } from '@/types';
 
-// Define the AuthContext type
 interface AuthContextType {
   user: User | null;
   userProfile: Customer | Provider | Admin | null;
@@ -26,10 +24,8 @@ interface AuthContextType {
   checkAuth: () => Promise<User | null>;
 }
 
-// Create the AuthContext
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// AuthProvider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<Customer | Provider | Admin | null>(null);
@@ -37,11 +33,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize auth state on component mount
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // Get current session
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -51,7 +45,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (sessionData?.session) {
           setSession(sessionData.session);
           
-          // Get user data
           const userData: User = {
             id: sessionData.session.user.id,
             email: sessionData.session.user.email as string,
@@ -59,13 +52,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             lastName: '',
             role: 'customer' as UserRole,
             phoneNumber: sessionData.session.user.phone as string,
-            // Convert to string to fix type errors
             createdAt: sessionData.session.user.created_at ? sessionData.session.user.created_at : undefined,
             emailVerified: false,
             avatarUrl: '',
           };
 
-          // Fetch user profile from 'profiles' table
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
@@ -75,7 +66,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (profileError) {
             console.error('Error fetching user profile:', profileError);
           } else if (profileData) {
-            // Update user data with profile data
             userData.firstName = profileData.first_name || '';
             userData.lastName = profileData.last_name || '';
             userData.role = profileData.role as UserRole || 'customer';
@@ -87,7 +77,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(userData);
           setUserRole(userData.role);
 
-          // Fetch role-specific data
           if (userData.role === 'customer') {
             const { data: customerData, error: customerError } = await supabase
               .from('customers')
@@ -117,21 +106,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .single();
 
             if (!providerError && providerData) {
-              // Convert properties based on data availability to avoid undefined issues
+              const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'unverified';
+              
               const providerProfile: Provider = {
                 ...userData,
                 businessName: providerData.business_name || '',
                 businessDescription: providerData.business_description || '',
-                categories: providerData.categories || [],
-                services: providerData.services || [], 
+                categories: providerData.categories ? [...providerData.categories] : [],
+                services: providerData.services ? [...providerData.services] : [],
                 rating: providerData.rating || 0,
                 commission: providerData.commission_rate || 0,
-                verificationStatus: (providerData.verification_status as ProviderVerificationStatus) || 'unverified',
+                verificationStatus: verificationStatus,
                 bannerUrl: providerData.banner_url || '',
                 website: providerData.website || '',
                 taxId: providerData.tax_id || '',
                 reviewCount: providerData.review_count || 0,
-                subscriptionTier: (providerData.subscription_tier || 'free') as any,
+                subscriptionTier: providerData.subscription_tier || 'free',
+                isVerified: verificationStatus === 'verified',
               };
               setUserProfile(providerProfile);
             }
@@ -146,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const adminProfile: Admin = {
                 ...userData,
                 permissions: adminData.permissions || [],
-                adminLevel: 1, // Default admin level
+                adminLevel: 1,
                 isVerified: true,
                 accessLevel: 1,
               };
@@ -164,7 +155,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
   }, []);
 
-  // auth methods would be defined here
   const signIn = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -214,7 +204,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateProfile = async (data: Partial<User>) => {
     try {
-      // Implementation details would go here
       return true;
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -223,28 +212,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const uploadAvatar = async (file: File) => {
-    // Implementation details would go here
     return '';
   };
 
   const resetPassword = async (email: string) => {
-    // Implementation details would go here
   };
 
   const updatePassword = async (newPassword: string) => {
-    // Implementation details would go here
   };
 
   const verifyEmail = async (token: string) => {
-    // Implementation details would go here
   };
 
   const sendVerificationEmail = async () => {
-    // Implementation details would go here
   };
 
   const checkAuth = async () => {
-    // Implementation details would go here
     return null;
   };
 
@@ -253,7 +236,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userProfile,
     userRole,
     isLoading,
-    loading: isLoading, // Alias for backward compatibility
+    loading: isLoading,
     isAuthenticated: !!user,
     session,
     signIn,
@@ -276,7 +259,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// Custom hook to use the auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

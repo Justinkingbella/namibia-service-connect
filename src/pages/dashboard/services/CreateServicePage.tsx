@@ -28,15 +28,17 @@ const CreateServicePage = () => {
     setIsSubmitting(true);
 
     try {
+      // Ensure required fields are set
       const newService = {
         provider_id: user.id,
         provider_name: `${user.firstName} ${user.lastName}`,
         is_active: true,
-        category: serviceData.category || '',
-        price: serviceData.price || 0,
         title: serviceData.title || '',
         description: serviceData.description || '',
+        price: serviceData.price || 0,
+        category: serviceData.category || '',
         pricing_model: serviceData.pricing_model || 'fixed',
+        features: serviceData.features || [],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -52,7 +54,6 @@ const CreateServicePage = () => {
       toast({
         title: "Success",
         description: 'Service created successfully',
-        variant: "default"
       });
       navigate(`/dashboard/services/${data.id}`);
     } catch (error: any) {
@@ -77,6 +78,7 @@ const CreateServicePage = () => {
 
         <CreateServiceForm 
           onSubmit={handleSubmit} 
+          isSubmitting={isSubmitting}
         />
       </div>
     </DashboardLayout>

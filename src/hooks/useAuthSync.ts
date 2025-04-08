@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -112,8 +111,8 @@ export const useAuthSync = () => {
                 ...userData,
                 businessName: providerData.business_name || '',
                 businessDescription: providerData.business_description || '',
-                categories: providerData.categories || [],
-                services: providerData.services || [],
+                categories: providerData.categories ? [...providerData.categories] : [],
+                services: providerData.services ? [...providerData.services] : [],
                 rating: providerData.rating || 0,
                 commission: providerData.commission_rate || 0,
                 verificationStatus: verificationStatus,

@@ -1,24 +1,10 @@
 
 import { Json } from "./schema";
+import { WalletPaymentType as SchemaWalletPaymentType, WalletVerificationStatus as SchemaWalletVerificationStatus } from "./schema";
 
-// Define enum or type for wallet verification status
-export type WalletVerificationStatus = 'pending' | 'submitted' | 'approved' | 'verified' | 'rejected' | 'expired';
-
-// Use string literal union type instead of enum for better TypeScript support
-export type WalletPaymentType = 
-  | 'bank_transfer' 
-  | 'Bank Transfer'
-  | 'mobile_money' 
-  | 'cash' 
-  | 'credit_card' 
-  | 'e_wallet' 
-  | 'pay_today' 
-  | 'pay_fast' 
-  | 'easy_wallet' 
-  | 'MTC E-Wallet'
-  | 'ewallet'
-  | 'payfast'
-  | 'dop';
+// Use the schema types directly to avoid conflicts
+export type WalletVerificationStatus = SchemaWalletVerificationStatus;
+export type WalletPaymentType = SchemaWalletPaymentType;
 
 export interface Wallet {
   id: string;
@@ -85,6 +71,8 @@ export interface WalletVerification {
   providerConfirmed?: boolean;
   adminVerified?: boolean;
   adminComments?: Json;
+  walletNumber?: string;
+  paymentPurpose?: string;
 }
 
 // Separate interface to represent the wallet verification request from the database
@@ -127,6 +115,8 @@ export interface WalletVerificationRequest {
   reviewDate?: string;
   walletName?: string;
   currency?: string;
+  paymentPurpose?: string;
+  status?: string;
 }
 
 export interface WalletVerificationFilters {
@@ -148,6 +138,7 @@ export interface WalletVerificationStats {
   approved: number;
   rejected: number;
   expired?: number;
+  averageProcessingTime?: string;
   // Fields used in service
   totalPending?: number;
   totalApproved?: number;
@@ -159,9 +150,11 @@ export interface WalletVerificationStats {
 
 export interface WalletVerificationComment {
   id: string;
+  verification_id?: string;
   verificationId?: string;
   content: string;
-  createdAt: string;
+  createdAt?: string;
+  created_at?: string;
   userId?: string;
   userName?: string;
   userRole?: string;
@@ -169,14 +162,18 @@ export interface WalletVerificationComment {
 
 export interface WalletProviderSettings {
   id: string;
-  providerName: string;
+  providerName?: string;
+  provider_id?: string;
   apiKey?: string;
   secretKey?: string;
   endpoint?: string;
   isActive: boolean;
+  processingFee: number;
+  processingFeeType?: string;
   // Additional fields used
   displayName?: string;
   isEnabled?: boolean;
   processingTime?: string;
-  processingFee?: number;
+  updatedAt: string;
+  currency?: string;
 }

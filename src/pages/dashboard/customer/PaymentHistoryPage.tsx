@@ -1,172 +1,214 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { CheckCircle, Clock, AlertCircle, CreditCard, Calendar, Search, Filter } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { usePaymentHistory } from '@/hooks/usePaymentHistory';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 import { fetchPaymentHistory } from '@/services/paymentService';
 
 const PaymentHistoryPage = () => {
-  const { user } = useAuth();
-  const [transactionType, setTransactionType] = React.useState<string>('all');
+  const { paymentHistory, loading, error } = usePaymentHistory();
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateRange, setDateRange] = useState('all');
 
-  const { data: transactions, isLoading } = useQuery({
-    queryKey: ['customerPaymentTransactions', user?.id, transactionType],
-    queryFn: async () => {
-      const allTransactions = await fetchPaymentHistory(user?.id || '');
-      
-      if (transactionType === 'all') {
-        return allTransactions;
-      }
-      
-      return allTransactions.filter(t => t.type === transactionType);
-    },
-    enabled: !!user?.id
-  });
-
-  const getStatusBadge = (status: string) => {
+  // Status badge component
+  const StatusBadge = ({ status }: { status: string }) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="text-yellow-600 border-yellow-200 bg-yellow-50">Pending</Badge>;
-      case 'processing':
-        return <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">Processing</Badge>;
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200"><Clock className="h-3 w-3 mr-1" /> Pending</Badge>;
       case 'completed':
-        return <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">Completed</Badge>;
+        return <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200"><CheckCircle className="h-3 w-3 mr-1" /> Completed</Badge>;
       case 'failed':
-        return <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50">Failed</Badge>;
-      case 'refunded':
-        return <Badge variant="outline" className="text-purple-600 border-purple-200 bg-purple-50">Refunded</Badge>;
+        return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200"><AlertCircle className="h-3 w-3 mr-1" /> Failed</Badge>;
+      case 'processing':
+        return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200"><Clock className="h-3 w-3 mr-1" /> Processing</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
   };
 
+  // Filter transactions
+  const filteredTransactions = paymentHistory
+    .filter(transaction => 
+      statusFilter === 'all' || transaction.status === statusFilter
+    )
+    .filter(transaction => 
+      typeFilter === 'all' || transaction.type === typeFilter
+    )
+    .filter(transaction => 
+      searchQuery === '' || 
+      transaction.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      transaction.reference.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .filter(transaction => {
+      if (dateRange === 'all') return true;
+      const transactionDate = new Date(transaction.createdAt);
+      const now = new Date();
+      
+      switch (dateRange) {
+        case 'today':
+          return transactionDate.toDateString() === now.toDateString();
+        case 'week':
+          const weekAgo = new Date(now);
+          weekAgo.setDate(now.getDate() - 7);
+          return transactionDate >= weekAgo;
+        case 'month':
+          const monthAgo = new Date(now);
+          monthAgo.setMonth(now.getMonth() - 1);
+          return transactionDate >= monthAgo;
+        default:
+          return true;
+      }
+    });
+
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Payment History</h1>
-          <p className="text-muted-foreground mt-1">View your payment and transaction history</p>
+          <p className="text-muted-foreground">View and track all your payment transactions</p>
         </div>
 
-        <Tabs defaultValue="all">
-          <TabsList className="mb-6">
-            <TabsTrigger value="all">All Transactions</TabsTrigger>
-            <TabsTrigger value="bookings">Bookings</TabsTrigger>
-            <TabsTrigger value="refunds">Refunds</TabsTrigger>
-          </TabsList>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <CreditCard className="h-5 w-5 mr-2 text-primary" />
+              Transaction History
+            </CardTitle>
+            <CardDescription>View all your payment transactions and their statuses</CardDescription>
+          </CardHeader>
           
-          <div className="flex justify-end mb-4">
-            <Select
-              value={transactionType}
-              onValueChange={setTransactionType}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Transactions</SelectItem>
-                <SelectItem value="booking">Bookings</SelectItem>
-                <SelectItem value="refund">Refunds</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <TabsContent value="all">
-            <Card>
-              <CardHeader>
-                <CardTitle>All Transactions</CardTitle>
-                <CardDescription>View your entire payment history</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-4">
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                  </div>
-                ) : transactions && transactions.length > 0 ? (
-                  <div className="rounded-md border">
-                    <div className="grid grid-cols-6 gap-2 p-4 text-sm font-medium border-b bg-muted/50">
-                      <div>Date</div>
-                      <div>Description</div>
-                      <div>Type</div>
-                      <div>Method</div>
-                      <div>Status</div>
-                      <div className="text-right">Amount</div>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Filters row */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search transactions..." 
+                    className="pl-9"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                
+                <div className="flex gap-2">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[140px]">
+                      <Filter className="h-4 w-4 mr-2" /> Status
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="processing">Processing</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-[140px]">
+                      <Filter className="h-4 w-4 mr-2" /> Type
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="booking">Booking</SelectItem>
+                      <SelectItem value="subscription">Subscription</SelectItem>
+                      <SelectItem value="refund">Refund</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={dateRange} onValueChange={setDateRange}>
+                    <SelectTrigger className="w-[140px]">
+                      <Calendar className="h-4 w-4 mr-2" /> Date
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Time</SelectItem>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="week">This Week</SelectItem>
+                      <SelectItem value="month">This Month</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Transactions table */}
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((_, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 border rounded-md">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-40" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                      <div className="text-right space-y-2">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-3 w-16 ml-auto" />
+                      </div>
                     </div>
-                    <div className="divide-y">
-                      {transactions.map((transaction) => (
-                        <div key={transaction.id} className="grid grid-cols-6 gap-2 p-4 text-sm">
-                          <div className="font-medium">
-                            {format(new Date(transaction.date), 'MMM d, yyyy')}
-                          </div>
-                          <div>{transaction.description || 'Transaction'}</div>
-                          <div><Badge variant="secondary">{transaction.type}</Badge></div>
-                          <div className="capitalize">{transaction.type.replace('_', ' ')}</div>
-                          <div>{getStatusBadge(transaction.status)}</div>
-                          <div className={`text-right font-medium ${transaction.type === 'refund' ? 'text-green-600' : ''}`}>
-                            {transaction.type === 'refund' ? '+' : ''}
+                  ))}
+                </div>
+              ) : error ? (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>
+                    Failed to load your payment history. Please try again later.
+                  </AlertDescription>
+                </Alert>
+              ) : filteredTransactions.length === 0 ? (
+                <Alert>
+                  <AlertTitle>No transactions found</AlertTitle>
+                  <AlertDescription>
+                    No payment transactions match your current filters.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <div className="rounded-md border">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-muted/50">
+                        <th className="text-left p-3 font-medium">Date</th>
+                        <th className="text-left p-3 font-medium">Description</th>
+                        <th className="text-left p-3 font-medium">Reference</th>
+                        <th className="text-left p-3 font-medium">Method</th>
+                        <th className="text-left p-3 font-medium">Status</th>
+                        <th className="text-right p-3 font-medium">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {filteredTransactions.map((transaction) => (
+                        <tr key={transaction.id} className="hover:bg-muted/30">
+                          <td className="p-3">
+                            {format(new Date(transaction.createdAt), 'MMM d, yyyy')}
+                          </td>
+                          <td className="p-3">{transaction.description}</td>
+                          <td className="p-3 font-mono text-sm">{transaction.reference}</td>
+                          <td className="p-3">{transaction.paymentMethod}</td>
+                          <td className="p-3">
+                            <StatusBadge status={transaction.status} />
+                          </td>
+                          <td className="p-3 text-right font-medium">
                             N${transaction.amount.toFixed(2)}
-                          </div>
-                        </div>
+                          </td>
+                        </tr>
                       ))}
-                    </div>
-                  </div>
-                ) : (
-                  <Alert>
-                    <AlertTitle>No transactions found</AlertTitle>
-                    <AlertDescription>
-                      Your payment history will appear here once you have made payments.
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="bookings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Booking Payments</CardTitle>
-                <CardDescription>Payments for service bookings</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Similar content to "all" tab but filtered to booking transactions */}
-                <Alert>
-                  <AlertTitle>No booking payments found</AlertTitle>
-                  <AlertDescription>
-                    Your booking payment history will appear here.
-                  </AlertDescription>
-                </Alert>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="refunds">
-            <Card>
-              <CardHeader>
-                <CardTitle>Refunds</CardTitle>
-                <CardDescription>Refunds and credits received</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Similar content to "all" tab but filtered to refund transactions */}
-                <Alert>
-                  <AlertTitle>No refunds found</AlertTitle>
-                  <AlertDescription>
-                    Your refund history will appear here.
-                  </AlertDescription>
-                </Alert>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );

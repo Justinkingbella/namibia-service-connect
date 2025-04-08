@@ -1,3 +1,4 @@
+
 import { Json } from "./schema";
 import { SubscriptionTierType } from "./schema";
 
@@ -95,7 +96,7 @@ export interface DbCustomerProfile extends DbUserProfile {
   };
 }
 
-export interface DbProviderProfile extends DbUserProfile {
+export interface DbProviderProfile extends Omit<DbUserProfile, 'is_active'> {
   business_name?: string;
   business_description?: string;
   banner_url?: string;
