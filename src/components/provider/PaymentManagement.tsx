@@ -6,11 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { PaymentMethod, PaymentMethodType } from '@/types';
+import { PaymentMethod } from '@/types/payments';
+import { PaymentMethodType } from '@/types/schema';
 import { CreditCard, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 
 const PaymentManagement = () => {
-  const { paymentMethods, loading, deletePaymentMethod, setDefaultPaymentMethod } = usePaymentMethods();
+  const { paymentMethods, loading, addPaymentMethod, updatePaymentMethod, removePaymentMethod, setDefaultPaymentMethod } = usePaymentMethods();
   const { toast } = useToast();
   const [isAddingMethod, setIsAddingMethod] = useState(false);
   const [newMethod, setNewMethod] = useState({
@@ -40,7 +41,7 @@ const PaymentManagement = () => {
 
   const handleRemove = async (id: string) => {
     try {
-      const success = await deletePaymentMethod(id);
+      const success = await removePaymentMethod(id);
       if (success) {
         toast({
           title: 'Payment Method Removed',

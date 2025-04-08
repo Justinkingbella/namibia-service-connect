@@ -12,7 +12,9 @@ export type { Transaction as BookingTransaction } from './booking';
 export type { 
   BookingStatus, 
   PaymentStatus,
-  PaymentMethodType
+  PaymentMethodType,
+  WalletPaymentType,
+  WalletVerificationStatus
 } from './schema';
 
 // Export payment types
@@ -21,22 +23,13 @@ export type {
   PaymentRecord,
   PaymentHistory,
   ProviderEarnings,
-  ProviderPayout
+  ProviderPayout,
+  Wallet,
+  Transaction as WalletTransaction,
+  WalletVerification
 } from './payments';
 
-// Fix exports for wallet types using 'export type'
-export type {
-  WalletVerification,
-  WalletVerificationRequest,
-  NamibianMobileOperator,
-  NamibianBank,
-  WalletPaymentType
-} from './payment';
-
-// Export wallet verification status from schema
-export type { WalletVerificationStatus } from './schema';
-
-// Re-export Auth types
+// Export Auth types
 export type { 
   DbUserProfile, 
   DbProviderProfile,
@@ -52,12 +45,6 @@ export type {
   AuthContextType
 } from './auth';
 export { SubscriptionTier } from './auth';
-
-// Export wallet types
-export type {
-  Wallet,
-  Transaction as WalletTransaction
-} from './payment';
 
 // Export schema types
 export type { Json } from './schema';
@@ -85,7 +72,6 @@ export type { Conversation, Message } from './conversations';
 
 // Export wallet types from wallet.ts
 export type {
-  WalletVerificationRequest as WalletVerificationRequestDetail,
   WalletVerificationFilters,
   WalletVerificationStats,
   WalletVerificationComment,

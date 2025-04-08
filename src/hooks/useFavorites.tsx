@@ -59,7 +59,7 @@ export function useFavorites() {
           userId: item.user_id,
           serviceId: item.service_id,
           createdAt: item.created_at,
-          service: {
+          service: serviceData ? {
             id: serviceData.id || '',
             title: serviceData.title || '',
             description: serviceData.description || '',
@@ -75,7 +75,7 @@ export function useFavorites() {
             rating: serviceData.rating || 0,
             reviewCount: serviceData.review_count || 0,
             location: serviceData.location || ''
-          }
+          } : null
         };
       });
       
@@ -131,7 +131,7 @@ export function useFavorites() {
         userId: data.user_id,
         serviceId: data.service_id,
         createdAt: data.created_at,
-        service: {
+        service: serviceData ? {
           id: serviceData.id || '',
           title: serviceData.title || '',
           description: serviceData.description || '',
@@ -147,7 +147,7 @@ export function useFavorites() {
           rating: serviceData.rating || 0,
           reviewCount: serviceData.review_count || 0,
           location: serviceData.location || ''
-        }
+        } : null
       };
       
       setFavorites([...favorites, mappedFavorite]);

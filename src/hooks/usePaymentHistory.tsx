@@ -23,7 +23,7 @@ export function usePaymentHistory() {
         setError(null);
         
         // Using mock data service - this should be replaced with actual API call
-        const data = await getMockPaymentHistory();
+        const data = await getMockPaymentHistory(user.id);
         
         // Filter by user ID if needed
         const userHistory = data.filter(payment => payment.userId === user.id);

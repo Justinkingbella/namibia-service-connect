@@ -7,7 +7,7 @@ export interface PaymentMethod {
   userId: string;
   name: string;
   type: PaymentMethodType;
-  details: Record<string, any>; // Changed from Json to Record<string, any>
+  details: Record<string, any>;
   isDefault: boolean;
   createdAt: string;
 }
@@ -32,28 +32,29 @@ export interface PaymentHistory {
   bookingId?: string;
   amount: number;
   description: string;
-  createdAt: string; // Use string instead of Date
+  createdAt: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   type: string;
   reference: string;
   paymentMethod: string;
   transactionId: string;
+  date?: string; // Added date field for compatibility
 }
 
 export interface ProviderEarnings {
   id: string;
   providerId: string;
-  periodStart: string; // Use string instead of Date
-  periodEnd: string; // Use string instead of Date
+  periodStart: string;
+  periodEnd: string;
   totalEarnings: number;
   totalBookings: number;
   commissionPaid: number;
   netEarnings: number;
   payoutStatus: string;
-  payoutDate: string; // Use string instead of Date
+  payoutDate: string;
   payoutReference: string;
-  createdAt: string; // Use string instead of Date
-  updatedAt: string; // Use string instead of Date
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ProviderPayout {
@@ -68,7 +69,7 @@ export interface ProviderPayout {
   bankDetails?: Record<string, any>;
   mobilePaymentDetails?: Record<string, any>;
   notes?: string;
-  processedAt: string; // Use string instead of Date
-  createdAt: string; // Use string instead of Date
-  updatedAt: string; // Use string instead of Date
+  processedAt: string;
+  createdAt: string;
+  updatedAt: string;
 }

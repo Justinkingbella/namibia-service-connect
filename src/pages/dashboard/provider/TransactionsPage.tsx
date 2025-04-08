@@ -7,7 +7,7 @@ import { usePaymentHistory } from '@/hooks/usePaymentHistory';
 import PaymentHistoryComponent from '@/components/provider/PaymentHistory';
 import { Button } from '@/components/ui/button';
 import { 
-  Download, CreditCard, Filter, Calendar, Search, 
+  Download, CreditCard, Filter, Search, 
   ArrowDownWideNarrow, ArrowUpWideNarrow
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -61,22 +61,6 @@ const TransactionsPage = () => {
 
   // Extract unique payment methods
   const paymentMethods = Array.from(new Set(paymentHistory.map(t => t.paymentMethod)));
-  
-  // Get status badge variant based on status
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return "default"; 
-      case 'pending':
-        return "outline"; 
-      case 'failed':
-        return "destructive"; 
-      case 'processing':
-        return "secondary"; 
-      default:
-        return "outline";
-    }
-  };
 
   return (
     <DashboardLayout>
@@ -230,16 +214,19 @@ const TransactionsPage = () => {
               </TabsContent>
 
               <TabsContent value="payment" className="space-y-4">
-                {/* Similar structure for payments tab */}
                 <PaymentHistoryComponent />
               </TabsContent>
 
               <TabsContent value="payout" className="space-y-4">
-                {/* Payout content */}
+                <div className="py-8 text-center text-muted-foreground">
+                  Payout history will be available soon.
+                </div>
               </TabsContent>
 
               <TabsContent value="refund" className="space-y-4">
-                {/* Refund content */}
+                <div className="py-8 text-center text-muted-foreground">
+                  Refund history will be available soon.
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>

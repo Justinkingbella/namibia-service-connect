@@ -88,12 +88,6 @@ export interface DbUserProfile {
 export interface DbCustomerProfile extends DbUserProfile {
   preferred_categories: string[];
   saved_services: string[];
-  birth_date?: string;
-  notification_preferences?: {
-    email: boolean;
-    sms: boolean;
-    push: boolean;
-  };
 }
 
 export interface DbProviderProfile {
@@ -105,7 +99,7 @@ export interface DbProviderProfile {
   avatar_url?: string;
   email_verified: boolean;
   role: UserRole;
-  is_active?: boolean;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
   address?: string;

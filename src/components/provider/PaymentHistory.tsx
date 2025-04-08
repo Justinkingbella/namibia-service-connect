@@ -22,8 +22,8 @@ const PaymentHistoryComponent: React.FC = () => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        // Using mock data service
-        const data = await getMockPaymentHistory();
+        // Using mock data service with user ID (using a dummy ID)
+        const data = await getMockPaymentHistory('current-user');
         setHistory(data);
       } catch (error) {
         console.error('Error fetching payment history:', error);
@@ -82,7 +82,6 @@ const PaymentHistoryComponent: React.FC = () => {
               history.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">
-                    {/* Use the date property if available, otherwise fallback to createdAt */}
                     {format(new Date(item.date || item.createdAt), 'MMM dd, yyyy')}
                   </TableCell>
                   <TableCell>{item.description}</TableCell>

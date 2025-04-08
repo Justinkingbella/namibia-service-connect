@@ -71,8 +71,19 @@ export interface WalletVerification {
   providerConfirmed?: boolean;
   adminVerified?: boolean;
   adminComments?: Json;
-  walletNumber?: string;
-  paymentPurpose?: string;
+  walletNumber?: string; // Additional field used in forms
+  paymentPurpose?: string; // Additional field used in forms
+  walletName?: string; // Additional field used in forms
+  userId?: string; // Additional field for referencing the user
+  userName?: string; // For displaying user names
+  userEmail?: string; // For contacting users
+  transactionReference?: string; // For tracking transactions
+  walletProvider?: string; // For wallet provider information
+  userType?: string; // To distinguish between customer and provider
+  reviewerId?: string; // For tracking who reviewed the verification
+  reviewerName?: string; // For displaying reviewer names
+  reviewDate?: string; // When the review happened
+  status?: string; // Additional status information
 }
 
 // Updated PaymentHistory type to include date field
