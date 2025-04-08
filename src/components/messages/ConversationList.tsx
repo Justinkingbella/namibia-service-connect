@@ -73,7 +73,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
                       <p className="text-sm text-muted-foreground truncate">
                         {conversation.lastMessage || 'No messages yet'}
                       </p>
-                      {conversation.unreadCount > 0 && (
+                      {conversation.unreadCount && conversation.unreadCount > 0 && (
                         <span className="ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
                           {conversation.unreadCount}
                         </span>

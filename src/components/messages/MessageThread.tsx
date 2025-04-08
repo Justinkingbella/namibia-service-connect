@@ -91,16 +91,17 @@ const MessageThread: React.FC<MessageThreadProps> = ({
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length > 0 ? (
           messages.map((msg, index) => {
-            const isUser = msg.senderId === user?.id;
+            const isUser = msg.sender_id === user?.id || msg.senderId === user?.id;
             const showDate = index === 0 || 
-              new Date(messages[index-1].createdAt).toDateString() !== new Date(msg.createdAt).toDateString();
+              new Date(messages[index-1].created_at || messages[index-1].createdAt || '').toDateString() !== 
+              new Date(msg.created_at || msg.createdAt || '').toDateString();
               
             return (
               <React.Fragment key={msg.id}>
                 {showDate && (
                   <div className="text-center my-2">
                     <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
-                      {formatDate(msg.createdAt)}
+                      {formatDate(msg.created_at || msg.createdAt || '')}
                     </span>
                   </div>
                 )}
@@ -125,7 +126,7 @@ const MessageThread: React.FC<MessageThreadProps> = ({
                         <p>{msg.content}</p>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {formatMessageTime(msg.createdAt)}
+                        {formatMessageTime(new Date(msg.created_at || msg.createdAt || ''))}
                       </p>
                     </div>
                   </div>

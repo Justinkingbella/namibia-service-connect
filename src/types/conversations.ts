@@ -12,13 +12,18 @@ export interface Conversation {
   serviceId?: string;
   bookingId?: string;
   isActive?: boolean;
+  // Add properties needed by UI components
+  recipientId?: string;
+  recipientName?: string;
+  recipientAvatar?: string;
+  serviceName?: string;
 }
 
 export interface Message {
   id: string;
-  conversationId: string;
-  senderId: string;
-  recipientId: string;
+  conversation_id: string;
+  sender_id: string;
+  recipient_id: string;
   content: string;
   read: boolean;
   created_at: string;
@@ -26,6 +31,13 @@ export interface Message {
   is_system_message: boolean;
   attachments: string[];
   metadata?: Json;
+  // Add properties needed by components
+  conversationId?: string;
+  senderId?: string;
+  recipientId?: string;
+  createdAt?: string;
+  messageType?: string;
+  isSystemMessage?: boolean;
 }
 
 export interface ConversationWithDetails extends Conversation {
