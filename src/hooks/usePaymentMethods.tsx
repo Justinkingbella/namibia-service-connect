@@ -29,7 +29,7 @@ export function usePaymentMethods() {
           userId: item.user_id,
           name: item.name,
           type: item.type as PaymentMethodType, // Apply type assertion
-          details: item.details,
+          details: item.details as unknown as Record<string, any>, // Cast JSON to Record
           isDefault: item.is_default || false,
           createdAt: item.created_at,
         }));
@@ -70,7 +70,7 @@ export function usePaymentMethods() {
           user_id: user.id,
           name: method.name,
           type: method.type,
-          details: method.details,
+          details: method.details as any, // Cast to any for database insertion
           is_default: isDefault,
         })
         .select();
@@ -81,8 +81,8 @@ export function usePaymentMethods() {
         id: data[0].id,
         userId: user.id,
         name: data[0].name,
-        type: data[0].type as PaymentMethodType, // Apply type assertion
-        details: data[0].details,
+        type: data[0].type as PaymentMethodType,
+        details: data[0].details as unknown as Record<string, any>,
         isDefault: data[0].is_default,
         createdAt: data[0].created_at,
       };
@@ -173,11 +173,21 @@ export function usePaymentMethods() {
     }
   };
 
+  // Add these two functions to handle PaymentManagement.tsx errors
+  const deletePaymentMethod = removePaymentMethod;
+  
+  const setDefaultPaymentMethod = async (id: string) => {
+    return updatePaymentMethod(id, { isDefault: true });
+  };
+
   return {
     paymentMethods,
     loading,
     addPaymentMethod,
     updatePaymentMethod,
     removePaymentMethod,
+    // Add these to fix the errors in PaymentManagement.tsx
+    deletePaymentMethod,
+    setDefaultPaymentMethod
   };
 }

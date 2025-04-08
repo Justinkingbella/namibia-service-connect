@@ -1,201 +1,246 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { PaymentHistory, ProviderEarnings, ProviderPayout } from '@/types/payments';
+import { 
+  PaymentHistory, 
+  ProviderEarnings, 
+  ProviderPayout 
+} from '@/types/payments';
 
-// Function to fetch payment history for a user
-export const fetchPaymentHistory = async (userId: string): Promise<PaymentHistory[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('payment_history')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+// Mock payment history data
+export const getMockPaymentHistory = async (userId: string): Promise<PaymentHistory[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
 
-    if (error) {
-      console.error('Error fetching payment history:', error);
-      throw new Error(error.message);
+  // Create mock payment history data
+  const paymentHistory: PaymentHistory[] = [
+    {
+      id: 'payment1',
+      userId: userId,
+      amount: 150,
+      description: 'Payment for cleaning service',
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+      status: 'completed',
+      type: 'booking',
+      reference: 'ref123',
+      bookingId: 'book123',
+      paymentMethod: 'credit_card',
+      transactionId: 'tx123'
+    },
+    {
+      id: 'payment2',
+      userId: userId,
+      amount: 200,
+      description: 'Payment for plumbing service',
+      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days ago
+      status: 'completed',
+      type: 'booking',
+      reference: 'ref456',
+      bookingId: 'book456',
+      paymentMethod: 'e_wallet',
+      transactionId: 'tx456'
+    },
+    {
+      id: 'payment3',
+      userId: userId,
+      amount: 50,
+      description: 'Refund for canceled service',
+      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+      status: 'completed',
+      type: 'refund',
+      reference: 'ref789',
+      bookingId: 'book789',
+      paymentMethod: 'e_wallet',
+      transactionId: 'tx789'
     }
+  ];
 
-    return data.map((item: any) => ({
-      id: item.id,
-      userId: item.user_id,
-      amount: item.amount,
-      description: item.description,
-      date: new Date(item.created_at),
-      status: item.status,
-      type: item.payment_method,
-      reference: item.transaction_id
-    }));
-  } catch (error) {
-    console.error('Unexpected error in fetchPaymentHistory:', error);
-    throw error;
-  }
+  return paymentHistory;
 };
 
-// Function to generate a provider earnings report for a specific date range
-export const generateEarningsReport = async (
-  providerId: string, 
-  startDate: string, 
-  endDate: string
-): Promise<ProviderEarnings> => {
+// Process a payment
+export const processPayment = async (userId: string, bookingId: string, amount: number, paymentMethod: string): Promise<{success: boolean; paymentId?: string; error?: string}> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1200));
+  
   try {
-    // First check if a report for this period already exists
-    const { data: existingReport, error: checkError } = await supabase
-      .from('provider_earnings')
-      .select('*')
-      .eq('provider_id', providerId)
-      .eq('period_start', startDate)
-      .eq('period_end', endDate)
-      .single();
-
-    if (existingReport) {
+    // In a real app, this would call a payment gateway API
+    console.log(`Processing payment: User ${userId}, Booking ${bookingId}, Amount ${amount}, Method ${paymentMethod}`);
+    
+    // Simulate successful payment (95% success rate)
+    const isSuccessful = Math.random() > 0.05;
+    
+    if (isSuccessful) {
+      // Create a new payment record
+      const paymentRecord: PaymentHistory = {
+        id: `payment-${Date.now()}`,
+        userId: userId,
+        bookingId: bookingId,
+        amount: amount,
+        description: `Payment for booking #${bookingId.substring(0, 5)}`,
+        createdAt: new Date().toISOString(),
+        status: 'completed',
+        type: 'booking',
+        reference: `REF-${Date.now().toString().substring(5)}`,
+        paymentMethod: paymentMethod,
+        transactionId: `TX-${Date.now()}`
+      };
+      
+      // In a real app, you'd save this to the database
+      
       return {
-        id: existingReport.id,
-        providerId: existingReport.provider_id,
-        periodStart: new Date(existingReport.period_start),
-        periodEnd: new Date(existingReport.period_end),
-        totalEarnings: existingReport.total_earnings,
-        totalBookings: existingReport.total_bookings,
-        commissionPaid: existingReport.commission_paid,
-        netEarnings: existingReport.net_earnings,
-        payoutStatus: existingReport.payout_status,
-        payoutDate: existingReport.payout_date ? new Date(existingReport.payout_date) : undefined,
-        payoutReference: existingReport.payout_reference,
-        createdAt: new Date(existingReport.created_at),
-        updatedAt: new Date(existingReport.updated_at)
+        success: true,
+        paymentId: paymentRecord.id
+      };
+    } else {
+      return {
+        success: false,
+        error: 'Payment processing failed. Please try again or use a different payment method.'
       };
     }
-
-    // Get all completed bookings for the period
-    const { data: bookings, error: bookingsError } = await supabase
-      .from('bookings')
-      .select('*')
-      .eq('provider_id', providerId)
-      .eq('status', 'completed')
-      .gte('date', startDate)
-      .lte('date', endDate);
-
-    if (bookingsError) {
-      throw new Error(`Error fetching bookings: ${bookingsError.message}`);
-    }
-
-    const totalBookings = bookings?.length || 0;
-    const totalEarnings = bookings?.reduce((sum, booking) => sum + (booking.total_amount || 0), 0) || 0;
-    const commissionRate = 0.10; // 10% commission rate
-    const commissionPaid = totalEarnings * commissionRate;
-    const netEarnings = totalEarnings - commissionPaid;
-
-    // Create a new earnings report
-    const { data: newReport, error: insertError } = await supabase
-      .from('provider_earnings')
-      .insert({
-        provider_id: providerId,
-        period_start: startDate,
-        period_end: endDate,
-        total_earnings: totalEarnings,
-        total_bookings: totalBookings,
-        commission_paid: commissionPaid,
-        net_earnings: netEarnings,
-        payout_status: 'pending',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      throw new Error(`Error creating earnings report: ${insertError.message}`);
-    }
-
+  } catch (error) {
+    console.error('Error processing payment:', error);
     return {
-      id: newReport.id,
-      providerId: newReport.provider_id,
-      periodStart: new Date(newReport.period_start),
-      periodEnd: new Date(newReport.period_end),
-      totalEarnings: newReport.total_earnings,
-      totalBookings: newReport.total_bookings,
-      commissionPaid: newReport.commission_paid,
-      netEarnings: newReport.net_earnings,
-      payoutStatus: newReport.payout_status,
-      payoutDate: newReport.payout_date ? new Date(newReport.payout_date) : undefined,
-      payoutReference: newReport.payout_reference,
-      createdAt: new Date(newReport.created_at),
-      updatedAt: new Date(newReport.updated_at)
+      success: false,
+      error: 'An unexpected error occurred while processing your payment.'
     };
+  }
+};
+
+// Create refund
+export const processRefund = async (userId: string, bookingId: string, amount: number, reason: string): Promise<{success: boolean; refundId?: string; error?: string}> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  try {
+    // In a real app, this would call a payment gateway API refund endpoint
+    console.log(`Processing refund: User ${userId}, Booking ${bookingId}, Amount ${amount}, Reason: ${reason}`);
     
+    // Simulate successful refund (98% success rate)
+    const isSuccessful = Math.random() > 0.02;
+    
+    if (isSuccessful) {
+      // Create a new refund record
+      const refundRecord: PaymentHistory = {
+        id: `refund-${Date.now()}`,
+        userId: userId,
+        bookingId: bookingId,
+        amount: amount,
+        description: `Refund for booking #${bookingId.substring(0, 5)}: ${reason}`,
+        createdAt: new Date().toISOString(), 
+        status: 'completed',
+        type: 'refund',
+        reference: `REF-${Date.now().toString().substring(5)}`,
+        paymentMethod: 'original_payment_method',
+        transactionId: `TX-R-${Date.now()}`
+      };
+      
+      // In a real app, you'd save this to the database
+      
+      return {
+        success: true,
+        refundId: refundRecord.id
+      };
+    } else {
+      return {
+        success: false,
+        error: 'Refund processing failed. Please try again later.'
+      };
+    }
   } catch (error) {
-    console.error('Error generating earnings report:', error);
-    throw error;
+    console.error('Error processing refund:', error);
+    return {
+      success: false,
+      error: 'An unexpected error occurred while processing the refund.'
+    };
   }
 };
 
-// Function to fetch provider earnings
-export const fetchProviderEarnings = async (providerId: string): Promise<ProviderEarnings[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('provider_earnings')
-      .select('*')
-      .eq('provider_id', providerId)
-      .order('period_end', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching provider earnings:', error);
-      throw new Error(error.message);
+// Get provider earnings
+export const getProviderEarnings = async (providerId: string): Promise<ProviderEarnings[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 900));
+  
+  // Create mock earnings data
+  const earnings: ProviderEarnings[] = [
+    {
+      id: 'earnings1',
+      providerId: providerId,
+      periodStart: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(), // Start of current month
+      periodEnd: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString(), // End of current month
+      totalEarnings: 5200,
+      totalBookings: 12,
+      commissionPaid: 520,
+      netEarnings: 4680,
+      payoutStatus: 'pending',
+      payoutDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 5).toISOString(), // 5th of next month
+      payoutReference: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'earnings2',
+      providerId: providerId,
+      periodStart: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString(), // Start of last month
+      periodEnd: new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString(), // End of last month
+      totalEarnings: 4800,
+      totalBookings: 10,
+      commissionPaid: 480,
+      netEarnings: 4320,
+      payoutStatus: 'completed',
+      payoutDate: new Date(new Date().getFullYear(), new Date().getMonth(), 5).toISOString(), // 5th of current month
+      payoutReference: 'PO-12345',
+      createdAt: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
+      updatedAt: new Date(new Date().getFullYear(), new Date().getMonth(), 5).toISOString()
     }
-
-    return data.map((item: any) => ({
-      id: item.id,
-      providerId: item.provider_id,
-      periodStart: new Date(item.period_start),
-      periodEnd: new Date(item.period_end),
-      totalEarnings: item.total_earnings,
-      totalBookings: item.total_bookings,
-      commissionPaid: item.commission_paid,
-      netEarnings: item.net_earnings,
-      payoutStatus: item.payout_status,
-      payoutDate: item.payout_date ? new Date(item.payout_date) : undefined,
-      payoutReference: item.payout_reference,
-      createdAt: new Date(item.created_at),
-      updatedAt: new Date(item.updated_at)
-    }));
-  } catch (error) {
-    console.error('Unexpected error in fetchProviderEarnings:', error);
-    throw error;
-  }
+  ];
+  
+  return earnings;
 };
 
-// Function to fetch provider payouts
-export const fetchProviderPayouts = async (providerId: string): Promise<ProviderPayout[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('provider_payouts')
-      .select('*')
-      .eq('provider_id', providerId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching provider payouts:', error);
-      throw new Error(error.message);
+// Get provider payouts
+export const getProviderPayouts = async (providerId: string): Promise<ProviderPayout[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // Create mock payout data
+  const payouts: ProviderPayout[] = [
+    {
+      id: 'payout1',
+      providerId: providerId,
+      amount: 4320,
+      fee: 0,
+      netAmount: 4320,
+      paymentMethod: 'bank_transfer',
+      status: 'completed',
+      reference: 'PO-12345',
+      bankDetails: {
+        bankName: 'First National Bank',
+        accountNumber: '****6789',
+        accountType: 'Checking'
+      },
+      notes: 'Monthly payout for April 2023',
+      processedAt: new Date(new Date().getFullYear(), new Date().getMonth(), 5).toISOString(), // 5th of current month
+      createdAt: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(), // 1st of current month
+      updatedAt: new Date(new Date().getFullYear(), new Date().getMonth(), 5).toISOString() // 5th of current month
+    },
+    {
+      id: 'payout2',
+      providerId: providerId,
+      amount: 3950,
+      fee: 0,
+      netAmount: 3950,
+      paymentMethod: 'mobile_money',
+      status: 'completed',
+      reference: 'PO-67890',
+      mobilePaymentDetails: {
+        provider: 'MTC Money',
+        phoneNumber: '+264 81 123 4567'
+      },
+      notes: 'Monthly payout for March 2023',
+      processedAt: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 5).toISOString(), // 5th of last month
+      createdAt: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString(), // 1st of last month
+      updatedAt: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 5).toISOString() // 5th of last month
     }
-
-    return data.map((item: any) => ({
-      id: item.id,
-      providerId: item.provider_id,
-      amount: item.amount,
-      fee: item.fee,
-      netAmount: item.net_amount,
-      paymentMethod: item.payment_method,
-      status: item.status,
-      reference: item.reference_number,
-      bankDetails: item.bank_account_details,
-      mobilePaymentDetails: item.mobile_payment_details,
-      notes: item.notes,
-      processedAt: item.processed_at ? new Date(item.processed_at) : undefined,
-      createdAt: new Date(item.created_at),
-      updatedAt: new Date(item.updated_at)
-    }));
-  } catch (error) {
-    console.error('Unexpected error in fetchProviderPayouts:', error);
-    throw error;
-  }
+  ];
+  
+  return payouts;
 };

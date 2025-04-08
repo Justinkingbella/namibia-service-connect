@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -5,7 +6,6 @@ import CreateServiceForm from '@/components/provider/CreateServiceForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Service, Provider } from '@/types';
 import { ServiceData } from '@/types/service';
 import { transformServiceData } from '@/services/serviceDataTransformer';
 
@@ -17,7 +17,11 @@ const CreateServicePage = () => {
 
   const handleSubmit = async (serviceData: Partial<ServiceData>) => {
     if (!user) {
-      toast.error('You must be logged in to create a service');
+      toast({
+        title: "Authentication Error",
+        description: 'You must be logged in to create a service',
+        variant: "destructive"
+      });
       return;
     }
 
@@ -25,11 +29,14 @@ const CreateServicePage = () => {
 
     try {
       const newService = {
-        ...serviceData,
         provider_id: user.id,
         provider_name: `${user.firstName} ${user.lastName}`,
         is_active: true,
         category: serviceData.category || '',
+        price: serviceData.price || 0,
+        title: serviceData.title || '',
+        description: serviceData.description || '',
+        pricing_model: serviceData.pricing_model || 'fixed',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -42,11 +49,19 @@ const CreateServicePage = () => {
 
       if (error) throw error;
 
-      toast.success('Service created successfully');
+      toast({
+        title: "Success",
+        description: 'Service created successfully',
+        variant: "default"
+      });
       navigate(`/dashboard/services/${data.id}`);
     } catch (error: any) {
       console.error('Error creating service:', error);
-      toast.error(error.message || 'Failed to create service');
+      toast({
+        title: "Error",
+        description: error.message || 'Failed to create service',
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -62,7 +77,6 @@ const CreateServicePage = () => {
 
         <CreateServiceForm 
           onSubmit={handleSubmit} 
-          isSubmitting={isSubmitting}
         />
       </div>
     </DashboardLayout>

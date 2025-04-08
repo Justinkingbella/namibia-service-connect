@@ -1,4 +1,3 @@
-
 import { Json } from './schema';
 
 export type BookingStatus = 
@@ -114,19 +113,17 @@ export interface Dispute {
 
 export enum DisputeStatus {
   PENDING = 'pending',
-  IN_PROGRESS = 'in_progress',
   IN_REVIEW = 'in_review',
   RESOLVED = 'resolved',
-  CLOSED = 'closed',
   ESCALATED = 'escalated',
-  REJECTED = 'rejected'
+  CLOSED = 'closed'
 }
 
 export enum DisputePriority {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  URGENT = 'urgent'
+  CRITICAL = 'critical'
 }
 
 export interface Transaction {

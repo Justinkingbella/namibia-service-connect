@@ -1,61 +1,32 @@
 
-import { WalletVerificationStatus, WalletPaymentType } from './payment';
+import { WalletVerificationStatus, WalletPaymentType } from './schema';
 
 export interface WalletVerificationRequest {
   id: string;
-  bookingId: string;
-  customerId: string;
-  providerId: string;
-  customerPhone: string;
-  providerPhone?: string;
-  paymentMethod: string;
+  booking_id: string;
+  customer_id: string;
+  provider_id: string;
   amount: number;
-  referenceNumber: string;
-  status: string;
-  dateSubmitted: string;
-  dateVerified?: string;
-  customerName?: string;
-  providerName?: string;
-  customerConfirmed: boolean;
-  providerConfirmed: boolean;
-  adminVerified: boolean;
-  verifiedBy?: string;
-  adminComments?: any[];
-  mobileOperator?: string;
-  bank?: string;
-  proofType?: string;
-  receiptImage?: string;
-  notes?: string;
-  rejectionReason?: string;
-  userId?: string;
-  walletProvider?: string;
-  userType?: string;
-  userName?: string;
-  userEmail?: string;
-  walletNumber?: string;
-  walletName?: string;
-  transactionReference?: string;
-  reviewerId?: string;
-  reviewerName?: string;
-  reviewDate?: string;
-  currency?: string;
+  date_submitted: string;
+  date_verified?: string;
+  verified_by?: string;
+  verification_status: WalletVerificationStatus;
+  payment_method: WalletPaymentType;
+  reference_number: string;
+  customer_phone: string;
+  provider_phone?: string;
+  rejection_reason?: string;
+  paymentPurpose?: string; // Add missing property
+  walletNumber?: string; // Add missing property
 }
 
 export interface WalletVerificationFilters {
-  status?: string;
-  paymentMethod?: string;
-  dateRange?: {
-    start: Date;
-    end: Date;
-  };
-  amount?: {
-    min: number;
-    max: number;
-  };
-  search?: string;
-  // Add missing properties used in WalletService
-  walletProvider?: string;
-  userType?: string;
+  status?: WalletVerificationStatus;
+  paymentMethod?: WalletPaymentType;
+  dateFrom?: string;
+  dateTo?: string;
+  amountMin?: number;
+  amountMax?: number;
   searchTerm?: string;
 }
 
@@ -65,100 +36,78 @@ export interface WalletVerificationStats {
   verified: number;
   rejected: number;
   totalAmount: number;
-  // Add missing property used in WalletService
-  approved?: number;
-  expired?: number;
-  totalAmountPending?: number;
-  totalAmountProcessed?: number;
+  averageAmount: number;
+  averageProcessingTime?: string; // Add missing property
 }
 
 export interface WalletVerificationComment {
   id: string;
-  requestId: string;
-  adminId: string;
-  adminName: string;
+  verification_id: string;
+  user_id: string;
+  user_role: string;
   comment: string;
   timestamp: string;
-  // Add missing property used in WalletService
-  verificationId?: string;
-  userId?: string;
-  userName?: string;
-  userRole?: string;
+  createdAt?: string; // Add missing property
 }
 
 export interface WalletProviderSettings {
   id: string;
-  name: string;
-  type: 'bank' | 'mobile';
-  isActive: boolean;
-  logo?: string;
-  processingTime?: string;
-  processingFee?: number;
-  minimumAmount?: number;
-  maximumAmount?: number;
-  instructions?: string;
-  // Add missing property used in WalletService
-  providerName?: string;
-  displayName?: string;
-  isEnabled?: boolean;
+  provider_id: string;
+  walletProvider: string;
+  isEnabled: boolean;
+  accountNumber?: string;
+  phoneNumber?: string;
+  processingFee: number;
+  processingFeeType?: string; // Add this property
+  currency: string;
+  notes?: string;
+  updatedAt: string;
 }
 
 export interface WalletVerificationDashboard {
   stats: WalletVerificationStats;
-  recentRequests: WalletVerificationRequest[];
+  recentVerifications: WalletVerificationRequest[];
+  providers: WalletProvider[];
 }
 
 export interface WalletVerificationSummary {
-  totalRequests: number;
-  totalAmount: number;
-  verificationRatePercentage: number;
-  averageProcessingTime: string;
-  mostCommonPaymentMethod: string;
-  mostCommonMobileOperator?: string;
-  mostCommonBank?: string;
+  totalVerifications: number;
+  pendingVerifications: number;
+  approvedVerifications: number;
+  rejectedVerifications: number;
+  totalAmountProcessed: number;
+  avgProcessingTime: string;
 }
 
-export enum VerificationAction {
-  APPROVE = 'approve',
-  REJECT = 'reject',
-  REQUEST_MORE_INFO = 'request_more_info'
+export interface VerificationAction {
+  id: string;
+  verification_id: string;
+  action_type: 'approve' | 'reject' | 'comment';
+  performed_by: string;
+  user_role: string;
+  timestamp: string;
+  details?: Record<string, any>;
 }
 
 export interface WalletVerificationReport {
-  dailyStats: {
-    date: string;
-    count: number;
-    amount: number;
-  }[];
-  methodBreakdown: {
-    method: string;
-    count: number;
-    amount: number;
-  }[];
-  statusBreakdown: {
-    status: string;
-    count: number;
-    percentage: number;
-  }[];
+  period: string;
+  verificationCount: number;
+  totalAmount: number;
+  approvalRate: number;
+  avgProcessingTime: string;
 }
 
-export enum VerificationStatus {
-  PENDING = 'pending',
-  VERIFIED = 'verified',
-  REJECTED = 'rejected',
-  EXPIRED = 'expired',
-  SUBMITTED = 'submitted',
-  IN_REVIEW = 'in_review'
-}
+export type VerificationStatus = 'pending' | 'submitted' | 'verified' | 'rejected' | 'expired' | 'approved';
 
 export interface WalletProvider {
   id: string;
   name: string;
-  logo?: string;
-  type: 'bank' | 'mobile';
+  code: string;
+  type: 'mobile' | 'bank' | 'wallet';
+  processingFee: number;
+  processingTime: string;
+  isEnabled: boolean;
+  logoUrl?: string;
 }
 
-export enum UserType {
-  CUSTOMER = 'customer',
-  PROVIDER = 'provider'
-}
+export type UserType = 'customer' | 'provider' | 'admin';

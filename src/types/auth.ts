@@ -1,4 +1,3 @@
-
 import { Json } from "./schema";
 import { SubscriptionTierType } from "./schema";
 
@@ -97,26 +96,26 @@ export interface DbCustomerProfile extends DbUserProfile {
 }
 
 export interface DbProviderProfile extends DbUserProfile {
-  business_name: string;
-  business_description: string;
-  categories: string[];
-  services: string[];
-  rating: number;
-  review_count: number;
-  completed_bookings: number;
-  commission_rate: number;
-  verification_status: ProviderVerificationStatus;
+  business_name?: string;
+  business_description?: string;
   banner_url?: string;
   website?: string;
-  tax_id?: string;
-  business_license?: string;
-  id_document_url?: string;
-  proof_of_address_url?: string;
   address?: string;
   city?: string;
   country?: string;
-  state?: string;
-  postal_code?: string;
+  commission_rate?: number;
+  verification_status?: string;
+  completed_bookings?: number;
+  rating?: number;
+  rating_count?: number;
+  services_count?: number;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  categories?: string[];
+  services?: string[];
+  tax_id?: string;
+  review_count?: number;
 }
 
 export interface Provider extends User {
