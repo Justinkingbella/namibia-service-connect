@@ -1,3 +1,4 @@
+
 import { WalletVerificationStatus as SchemaWalletVerificationStatus, WalletPaymentType as SchemaWalletPaymentType } from './schema';
 
 export type WalletVerificationStatus = SchemaWalletVerificationStatus;
@@ -127,6 +128,7 @@ export interface WalletVerificationComment {
   verificationId?: string;
   content?: string;
   createdAt?: string;
+  userId?: string; // Add this to fix errors
 }
 
 export interface WalletProviderSettings {
@@ -148,6 +150,7 @@ export interface WalletProviderSettings {
   endpoint?: string;
   displayName?: string;
   processingTime?: string;
+  logo?: string; // Add this to fix errors
 }
 
 export interface WalletVerificationDashboard {

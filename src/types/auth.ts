@@ -23,7 +23,7 @@ export interface Session {
   id: string;
   user_id: string;
   created_at: string;
-  expires_at: string;
+  expires_at: string | number;
   expires_in: number;
   token_type: string;
   access_token: string;
@@ -97,14 +97,14 @@ export interface DbProviderProfile extends DbUserProfile {
   banner_url?: string;
   website?: string;
   commission_rate?: number;
-  verification_status?: string;
+  verification_status?: ProviderVerificationStatus;
   completed_bookings?: number;
   rating?: number;
   rating_count?: number;
   services_count?: number;
   tax_id?: string;
   review_count?: number;
-  categories?: string[];  // Add missing properties for service providers
+  categories?: string[];
   services?: string[];
 }
 

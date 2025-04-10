@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,11 +36,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session: supabaseSession } } = await supabase.auth.getSession();
 
         if (supabaseSession) {
-          const customSession: Session = {
+          const customSession = {
             id: supabaseSession.user.id,
             user_id: supabaseSession.user.id,
-            created_at: supabaseSession.created_at || '',
+            created_at: new Date().toISOString(),
             expires_at: supabaseSession.expires_at?.toString() || '',
+            expires_in: supabaseSession.expires_in || 0,
+            token_type: supabaseSession.token_type || 'bearer',
             access_token: supabaseSession.access_token,
             refresh_token: supabaseSession.refresh_token || '',
             user: {
@@ -133,11 +136,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAuthenticated(false);
         navigate('/auth/sign-in', { replace: true });
       } else if (event === 'SIGNED_IN' && supabaseSession) {
-        const customSession: Session = {
+        const customSession = {
           id: supabaseSession.user.id,
           user_id: supabaseSession.user.id,
-          created_at: supabaseSession.created_at || '',
+          created_at: new Date().toISOString(),
           expires_at: supabaseSession.expires_at?.toString() || '',
+          expires_in: supabaseSession.expires_in || 0,
+          token_type: supabaseSession.token_type || 'bearer',
           access_token: supabaseSession.access_token,
           refresh_token: supabaseSession.refresh_token || '',
           user: {
@@ -177,7 +182,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      setSession(data.session);
+      
+      const customSession = {
+        id: data.session.user.id,
+        user_id: data.session.user.id,
+        created_at: new Date().toISOString(),
+        expires_at: data.session.expires_at?.toString() || '',
+        expires_in: data.session.expires_in || 0,
+        token_type: data.session.token_type || 'bearer',
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token || '',
+        user: {
+          id: data.session.user.id,
+          email: data.session.user.email || '',
+          role: (data.session.user.user_metadata?.role as UserRole) || 'customer'
+        }
+      };
+      
+      setSession(customSession);
       setIsAuthenticated(true);
       return { error: null };
     } catch (error: any) {
@@ -324,7 +346,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
 
-      const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${data.path}`;
+      const { data: publicUrlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(data.path);
+      
+      const publicUrl = publicUrlData.publicUrl;
+      
       await updateProfile({ avatarUrl: publicUrl });
       return publicUrl;
     } catch (error: any) {
@@ -381,7 +408,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.verifyOtp({
         token,
         type: 'signup',
-        email: user?.email || '',
       });
       if (error) throw error;
       setUser({ ...user, emailVerified: true } as User);
@@ -402,7 +428,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const sendVerificationEmail = async () => {
     try {
       const { error } = await supabase.auth.resend({
-        type: 'email',
+        type: 'signup',
         email: user?.email || '',
       });
       if (error) throw error;
@@ -477,7 +503,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const profileData = providerData.profiles || {};
 
-      const verificationStatus = (providerData.verification_status as ProviderVerificationStatus) || 'unverified';
+      // Use a default value for verification_status if it's not present
+      const verificationStatus = 
+        (providerData.verification_status as ProviderVerificationStatus) || 'unverified';
 
       const providerProfile: Provider = {
         id: userId,
@@ -518,7 +546,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('user_id', userId)
         .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Error fetching admin profile:', error);
         return;
       }

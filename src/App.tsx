@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { SupabaseProvider } from './contexts/SupabaseContext';
 import { SiteProvider } from './contexts/SiteContext';

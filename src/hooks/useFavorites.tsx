@@ -52,11 +52,10 @@ export function useFavorites() {
         
         return {
           id: item.id,
-          user_id: item.user_id,
           service_id: item.service_id,
+          user_id: item.user_id,
           created_at: item.created_at,
           // Add compatible property names
-          userId: item.user_id,
           serviceId: item.service_id,
           createdAt: item.created_at,
           service: serviceData ? {
@@ -124,11 +123,10 @@ export function useFavorites() {
       
       const mappedFavorite: FavoriteService = {
         id: data.id,
-        user_id: data.user_id,
         service_id: data.service_id,
+        user_id: data.user_id,
         created_at: data.created_at,
         // Add compatible property names
-        userId: data.user_id,
         serviceId: data.service_id,
         createdAt: data.created_at,
         service: serviceData ? {

@@ -40,7 +40,9 @@ export type {
   WalletVerificationReport,
   VerificationStatus,
   WalletProvider,
-  UserType
+  UserType,
+  Transaction, 
+  Wallet
 } from './wallet';
 
 // Export Auth types
