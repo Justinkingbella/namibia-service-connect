@@ -17,8 +17,8 @@ const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmi
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState<number>(0);
-  const [category, setCategory] = useState(ServiceCategoryEnum.CLEANING);
-  const [pricingModel, setPricingModel] = useState(PricingModelEnum.FIXED);
+  const [category, setCategory] = useState<ServiceCategoryEnum>(ServiceCategoryEnum.CLEANING);
+  const [pricingModel, setPricingModel] = useState<PricingModelEnum>(PricingModelEnum.FIXED);
   const [features, setFeatures] = useState<string[]>([]);
 
   // Use either isSubmitting or isLoading

@@ -13,10 +13,10 @@ interface ServiceBasicInfoFormProps {
   setDescription: (value: string) => void;
   price: number;
   setPrice: (value: number) => void;
-  category: string;
-  setCategory: (value: string) => void;
-  pricingModel: string;
-  setPricingModel: (value: string) => void;
+  category: ServiceCategoryEnum;
+  setCategory: (value: ServiceCategoryEnum) => void;
+  pricingModel: PricingModelEnum;
+  setPricingModel: (value: PricingModelEnum) => void;
 }
 
 export const ServiceBasicInfoForm: React.FC<ServiceBasicInfoFormProps> = ({
@@ -69,7 +69,10 @@ export const ServiceBasicInfoForm: React.FC<ServiceBasicInfoFormProps> = ({
 
       <div>
         <Label htmlFor="category">Category</Label>
-        <Select value={category} onValueChange={(value) => setCategory(value)}>
+        <Select
+          value={category}
+          onValueChange={(value) => setCategory(value as ServiceCategoryEnum)}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select a category" />
           </SelectTrigger>
@@ -87,7 +90,10 @@ export const ServiceBasicInfoForm: React.FC<ServiceBasicInfoFormProps> = ({
 
       <div>
         <Label htmlFor="pricingModel">Pricing Model</Label>
-        <Select value={pricingModel} onValueChange={(value) => setPricingModel(value)}>
+        <Select
+          value={pricingModel}
+          onValueChange={(value) => setPricingModel(value as PricingModelEnum)}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select pricing model" />
           </SelectTrigger>

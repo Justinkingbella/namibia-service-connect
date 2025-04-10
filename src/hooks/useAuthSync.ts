@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 import { User, UserRole, Provider, Customer, Admin, ProviderVerificationStatus } from '@/types';
 import { useNavigate } from 'react-router-dom';
+import { CustomSession, createCustomSession, transformProviderData } from '@/types/auth-helpers';
 
 export const useAuthSync = () => {
   const { 
@@ -33,25 +34,11 @@ export const useAuthSync = () => {
 
         if (sessionData?.session) {
           console.log("Session exists");
-          // Create a custom session object but adapt it for Supabase's API
-          const customSession = {
-            id: sessionData.session.user.id,
-            user_id: sessionData.session.user.id,
-            expires_in: sessionData.session.expires_in || 0,
-            token_type: sessionData.session.token_type || 'bearer',
-            created_at: new Date().toISOString(),
-            expires_at: sessionData.session.expires_at || 0, 
-            access_token: sessionData.session.access_token,
-            refresh_token: sessionData.session.refresh_token || '',
-            user: {
-              id: sessionData.session.user.id,
-              email: sessionData.session.user.email || '',
-              role: (sessionData.session.user.user_metadata?.role as UserRole) || 'customer'
-            }
-          };
+          // Create a custom session object that matches our app's expected type
+          const customSession = createCustomSession(sessionData.session);
           
           // Set session in store
-          setSession(customSession);
+          setSession(customSession as unknown as any);
           
           // Get user data
           const userData: User = {
@@ -128,15 +115,11 @@ export const useAuthSync = () => {
               .single();
 
             if (!providerError && providerData) {
+              // Use our helper function to safely transform provider data
+              const { categories, services, taxId, reviewCount } = transformProviderData(providerData);
+              
               // Cast to ProviderVerificationStatus to ensure type safety
               const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'unverified';
-              
-              // Handle missing or optional fields
-              // Default to empty arrays for categories and services
-              const categories = Array.isArray(providerData.categories) ? providerData.categories : [];
-              const services = Array.isArray(providerData.services) ? providerData.services : [];
-              const taxId = providerData.tax_id || '';
-              const reviewCount = providerData.review_count || 0;
               
               const providerProfile: Provider = {
                 ...userData,
@@ -205,24 +188,10 @@ export const useAuthSync = () => {
       if (event === 'SIGNED_IN' && session) {
         // Update auth state with new user data
         // Create a compatible session object for our store
-        const customSession = {
-          id: session.user?.id || '',
-          user_id: session.user?.id || '',
-          expires_in: session.expires_in || 0,
-          token_type: session.token_type || 'bearer',
-          created_at: new Date().toISOString(),
-          expires_at: session.expires_at || 0,
-          access_token: session.access_token,
-          refresh_token: session.refresh_token || '',
-          user: {
-            id: session.user?.id || '',
-            email: session.user?.email || '',
-            role: ((session.user?.user_metadata?.role as UserRole) || 'customer')
-          }
-        };
+        const customSession = createCustomSession(session);
         
         // Update the session
-        setSession(customSession);
+        setSession(customSession as unknown as any);
         const userMeta = session.user?.user_metadata || {};
         const userRole = userMeta.role || 'customer';
         console.log("Setting user role from metadata:", userRole);

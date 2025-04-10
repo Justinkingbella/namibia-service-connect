@@ -1,11 +1,13 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
 
-type TableName = keyof Database['public']['Tables'];
+// Define a generic type parameter for table names
+type TableName = string;
 
 export function useSupabaseQuery<T>(
-  tableName: string,
+  tableName: TableName,
   options: {
     select?: string;
     match?: Record<string, any>;
@@ -29,8 +31,10 @@ export function useSupabaseQuery<T>(
       setLoading(true);
       setError(null);
 
-      let query = supabase.from(tableName as any).select(options.select || '*');
+      // Build the main query
+      let query = supabase.from(tableName).select(options.select || '*');
 
+      // Apply filters
       if (options.filters && options.filters.length > 0) {
         for (const filter of options.filters) {
           switch (filter.operator) {
@@ -62,18 +66,21 @@ export function useSupabaseQuery<T>(
         }
       }
 
+      // Apply exact matches
       if (options.match) {
         Object.entries(options.match).forEach(([column, value]) => {
           query = query.eq(column, value);
         });
       }
 
+      // Apply ordering
       if (options.order) {
         query = query.order(options.order.column, {
           ascending: options.order.ascending,
         });
       }
 
+      // Apply pagination
       if (options.limit) {
         query = query.limit(options.limit);
         
@@ -83,12 +90,15 @@ export function useSupabaseQuery<T>(
         }
       }
 
+      // Execute the query
       const { data: result, error: queryError } = await query;
       
+      // Create a separate count query since we can't reuse the same query object
       const countQuery = supabase
-        .from(tableName as any)
+        .from(tableName)
         .select('*', { count: 'exact', head: true });
         
+      // Apply the same filters to the count query  
       if (options.filters && options.filters.length > 0) {
         for (const filter of options.filters) {
           switch (filter.operator) {

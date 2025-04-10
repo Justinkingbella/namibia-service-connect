@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +15,7 @@ import {
   ProviderVerificationStatus
 } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { CustomSession, createCustomSession, transformProviderData } from '@/types/auth-helpers';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -36,23 +36,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session: supabaseSession } } = await supabase.auth.getSession();
 
         if (supabaseSession) {
-          const customSession: Session = {
-            id: supabaseSession.user.id,
-            user_id: supabaseSession.user.id,
-            created_at: new Date().toISOString(),
-            expires_at: supabaseSession.expires_at || 0,
-            expires_in: supabaseSession.expires_in || 0,
-            token_type: supabaseSession.token_type || 'bearer',
-            access_token: supabaseSession.access_token,
-            refresh_token: supabaseSession.refresh_token || '',
-            user: {
-              id: supabaseSession.user.id,
-              email: supabaseSession.user.email || '',
-              role: (supabaseSession.user.user_metadata?.role as UserRole) || 'customer'
-            }
-          };
+          const customSession = createCustomSession(supabaseSession);
           
-          setSession(customSession);
+          setSession(customSession as unknown as Session);
           setIsAuthenticated(true);
 
           const userDetails: User = {
@@ -136,23 +122,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAuthenticated(false);
         navigate('/auth/sign-in', { replace: true });
       } else if (event === 'SIGNED_IN' && supabaseSession) {
-        const customSession: Session = {
-          id: supabaseSession.user.id,
-          user_id: supabaseSession.user.id,
-          created_at: new Date().toISOString(),
-          expires_at: supabaseSession.expires_at || 0,
-          expires_in: supabaseSession.expires_in || 0,
-          token_type: supabaseSession.token_type || 'bearer',
-          access_token: supabaseSession.access_token,
-          refresh_token: supabaseSession.refresh_token || '',
-          user: {
-            id: supabaseSession.user.id,
-            email: supabaseSession.user.email || '',
-            role: (supabaseSession.user.user_metadata?.role as UserRole) || 'customer'
-          }
-        };
+        const customSession = createCustomSession(supabaseSession);
         
-        setSession(customSession);
+        setSession(customSession as unknown as Session);
         setIsAuthenticated(true);
         const userMeta = supabaseSession.user?.user_metadata || {};
         const userRole = userMeta.role || 'customer';
@@ -183,23 +155,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
-      const customSession: Session = {
-        id: data.session.user.id,
-        user_id: data.session.user.id,
-        created_at: new Date().toISOString(),
-        expires_at: data.session.expires_at || 0,
-        expires_in: data.session.expires_in || 0,
-        token_type: data.session.token_type || 'bearer',
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token || '',
-        user: {
-          id: data.session.user.id,
-          email: data.session.user.email || '',
-          role: (data.session.user.user_metadata?.role as UserRole) || 'customer'
-        }
-      };
+      const customSession = createCustomSession(data.session);
       
-      setSession(customSession);
+      setSession(customSession as unknown as Session);
       setIsAuthenticated(true);
       return { error: null };
     } catch (error: any) {
@@ -521,11 +479,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Handle the profile data safely
       const profileData = providerData.profiles as Record<string, any> || {};
 
-      // Safely handle arrays and optional fields
-      const categories = Array.isArray(providerData.categories) ? providerData.categories : [];
-      const services = Array.isArray(providerData.services) ? providerData.services : [];
-      const taxId = providerData.tax_id || '';
-      const reviewCount = providerData.review_count || 0;
+      // Use our helper function to safely transform provider data
+      const { categories, services, taxId, reviewCount } = transformProviderData(providerData);
+      
       const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'unverified';
 
       const providerProfile: Provider = {
@@ -549,8 +505,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         taxId,
         reviewCount,
         isVerified: verificationStatus === 'verified',
+        subscriptionTier: providerData.subscription_tier || 'free',
       };
-
+      
       setUserProfile(providerProfile);
       return providerProfile;
     } catch (error) {
