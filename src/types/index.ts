@@ -87,4 +87,4 @@ export interface IResponse<T> {
 export type { Conversation, Message } from './conversations';
 
 // Export favorites type
-export type { FavoriteService as ServiceFavorite } from './favorites';
+export type { FavoriteService as ServiceFavorite } from './service';

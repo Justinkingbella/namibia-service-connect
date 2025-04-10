@@ -20,10 +20,13 @@ const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmi
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState<number>(0);
-  const [category, setCategory] = useState(ServiceCategoryEnum.CLEANING); // Use CLEANING instead of HOME
+  const [category, setCategory] = useState(ServiceCategoryEnum.CLEANING);
   const [pricingModel, setPricingModel] = useState(PricingModelEnum.FIXED);
   const [features, setFeatures] = useState<string[]>([]);
   const [newFeature, setNewFeature] = useState('');
+
+  // Use either isSubmitting or isLoading
+  const loading = isSubmitting || isLoading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,9 +53,6 @@ const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmi
   const removeFeature = (featureToRemove: string) => {
     setFeatures(features.filter(feature => feature !== featureToRemove));
   };
-
-  // Use either isSubmitting or isLoading
-  const loading = isSubmitting || isLoading;
 
   return (
     <form onSubmit={handleSubmit}>
@@ -179,32 +179,6 @@ const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmi
       </div>
     </form>
   );
-  
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    
-    const serviceData: Partial<ServiceData> = {
-      title,
-      description,
-      price,
-      category,
-      pricing_model: pricingModel,
-      features,
-    };
-    
-    onSubmit(serviceData);
-  }
-
-  function addFeature() {
-    if (newFeature.trim() !== '') {
-      setFeatures([...features, newFeature.trim()]);
-      setNewFeature('');
-    }
-  }
-
-  function removeFeature(featureToRemove: string) {
-    setFeatures(features.filter(feature => feature !== featureToRemove));
-  }
 };
 
 export default CreateServiceForm;

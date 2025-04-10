@@ -57,7 +57,7 @@ export interface ServiceListItem {
   location?: string;
   isActive?: boolean;
   featured?: boolean;
-  pricingModel?: string; // Add missing property for ServiceCard
+  pricingModel: string; // Add pricingModel property
   createdAt?: string;
   updatedAt?: string;
 }
@@ -79,7 +79,7 @@ export interface Service {
   providerId: string;
   providerName: string;
   // Add missing properties needed in the codebase
-  features?: string[];
+  features: string[];
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;

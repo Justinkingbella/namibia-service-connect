@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -404,8 +405,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const verifyEmail = async (token: string) => {
     try {
+      if (!user?.email) {
+        throw new Error('User email not available');
+      }
+      
       const { error } = await supabase.auth.verifyOtp({
-        email: user?.email || '',
+        email: user.email,
         token,
         type: 'signup'
       });
@@ -428,9 +433,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sendVerificationEmail = async () => {
     try {
+      if (!user?.email) {
+        throw new Error('User email not available');
+      }
+      
       const { error } = await supabase.auth.resend({
         type: 'signup',
-        email: user?.email || '',
+        email: user.email,
         options: {
           emailRedirectTo: `${window.location.origin}/verify-email`
         }
@@ -468,17 +477,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!data) return;
 
-      const profileData = data.profiles || {};
+      // Handle profile data safely
+      const profileData = data.profiles as Record<string, any> || {};
 
       const customerProfile: Customer = {
         id: userId,
-        email: typeof profileData === 'object' && profileData.email ? profileData.email : '',
-        firstName: typeof profileData === 'object' && profileData.first_name ? profileData.first_name : '',
-        lastName: typeof profileData === 'object' && profileData.last_name ? profileData.last_name : '',
+        email: typeof profileData.email === 'string' ? profileData.email : '',
+        firstName: typeof profileData.first_name === 'string' ? profileData.first_name : '',
+        lastName: typeof profileData.last_name === 'string' ? profileData.last_name : '',
         role: 'customer',
-        phoneNumber: typeof profileData === 'object' && profileData.phone_number ? profileData.phone_number : '',
-        avatarUrl: typeof profileData === 'object' && profileData.avatar_url ? profileData.avatar_url : '',
-        emailVerified: typeof profileData === 'object' && profileData.email_verified ? profileData.email_verified : false,
+        phoneNumber: typeof profileData.phone_number === 'string' ? profileData.phone_number : '',
+        avatarUrl: typeof profileData.avatar_url === 'string' ? profileData.avatar_url : '',
+        emailVerified: typeof profileData.email_verified === 'boolean' ? profileData.email_verified : false,
         preferredCategories: data.preferred_categories || [],
         savedServices: data.saved_services || [],
         notificationPreferences: {
@@ -508,34 +518,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!providerData) return null;
 
-      const profileData = providerData.profiles || {};
+      // Handle the profile data safely
+      const profileData = providerData.profiles as Record<string, any> || {};
 
+      // Safely handle arrays and optional fields
       const categories = Array.isArray(providerData.categories) ? providerData.categories : [];
       const services = Array.isArray(providerData.services) ? providerData.services : [];
       const taxId = providerData.tax_id || '';
       const reviewCount = providerData.review_count || 0;
+      const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'unverified';
 
       const providerProfile: Provider = {
         id: userId,
-        email: typeof profileData === 'object' && profileData.email ? profileData.email : '',
-        firstName: typeof profileData === 'object' && profileData.first_name ? profileData.first_name : '',
-        lastName: typeof profileData === 'object' && profileData.last_name ? profileData.last_name : '',
+        email: typeof profileData.email === 'string' ? profileData.email : '',
+        firstName: typeof profileData.first_name === 'string' ? profileData.first_name : '',
+        lastName: typeof profileData.last_name === 'string' ? profileData.last_name : '',
         role: 'provider',
-        phoneNumber: typeof profileData === 'object' && profileData.phone_number ? profileData.phone_number : '',
-        avatarUrl: typeof profileData === 'object' && profileData.avatar_url ? profileData.avatar_url : '',
-        emailVerified: typeof profileData === 'object' && profileData.email_verified ? profileData.email_verified : false,
+        phoneNumber: typeof profileData.phone_number === 'string' ? profileData.phone_number : '',
+        avatarUrl: typeof profileData.avatar_url === 'string' ? profileData.avatar_url : '',
+        emailVerified: typeof profileData.email_verified === 'boolean' ? profileData.email_verified : false,
         businessName: providerData.business_name || '',
         businessDescription: providerData.business_description || '',
         categories,
         services,
         rating: providerData.rating || 0,
         commission: providerData.commission_rate || 0,
-        verificationStatus: providerData.verification_status || 'unverified',
+        verificationStatus,
         bannerUrl: providerData.banner_url || '',
         website: providerData.website || '',
         taxId,
         reviewCount,
-        isVerified: providerData.verification_status === 'verified',
+        isVerified: verificationStatus === 'verified',
       };
 
       setUserProfile(providerProfile);

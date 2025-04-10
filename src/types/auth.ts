@@ -27,7 +27,7 @@ export interface Session {
   expires_in: number;
   token_type: string;
   access_token: string;
-  refresh_token?: string;
+  refresh_token: string; // Make refresh_token required
   user?: {
     id: string;
     email: string;

@@ -51,9 +51,9 @@ export function useProfile() {
           bio: data.bio,
           birth_date: data.birth_date,
           loyalty_points: data.loyalty_points,
-          // Fix notification preferences handling with safe access
+          // Default notification preferences
           notification_preferences: {
-            email: true, // Default values
+            email: true,
             sms: false,
             push: true
           }
@@ -64,14 +64,14 @@ export function useProfile() {
             typeof data.user_preferences === 'object' && 
             data.user_preferences !== null) {
           try {
-            // Extract notification preferences safely
-            const userPrefs = data.user_preferences;
+            const userPrefs = data.user_preferences as Record<string, any>;
             if (userPrefs.notification_preferences && 
                 typeof userPrefs.notification_preferences === 'object') {
+              const notificationPrefs = userPrefs.notification_preferences as Record<string, boolean>;
               mappedProfile.notification_preferences = {
-                email: userPrefs.notification_preferences.email ?? true,
-                sms: userPrefs.notification_preferences.sms ?? false,
-                push: userPrefs.notification_preferences.push ?? true
+                email: notificationPrefs.email ?? true,
+                sms: notificationPrefs.sms ?? false,
+                push: notificationPrefs.push ?? true
               };
             }
           } catch (prefError) {

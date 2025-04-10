@@ -44,7 +44,7 @@ export function useFavorites() {
 
       // Map to FavoriteService type with proper null handling
       const mappedFavorites: FavoriteService[] = data.map(item => {
-        // Use proper type checking and defaults for service data
+        // Use proper type checking and defaults
         const serviceData = item.service || {};
         
         // Create a properly typed Service object with defaults for missing values
@@ -146,7 +146,8 @@ export function useFavorites() {
         features: serviceData.features || [],
         isActive: serviceData.is_active || false,
         createdAt: serviceData.created_at || '',
-        updatedAt: serviceData.updated_at || ''
+        updatedAt: serviceData.updated_at || '',
+        tags: serviceData.tags || []
       };
       
       const mappedFavorite: FavoriteService = {

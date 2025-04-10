@@ -11,7 +11,7 @@ interface ServiceCardProps {
   className?: string;
   asLink?: boolean;
   linkTo?: string;
-  viewMode?: 'grid' | 'list'; // Add missing prop
+  viewMode?: 'grid' | 'list'; // Add viewMode prop
 }
 
 export function ServiceCard({ service, className, viewMode = 'grid', asLink = false, linkTo = '' }: ServiceCardProps) {

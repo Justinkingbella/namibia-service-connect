@@ -18,7 +18,7 @@ export function transformServiceData(data: ServiceData): Service {
     location: data.location || '',
     provider_id: data.provider_id || '', // Keep the snake_case variant
     provider_name: data.provider_name || '', // Keep the snake_case variant
-    // Add the additional properties needed in the codebase
+    // Add the additional properties needed
     features: data.features || [],
     isActive: data.is_active || false,
     createdAt: data.created_at || '',

@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
-import { User, UserRole, Provider, Customer, Admin, ProviderVerificationStatus, Session } from '@/types';
+import { User, UserRole, Provider, Customer, Admin, ProviderVerificationStatus } from '@/types';
 import { useNavigate } from 'react-router-dom';
 
 export const useAuthSync = () => {
@@ -33,14 +33,14 @@ export const useAuthSync = () => {
 
         if (sessionData?.session) {
           console.log("Session exists");
-          // Create a custom session object that matches our Session type
-          const customSession: Session = {
+          // Create a custom session object but adapt it for Supabase's API
+          const customSession = {
             id: sessionData.session.user.id,
             user_id: sessionData.session.user.id,
             expires_in: sessionData.session.expires_in || 0,
             token_type: sessionData.session.token_type || 'bearer',
             created_at: new Date().toISOString(),
-            expires_at: sessionData.session.expires_at || 0, // Convert to number for Session type
+            expires_at: sessionData.session.expires_at || 0, 
             access_token: sessionData.session.access_token,
             refresh_token: sessionData.session.refresh_token || '',
             user: {
@@ -50,8 +50,7 @@ export const useAuthSync = () => {
             }
           };
           
-          // Avoid directly passing Session object to Supabase functions
-          // instead use separate store function
+          // Set session in store
           setSession(customSession);
           
           // Get user data
@@ -132,8 +131,8 @@ export const useAuthSync = () => {
               // Cast to ProviderVerificationStatus to ensure type safety
               const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'unverified';
               
-              // Add safety checks for specific fields
-              // Handle potentially missing fields that are causing errors
+              // Handle missing or optional fields
+              // Default to empty arrays for categories and services
               const categories = Array.isArray(providerData.categories) ? providerData.categories : [];
               const services = Array.isArray(providerData.services) ? providerData.services : [];
               const taxId = providerData.tax_id || '';
@@ -205,7 +204,8 @@ export const useAuthSync = () => {
       
       if (event === 'SIGNED_IN' && session) {
         // Update auth state with new user data
-        const customSession: Session = {
+        // Create a compatible session object for our store
+        const customSession = {
           id: session.user?.id || '',
           user_id: session.user?.id || '',
           expires_in: session.expires_in || 0,
@@ -221,7 +221,7 @@ export const useAuthSync = () => {
           }
         };
         
-        // Use a custom function to update the session state instead of directly passing to Supabase
+        // Update the session
         setSession(customSession);
         const userMeta = session.user?.user_metadata || {};
         const userRole = userMeta.role || 'customer';
