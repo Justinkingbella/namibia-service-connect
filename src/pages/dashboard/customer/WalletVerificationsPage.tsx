@@ -1,12 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  WalletVerification,
-  WalletPaymentType,
-  WalletVerificationStatus
-} from '@/types';
+import { WalletVerification } from '@/types';
 import { getVerifications } from '@/services/walletService';
 
 const verifications: WalletVerification[] = [
@@ -48,7 +45,7 @@ const WalletVerificationsPage = () => {
       try {
         setLoading(true);
         // Replace with actual API call when available
-        const data = getVerifications();
+        const data = getVerifications() as WalletVerification[];
         setWalletVerifications(data);
       } catch (error) {
         console.error('Error fetching wallet verifications:', error);

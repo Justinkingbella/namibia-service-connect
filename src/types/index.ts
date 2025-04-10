@@ -26,13 +26,22 @@ export type {
   ProviderPayout
 } from './payments';
 
-// Export wallet types from payment.ts instead of payments.ts
+// Export wallet types from their proper files
 export type {
-  Wallet,
-  Transaction as WalletTransaction,
   WalletVerification,
-  WalletVerificationRequest
-} from './payment';
+  WalletVerificationRequest,
+  WalletVerificationFilters,
+  WalletVerificationStats,
+  WalletVerificationComment,
+  WalletProviderSettings,
+  WalletVerificationDashboard,
+  WalletVerificationSummary,
+  VerificationAction,
+  WalletVerificationReport,
+  VerificationStatus,
+  WalletProvider,
+  UserType
+} from './wallet';
 
 // Export Auth types
 export type { 
@@ -74,18 +83,3 @@ export interface IResponse<T> {
 
 // Export conversation and message types
 export type { Conversation, Message } from './conversations';
-
-// Export wallet types from wallet.ts
-export type {
-  WalletVerificationFilters,
-  WalletVerificationStats,
-  WalletVerificationComment,
-  WalletProviderSettings,
-  WalletVerificationDashboard,
-  WalletVerificationSummary,
-  VerificationAction,
-  WalletVerificationReport,
-  VerificationStatus,
-  WalletProvider,
-  UserType
-} from './wallet';

@@ -24,9 +24,9 @@ export interface Session {
   user_id: string;
   created_at: string;
   expires_at: string;
-  user_agent?: string;
-  ip_address?: string;
-  access_token?: string;
+  expires_in: number;
+  token_type: string;
+  access_token: string;
   refresh_token?: string;
   user?: {
     id: string;
@@ -91,22 +91,7 @@ export interface DbCustomerProfile extends DbUserProfile {
 }
 
 // Fix the DbProviderProfile interface to match properly
-export interface DbProviderProfile {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  phone_number?: string;
-  avatar_url?: string;
-  email_verified: boolean;
-  role: UserRole;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  address?: string;
-  city?: string;
-  country?: string;
-  bio?: string;
+export interface DbProviderProfile extends DbUserProfile {
   business_name?: string;
   business_description?: string;
   banner_url?: string;
@@ -121,11 +106,6 @@ export interface DbProviderProfile {
   review_count?: number;
   categories?: string[];  // Add missing properties for service providers
   services?: string[];
-  notification_preferences?: {
-    email: boolean;
-    sms: boolean;
-    push: boolean;
-  };
 }
 
 export interface Provider extends User {

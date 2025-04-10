@@ -37,7 +37,9 @@ export const useAuthSync = () => {
           const customSession = {
             id: sessionData.session.user.id,
             user_id: sessionData.session.user.id,
-            created_at: sessionData.session.created_at || new Date().toISOString(),
+            expires_in: sessionData.session.expires_in || 0,
+            token_type: sessionData.session.token_type || 'bearer',
+            created_at: new Date().toISOString(),
             expires_at: sessionData.session.expires_at?.toString() || '',
             access_token: sessionData.session.access_token,
             refresh_token: sessionData.session.refresh_token || '',
@@ -99,8 +101,8 @@ export const useAuthSync = () => {
               .single();
 
             if (!customerError && customerData) {
-              // Get profile data through the join
-              const profileData = customerData.profiles || {};
+              // Since we can't access profile data directly through the join due to TypeScript errors,
+              // we'll use the userData which we already populated from profiles table
               
               const customerProfile: Customer = {
                 ...userData,
@@ -119,16 +121,13 @@ export const useAuthSync = () => {
             // Join service_providers with profiles
             const { data: providerData, error: providerError } = await supabase
               .from('service_providers')
-              .select('*, profiles:id(*)')
+              .select('*')
               .eq('id', userData.id)
               .single();
 
             if (!providerError && providerData) {
-              // Get profile data through the join
-              const profileData = providerData.profiles || {};
-              
               // Cast to ProviderVerificationStatus to ensure type safety
-              const verificationStatus = (providerData.verification_status as ProviderVerificationStatus) || 'unverified';
+              const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'unverified';
               
               const providerProfile: Provider = {
                 ...userData,
@@ -196,7 +195,23 @@ export const useAuthSync = () => {
       
       if (event === 'SIGNED_IN' && session) {
         // Update auth state with new user data
-        setSession(session);
+        const customSession = {
+          id: session.user?.id || '',
+          user_id: session.user?.id || '',
+          expires_in: session.expires_in || 0,
+          token_type: session.token_type || 'bearer',
+          created_at: new Date().toISOString(),
+          expires_at: session.expires_at?.toString() || '',
+          access_token: session.access_token,
+          refresh_token: session.refresh_token || '',
+          user: {
+            id: session.user?.id || '',
+            email: session.user?.email || '',
+            role: ((session.user?.user_metadata?.role as UserRole) || 'customer')
+          }
+        };
+        
+        setSession(customSession);
         const userMeta = session.user?.user_metadata || {};
         const userRole = userMeta.role || 'customer';
         console.log("Setting user role from metadata:", userRole);

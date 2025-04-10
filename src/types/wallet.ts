@@ -1,5 +1,7 @@
+import { WalletVerificationStatus as SchemaWalletVerificationStatus, WalletPaymentType as SchemaWalletPaymentType } from './schema';
 
-import { WalletVerificationStatus, WalletPaymentType } from './schema';
+export type WalletVerificationStatus = SchemaWalletVerificationStatus;
+export type WalletPaymentType = SchemaWalletPaymentType;
 
 export interface WalletVerificationRequest {
   id: string;
@@ -28,7 +30,7 @@ export interface WalletVerificationRequest {
   receipt_image?: string;
   notes?: string;
   // Additional fields used in components
-  paymentPurpose?: string;
+  status?: WalletVerificationStatus;
   walletNumber?: string;
   userId?: string;
   userName?: string;
@@ -39,7 +41,49 @@ export interface WalletVerificationRequest {
   reviewerId?: string;
   reviewerName?: string;
   reviewDate?: string;
-  status?: string;
+  paymentPurpose?: string;
+  walletName?: string;
+}
+
+export interface WalletVerification {
+  id: string;
+  user_id: string;
+  verificationStatus?: WalletVerificationStatus;
+  status?: WalletVerificationStatus;
+  date?: string;
+  reference?: string;
+  method?: WalletPaymentType;
+  amount: number;
+  provider_id?: string;
+  customer_id?: string;
+  booking_id?: string;
+  paymentMethod?: WalletPaymentType;
+  customerPhone?: string;
+  providerPhone?: string;
+  referenceNumber?: string;
+  dateSubmitted?: string;
+  dateVerified?: string | null;
+  rejectionReason?: string;
+  notes?: string;
+  receiptImage?: string;
+  mobileOperator?: string;
+  bankUsed?: string;
+  customerConfirmed?: boolean;
+  providerConfirmed?: boolean;
+  adminVerified?: boolean;
+  adminComments?: any;
+  walletNumber?: string;
+  paymentPurpose?: string;
+  walletName?: string;
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
+  transactionReference?: string;
+  walletProvider?: string;
+  userType?: string;
+  reviewerId?: string;
+  reviewerName?: string;
+  reviewDate?: string;
 }
 
 export interface WalletVerificationFilters {
