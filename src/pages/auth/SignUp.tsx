@@ -104,8 +104,9 @@ const SignUp = () => {
             id: data.user?.id,
             business_name: `${formData.firstName} ${formData.lastName}'s Services`,
             verification_status: 'pending',
-            categories: [],
-            services: []
+            categories: [], // Pass empty array for categories
+            services: [],   // Pass empty array for services
+            email: formData.email // Add email as it's required
           });
       }
 

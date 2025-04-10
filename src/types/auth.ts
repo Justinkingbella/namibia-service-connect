@@ -23,7 +23,7 @@ export interface Session {
   id: string;
   user_id: string;
   created_at: string;
-  expires_at: string | number;
+  expires_at: number; // Changed to number to match Supabase's typing
   expires_in: number;
   token_type: string;
   access_token: string;

@@ -26,7 +26,7 @@ export type {
   ProviderPayout
 } from './payments';
 
-// Export wallet types from their proper files
+// Export wallet types
 export type {
   WalletVerification,
   WalletVerificationRequest,
@@ -41,8 +41,8 @@ export type {
   VerificationStatus,
   WalletProvider,
   UserType,
-  Transaction, 
-  Wallet
+  Wallet,
+  Transaction
 } from './wallet';
 
 // Export Auth types

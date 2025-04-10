@@ -36,11 +36,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session: supabaseSession } } = await supabase.auth.getSession();
 
         if (supabaseSession) {
-          const customSession = {
+          // Create a custom session object that matches our Session type
+          const customSession: Session = {
             id: supabaseSession.user.id,
             user_id: supabaseSession.user.id,
             created_at: new Date().toISOString(),
-            expires_at: supabaseSession.expires_at?.toString() || '',
+            expires_at: supabaseSession.expires_at || 0,
             expires_in: supabaseSession.expires_in || 0,
             token_type: supabaseSession.token_type || 'bearer',
             access_token: supabaseSession.access_token,
@@ -136,11 +137,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAuthenticated(false);
         navigate('/auth/sign-in', { replace: true });
       } else if (event === 'SIGNED_IN' && supabaseSession) {
-        const customSession = {
+        const customSession: Session = {
           id: supabaseSession.user.id,
           user_id: supabaseSession.user.id,
           created_at: new Date().toISOString(),
-          expires_at: supabaseSession.expires_at?.toString() || '',
+          expires_at: supabaseSession.expires_at || 0,
           expires_in: supabaseSession.expires_in || 0,
           token_type: supabaseSession.token_type || 'bearer',
           access_token: supabaseSession.access_token,
@@ -183,11 +184,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
-      const customSession = {
+      // Create Session object from Supabase session
+      const customSession: Session = {
         id: data.session.user.id,
         user_id: data.session.user.id,
         created_at: new Date().toISOString(),
-        expires_at: data.session.expires_at?.toString() || '',
+        expires_at: data.session.expires_at || 0,
         expires_in: data.session.expires_in || 0,
         token_type: data.session.token_type || 'bearer',
         access_token: data.session.access_token,
@@ -405,10 +407,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const verifyEmail = async (token: string) => {
     try {
+      // Fix: Use proper parameters for verifyOtp
       const { error } = await supabase.auth.verifyOtp({
-        token,
-        type: 'signup',
+        token_hash: token, 
+        type: 'email'
       });
+      
       if (error) throw error;
       setUser({ ...user, emailVerified: true } as User);
       toast({
@@ -427,10 +431,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sendVerificationEmail = async () => {
     try {
+      // Use correct resend parameters
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: user?.email || '',
+        options: {
+          emailRedirectTo: `${window.location.origin}/verify-email`
+        }
       });
+      
       if (error) throw error;
       toast({
         title: "Verification Email Sent",
@@ -461,7 +470,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!data) return;
 
-      const profileData = data.profiles || {};
+      // Extract profile data safely
+      const profileData = data.profiles ? data.profiles : {};
 
       const customerProfile: Customer = {
         id: userId,
@@ -501,11 +511,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!providerData) return null;
 
-      const profileData = providerData.profiles || {};
+      // Extract profile data safely 
+      const profileData = providerData.profiles ? providerData.profiles : {};
 
       // Use a default value for verification_status if it's not present
       const verificationStatus = 
         (providerData.verification_status as ProviderVerificationStatus) || 'unverified';
+
+      // Type assertion to handle optional fields
+      const categories = providerData.categories ? providerData.categories as string[] : [];
+      const services = providerData.services ? providerData.services as string[] : [];
+      const taxId = providerData.tax_id || '';
+      const reviewCount = providerData.review_count || 0;
 
       const providerProfile: Provider = {
         id: userId,
@@ -518,15 +535,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         emailVerified: profileData.email_verified || false,
         businessName: providerData.business_name || '',
         businessDescription: providerData.business_description || '',
-        categories: providerData.categories || [],
-        services: providerData.services || [],
+        categories,
+        services,
         rating: providerData.rating || 0,
         commission: providerData.commission_rate || 0,
         verificationStatus: verificationStatus,
         bannerUrl: providerData.banner_url || '',
         website: providerData.website || '',
-        taxId: providerData.tax_id || '',
-        reviewCount: providerData.review_count || 0,
+        taxId,
+        reviewCount,
         isVerified: verificationStatus === 'verified',
       };
 

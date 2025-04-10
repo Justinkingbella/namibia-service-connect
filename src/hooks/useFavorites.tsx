@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { FavoriteService } from '@/types';
+import { FavoriteService, Service } from '@/types';
 
 export function useFavorites() {
   const [favorites, setFavorites] = useState<FavoriteService[]>([]);
@@ -50,31 +50,35 @@ export function useFavorites() {
         // Create service object with proper null handling
         const serviceData = item.service || {};
         
+        // Create a properly typed Service object with defaults for missing values
+        const serviceObj: Service = {
+          id: serviceData.id || '',
+          title: serviceData.title || '',
+          description: serviceData.description || '',
+          price: serviceData.price || 0,
+          image: serviceData.image || '',
+          provider_id: serviceData.provider_id || '',
+          provider_name: serviceData.provider_name || '',
+          // Add camelCase variants for compatibility
+          providerId: serviceData.provider_id || '',
+          providerName: serviceData.provider_name || '',
+          category: serviceData.category || '',
+          pricingModel: serviceData.pricing_model || '',
+          rating: serviceData.rating || 0,
+          reviewCount: serviceData.review_count || 0,
+          location: serviceData.location || ''
+        };
+        
         return {
           id: item.id,
-          service_id: item.service_id,
           user_id: item.user_id,
+          service_id: item.service_id,
           created_at: item.created_at,
-          // Add compatible property names
+          // Add camelCase variants for compatibility
+          userId: item.user_id,
           serviceId: item.service_id,
           createdAt: item.created_at,
-          service: serviceData ? {
-            id: serviceData.id || '',
-            title: serviceData.title || '',
-            description: serviceData.description || '',
-            price: serviceData.price || 0,
-            image: serviceData.image || '',
-            provider_id: serviceData.provider_id || '',
-            provider_name: serviceData.provider_name || '',
-            // Add camelCase variants for compatibility
-            providerId: serviceData.provider_id || '',
-            providerName: serviceData.provider_name || '',
-            category: serviceData.category || '',
-            pricingModel: serviceData.pricing_model || '',
-            rating: serviceData.rating || 0,
-            reviewCount: serviceData.review_count || 0,
-            location: serviceData.location || ''
-          } : null
+          service: serviceObj
         };
       });
       
@@ -121,31 +125,35 @@ export function useFavorites() {
       // Create service object with proper null handling
       const serviceData = data.service || {};
       
+      // Create a properly typed Service object with defaults for missing values
+      const serviceObj: Service = {
+        id: serviceData.id || '',
+        title: serviceData.title || '',
+        description: serviceData.description || '',
+        price: serviceData.price || 0,
+        image: serviceData.image || '',
+        provider_id: serviceData.provider_id || '',
+        provider_name: serviceData.provider_name || '',
+        // Add camelCase variants for compatibility
+        providerId: serviceData.provider_id || '',
+        providerName: serviceData.provider_name || '',
+        category: serviceData.category || '',
+        pricingModel: serviceData.pricing_model || '',
+        rating: serviceData.rating || 0,
+        reviewCount: serviceData.review_count || 0,
+        location: serviceData.location || ''
+      };
+      
       const mappedFavorite: FavoriteService = {
         id: data.id,
-        service_id: data.service_id,
         user_id: data.user_id,
+        service_id: data.service_id,
         created_at: data.created_at,
-        // Add compatible property names
+        // Add camelCase variants for compatibility
+        userId: data.user_id,
         serviceId: data.service_id,
         createdAt: data.created_at,
-        service: serviceData ? {
-          id: serviceData.id || '',
-          title: serviceData.title || '',
-          description: serviceData.description || '',
-          price: serviceData.price || 0,
-          image: serviceData.image || '',
-          provider_id: serviceData.provider_id || '',
-          provider_name: serviceData.provider_name || '',
-          // Add camelCase variants for compatibility
-          providerId: serviceData.provider_id || '',
-          providerName: serviceData.provider_name || '',
-          category: serviceData.category || '',
-          pricingModel: serviceData.pricing_model || '',
-          rating: serviceData.rating || 0,
-          reviewCount: serviceData.review_count || 0,
-          location: serviceData.location || ''
-        } : null
+        service: serviceObj
       };
       
       setFavorites([...favorites, mappedFavorite]);

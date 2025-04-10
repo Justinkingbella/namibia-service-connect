@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
-import { User, UserRole, Provider, Customer, Admin, ProviderVerificationStatus } from '@/types';
+import { User, UserRole, Provider, Customer, Admin, ProviderVerificationStatus, Session } from '@/types';
 import { useNavigate } from 'react-router-dom';
 
 export const useAuthSync = () => {
@@ -34,13 +34,13 @@ export const useAuthSync = () => {
         if (sessionData?.session) {
           console.log("Session exists");
           // Create a custom session object that matches our Session type
-          const customSession = {
+          const customSession: Session = {
             id: sessionData.session.user.id,
             user_id: sessionData.session.user.id,
             expires_in: sessionData.session.expires_in || 0,
             token_type: sessionData.session.token_type || 'bearer',
             created_at: new Date().toISOString(),
-            expires_at: sessionData.session.expires_at?.toString() || '',
+            expires_at: sessionData.session.expires_at || 0, // Convert to number for Session type
             access_token: sessionData.session.access_token,
             refresh_token: sessionData.session.refresh_token || '',
             user: {
@@ -49,6 +49,7 @@ export const useAuthSync = () => {
               role: (sessionData.session.user.user_metadata?.role as UserRole) || 'customer'
             }
           };
+          
           setSession(customSession);
           
           // Get user data
@@ -129,19 +130,25 @@ export const useAuthSync = () => {
               // Cast to ProviderVerificationStatus to ensure type safety
               const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'unverified';
               
+              // Safely handle potentially missing fields
+              const categories = providerData.categories ? providerData.categories as string[] : [];
+              const services = providerData.services ? providerData.services as string[] : [];
+              const taxId = providerData.tax_id || '';
+              const reviewCount = providerData.review_count || 0;
+              
               const providerProfile: Provider = {
                 ...userData,
                 businessName: providerData.business_name || '',
                 businessDescription: providerData.business_description || '',
-                categories: providerData.categories || [],
-                services: providerData.services || [],
+                categories,
+                services,
                 rating: providerData.rating || 0,
                 commission: providerData.commission_rate || 0,
                 verificationStatus: verificationStatus,
                 bannerUrl: providerData.banner_url || '',
                 website: providerData.website || '',
-                taxId: providerData.tax_id || '',
-                reviewCount: providerData.review_count || 0,
+                taxId,
+                reviewCount,
                 subscriptionTier: providerData.subscription_tier || 'free',
                 isVerified: verificationStatus === 'verified',
               };
@@ -195,13 +202,13 @@ export const useAuthSync = () => {
       
       if (event === 'SIGNED_IN' && session) {
         // Update auth state with new user data
-        const customSession = {
+        const customSession: Session = {
           id: session.user?.id || '',
           user_id: session.user?.id || '',
           expires_in: session.expires_in || 0,
           token_type: session.token_type || 'bearer',
           created_at: new Date().toISOString(),
-          expires_at: session.expires_at?.toString() || '',
+          expires_at: session.expires_at || 0,
           access_token: session.access_token,
           refresh_token: session.refresh_token || '',
           user: {

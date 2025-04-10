@@ -1,13 +1,13 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { PaymentMethod } from '@/types';
+import { PaymentMethod, PaymentMethodType } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 
 interface PaymentMethodInput {
   name: string;
-  type: string;
+  type: PaymentMethodType;
   details: Record<string, any>;
   isDefault: boolean;
 }
@@ -46,7 +46,7 @@ export function usePaymentMethods() {
         id: item.id,
         userId: item.user_id,
         name: item.name,
-        type: item.type,
+        type: item.type as PaymentMethodType, // Cast to ensure type safety
         details: typeof item.details === 'object' ? item.details : {},
         isDefault: item.is_default,
         createdAt: item.created_at
@@ -96,8 +96,8 @@ export function usePaymentMethods() {
         id: data.id,
         userId: data.user_id,
         name: data.name,
-        type: data.type,
-        details: data.details,
+        type: data.type as PaymentMethodType, // Ensure type safety with assertion
+        details: data.details as Record<string, any>, // Ensure proper typing
         isDefault: data.is_default,
         createdAt: data.created_at
       };
@@ -157,8 +157,8 @@ export function usePaymentMethods() {
         id: data.id,
         userId: data.user_id,
         name: data.name,
-        type: data.type,
-        details: data.details,
+        type: data.type as PaymentMethodType, // Ensure type safety with assertion
+        details: data.details as Record<string, any>, // Ensure proper typing
         isDefault: data.is_default,
         createdAt: data.created_at
       };

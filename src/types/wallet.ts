@@ -4,6 +4,29 @@ import { WalletVerificationStatus as SchemaWalletVerificationStatus, WalletPayme
 export type WalletVerificationStatus = SchemaWalletVerificationStatus;
 export type WalletPaymentType = SchemaWalletPaymentType;
 
+export interface Transaction {
+  id: string;
+  walletId: string;
+  amount: number;
+  type: 'deposit' | 'withdrawal' | 'transfer' | 'payment';
+  status: 'pending' | 'completed' | 'failed';
+  reference: string;
+  description?: string;
+  createdAt: string;
+  metadata?: Record<string, any>;
+}
+
+export interface Wallet {
+  id: string;
+  userId: string;
+  balance: number;
+  currency: string;
+  isVerified: boolean;
+  verificationStatus: WalletVerificationStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface WalletVerificationRequest {
   id: string;
   booking_id: string;
@@ -128,7 +151,7 @@ export interface WalletVerificationComment {
   verificationId?: string;
   content?: string;
   createdAt?: string;
-  userId?: string; // Add this to fix errors
+  userId?: string;
 }
 
 export interface WalletProviderSettings {
@@ -150,7 +173,7 @@ export interface WalletProviderSettings {
   endpoint?: string;
   displayName?: string;
   processingTime?: string;
-  logo?: string; // Add this to fix errors
+  logo?: string;
 }
 
 export interface WalletVerificationDashboard {

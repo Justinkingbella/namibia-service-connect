@@ -1,33 +1,6 @@
 
 import { Json } from "./schema";
-import { WalletPaymentType as SchemaWalletPaymentType, WalletVerificationStatus as SchemaWalletVerificationStatus } from "./schema";
-
-// Use the schema types directly to avoid conflicts
-export type WalletVerificationStatus = SchemaWalletVerificationStatus;
-export type WalletPaymentType = SchemaWalletPaymentType;
-
-export interface Wallet {
-  id: string;
-  userId: string;
-  balance: number;
-  currency: string;
-  isVerified: boolean;
-  verificationStatus: WalletVerificationStatus;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Transaction {
-  id: string;
-  walletId: string;
-  amount: number;
-  type: 'deposit' | 'withdrawal' | 'transfer' | 'payment';
-  status: 'pending' | 'completed' | 'failed';
-  reference: string;
-  description?: string;
-  createdAt: string;
-  metadata?: Record<string, any>;
-}
+import { PaymentMethodType, WalletPaymentType, WalletVerificationStatus } from "./schema";
 
 export interface NamibianMobileOperator {
   id: string;

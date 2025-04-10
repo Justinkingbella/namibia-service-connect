@@ -1,51 +1,45 @@
 
-import { Json } from './schema';
-import { PaymentMethodType } from './schema';
+import { Json } from "./schema";
 
-export interface ServiceData {
-  id?: string;
-  title: string;
-  description: string;
-  price: number;
-  category: string;
-  provider_id: string;
-  provider_name: string;
-  image?: string;
-  features?: string[];
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-  pricing_model: string;
-  location?: string;
-  rating?: number;
-  review_count?: number;
-  availability?: Json;
-  featured?: boolean;
-  faqs?: Json;
-  tags?: string[];
+export enum ServiceCategoryEnum {
+  CLEANING = 'cleaning',
+  CONSTRUCTION = 'construction',
+  PLUMBING = 'plumbing',
+  ELECTRICAL = 'electrical',
+  GARDENING = 'gardening',
+  MOVING = 'moving',
+  REPAIRS = 'repairs',
+  INTERIOR_DESIGN = 'interior_design',
+  EVENT_PLANNING = 'event_planning',
+  TUTORING = 'tutoring',
+  OTHER = 'other'
 }
 
-export interface Service {
+export enum PricingModelEnum {
+  HOURLY = 'hourly',
+  FIXED = 'fixed',
+  QUOTE = 'quote',
+  DAILY = 'daily',
+  MONTHLY = 'monthly',
+  PER_UNIT = 'per_unit'
+}
+
+export interface ServiceCategory {
   id: string;
-  title: string;
-  description: string;
-  price: number;
-  category: string; 
-  providerId: string;
-  providerName: string;
-  image?: string;
-  features: string[];
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  pricingModel: string;
-  location?: string;
-  rating?: number;
-  reviewCount?: number;
-  availability?: Record<string, any>;
+  name: string;
+  description?: string;
+  icon?: string;
+  slug?: string;
+  parentId?: string;
+  isActive?: boolean;
   featured?: boolean;
-  faqs?: Record<string, any>;
-  tags?: string[];
+  orderIndex?: number;
+}
+
+export interface PricingModel {
+  type: PricingModelEnum;
+  label: string;
+  description: string;
 }
 
 export interface ServiceListItem {
@@ -53,86 +47,67 @@ export interface ServiceListItem {
   title: string;
   description: string;
   price: number;
-  category: string;
-  pricingModel: string;
-  providerName: string;
-  providerId: string;
   image?: string;
+  category: string;
   rating?: number;
   reviewCount?: number;
+  providerId?: string;
+  providerName?: string;
   location?: string;
+  isActive?: boolean;
+  featured?: boolean;
 }
 
-export interface ServiceBookingData {
-  serviceId: string;
-  serviceName: string;
+export interface Service {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  image: string;
+  provider_id: string; // Use snake_case for DB fields
+  provider_name: string; // Use snake_case for DB fields
+  category: string;
+  pricingModel: string;
+  rating: number;
+  reviewCount: number;
+  location: string;
+  // Add camel case variants for client-side consistency
   providerId: string;
   providerName: string;
+}
+
+// Updated to include provider_name
+export interface ServiceData {
+  id: string;
+  title: string;
+  description?: string;
   price: number;
-  date: string;
-  startTime: string;
-  endTime: string;
-  notes?: string;
+  image?: string;
+  category: string;
+  pricing_model: string;
+  provider_id: string;
+  provider_name: string; // Added to match required field
+  rating?: number;
+  review_count?: number;
+  location?: string;
+  is_active?: boolean;
+  featured?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  availability?: Json;
+  faqs?: Json;
+  features?: string[];
+  tags?: string[];
+  slug?: string;
 }
 
 export interface FavoriteService {
   id: string;
-  service_id: string;
   user_id: string;
+  service_id: string;
   created_at: string;
-  service: {
-    id: string;
-    title: string;
-    description: string;
-    price: number;
-    image?: string;
-    provider_id: string;
-    provider_name: string;
-    // Additional fields needed by components
-    category?: string;
-    pricingModel?: string;
-    rating?: number;
-    reviewCount?: number;
-    location?: string;
-    // Additional fields with property names used in components
-    providerId?: string;
-    providerName?: string;
-  };
+  userId?: string;     // Add camelCase variants for compatibility
+  serviceId?: string;  // Add camelCase variants for compatibility
+  createdAt?: string;  // Add camelCase variants for compatibility
+  service?: Service | null;
 }
-
-// Add enums for categories
-export enum ServiceCategoryEnum {
-  HOME = 'HOME',
-  CLEANING = 'CLEANING',
-  REPAIR = 'REPAIR',
-  PLUMBING = 'PLUMBING',
-  ELECTRICAL = 'ELECTRICAL',
-  MOVING = 'MOVING',
-  PAINTING = 'PAINTING',
-  LANDSCAPING = 'LANDSCAPING',
-  TUTORING = 'TUTORING',
-  ERRAND = 'ERRAND',
-  PROFESSIONAL = 'PROFESSIONAL',
-  FREELANCE = 'FREELANCE',
-  TRANSPORT = 'TRANSPORT',
-  HEALTH = 'HEALTH',
-  ALL = 'ALL'
-}
-
-// Export ServiceCategory type
-export type ServiceCategory = keyof typeof ServiceCategoryEnum;
-
-// Pricing model enum
-export enum PricingModelEnum {
-  FIXED = 'FIXED',
-  HOURLY = 'HOURLY',
-  DAILY = 'DAILY',
-  PROJECT = 'PROJECT',
-  QUOTE = 'QUOTE'
-}
-
-// Export PricingModel type
-export type PricingModel = keyof typeof PricingModelEnum;
-
-// Export payment method type
-export type ServicePaymentMethod = PaymentMethodType;
