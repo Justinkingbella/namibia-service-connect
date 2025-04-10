@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,7 +35,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session: supabaseSession } } = await supabase.auth.getSession();
 
         if (supabaseSession) {
-          // Create a custom session object that matches our Session type
           const customSession: Session = {
             id: supabaseSession.user.id,
             user_id: supabaseSession.user.id,
@@ -184,7 +182,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
-      // Create Session object from Supabase session
       const customSession: Session = {
         id: data.session.user.id,
         user_id: data.session.user.id,
@@ -407,10 +404,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const verifyEmail = async (token: string) => {
     try {
-      // Fix: Use proper parameters for verifyOtp
       const { error } = await supabase.auth.verifyOtp({
-        token_hash: token, 
-        type: 'email'
+        email: user?.email || '',
+        token,
+        type: 'signup'
       });
       
       if (error) throw error;
@@ -431,7 +428,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sendVerificationEmail = async () => {
     try {
-      // Use correct resend parameters
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: user?.email || '',
@@ -459,7 +455,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data, error } = await supabase
         .from('customers')
-        .select('*, profiles:id(*)')
+        .select(`
+          *, profiles:id (*)
+        `)
         .eq('id', userId)
         .single();
 
@@ -470,18 +468,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!data) return;
 
-      // Extract profile data safely
-      const profileData = data.profiles ? data.profiles : {};
+      const profileData = data.profiles || {};
 
       const customerProfile: Customer = {
         id: userId,
-        email: profileData.email || '',
-        firstName: profileData.first_name || '',
-        lastName: profileData.last_name || '',
+        email: typeof profileData === 'object' && profileData.email ? profileData.email : '',
+        firstName: typeof profileData === 'object' && profileData.first_name ? profileData.first_name : '',
+        lastName: typeof profileData === 'object' && profileData.last_name ? profileData.last_name : '',
         role: 'customer',
-        phoneNumber: profileData.phone_number || '',
-        avatarUrl: profileData.avatar_url || '',
-        emailVerified: profileData.email_verified || false,
+        phoneNumber: typeof profileData === 'object' && profileData.phone_number ? profileData.phone_number : '',
+        avatarUrl: typeof profileData === 'object' && profileData.avatar_url ? profileData.avatar_url : '',
+        emailVerified: typeof profileData === 'object' && profileData.email_verified ? profileData.email_verified : false,
         preferredCategories: data.preferred_categories || [],
         savedServices: data.saved_services || [],
         notificationPreferences: {
@@ -500,7 +497,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data: providerData, error } = await supabase
         .from('service_providers')
-        .select('*, profiles:id(*)')
+        .select(`*, profiles:id(*)`)
         .eq('id', userId)
         .single();
 
@@ -511,40 +508,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!providerData) return null;
 
-      // Extract profile data safely 
-      const profileData = providerData.profiles ? providerData.profiles : {};
+      const profileData = providerData.profiles || {};
 
-      // Use a default value for verification_status if it's not present
-      const verificationStatus = 
-        (providerData.verification_status as ProviderVerificationStatus) || 'unverified';
-
-      // Type assertion to handle optional fields
-      const categories = providerData.categories ? providerData.categories as string[] : [];
-      const services = providerData.services ? providerData.services as string[] : [];
+      const categories = Array.isArray(providerData.categories) ? providerData.categories : [];
+      const services = Array.isArray(providerData.services) ? providerData.services : [];
       const taxId = providerData.tax_id || '';
       const reviewCount = providerData.review_count || 0;
 
       const providerProfile: Provider = {
         id: userId,
-        email: profileData.email || '',
-        firstName: profileData.first_name || '',
-        lastName: profileData.last_name || '',
+        email: typeof profileData === 'object' && profileData.email ? profileData.email : '',
+        firstName: typeof profileData === 'object' && profileData.first_name ? profileData.first_name : '',
+        lastName: typeof profileData === 'object' && profileData.last_name ? profileData.last_name : '',
         role: 'provider',
-        phoneNumber: profileData.phone_number || '',
-        avatarUrl: profileData.avatar_url || '',
-        emailVerified: profileData.email_verified || false,
+        phoneNumber: typeof profileData === 'object' && profileData.phone_number ? profileData.phone_number : '',
+        avatarUrl: typeof profileData === 'object' && profileData.avatar_url ? profileData.avatar_url : '',
+        emailVerified: typeof profileData === 'object' && profileData.email_verified ? profileData.email_verified : false,
         businessName: providerData.business_name || '',
         businessDescription: providerData.business_description || '',
         categories,
         services,
         rating: providerData.rating || 0,
         commission: providerData.commission_rate || 0,
-        verificationStatus: verificationStatus,
+        verificationStatus: providerData.verification_status || 'unverified',
         bannerUrl: providerData.banner_url || '',
         website: providerData.website || '',
         taxId,
         reviewCount,
-        isVerified: verificationStatus === 'verified',
+        isVerified: providerData.verification_status === 'verified',
       };
 
       setUserProfile(providerProfile);

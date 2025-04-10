@@ -12,7 +12,8 @@ export enum ServiceCategoryEnum {
   INTERIOR_DESIGN = 'interior_design',
   EVENT_PLANNING = 'event_planning',
   TUTORING = 'tutoring',
-  OTHER = 'other'
+  OTHER = 'other',
+  ALL = 'all' // Adding ALL for filter purposes
 }
 
 export enum PricingModelEnum {
@@ -56,6 +57,9 @@ export interface ServiceListItem {
   location?: string;
   isActive?: boolean;
   featured?: boolean;
+  pricingModel?: string; // Add missing property for ServiceCard
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Service {
@@ -64,8 +68,8 @@ export interface Service {
   description: string;
   price: number;
   image: string;
-  provider_id: string; // Use snake_case for DB fields
-  provider_name: string; // Use snake_case for DB fields
+  provider_id: string;
+  provider_name: string;
   category: string;
   pricingModel: string;
   rating: number;
@@ -74,9 +78,14 @@ export interface Service {
   // Add camel case variants for client-side consistency
   providerId: string;
   providerName: string;
+  // Add missing properties needed in the codebase
+  features?: string[];
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  tags?: string[];
 }
 
-// Updated to include provider_name
 export interface ServiceData {
   id: string;
   title: string;
@@ -86,7 +95,7 @@ export interface ServiceData {
   category: string;
   pricing_model: string;
   provider_id: string;
-  provider_name: string; // Added to match required field
+  provider_name: string; // Required field
   rating?: number;
   review_count?: number;
   location?: string;

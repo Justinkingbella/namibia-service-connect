@@ -9,10 +9,13 @@ import { Badge } from '@/components/ui/badge';
 interface ServiceCardProps {
   service: ServiceListItem;
   className?: string;
+  asLink?: boolean;
+  linkTo?: string;
+  viewMode?: 'grid' | 'list'; // Add missing prop
 }
 
-export function ServiceCard({ service, className }: ServiceCardProps) {
-  const formatPrice = (price: number, model: string) => {
+export function ServiceCard({ service, className, viewMode = 'grid', asLink = false, linkTo = '' }: ServiceCardProps) {
+  const formatPrice = (price: number, model: string = 'fixed') => {
     return `N$${price}${model === 'hourly' ? '/hr' : ''}`;
   };
 
@@ -51,12 +54,12 @@ export function ServiceCard({ service, className }: ServiceCardProps) {
             <div className="flex items-center text-amber-500">
               <Star className="h-4 w-4 fill-current" />
               <span className="ml-1 text-sm font-medium">
-                {service.rating.toFixed(1)}
+                {service.rating?.toFixed(1) || '0.0'}
               </span>
             </div>
             <span className="mx-1 text-muted-foreground">•</span>
             <span className="text-sm text-muted-foreground">
-              {service.reviewCount} reviews
+              {service.reviewCount || 0} reviews
             </span>
           </div>
           

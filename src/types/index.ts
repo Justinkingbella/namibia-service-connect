@@ -23,8 +23,10 @@ export type {
   PaymentRecord,
   PaymentHistory,
   ProviderEarnings,
-  ProviderPayout
-} from './payments';
+  ProviderPayout,
+  NamibianMobileOperator,
+  NamibianBank
+} from './payment';
 
 // Export wallet types
 export type {
@@ -40,9 +42,7 @@ export type {
   WalletVerificationReport,
   VerificationStatus,
   WalletProvider,
-  UserType,
-  Wallet,
-  Transaction
+  UserType
 } from './wallet';
 
 // Export Auth types
@@ -85,3 +85,6 @@ export interface IResponse<T> {
 
 // Export conversation and message types
 export type { Conversation, Message } from './conversations';
+
+// Export favorites type
+export type { FavoriteService as ServiceFavorite } from './favorites';

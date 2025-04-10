@@ -52,18 +52,32 @@ export function useProfile() {
           birth_date: data.birth_date,
           loyalty_points: data.loyalty_points,
           // Fix notification preferences handling with safe access
-          notification_preferences: data.user_preferences && 
-            typeof data.user_preferences === 'object' ? 
-            {
-              email: data.user_preferences.notification_preferences?.email || true,
-              sms: data.user_preferences.notification_preferences?.sms || false,
-              push: data.user_preferences.notification_preferences?.push || true
-            } : {
-              email: true,
-              sms: false,
-              push: true
-            }
+          notification_preferences: {
+            email: true, // Default values
+            sms: false,
+            push: true
+          }
         };
+
+        // Safely update notification preferences if they exist
+        if (data.user_preferences && 
+            typeof data.user_preferences === 'object' && 
+            data.user_preferences !== null) {
+          try {
+            // Extract notification preferences safely
+            const userPrefs = data.user_preferences;
+            if (userPrefs.notification_preferences && 
+                typeof userPrefs.notification_preferences === 'object') {
+              mappedProfile.notification_preferences = {
+                email: userPrefs.notification_preferences.email ?? true,
+                sms: userPrefs.notification_preferences.sms ?? false,
+                push: userPrefs.notification_preferences.push ?? true
+              };
+            }
+          } catch (prefError) {
+            console.error('Error parsing notification preferences:', prefError);
+          }
+        }
 
         setProfile(mappedProfile);
       } catch (err) {

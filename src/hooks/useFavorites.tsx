@@ -34,10 +34,7 @@ export function useFavorites() {
           user_id,
           service_id,
           created_at,
-          service:service_id (
-            id, title, description, price, image, provider_id, provider_name, 
-            category, pricing_model, rating, review_count, location
-          )
+          service:service_id (*)
         `)
         .eq('user_id', user.id);
         
@@ -47,7 +44,7 @@ export function useFavorites() {
 
       // Map to FavoriteService type with proper null handling
       const mappedFavorites: FavoriteService[] = data.map(item => {
-        // Create service object with proper null handling
+        // Use proper type checking and defaults for service data
         const serviceData = item.service || {};
         
         // Create a properly typed Service object with defaults for missing values
@@ -66,7 +63,13 @@ export function useFavorites() {
           pricingModel: serviceData.pricing_model || '',
           rating: serviceData.rating || 0,
           reviewCount: serviceData.review_count || 0,
-          location: serviceData.location || ''
+          location: serviceData.location || '',
+          // Additional properties from type
+          features: serviceData.features || [],
+          isActive: serviceData.is_active || false,
+          createdAt: serviceData.created_at || '',
+          updatedAt: serviceData.updated_at || '',
+          tags: serviceData.tags || []
         };
         
         return {
@@ -112,17 +115,14 @@ export function useFavorites() {
           user_id,
           service_id,
           created_at,
-          service:service_id (
-            id, title, description, price, image, provider_id, provider_name, 
-            category, pricing_model, rating, review_count, location
-          )
+          service:service_id (*)
         `)
         .single();
         
       if (error) throw error;
       
       // Add to state with proper mapping
-      // Create service object with proper null handling
+      // Use proper null checking for service
       const serviceData = data.service || {};
       
       // Create a properly typed Service object with defaults for missing values
@@ -141,7 +141,12 @@ export function useFavorites() {
         pricingModel: serviceData.pricing_model || '',
         rating: serviceData.rating || 0,
         reviewCount: serviceData.review_count || 0,
-        location: serviceData.location || ''
+        location: serviceData.location || '',
+        // Additional properties
+        features: serviceData.features || [],
+        isActive: serviceData.is_active || false,
+        createdAt: serviceData.created_at || '',
+        updatedAt: serviceData.updated_at || ''
       };
       
       const mappedFavorite: FavoriteService = {

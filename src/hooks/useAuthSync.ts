@@ -50,6 +50,8 @@ export const useAuthSync = () => {
             }
           };
           
+          // Avoid directly passing Session object to Supabase functions
+          // instead use separate store function
           setSession(customSession);
           
           // Get user data
@@ -130,9 +132,10 @@ export const useAuthSync = () => {
               // Cast to ProviderVerificationStatus to ensure type safety
               const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'unverified';
               
-              // Safely handle potentially missing fields
-              const categories = providerData.categories ? providerData.categories as string[] : [];
-              const services = providerData.services ? providerData.services as string[] : [];
+              // Add safety checks for specific fields
+              // Handle potentially missing fields that are causing errors
+              const categories = Array.isArray(providerData.categories) ? providerData.categories : [];
+              const services = Array.isArray(providerData.services) ? providerData.services : [];
               const taxId = providerData.tax_id || '';
               const reviewCount = providerData.review_count || 0;
               
@@ -218,6 +221,7 @@ export const useAuthSync = () => {
           }
         };
         
+        // Use a custom function to update the session state instead of directly passing to Supabase
         setSession(customSession);
         const userMeta = session.user?.user_metadata || {};
         const userRole = userMeta.role || 'customer';

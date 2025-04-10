@@ -13,14 +13,14 @@ import { Badge } from '@/components/ui/badge';
 export interface CreateServiceFormProps {
   onSubmit: (data: Partial<ServiceData>) => Promise<void>;
   isSubmitting?: boolean;
-  isLoading?: boolean; // Add isLoading for compatibility
+  isLoading?: boolean;
 }
 
 const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmitting = false, isLoading = false }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState<number>(0);
-  const [category, setCategory] = useState(ServiceCategoryEnum.HOME);
+  const [category, setCategory] = useState(ServiceCategoryEnum.CLEANING); // Use CLEANING instead of HOME
   const [pricingModel, setPricingModel] = useState(PricingModelEnum.FIXED);
   const [features, setFeatures] = useState<string[]>([]);
   const [newFeature, setNewFeature] = useState('');
@@ -99,9 +99,11 @@ const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmi
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
-                {Object.values(ServiceCategoryEnum).map((cat) => (
+                {Object.values(ServiceCategoryEnum)
+                  .filter(cat => cat !== 'all') // Skip the ALL category
+                  .map((cat) => (
                   <SelectItem key={cat} value={cat}>
-                    {cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
+                    {cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase().replace('_', ' ')}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -177,6 +179,32 @@ const CreateServiceForm: React.FC<CreateServiceFormProps> = ({ onSubmit, isSubmi
       </div>
     </form>
   );
+  
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    
+    const serviceData: Partial<ServiceData> = {
+      title,
+      description,
+      price,
+      category,
+      pricing_model: pricingModel,
+      features,
+    };
+    
+    onSubmit(serviceData);
+  }
+
+  function addFeature() {
+    if (newFeature.trim() !== '') {
+      setFeatures([...features, newFeature.trim()]);
+      setNewFeature('');
+    }
+  }
+
+  function removeFeature(featureToRemove: string) {
+    setFeatures(features.filter(feature => feature !== featureToRemove));
+  }
 };
 
 export default CreateServiceForm;
