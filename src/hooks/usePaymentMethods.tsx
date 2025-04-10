@@ -1,176 +1,243 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { PaymentMethod } from '@/types/payments';
-import { getMockPaymentMethods } from '@/services/paymentService';
-import { useToast } from '@/hooks/use-toast';
-import { PaymentMethodType } from '@/types/schema';
+import { PaymentMethod } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from './use-toast';
+
+interface PaymentMethodInput {
+  name: string;
+  type: string;
+  details: Record<string, any>;
+  isDefault: boolean;
+}
 
 export function usePaymentMethods() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const loadPaymentMethods = async () => {
-      if (!user) return;
-      try {
-        setLoading(true);
-        // Use the mock service for demonstration purposes
-        const data = await getMockPaymentMethods(user.id);
-        setPaymentMethods(data);
-      } catch (error: any) {
-        console.error('Error loading payment methods:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load payment methods',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!user) {
+      setPaymentMethods([]);
+      setLoading(false);
+      return;
+    }
 
-    loadPaymentMethods();
-  }, [user, toast]);
+    fetchPaymentMethods();
+  }, [user]);
 
-  const addPaymentMethod = async (method: Omit<PaymentMethod, 'id' | 'createdAt' | 'userId'>) => {
+  const fetchPaymentMethods = async () => {
     try {
-      if (!user) throw new Error('User must be logged in');
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('payment_methods')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('is_default', { ascending: false });
 
-      // Simulate API call
-      // In a real app, this would call an API endpoint
-      const newMethod = {
-        id: `pm_${Date.now()}`,
-        userId: user.id,
-        createdAt: new Date().toISOString(),
-        ...method
+      if (error) {
+        throw error;
+      }
+
+      // Map database fields to our PaymentMethod interface
+      const mappedMethods: PaymentMethod[] = data.map(item => ({
+        id: item.id,
+        userId: item.user_id,
+        name: item.name,
+        type: item.type,
+        details: typeof item.details === 'object' ? item.details : {},
+        isDefault: item.is_default,
+        createdAt: item.created_at
+      }));
+
+      setPaymentMethods(mappedMethods);
+    } catch (error) {
+      console.error('Error fetching payment methods:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load payment methods",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addPaymentMethod = async (method: Omit<PaymentMethod, "id" | "createdAt" | "userId">): Promise<PaymentMethod> => {
+    try {
+      // If setting as default, update all others to not default
+      if (method.isDefault) {
+        await supabase
+          .from('payment_methods')
+          .update({ is_default: false })
+          .eq('user_id', user?.id);
+      }
+
+      // Insert new payment method
+      const { data, error } = await supabase
+        .from('payment_methods')
+        .insert({
+          user_id: user?.id,
+          name: method.name,
+          type: method.type,
+          details: method.details || {},
+          is_default: method.isDefault
+        })
+        .select('*')
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      const newMethod: PaymentMethod = {
+        id: data.id,
+        userId: data.user_id,
+        name: data.name,
+        type: data.type,
+        details: data.details,
+        isDefault: data.is_default,
+        createdAt: data.created_at
       };
 
-      // Update state
-      setPaymentMethods([...paymentMethods, newMethod]);
+      // Update local state
+      setPaymentMethods(prev => 
+        method.isDefault 
+          ? [newMethod, ...prev.map(m => ({ ...m, isDefault: false }))]
+          : [...prev, newMethod]
+      );
 
       toast({
-        title: 'Success',
-        description: 'Payment method added successfully',
+        title: "Payment Method Added",
+        description: `${method.name} has been added to your payment methods.`,
       });
 
       return newMethod;
     } catch (error: any) {
       console.error('Error adding payment method:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to add payment method',
-        variant: 'destructive',
+        title: "Error",
+        description: error.message || "Failed to add payment method",
+        variant: "destructive"
       });
       throw error;
     }
   };
 
-  const updatePaymentMethod = async (id: string, method: Partial<PaymentMethod>) => {
+  const updatePaymentMethod = async (id: string, updates: Partial<PaymentMethod>): Promise<PaymentMethod> => {
     try {
-      if (!user) throw new Error('User must be logged in');
+      // If setting as default, update all others to not default
+      if (updates.isDefault) {
+        await supabase
+          .from('payment_methods')
+          .update({ is_default: false })
+          .eq('user_id', user?.id);
+      }
 
-      // Find the payment method
-      const foundMethod = paymentMethods.find(pm => pm.id === id);
-      if (!foundMethod) throw new Error('Payment method not found');
+      // Update the specified payment method
+      const { data, error } = await supabase
+        .from('payment_methods')
+        .update({
+          name: updates.name,
+          type: updates.type,
+          details: updates.details,
+          is_default: updates.isDefault
+        })
+        .eq('id', id)
+        .select('*')
+        .single();
 
-      // Simulate API call
-      const updatedMethod = {
-        ...foundMethod,
-        ...method,
+      if (error) {
+        throw error;
+      }
+
+      const updatedMethod: PaymentMethod = {
+        id: data.id,
+        userId: data.user_id,
+        name: data.name,
+        type: data.type,
+        details: data.details,
+        isDefault: data.is_default,
+        createdAt: data.created_at
       };
 
-      // Update state
-      setPaymentMethods(paymentMethods.map(pm => pm.id === id ? updatedMethod : pm));
+      // Update local state
+      setPaymentMethods(prev => {
+        let newMethods = [...prev];
+        const index = newMethods.findIndex(m => m.id === id);
+        
+        if (index !== -1) {
+          newMethods[index] = updatedMethod;
+        }
+        
+        // If setting as default, update all others
+        if (updates.isDefault) {
+          newMethods = newMethods.map(m => 
+            m.id === id ? m : { ...m, isDefault: false }
+          );
+        }
+        
+        return newMethods;
+      });
 
       toast({
-        title: 'Success',
-        description: 'Payment method updated successfully',
+        title: "Payment Method Updated",
+        description: `${updatedMethod.name} has been updated.`,
       });
 
       return updatedMethod;
     } catch (error: any) {
       console.error('Error updating payment method:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to update payment method',
-        variant: 'destructive',
+        title: "Error",
+        description: error.message || "Failed to update payment method",
+        variant: "destructive"
       });
       throw error;
     }
   };
 
-  const removePaymentMethod = async (id: string) => {
+  const removePaymentMethod = async (id: string): Promise<boolean> => {
     try {
-      if (!user) throw new Error('User must be logged in');
-
-      // Find the payment method
-      const foundMethod = paymentMethods.find(pm => pm.id === id);
-      if (!foundMethod) throw new Error('Payment method not found');
-
-      // Check if this is the default payment method
-      if (foundMethod.isDefault && paymentMethods.length > 1) {
+      // Check if this is the default method
+      const method = paymentMethods.find(m => m.id === id);
+      if (!method) throw new Error("Payment method not found");
+      
+      if (method.isDefault && paymentMethods.length > 1) {
         toast({
-          title: 'Warning',
-          description: 'Cannot delete default payment method',
-          variant: 'destructive',
+          title: "Error",
+          description: "Cannot delete default payment method. Set another method as default first.",
+          variant: "destructive"
         });
         return false;
       }
 
-      // Simulate API call
-      // Update state
-      setPaymentMethods(paymentMethods.filter(pm => pm.id !== id));
+      const { error } = await supabase
+        .from('payment_methods')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state
+      setPaymentMethods(prev => prev.filter(m => m.id !== id));
 
       toast({
-        title: 'Success',
-        description: 'Payment method removed successfully',
+        title: "Payment Method Removed",
+        description: `${method.name} has been removed from your payment methods.`,
       });
 
       return true;
     } catch (error: any) {
       console.error('Error removing payment method:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to remove payment method',
-        variant: 'destructive',
-      });
-      return false;
-    }
-  };
-
-  const setDefaultPaymentMethod = async (id: string) => {
-    try {
-      if (!user) throw new Error('User must be logged in');
-
-      // Find the payment method
-      const foundMethod = paymentMethods.find(pm => pm.id === id);
-      if (!foundMethod) throw new Error('Payment method not found');
-
-      // Update all payment methods - set isDefault=false for all except the selected one
-      const updatedMethods = paymentMethods.map(pm => ({
-        ...pm,
-        isDefault: pm.id === id
-      }));
-
-      // Simulate API call
-      // Update state
-      setPaymentMethods(updatedMethods);
-
-      toast({
-        title: 'Success',
-        description: 'Default payment method updated',
-      });
-
-      return true;
-    } catch (error: any) {
-      console.error('Error setting default payment method:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to set default payment method',
-        variant: 'destructive',
+        title: "Error",
+        description: error.message || "Failed to remove payment method",
+        variant: "destructive"
       });
       return false;
     }
@@ -181,7 +248,6 @@ export function usePaymentMethods() {
     loading,
     addPaymentMethod,
     updatePaymentMethod,
-    removePaymentMethod,
-    setDefaultPaymentMethod
+    removePaymentMethod
   };
 }

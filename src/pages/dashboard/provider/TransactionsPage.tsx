@@ -1,238 +1,269 @@
 
 import React, { useState } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { usePaymentHistory } from '@/hooks/usePaymentHistory';
-import PaymentHistoryComponent from '@/components/provider/PaymentHistory';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
-import { 
-  Download, CreditCard, Filter, Search, 
-  ArrowDownWideNarrow, ArrowUpWideNarrow
-} from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format, isValid, parseISO } from 'date-fns';
+import { format } from 'date-fns';
+import { CalendarIcon, Download, Filter } from 'lucide-react';
+import { usePaymentHistory } from '@/hooks/usePaymentHistory';
+import { PaymentHistory } from '@/types/payments';
+import { cn } from '@/lib/utils';
 
-const TransactionsPage = () => {
-  const { paymentHistory, loading } = usePaymentHistory();
-  const [activeTab, setActiveTab] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterPaymentMethod, setFilterPaymentMethod] = useState<string>('all');
+const statusColors = {
+  pending: 'bg-yellow-100 text-yellow-800',
+  completed: 'bg-green-100 text-green-800',
+  failed: 'bg-red-100 text-red-800',
+  processing: 'bg-blue-100 text-blue-800'
+};
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = parseISO(dateString);
-      return isValid(date) ? format(date, 'MMM dd, yyyy') : 'Invalid date';
-    } catch (error) {
-      return 'Invalid date';
+const TransactionsPage: React.FC = () => {
+  const { paymentHistory, loading, error } = usePaymentHistory();
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+
+  const [revenueReportTab, setRevenueReportTab] = useState('transactions');
+  
+  // Apply filters to payment history
+  const filteredHistory = paymentHistory.filter(payment => {
+    // Status filter
+    if (statusFilter !== 'all' && payment.status !== statusFilter) {
+      return false;
     }
+    
+    // Date filter
+    if (dateFilter && new Date(payment.createdAt).toDateString() !== dateFilter.toDateString()) {
+      return false;
+    }
+    
+    return true;
+  });
+  
+  // Calculate summary metrics
+  const totalIncome = filteredHistory
+    .filter(p => p.status === 'completed' && p.type === 'payment')
+    .reduce((sum, p) => sum + p.amount, 0);
+    
+  const totalPayout = filteredHistory
+    .filter(p => p.status === 'completed' && p.type === 'payout')
+    .reduce((sum, p) => sum + p.amount, 0);
+    
+  const pendingAmount = filteredHistory
+    .filter(p => p.status === 'pending')
+    .reduce((sum, p) => sum + p.amount, 0);
+  
+  const resetFilters = () => {
+    setStatusFilter('all');
+    setDateFilter(undefined);
   };
 
-  // Filter and sort transactions
-  const filteredTransactions = paymentHistory
-    .filter((transaction) => {
-      // Apply tab filter
-      if (activeTab !== 'all' && transaction.type !== activeTab) return false;
-      
-      // Apply status filter
-      if (filterStatus !== 'all' && transaction.status !== filterStatus) return false;
-      
-      // Apply payment method filter
-      if (filterPaymentMethod !== 'all' && transaction.paymentMethod !== filterPaymentMethod) return false;
-      
-      // Apply search
-      if (searchTerm && !transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) && 
-          !transaction.reference.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
-      }
-      
-      return true;
-    })
-    .sort((a, b) => {
-      // Sort by date
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
-      
-      return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
-    });
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
-  // Extract unique payment methods
-  const paymentMethods = Array.from(new Set(paymentHistory.map(t => t.paymentMethod)));
+  if (error) {
+    return (
+      <div className="text-center p-8 text-red-500">
+        <h3 className="text-lg font-medium">Error Loading Transactions</h3>
+        <p>{error}</p>
+        <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+          Try Again
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Transactions</h1>
-            <p className="text-muted-foreground">
-              Manage and track all your transactions and payments
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
-            <Button>
-              <CreditCard className="mr-2 h-4 w-4" />
-              Withdraw Funds
-            </Button>
-          </div>
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Financial Overview</h1>
+          <p className="text-muted-foreground">
+            Manage your transactions, payouts, and revenue reports
+          </p>
         </div>
-
+        
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" className="flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            <span>Filter</span>
+          </Button>
+          <Button variant="outline" className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            <span>Export</span>
+          </Button>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardHeader>
-            <CardTitle>Transaction History</CardTitle>
-            <CardDescription>
-              View all your past transactions, payments, and withdrawals
-            </CardDescription>
+          <CardHeader className="pb-2">
+            <CardDescription>Total Income</CardDescription>
+            <CardTitle className="text-2xl">N${totalIncome.toFixed(2)}</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
-                <TabsList className="mb-4 sm:mb-0">
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="payment">Payments</TabsTrigger>
-                  <TabsTrigger value="payout">Payouts</TabsTrigger>
-                  <TabsTrigger value="refund">Refunds</TabsTrigger>
-                </TabsList>
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
-                  >
-                    {sortDirection === 'asc' 
-                      ? <ArrowUpWideNarrow className="mr-2 h-4 w-4" /> 
-                      : <ArrowDownWideNarrow className="mr-2 h-4 w-4" />
-                    }
-                    Date
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search transactions..."
-                    className="pl-8"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-[160px]">
-                    <Filter className="mr-2 h-4 w-4" />
-                    <span>Status</span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="processing">Processing</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
-                  </SelectContent>
-                </Select>
-                {paymentMethods.length > 0 && (
-                  <Select value={filterPaymentMethod} onValueChange={setFilterPaymentMethod}>
-                    <SelectTrigger className="w-[180px]">
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      <span>Payment Method</span>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Methods</SelectItem>
-                      {paymentMethods.map(method => (
-                        <SelectItem key={method} value={method}>
-                          {method}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-
-              <TabsContent value="all" className="space-y-4">
-                <div className="rounded-md border">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="py-3 px-4 text-left font-medium">Date</th>
-                        <th className="py-3 px-4 text-left font-medium">Description</th>
-                        <th className="py-3 px-4 text-left font-medium">Type</th>
-                        <th className="py-3 px-4 text-left font-medium">Amount</th>
-                        <th className="py-3 px-4 text-left font-medium">Status</th>
-                        <th className="py-3 px-4 text-left font-medium">Reference</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {loading ? (
-                        <tr>
-                          <td colSpan={6} className="py-6 text-center">Loading transactions...</td>
-                        </tr>
-                      ) : filteredTransactions.length === 0 ? (
-                        <tr>
-                          <td colSpan={6} className="py-6 text-center">No transactions found.</td>
-                        </tr>
-                      ) : (
-                        filteredTransactions.map((transaction) => (
-                          <tr key={transaction.id} className="border-b">
-                            <td className="py-3 px-4">
-                              {transaction.date ? formatDate(transaction.date) : formatDate(transaction.createdAt)}
-                            </td>
-                            <td className="py-3 px-4">{transaction.description}</td>
-                            <td className="py-3 px-4 capitalize">{transaction.type}</td>
-                            <td className="py-3 px-4">
-                              <span className={transaction.type === 'refund' ? 'text-red-600' : transaction.type === 'payout' ? 'text-amber-600' : 'text-green-600'}>
-                                {transaction.type === 'refund' || transaction.type === 'payout' ? '-' : '+'} 
-                                N${transaction.amount.toFixed(2)}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span 
-                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                  transaction.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                                  transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                  transaction.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                                  'bg-red-100 text-red-800'
-                                }`}
-                              >
-                                {transaction.status}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 font-mono text-xs">{transaction.reference}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="payment" className="space-y-4">
-                <PaymentHistoryComponent />
-              </TabsContent>
-
-              <TabsContent value="payout" className="space-y-4">
-                <div className="py-8 text-center text-muted-foreground">
-                  Payout history will be available soon.
-                </div>
-              </TabsContent>
-
-              <TabsContent value="refund" className="space-y-4">
-                <div className="py-8 text-center text-muted-foreground">
-                  Refund history will be available soon.
-                </div>
-              </TabsContent>
-            </Tabs>
+            <p className="text-xs text-muted-foreground">+2.5% from last month</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Total Payouts</CardDescription>
+            <CardTitle className="text-2xl">N${totalPayout.toFixed(2)}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">Processed earnings</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Pending Amount</CardDescription>
+            <CardTitle className="text-2xl">N${pendingAmount.toFixed(2)}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">Awaiting confirmation</p>
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+      
+      <Tabs defaultValue="transactions" value={revenueReportTab} onValueChange={setRevenueReportTab}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          <TabsTrigger value="payouts">Payouts</TabsTrigger>
+          <TabsTrigger value="reports">Revenue Reports</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="transactions" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <CardTitle>Transaction History</CardTitle>
+                  <CardDescription>View all your financial transactions</CardDescription>
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                      <SelectItem value="processing">Processing</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className={cn("w-[200px] justify-start text-left font-normal", !dateFilter && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateFilter ? format(dateFilter, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={dateFilter}
+                        onSelect={setDateFilter}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  
+                  <Button variant="ghost" size="sm" onClick={resetFilters}>
+                    Reset
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Payment Method</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Reference</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredHistory.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center">
+                        No transactions found.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredHistory.map((transaction: PaymentHistory) => (
+                      <TableRow key={transaction.id}>
+                        <TableCell className="font-medium">
+                          {format(new Date(transaction.createdAt), 'MMM dd, yyyy')}
+                        </TableCell>
+                        <TableCell>{transaction.description}</TableCell>
+                        <TableCell>
+                          <span className={transaction.type === 'payment' ? 'text-green-700' : ''}>
+                            {transaction.type === 'payment' ? '+' : '-'}N${transaction.amount.toFixed(2)}
+                          </span>
+                        </TableCell>
+                        <TableCell>{transaction.paymentMethod}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={statusColors[transaction.status as keyof typeof statusColors]}>
+                            {transaction.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-xs">
+                          {transaction.reference}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="payouts">
+          <Card>
+            <CardHeader>
+              <CardTitle>Payouts</CardTitle>
+              <CardDescription>View and manage your payouts</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Payout feature will be available soon.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="reports">
+          <Card>
+            <CardHeader>
+              <CardTitle>Revenue Reports</CardTitle>
+              <CardDescription>Financial analytics and reporting</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Revenue reporting tools will be available soon.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

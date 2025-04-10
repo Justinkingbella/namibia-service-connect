@@ -51,8 +51,8 @@ export function useProfile() {
           bio: data.bio,
           birth_date: data.birth_date,
           loyalty_points: data.loyalty_points,
-          notification_preferences: data.user_preferences && 
-            typeof data.user_preferences === 'object' ? 
+          // Fix notification preferences handling
+          notification_preferences: typeof data.user_preferences === 'object' && data.user_preferences ? 
             (data.user_preferences.notification_preferences || {
               email: true,
               sms: false,

@@ -1,7 +1,6 @@
-
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
-import { BookingData, BookingWithDetails, BookingStatus, PaymentStatus } from '@/types/booking';
+import { BookingData, BookingWithDetails, BookingStatus, PaymentStatus } from '@/types';
 import { toast } from 'sonner';
 import { useAuthStore } from './authStore';
 
@@ -33,7 +32,6 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   fetchUserBookings: async (userId: string, role: 'customer' | 'provider') => {
     set({ isLoading: true, error: null });
     try {
-      // Fetch bookings based on role
       const field = role === 'customer' ? 'customer_id' : 'provider_id';
       
       const { data, error } = await supabase
@@ -82,34 +80,53 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   fetchBookingById: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
-      // Fetch booking with related service, customer and provider info
       const { data, error } = await supabase
         .from('bookings')
         .select(`
           *,
           service:service_id(*),
-          customer:customer_id(first_name, last_name, email, phone_number, avatar_url),
-          provider:provider_id(business_name, email, phone_number, avatar_url)
+          customer:customer_id(*),
+          provider:provider_id(*)
         `)
         .eq('id', id)
         .single();
 
       if (error) throw error;
 
-      // Transform to BookingWithDetails
+      const serviceData = data.service || {};
+      const customerData = data.customer || {};
+      const providerData = data.provider || {};
+      
       const bookingWithDetails: BookingWithDetails = {
-        ...data,
-        serviceDetails: data.service,
-        customerDetails: data.customer,
-        providerDetails: data.provider,
+        id: data.id,
+        serviceId: data.service_id,
+        customerId: data.customer_id,
+        providerId: data.provider_id,
+        date: data.date,
+        startTime: data.start_time,
+        endTime: data.end_time,
+        status: data.status as BookingStatus,
+        paymentStatus: data.payment_status as PaymentStatus,
+        paymentMethod: data.payment_method,
+        totalAmount: data.total_amount,
+        commission: data.commission,
+        notes: data.notes,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
         
-        // Add convenient display properties
-        serviceTitle: data.service?.title || 'Unknown Service',
-        serviceImage: data.service?.image || '',
-        providerName: data.provider?.business_name || 'Unknown Provider',
-        customerName: `${data.customer?.first_name || ''} ${data.customer?.last_name || ''}`.trim() || 'Unknown Customer',
-        providerAvatar: data.provider?.avatar_url || '',
-        customerAvatar: data.customer?.avatar_url || '',
+        service: {
+          title: serviceData.title || 'Unknown Service',
+          image: serviceData.image || '',
+        },
+        provider: {
+          businessName: providerData.business_name || 'Unknown Provider',
+          avatarUrl: providerData.avatar_url || '',
+        },
+        customer: {
+          name: `${customerData.first_name || ''} ${customerData.last_name || ''}`.trim() || 'Unknown Customer',
+          avatarUrl: customerData.avatar_url || '',
+        },
+        
         formattedDate: new Date(data.date).toLocaleDateString(),
       };
 
@@ -130,22 +147,18 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   createBooking: async (bookingData: Partial<BookingData>) => {
     set({ isLoading: true, error: null });
     try {
-      // Ensure total_amount is a number
       if (bookingData.total_amount) {
         bookingData.total_amount = Number(bookingData.total_amount);
       }
 
-      // Set default commission if not provided (10% of total)
       if (bookingData.total_amount && !bookingData.commission) {
         bookingData.commission = Number(bookingData.total_amount) * 0.1;
       }
 
-      // Set default status if not provided
       if (!bookingData.status) {
         bookingData.status = 'pending';
       }
 
-      // Set default payment status if not provided
       if (!bookingData.payment_status) {
         bookingData.payment_status = 'pending';
       }
@@ -158,7 +171,6 @@ export const useBookingStore = create<BookingState>((set, get) => ({
 
       if (error) throw error;
 
-      // Update the user bookings list
       const { userBookings } = get();
       set({
         userBookings: [...userBookings, data as BookingData]
@@ -188,17 +200,14 @@ export const useBookingStore = create<BookingState>((set, get) => ({
 
       if (error) throw error;
 
-      // Update the bookings in the store
       const { userBookings, allBookings, selectedBooking } = get();
       
-      // Update userBookings
       set({
         userBookings: userBookings.map(booking => 
           booking.id === id ? { ...booking, ...bookingData } : booking
         )
       });
 
-      // Update allBookings if necessary
       if (allBookings.length > 0) {
         set({
           allBookings: allBookings.map(booking => 
@@ -207,7 +216,6 @@ export const useBookingStore = create<BookingState>((set, get) => ({
         });
       }
 
-      // Update selectedBooking if it's the one being edited
       if (selectedBooking && selectedBooking.id === id) {
         set({
           selectedBooking: {

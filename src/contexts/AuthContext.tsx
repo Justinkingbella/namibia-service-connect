@@ -32,25 +32,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkAuth = async () => {
       setIsLoading(true);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session: supabaseSession } } = await supabase.auth.getSession();
 
-        if (session) {
-          setSession(session);
+        if (supabaseSession) {
+          const customSession: Session = {
+            id: supabaseSession.user.id,
+            user_id: supabaseSession.user.id,
+            created_at: supabaseSession.created_at || '',
+            expires_at: supabaseSession.expires_at?.toString() || '',
+            access_token: supabaseSession.access_token,
+            refresh_token: supabaseSession.refresh_token || '',
+            user: {
+              id: supabaseSession.user.id,
+              email: supabaseSession.user.email || '',
+              role: (supabaseSession.user.user_metadata?.role as UserRole) || 'customer'
+            }
+          };
+          
+          setSession(customSession);
           setIsAuthenticated(true);
 
           const userDetails: User = {
-            id: session.user.id,
-            email: session.user.email as string,
+            id: supabaseSession.user.id,
+            email: supabaseSession.user.email as string,
             firstName: '',
             lastName: '',
             role: 'customer' as UserRole,
-            phoneNumber: session.user.phone || '',
-            createdAt: session.user.created_at || '',
+            phoneNumber: supabaseSession.user.phone || '',
+            createdAt: supabaseSession.user.created_at || '',
             emailVerified: false,
           };
 
-          if (session.user.user_metadata) {
-            userDetails.role = session.user.user_metadata.role || 'customer';
+          if (supabaseSession.user.user_metadata) {
+            userDetails.role = supabaseSession.user.user_metadata.role || 'customer';
             setUserRole(userDetails.role);
           }
 
@@ -110,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     checkAuth();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, supabaseSession) => {
       console.log('Auth state changed:', event);
       if (event === 'SIGNED_OUT') {
         setUser(null);
@@ -118,21 +132,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserRole(null);
         setIsAuthenticated(false);
         navigate('/auth/sign-in', { replace: true });
-      } else if (event === 'SIGNED_IN' && session) {
-        setSession(session);
+      } else if (event === 'SIGNED_IN' && supabaseSession) {
+        const customSession: Session = {
+          id: supabaseSession.user.id,
+          user_id: supabaseSession.user.id,
+          created_at: supabaseSession.created_at || '',
+          expires_at: supabaseSession.expires_at?.toString() || '',
+          access_token: supabaseSession.access_token,
+          refresh_token: supabaseSession.refresh_token || '',
+          user: {
+            id: supabaseSession.user.id,
+            email: supabaseSession.user.email || '',
+            role: (supabaseSession.user.user_metadata?.role as UserRole) || 'customer'
+          }
+        };
+        
+        setSession(customSession);
         setIsAuthenticated(true);
-        const userMeta = session.user?.user_metadata || {};
+        const userMeta = supabaseSession.user?.user_metadata || {};
         const userRole = userMeta.role || 'customer';
         console.log("Setting user role from metadata:", userRole);
         
         const user: User = {
-          id: session.user?.id || '',
-          email: session.user?.email || '',
+          id: supabaseSession.user?.id || '',
+          email: supabaseSession.user?.email || '',
           firstName: userMeta.first_name || '',
           lastName: userMeta.last_name || '',
           role: userRole as UserRole,
-          phoneNumber: session.user?.phone || '',
-          createdAt: session.user?.created_at || '',
+          phoneNumber: supabaseSession.user?.phone || '',
+          createdAt: supabaseSession.user?.created_at || '',
           emailVerified: false,
         };
         
@@ -187,7 +215,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error, data: null };
       }
 
-      // Create a user profile in the "profiles" table
       const { error: profileError } = await supabase
         .from('profiles')
         .insert([
@@ -297,7 +324,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
 
-      const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${data.Key}`;
+      const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${data.path}`;
       await updateProfile({ avatarUrl: publicUrl });
       return publicUrl;
     } catch (error: any) {
@@ -352,8 +379,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const verifyEmail = async (token: string) => {
     try {
       const { error } = await supabase.auth.verifyOtp({
-        type: 'email',
         token,
+        type: 'signup',
         email: user?.email || '',
       });
       if (error) throw error;
@@ -395,9 +422,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadCustomerProfile = async (userId: string) => {
     try {
-      const { data: customerData, error } = await supabase
+      const { data, error } = await supabase
         .from('customers')
-        .select('*')
+        .select('*, profiles:id(*)')
         .eq('id', userId)
         .single();
 
@@ -406,19 +433,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      if (!customerData) return;
+      if (!data) return;
+
+      const profileData = data.profiles || {};
 
       const customerProfile: Customer = {
         id: userId,
-        email: customerData.email || '',
-        firstName: customerData.first_name || '',
-        lastName: customerData.last_name || '',
+        email: profileData.email || '',
+        firstName: profileData.first_name || '',
+        lastName: profileData.last_name || '',
         role: 'customer',
-        phoneNumber: customerData.phone_number || '',
-        avatarUrl: customerData.avatar_url || '',
-        emailVerified: customerData.email_verified || false,
-        preferredCategories: customerData.preferred_categories || [],
-        savedServices: customerData.saved_services || [],
+        phoneNumber: profileData.phone_number || '',
+        avatarUrl: profileData.avatar_url || '',
+        emailVerified: profileData.email_verified || false,
+        preferredCategories: data.preferred_categories || [],
+        savedServices: data.saved_services || [],
         notificationPreferences: {
           email: true,
           sms: false,
@@ -435,7 +464,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data: providerData, error } = await supabase
         .from('service_providers')
-        .select('*')
+        .select('*, profiles:id(*)')
         .eq('id', userId)
         .single();
 
@@ -446,19 +475,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!providerData) return null;
 
-      // Cast to ProviderVerificationStatus to ensure type safety
+      const profileData = providerData.profiles || {};
+
       const verificationStatus = (providerData.verification_status as ProviderVerificationStatus) || 'unverified';
 
-      // Create provider profile with safe defaults for missing fields
       const providerProfile: Provider = {
         id: userId,
-        email: providerData.email || '',
-        firstName: providerData.first_name || '',
-        lastName: providerData.last_name || '',
+        email: profileData.email || '',
+        firstName: profileData.first_name || '',
+        lastName: profileData.last_name || '',
         role: 'provider',
-        phoneNumber: providerData.phone_number || '',
-        avatarUrl: providerData.avatar_url || '',
-        emailVerified: providerData.email_verified || false,
+        phoneNumber: profileData.phone_number || '',
+        avatarUrl: profileData.avatar_url || '',
+        emailVerified: profileData.email_verified || false,
         businessName: providerData.business_name || '',
         businessDescription: providerData.business_description || '',
         categories: providerData.categories || [],
@@ -473,6 +502,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isVerified: verificationStatus === 'verified',
       };
 
+      setUserProfile(providerProfile);
       return providerProfile;
     } catch (error) {
       console.error('Error in loadProviderProfile:', error);
@@ -533,16 +563,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     verifyEmail,
     sendVerificationEmail,
     checkAuth: useCallback(async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      const { data: { session: supabaseSession } } = await supabase.auth.getSession();
+      if (supabaseSession) {
         const userDetails: User = {
-          id: session.user.id,
-          email: session.user.email as string,
+          id: supabaseSession.user.id,
+          email: supabaseSession.user.email as string,
           firstName: '',
           lastName: '',
           role: 'customer' as UserRole,
-          phoneNumber: session.user.phone || '',
-          createdAt: session.user.created_at || '',
+          phoneNumber: supabaseSession.user.phone || '',
+          createdAt: supabaseSession.user.created_at || '',
           emailVerified: false,
         };
         return userDetails;

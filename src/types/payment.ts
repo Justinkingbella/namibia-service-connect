@@ -47,10 +47,10 @@ export interface NamibianBank {
 export interface WalletVerification {
   id: string;
   user_id: string;
-  status: WalletVerificationStatus;
-  date: string;
-  reference: string;
-  method: WalletPaymentType;
+  verificationStatus?: WalletVerificationStatus;
+  date?: string;
+  reference?: string;
+  method?: WalletPaymentType;
   amount: number;
   provider_id?: string;
   customer_id?: string;
@@ -61,7 +61,6 @@ export interface WalletVerification {
   referenceNumber?: string;
   dateSubmitted?: string;
   dateVerified?: string | null;
-  verificationStatus?: WalletVerificationStatus;
   rejectionReason?: string;
   notes?: string;
   receiptImage?: string;
@@ -71,19 +70,61 @@ export interface WalletVerification {
   providerConfirmed?: boolean;
   adminVerified?: boolean;
   adminComments?: Json;
-  walletNumber?: string; // Additional field used in forms
-  paymentPurpose?: string; // Additional field used in forms
-  walletName?: string; // Additional field used in forms
-  userId?: string; // Additional field for referencing the user
-  userName?: string; // For displaying user names
-  userEmail?: string; // For contacting users
-  transactionReference?: string; // For tracking transactions
-  walletProvider?: string; // For wallet provider information
-  userType?: string; // To distinguish between customer and provider
-  reviewerId?: string; // For tracking who reviewed the verification
-  reviewerName?: string; // For displaying reviewer names
-  reviewDate?: string; // When the review happened
-  status?: string; // Additional status information
+  walletNumber?: string;
+  paymentPurpose?: string;
+  walletName?: string;
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
+  transactionReference?: string;
+  walletProvider?: string;
+  userType?: string;
+  reviewerId?: string;
+  reviewerName?: string;
+  reviewDate?: string;
+}
+
+// WalletVerificationRequest interface with all needed fields
+export interface WalletVerificationRequest {
+  id: string;
+  booking_id?: string;
+  customer_id?: string;
+  provider_id?: string;
+  amount: number;
+  date_submitted?: string;
+  date_verified?: string;
+  verified_by?: string;
+  verification_status?: WalletVerificationStatus;
+  payment_method?: WalletPaymentType;
+  reference_number?: string;
+  customer_phone?: string;
+  provider_phone?: string;
+  rejection_reason?: string;
+  customer_confirmed?: boolean;
+  provider_confirmed?: boolean;
+  admin_verified?: boolean;
+  admin_comments?: Json;
+  created_at?: string;
+  updated_at?: string;
+  proof_type?: string;
+  mobile_operator?: string;
+  bank_used?: string;
+  receipt_image?: string;
+  notes?: string;
+  // Additional fields used in components
+  walletNumber?: string;
+  walletName?: string;
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
+  transactionReference?: string;
+  walletProvider?: string;
+  userType?: string;
+  reviewerId?: string;
+  reviewerName?: string;
+  reviewDate?: string;
+  status?: WalletVerificationStatus;
+  paymentPurpose?: string;
 }
 
 // Updated PaymentHistory type to include date field

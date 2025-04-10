@@ -90,6 +90,7 @@ export interface DbCustomerProfile extends DbUserProfile {
   saved_services: string[];
 }
 
+// Fix the DbProviderProfile interface to match properly
 export interface DbProviderProfile {
   id: string;
   email: string;
@@ -116,10 +117,10 @@ export interface DbProviderProfile {
   rating?: number;
   rating_count?: number;
   services_count?: number;
-  categories?: string[];
-  services?: string[];
   tax_id?: string;
   review_count?: number;
+  categories?: string[];  // Add missing properties for service providers
+  services?: string[];
   notification_preferences?: {
     email: boolean;
     sms: boolean;

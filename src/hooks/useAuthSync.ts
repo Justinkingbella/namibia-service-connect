@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -32,7 +33,21 @@ export const useAuthSync = () => {
 
         if (sessionData?.session) {
           console.log("Session exists");
-          setSession(sessionData.session);
+          // Create a custom session object that matches our Session type
+          const customSession = {
+            id: sessionData.session.user.id,
+            user_id: sessionData.session.user.id,
+            created_at: sessionData.session.created_at || new Date().toISOString(),
+            expires_at: sessionData.session.expires_at?.toString() || '',
+            access_token: sessionData.session.access_token,
+            refresh_token: sessionData.session.refresh_token || '',
+            user: {
+              id: sessionData.session.user.id,
+              email: sessionData.session.user.email || '',
+              role: (sessionData.session.user.user_metadata?.role as UserRole) || 'customer'
+            }
+          };
+          setSession(customSession);
           
           // Get user data
           const userData: User = {
@@ -76,13 +91,17 @@ export const useAuthSync = () => {
 
           // Fetch role-specific data
           if (userData.role === 'customer') {
+            // Join customers table with profiles
             const { data: customerData, error: customerError } = await supabase
               .from('customers')
-              .select('*')
+              .select('*, profiles:id(*)')
               .eq('id', userData.id)
               .single();
 
             if (!customerError && customerData) {
+              // Get profile data through the join
+              const profileData = customerData.profiles || {};
+              
               const customerProfile: Customer = {
                 ...userData,
                 preferredCategories: customerData.preferred_categories || [],
@@ -97,13 +116,17 @@ export const useAuthSync = () => {
               navigate('/customer/dashboard', { replace: true });
             }
           } else if (userData.role === 'provider') {
+            // Join service_providers with profiles
             const { data: providerData, error: providerError } = await supabase
               .from('service_providers')
-              .select('*')
+              .select('*, profiles:id(*)')
               .eq('id', userData.id)
               .single();
 
             if (!providerError && providerData) {
+              // Get profile data through the join
+              const profileData = providerData.profiles || {};
+              
               // Cast to ProviderVerificationStatus to ensure type safety
               const verificationStatus = (providerData.verification_status as ProviderVerificationStatus) || 'unverified';
               
@@ -111,8 +134,8 @@ export const useAuthSync = () => {
                 ...userData,
                 businessName: providerData.business_name || '',
                 businessDescription: providerData.business_description || '',
-                categories: providerData.categories ? [...providerData.categories] : [],
-                services: providerData.services ? [...providerData.services] : [],
+                categories: providerData.categories || [],
+                services: providerData.services || [],
                 rating: providerData.rating || 0,
                 commission: providerData.commission_rate || 0,
                 verificationStatus: verificationStatus,

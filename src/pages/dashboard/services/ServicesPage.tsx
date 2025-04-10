@@ -1,102 +1,75 @@
-
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useServiceStore } from '@/store/serviceStore';
+import { useAuth } from '@/contexts/AuthContext';
+import { Service } from '@/types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, CirclePlus, Filter, Grid, LayoutGrid, List, Search, SortDesc } from 'lucide-react';
-import { ServiceCategoryEnum, Service, ServiceData } from '@/types';
-import { formatCurrency } from '@/lib/formatters';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import ServiceCard from '@/components/dashboard/ServiceCard';
-import { useAuth } from '@/contexts/AuthContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PlusCircle, Grid2X2, List, Search } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ServiceCategoryEnum } from '@/types';
+import { cn } from '@/lib/utils';
 
-// Sample services data
-const MOCK_SERVICES: Service[] = [
-  {
-    id: '1',
-    title: 'Professional House Cleaning',
-    description: 'Complete house cleaning service including all rooms and bathrooms.',
-    price: 450,
-    category: 'CLEANING',
-    providerId: 'p1',
-    providerName: 'CleanPro Namibia',
-    image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80',
-    features: ['Deep cleaning', 'Eco-friendly products', 'Same-day service'],
-    isActive: true,
-    createdAt: '2023-01-15T10:30:00Z',
-    updatedAt: '2023-03-20T14:45:00Z',
-    pricingModel: 'FIXED',
-    location: 'Windhoek',
-    rating: 4.8,
-    reviewCount: 125,
-    tags: ['cleaning', 'house', 'professional']
-  },
-  {
-    id: '2',
-    title: 'Plumbing Repair Services',
-    description: 'Professional plumbing repair services for residential and commercial properties.',
-    price: 350,
-    category: 'PLUMBING',
-    providerId: 'p2',
-    providerName: 'FixIt Pro Plumbers',
-    image: 'https://images.unsplash.com/photo-1606274016746-2da05ca37127?auto=format&fit=crop&q=80',
-    features: ['Emergency service', '1-year warranty', 'Free estimates'],
-    isActive: true,
-    createdAt: '2023-02-10T08:20:00Z',
-    updatedAt: '2023-04-05T11:30:00Z',
-    pricingModel: 'HOURLY',
-    location: 'Walvis Bay',
-    rating: 4.6,
-    reviewCount: 89,
-    tags: ['plumbing', 'repair', 'emergency']
-  },
-  {
-    id: '3',
-    title: 'Electrical Installation',
-    description: 'Complete electrical installation and repair services for homes and businesses.',
-    price: 575,
-    category: 'ELECTRICAL',
-    providerId: 'p3',
-    providerName: 'ElectroPro Services',
-    image: 'https://images.unsplash.com/photo-1621905251189-08b45249f78a?auto=format&fit=crop&q=80',
-    features: ['Licensed electricians', '24/7 emergency service', 'Safety certified'],
-    isActive: true,
-    createdAt: '2023-01-25T12:15:00Z',
-    updatedAt: '2023-03-18T09:40:00Z',
-    pricingModel: 'FIXED',
-    location: 'Swakopmund',
-    rating: 4.9,
-    reviewCount: 78,
-    tags: ['electrical', 'installation', 'repair']
-  },
-  {
-    id: '4',
-    title: 'Professional Moving Services',
-    description: 'Full-service moving company for local and long-distance relocations.',
-    price: 1200,
-    category: 'MOVING',
-    providerId: 'p4',
-    providerName: 'Swift Movers Namibia',
-    image: 'https://images.unsplash.com/photo-1600518858246-6219bb1838ea?auto=format&fit=crop&q=80',
-    features: ['Packing services', 'Furniture assembly', 'Insurance coverage'],
-    isActive: true,
-    createdAt: '2023-02-05T14:20:00Z',
-    updatedAt: '2023-04-10T10:15:00Z',
-    pricingModel: 'FIXED',
-    location: 'Windhoek',
-    rating: 4.7,
-    reviewCount: 56,
-    tags: ['moving', 'relocation', 'transport']
+interface ServiceCardProps {
+  service: Service;
+  asLink?: boolean;
+  linkTo?: string;
+  key?: string;
+}
+
+const ServiceCard: React.FC<ServiceCardProps> = ({ service, asLink = false, linkTo = '' }) => {
+  const content = (
+    <div className={cn("group cursor-pointer")}>
+      <div className="aspect-video relative rounded-md overflow-hidden mb-3">
+        {service.image ? (
+          <img 
+            src={service.image} 
+            alt={service.title}
+            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="bg-muted w-full h-full flex items-center justify-center text-muted-foreground">
+            No Image
+          </div>
+        )}
+        
+        <div className="absolute top-2 right-2">
+          <span className="bg-background/80 text-foreground text-xs font-medium px-2 py-1 rounded-full">
+            ${service.price.toFixed(2)}
+          </span>
+        </div>
+      </div>
+      <h3 className="font-medium text-md group-hover:text-primary transition-colors line-clamp-1">
+        {service.title}
+      </h3>
+      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+        {service.description}
+      </p>
+      <div className="flex justify-between items-center mt-2">
+        <div className="text-xs">
+          {service.category}
+        </div>
+        <div className="flex items-center text-xs text-muted-foreground">
+          {service.rating ? (
+            <>
+              <span className="mr-1">★</span>
+              <span>{service.rating.toFixed(1)}</span>
+            </>
+          ) : (
+            <span>New</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (asLink && linkTo) {
+    return <Link to={linkTo}>{content}</Link>;
   }
-];
+
+  return content;
+};
 
 const ServicesPage = () => {
   const { user } = useAuth();
@@ -111,7 +84,6 @@ const ServicesPage = () => {
   const isAdmin = user?.role === 'admin';
   const isProvider = user?.role === 'provider';
 
-  // Categories with labels
   const categories: Record<keyof typeof ServiceCategoryEnum, string> = {
     HOME: 'Home Services',
     CLEANING: 'Cleaning',
@@ -137,12 +109,10 @@ const ServicesPage = () => {
   const filterServices = () => {
     let filtered = [...services];
     
-    // Apply category filter
     if (selectedCategory !== 'ALL') {
       filtered = filtered.filter(service => service.category === selectedCategory);
     }
     
-    // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(service => 
@@ -153,7 +123,6 @@ const ServicesPage = () => {
       );
     }
     
-    // Apply sorting
     switch (sortBy) {
       case 'newest':
         filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -197,7 +166,6 @@ const ServicesPage = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Page Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
@@ -227,7 +195,6 @@ const ServicesPage = () => {
           )}
         </div>
         
-        {/* Filters and Search */}
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col md:flex-row gap-4">
@@ -280,7 +247,7 @@ const ServicesPage = () => {
                     onClick={() => setViewMode('grid')}
                     className="rounded-none rounded-l-md"
                   >
-                    <Grid className="h-4 w-4" />
+                    <Grid2X2 className="h-4 w-4" />
                   </Button>
                   <Button
                     variant={viewMode === 'list' ? 'default' : 'ghost'} 
@@ -300,12 +267,10 @@ const ServicesPage = () => {
           </CardContent>
         </Card>
         
-        {/* Results Count */}
         <div className="text-sm text-muted-foreground">
           Showing {filteredServices.length} {filteredServices.length === 1 ? 'service' : 'services'}
         </div>
         
-        {/* Services List */}
         {filteredServices.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center bg-muted rounded-lg">
             <Calendar className="h-10 w-10 text-muted-foreground mb-3" />

@@ -45,7 +45,7 @@ export function useFavorites() {
         throw error;
       }
 
-      // Map to FavoriteService type and ensure service is handled properly
+      // Map to FavoriteService type with proper null handling
       const mappedFavorites: FavoriteService[] = data.map(item => {
         // Create service object with proper null handling
         const serviceData = item.service || {};

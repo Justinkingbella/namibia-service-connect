@@ -23,11 +23,16 @@ export type {
   PaymentRecord,
   PaymentHistory,
   ProviderEarnings,
-  ProviderPayout,
+  ProviderPayout
+} from './payments';
+
+// Export wallet types from payment.ts instead of payments.ts
+export type {
   Wallet,
   Transaction as WalletTransaction,
-  WalletVerification
-} from './payments';
+  WalletVerification,
+  WalletVerificationRequest
+} from './payment';
 
 // Export Auth types
 export type { 
