@@ -1,7 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PostgrestError } from '@supabase/supabase-js';
+
+type TableName = keyof Database['public']['Tables'];
 
 export function useSupabaseQuery<T>(
   tableName: string,
@@ -28,10 +29,8 @@ export function useSupabaseQuery<T>(
       setLoading(true);
       setError(null);
 
-      // Start building the query
-      let query = supabase.from(tableName).select(options.select || '*');
+      let query = supabase.from(tableName as any).select(options.select || '*');
 
-      // Add filters
       if (options.filters && options.filters.length > 0) {
         for (const filter of options.filters) {
           switch (filter.operator) {
@@ -63,21 +62,18 @@ export function useSupabaseQuery<T>(
         }
       }
 
-      // Add exact match conditions
       if (options.match) {
         Object.entries(options.match).forEach(([column, value]) => {
           query = query.eq(column, value);
         });
       }
 
-      // Add ordering
       if (options.order) {
         query = query.order(options.order.column, {
           ascending: options.order.ascending,
         });
       }
 
-      // Add pagination
       if (options.limit) {
         query = query.limit(options.limit);
         
@@ -87,11 +83,57 @@ export function useSupabaseQuery<T>(
         }
       }
 
-      // Execute the query
-      const { data: result, error: queryError, count: totalCount } = await query.count('exact');
+      const { data: result, error: queryError } = await query;
+      
+      const countQuery = supabase
+        .from(tableName as any)
+        .select('*', { count: 'exact', head: true });
+        
+      if (options.filters && options.filters.length > 0) {
+        for (const filter of options.filters) {
+          switch (filter.operator) {
+            case 'eq':
+              countQuery.eq(filter.column, filter.value);
+              break;
+            case 'neq':
+              countQuery.neq(filter.column, filter.value);
+              break;
+            case 'gt':
+              countQuery.gt(filter.column, filter.value);
+              break;
+            case 'lt':
+              countQuery.lt(filter.column, filter.value);
+              break;
+            case 'gte':
+              countQuery.gte(filter.column, filter.value);
+              break;
+            case 'lte':
+              countQuery.lte(filter.column, filter.value);
+              break;
+            case 'in':
+              countQuery.in(filter.column, filter.value);
+              break;
+            case 'is':
+              countQuery.is(filter.column, filter.value);
+              break;
+          }
+        }
+      }
+      
+      if (options.match) {
+        Object.entries(options.match).forEach(([column, value]) => {
+          countQuery.eq(column, value);
+        });
+      }
+      
+      const { count: totalCount, error: countError } = await countQuery;
 
       if (queryError) {
         throw queryError;
+      }
+
+      if (countError) {
+        console.warn('Error fetching count:', countError);
       }
 
       setData(result as T[]);
@@ -105,7 +147,6 @@ export function useSupabaseQuery<T>(
     }
   };
 
-  // Fetch data on mount and when dependencies change
   useEffect(() => {
     fetchData();
   }, [tableName, JSON.stringify(options)]);
