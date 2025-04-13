@@ -31,6 +31,16 @@ export const ServiceBasicInfoForm: React.FC<ServiceBasicInfoFormProps> = ({
   pricingModel,
   setPricingModel
 }) => {
+  // Handle the value conversion from string to enum properly
+  const handleCategoryChange = (value: string) => {
+    setCategory(value as ServiceCategoryEnum);
+  };
+  
+  // Handle the value conversion from string to enum properly
+  const handlePricingModelChange = (value: string) => {
+    setPricingModel(value as PricingModelEnum);
+  };
+  
   return (
     <>
       <div>
@@ -71,7 +81,7 @@ export const ServiceBasicInfoForm: React.FC<ServiceBasicInfoFormProps> = ({
         <Label htmlFor="category">Category</Label>
         <Select
           value={category}
-          onValueChange={(value) => setCategory(value as ServiceCategoryEnum)}
+          onValueChange={handleCategoryChange}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select a category" />
@@ -92,7 +102,7 @@ export const ServiceBasicInfoForm: React.FC<ServiceBasicInfoFormProps> = ({
         <Label htmlFor="pricingModel">Pricing Model</Label>
         <Select
           value={pricingModel}
-          onValueChange={(value) => setPricingModel(value as PricingModelEnum)}
+          onValueChange={handlePricingModelChange}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select pricing model" />

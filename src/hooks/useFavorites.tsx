@@ -44,7 +44,7 @@ export function useFavorites() {
 
       // Map to FavoriteService type with proper null handling
       const mappedFavorites: FavoriteService[] = data.map(item => {
-        // Use proper type checking and defaults
+        // Ensure service data exists before accessing properties
         const serviceData = item.service || {};
         
         // Create a properly typed Service object with defaults for missing values
@@ -121,48 +121,50 @@ export function useFavorites() {
         
       if (error) throw error;
       
-      // Add to state with proper mapping
-      // Use proper null checking for service
-      const serviceData = data.service || {};
-      
-      // Create a properly typed Service object with defaults for missing values
-      const serviceObj: Service = {
-        id: serviceData.id || '',
-        title: serviceData.title || '',
-        description: serviceData.description || '',
-        price: serviceData.price || 0,
-        image: serviceData.image || '',
-        provider_id: serviceData.provider_id || '',
-        provider_name: serviceData.provider_name || '',
-        // Add camelCase variants for compatibility
-        providerId: serviceData.provider_id || '',
-        providerName: serviceData.provider_name || '',
-        category: serviceData.category || '',
-        pricingModel: serviceData.pricing_model || '',
-        rating: serviceData.rating || 0,
-        reviewCount: serviceData.review_count || 0,
-        location: serviceData.location || '',
-        // Additional properties
-        features: serviceData.features || [],
-        isActive: serviceData.is_active || false,
-        createdAt: serviceData.created_at || '',
-        updatedAt: serviceData.updated_at || '',
-        tags: serviceData.tags || []
-      };
-      
-      const mappedFavorite: FavoriteService = {
-        id: data.id,
-        user_id: data.user_id,
-        service_id: data.service_id,
-        created_at: data.created_at,
-        // Add camelCase variants for compatibility
-        userId: data.user_id,
-        serviceId: data.service_id,
-        createdAt: data.created_at,
-        service: serviceObj
-      };
-      
-      setFavorites([...favorites, mappedFavorite]);
+      // Process returned data with proper type checks
+      if (data) {
+        // Use proper null checking for service
+        const serviceData = data.service || {};
+        
+        // Create a properly typed Service object with defaults for missing values
+        const serviceObj: Service = {
+          id: serviceData.id || '',
+          title: serviceData.title || '',
+          description: serviceData.description || '',
+          price: serviceData.price || 0,
+          image: serviceData.image || '',
+          provider_id: serviceData.provider_id || '',
+          provider_name: serviceData.provider_name || '',
+          // Add camelCase variants for compatibility
+          providerId: serviceData.provider_id || '',
+          providerName: serviceData.provider_name || '',
+          category: serviceData.category || '',
+          pricingModel: serviceData.pricing_model || '',
+          rating: serviceData.rating || 0,
+          reviewCount: serviceData.review_count || 0,
+          location: serviceData.location || '',
+          // Additional properties
+          features: serviceData.features || [],
+          isActive: serviceData.is_active || false,
+          createdAt: serviceData.created_at || '',
+          updatedAt: serviceData.updated_at || '',
+          tags: serviceData.tags || []
+        };
+        
+        const mappedFavorite: FavoriteService = {
+          id: data.id,
+          user_id: data.user_id,
+          service_id: data.service_id,
+          created_at: data.created_at,
+          // Add camelCase variants for compatibility
+          userId: data.user_id,
+          serviceId: data.service_id,
+          createdAt: data.created_at,
+          service: serviceObj
+        };
+        
+        setFavorites([...favorites, mappedFavorite]);
+      }
       
       toast({
         title: 'Success',

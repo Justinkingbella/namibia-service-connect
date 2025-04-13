@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PaymentMethod, PaymentMethodType } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
+import { castPaymentMethodType } from '@/types/payment-helpers';
 
 interface PaymentMethodInput {
   name: string;
@@ -46,7 +47,7 @@ export function usePaymentMethods() {
         id: item.id,
         userId: item.user_id,
         name: item.name,
-        type: item.type as PaymentMethodType, // Cast to ensure type safety
+        type: castPaymentMethodType(item.type), // Use the helper to cast to correct type
         details: typeof item.details === 'object' ? item.details : {},
         isDefault: item.is_default,
         createdAt: item.created_at
@@ -81,7 +82,7 @@ export function usePaymentMethods() {
         .insert({
           user_id: user?.id,
           name: method.name,
-          type: method.type,
+          type: method.type, // The types should be aligned now
           details: method.details || {},
           is_default: method.isDefault
         })
@@ -96,8 +97,8 @@ export function usePaymentMethods() {
         id: data.id,
         userId: data.user_id,
         name: data.name,
-        type: data.type as PaymentMethodType, // Ensure type safety with assertion
-        details: data.details as Record<string, any>, // Ensure proper typing
+        type: castPaymentMethodType(data.type), // Use the helper function
+        details: data.details,
         isDefault: data.is_default,
         createdAt: data.created_at
       };
@@ -141,7 +142,7 @@ export function usePaymentMethods() {
         .from('payment_methods')
         .update({
           name: updates.name,
-          type: updates.type,
+          type: updates.type, // Types should be aligned now
           details: updates.details,
           is_default: updates.isDefault
         })
@@ -157,8 +158,8 @@ export function usePaymentMethods() {
         id: data.id,
         userId: data.user_id,
         name: data.name,
-        type: data.type as PaymentMethodType, // Ensure type safety with assertion
-        details: data.details as Record<string, any>, // Ensure proper typing
+        type: castPaymentMethodType(data.type), // Use the helper function
+        details: data.details,
         isDefault: data.is_default,
         createdAt: data.created_at
       };
