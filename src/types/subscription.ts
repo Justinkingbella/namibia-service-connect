@@ -1,12 +1,11 @@
 
-import { Json } from '@/integrations/supabase/types';
+import { Json } from './index';
 
 export interface SubscriptionFeature {
-  id: string;
   name: string;
-  description: string;
   included: boolean;
   limit?: number;
+  description?: string;
 }
 
 export interface SubscriptionPlan {
@@ -14,112 +13,52 @@ export interface SubscriptionPlan {
   name: string;
   description: string;
   price: number;
-  billingCycle: 'monthly' | 'yearly' | string;
-  credits: number;
-  maxBookings: number;
+  billingCycle: 'monthly' | 'quarterly' | 'yearly';
   features: SubscriptionFeature[];
-  isPopular?: boolean;
   isActive: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-  trialPeriodDays?: number;
-  allowedServices?: number;
-  sortOrder?: number;
-  stripePriceId?: string;
-  visibleToRoles?: string[];
-}
-
-export interface SubscriptionState {
-  loading: boolean;
-  error: string | null;
-  plans: SubscriptionPlan[];
+  isPopular?: boolean;
+  trial_period_days?: number;
+  allowed_services?: number;
+  credits?: number;
+  max_bookings?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface UserSubscription {
   id: string;
-  userId: string;
-  subscriptionPlanId: string;
-  startDate: string;
-  endDate: string;
-  paymentMethod: string;
-  status: 'active' | 'pending' | 'cancelled' | 'expired';
-  creditsUsed?: number;
-  creditsRemaining?: number;
-  bookingsUsed?: number;
-  bookingsRemaining?: number;
-  autoRenew?: boolean;
-  cancellationReason?: string;
-  cancellationDate?: string;
-  trialEndDate?: string;
-  stripeSubscriptionId?: string;
-  stripeCustomerId?: string;
-  plan?: SubscriptionPlan;
+  user_id: string;
+  subscription_plan_id: string;
+  status: 'active' | 'expired' | 'cancelled' | 'pending';
+  start_date: string;
+  end_date: string;
+  payment_method: string;
+  payment_id?: string;
+  auto_renew?: boolean;
+  credits_used?: number;
+  credits_remaining?: number;
+  bookings_used?: number;
+  bookings_remaining?: number;
+  created_at?: string;
+  updated_at?: string;
+  cancellation_date?: string;
+  cancellation_reason?: string;
+  stripe_customer_id?: string;
+  stripe_subscription_id?: string;
+  userId?: string;
+  planId?: string;
+  planName?: string;
 }
 
-export interface SubscriptionUsage {
+export interface SubscriptionTransaction {
   id: string;
-  subscriptionId: string;
-  userId: string;
-  metricName: string;
-  usageCount: number;
-  usageDate: string;
-  referenceId?: string;
-  createdAt: string;
-}
-
-export interface SubscriptionInvoice {
-  id: string;
-  subscriptionId: string;
-  userId: string;
+  user_id: string;
+  subscription_plan_id: string;
   amount: number;
-  currency: string;
-  status: 'pending' | 'paid' | 'failed' | 'cancelled';
-  invoiceDate: string;
-  dueDate?: string;
-  paidDate?: string;
-  billingPeriodStart?: string;
-  billingPeriodEnd?: string;
-  stripeInvoiceId?: string;
-  paymentMethod?: string;
-  invoiceNumber?: string;
-  lineItems?: any[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type SubscriptionTier = 'Basic' | 'Professional' | 'Premium' | string;
-
-// Helper function to convert Supabase Json features to SubscriptionFeature[]
-export const convertJsonToFeatures = (jsonFeatures: Json): SubscriptionFeature[] => {
-  if (!jsonFeatures || !Array.isArray(jsonFeatures)) {
-    return [];
-  }
-  
-  return jsonFeatures.map((feature: any) => ({
-    id: feature.id || crypto.randomUUID(),
-    name: feature.name || '',
-    description: feature.description || '',
-    included: feature.included !== undefined ? feature.included : true,
-    limit: feature.limit
-  }));
-};
-
-// Helper function to convert SubscriptionFeature[] to Json format for Supabase
-export const convertFeaturesToJson = (features: SubscriptionFeature[]): Json => {
-  return features as unknown as Json;
-};
-
-export interface ProviderEarnings {
-  id?: string;
-  providerId: string;
-  periodStart: Date;
-  periodEnd: Date;
-  totalEarnings: number;
-  totalBookings: number;
-  completedBookings: number;
-  commissionPaid: number;
-  netEarnings: number;
-  payoutStatus?: string;
-  payoutDate?: Date;
-  payoutReference?: string;
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  payment_method: string;
+  payment_id?: string;
+  created_at?: string;
+  userId?: string;
+  userName?: string;
 }

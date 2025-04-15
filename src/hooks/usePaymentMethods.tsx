@@ -42,13 +42,15 @@ export function usePaymentMethods() {
         throw error;
       }
 
-      // Map database fields to our PaymentMethod interface
+      // Map database fields to our PaymentMethod interface with proper type casting
       const mappedMethods: PaymentMethod[] = data.map(item => ({
         id: item.id,
         userId: item.user_id,
         name: item.name,
         type: castPaymentMethodType(item.type), // Use the helper to cast to correct type
-        details: typeof item.details === 'object' ? item.details : {},
+        details: item.details && typeof item.details === 'object' ? 
+                 item.details as Record<string, any> : 
+                 {},
         isDefault: item.is_default,
         createdAt: item.created_at
       }));
@@ -98,7 +100,9 @@ export function usePaymentMethods() {
         userId: data.user_id,
         name: data.name,
         type: castPaymentMethodType(data.type), // Use the helper function
-        details: data.details,
+        details: data.details && typeof data.details === 'object' ? 
+                data.details as Record<string, any> : 
+                {},
         isDefault: data.is_default,
         createdAt: data.created_at
       };
@@ -143,7 +147,7 @@ export function usePaymentMethods() {
         .update({
           name: updates.name,
           type: updates.type, // Types should be aligned now
-          details: updates.details,
+          details: updates.details || {},
           is_default: updates.isDefault
         })
         .eq('id', id)
@@ -159,7 +163,9 @@ export function usePaymentMethods() {
         userId: data.user_id,
         name: data.name,
         type: castPaymentMethodType(data.type), // Use the helper function
-        details: data.details,
+        details: data.details && typeof data.details === 'object' ? 
+                data.details as Record<string, any> : 
+                {},
         isDefault: data.is_default,
         createdAt: data.created_at
       };

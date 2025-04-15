@@ -44,7 +44,7 @@ export function useFavorites() {
 
       // Map to FavoriteService type with proper null handling
       const mappedFavorites: FavoriteService[] = data.map(item => {
-        // Ensure service data exists before accessing properties
+        // Create a default service object or use the data from the response
         const serviceData = item.service || {};
         
         // Create a properly typed Service object with defaults for missing values
@@ -52,7 +52,7 @@ export function useFavorites() {
           id: serviceData.id || '',
           title: serviceData.title || '',
           description: serviceData.description || '',
-          price: serviceData.price || 0,
+          price: typeof serviceData.price === 'number' ? serviceData.price : 0,
           image: serviceData.image || '',
           provider_id: serviceData.provider_id || '',
           provider_name: serviceData.provider_name || '',
@@ -61,15 +61,15 @@ export function useFavorites() {
           providerName: serviceData.provider_name || '',
           category: serviceData.category || '',
           pricingModel: serviceData.pricing_model || '',
-          rating: serviceData.rating || 0,
-          reviewCount: serviceData.review_count || 0,
+          rating: typeof serviceData.rating === 'number' ? serviceData.rating : 0,
+          reviewCount: typeof serviceData.review_count === 'number' ? serviceData.review_count : 0,
           location: serviceData.location || '',
           // Additional properties from type
-          features: serviceData.features || [],
-          isActive: serviceData.is_active || false,
+          features: Array.isArray(serviceData.features) ? serviceData.features : [],
+          isActive: Boolean(serviceData.is_active),
           createdAt: serviceData.created_at || '',
           updatedAt: serviceData.updated_at || '',
-          tags: serviceData.tags || []
+          tags: Array.isArray(serviceData.tags) ? serviceData.tags : []
         };
         
         return {
@@ -123,7 +123,7 @@ export function useFavorites() {
       
       // Process returned data with proper type checks
       if (data) {
-        // Use proper null checking for service
+        // Create default service object or use response data
         const serviceData = data.service || {};
         
         // Create a properly typed Service object with defaults for missing values
@@ -131,7 +131,7 @@ export function useFavorites() {
           id: serviceData.id || '',
           title: serviceData.title || '',
           description: serviceData.description || '',
-          price: serviceData.price || 0,
+          price: typeof serviceData.price === 'number' ? serviceData.price : 0,
           image: serviceData.image || '',
           provider_id: serviceData.provider_id || '',
           provider_name: serviceData.provider_name || '',
@@ -140,15 +140,15 @@ export function useFavorites() {
           providerName: serviceData.provider_name || '',
           category: serviceData.category || '',
           pricingModel: serviceData.pricing_model || '',
-          rating: serviceData.rating || 0,
-          reviewCount: serviceData.review_count || 0,
+          rating: typeof serviceData.rating === 'number' ? serviceData.rating : 0,
+          reviewCount: typeof serviceData.review_count === 'number' ? serviceData.review_count : 0,
           location: serviceData.location || '',
           // Additional properties
-          features: serviceData.features || [],
-          isActive: serviceData.is_active || false,
+          features: Array.isArray(serviceData.features) ? serviceData.features : [],
+          isActive: Boolean(serviceData.is_active),
           createdAt: serviceData.created_at || '',
           updatedAt: serviceData.updated_at || '',
-          tags: serviceData.tags || []
+          tags: Array.isArray(serviceData.tags) ? serviceData.tags : []
         };
         
         const mappedFavorite: FavoriteService = {

@@ -1,24 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PostgrestError, PostgrestFilterBuilder } from '@supabase/supabase-js';
+import { PostgrestError } from '@supabase/supabase-js';
 import { Json } from '@/types';
 
 // Define valid table names to avoid type instantiation issues
-type ValidTableName =
-  | 'profiles'
-  | 'services'
-  | 'bookings'
-  | 'conversations'
-  | 'favorite_services'
-  | 'service_providers'
-  | 'payment_methods'
-  | 'payment_transactions'
-  | 'reviews'
-  | 'disputes'
-  | 'wallet_verification_requests'
-  | 'customers'
-  | string;
+type ValidTableName = string;
 
 /**
  * Generic hook for querying Supabase data
@@ -49,7 +36,8 @@ export function useSupabaseQuery<T>(
       setError(null);
 
       // Build the main query
-      let query = supabase.from(tableName).select(options.select || '*') as PostgrestFilterBuilder<any, any, T[]>;
+      // Using any to bypass type issues with dynamic table names
+      let query = supabase.from(tableName).select(options.select || '*') as any;
 
       // Apply filters
       if (options.filters && options.filters.length > 0) {
@@ -113,7 +101,7 @@ export function useSupabaseQuery<T>(
       // Create a separate count query
       const countQuery = supabase
         .from(tableName)
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true }) as any;
         
       // Apply the same filters to the count query  
       if (options.filters && options.filters.length > 0) {

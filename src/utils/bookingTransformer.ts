@@ -1,6 +1,13 @@
 
 import { BookingData, BookingWithDetails } from '@/types';
 
+// Update the interface to include the formattedDate property
+declare module '@/types' {
+  interface BookingWithDetails {
+    formattedDate: string;
+  }
+}
+
 /**
  * Transforms raw booking data with related objects into a properly typed BookingWithDetails
  */
@@ -9,6 +16,11 @@ export function transformBookingDetails(bookingData: any): BookingWithDetails {
   const serviceData = bookingData.service || {};
   const providerData = bookingData.provider || {};
   const customerData = bookingData.customer || {};
+  
+  // Format date for display
+  const formattedDate = bookingData.date ? 
+    new Date(bookingData.date).toLocaleDateString() : 
+    'No date';
   
   return {
     id: bookingData.id,
@@ -41,8 +53,8 @@ export function transformBookingDetails(bookingData: any): BookingWithDetails {
       avatarUrl: customerData.avatar_url || '',
     },
     
-    // Add formatted date property to BookingWithDetails interface
-    formattedDate: new Date(bookingData.date).toLocaleDateString()
+    // Add formatted date property
+    formattedDate: formattedDate
   };
 }
 
