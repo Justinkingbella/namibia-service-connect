@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -8,44 +9,36 @@ import { Badge } from '@/components/ui/badge';
 import { Star, MapPin, X, Loader2 } from 'lucide-react';
 
 const FavoritesPage = () => {
-  const { favorites, loading, fetchFavorites, removeFavorite } = useFavorites();
+  const { favorites, loading, refreshFavorites, removeFromFavorites } = useFavorites();
 
   useEffect(() => {
-    fetchFavorites();
-  }, [fetchFavorites]);
+    refreshFavorites();
+  }, [refreshFavorites]);
 
   const handleRemoveFavorite = async (serviceId: string) => {
-    await removeFavorite(serviceId);
+    await removeFromFavorites(serviceId);
   };
 
-  // In the render section where you're mapping over favorites
-const renderFavorites = () => {
-  if (loading) {
-    return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-  }
-  
-  if (favorites.length === 0) {
+  const renderFavorites = () => {
+    if (loading) {
+      return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+    }
+    
+    if (favorites.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground mb-4">You haven't added any services to your favorites yet.</p>
+          <Link to="/services">
+            <Button>Browse Services</Button>
+          </Link>
+        </div>
+      );
+    }
+    
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground mb-4">You haven't added any services to your favorites yet.</p>
-        <Link to="/services">
-          <Button>Browse Services</Button>
-        </Link>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-      {favorites.map((favorite) => {
-        // Make sure we have a service
-        if (!favorite.service) return null;
-        
-        // Use service properties
-        const service = favorite.service;
-        
-        return (
-          <Card key={favorite.id} className="overflow-hidden flex flex-col h-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {favorites.map((service) => (
+          <Card key={service.id} className="overflow-hidden flex flex-col h-full">
             <CardHeader className="p-0">
               <div className="relative h-48 w-full">
                 <img 
@@ -57,7 +50,7 @@ const renderFavorites = () => {
                   variant="destructive" 
                   size="icon" 
                   className="absolute top-2 right-2 rounded-full" 
-                  onClick={() => handleRemoveFavorite(favorite.service_id)}
+                  onClick={() => handleRemoveFavorite(service.id)}
                 >
                   <X className="h-4 w-4" />
                   <span className="sr-only">Remove from favorites</span>
@@ -75,7 +68,7 @@ const renderFavorites = () => {
                   )}
                 </div>
               </div>
-              <Link to={`/services/${favorite.service_id}`}>
+              <Link to={`/services/${service.id}`}>
                 <h3 className="font-semibold text-lg hover:text-primary transition-colors">{service.title}</h3>
               </Link>
               <div className="text-muted-foreground mt-1 text-sm flex items-center">
@@ -89,16 +82,15 @@ const renderFavorites = () => {
                 <span className="font-bold">${service.price}</span>
                 <span className="text-muted-foreground ml-1 text-xs">/ {service.pricingModel || 'service'}</span>
               </div>
-              <Link to={`/services/${favorite.service_id}`}>
+              <Link to={`/services/${service.id}`}>
                 <Button variant="default" size="sm">View Details</Button>
               </Link>
             </CardFooter>
           </Card>
-        );
-      })}
-    </div>
-  );
-};
+        ))}
+      </div>
+    );
+  };
 
   return (
     <DashboardLayout>

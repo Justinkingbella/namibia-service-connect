@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types/service';
 import { toast } from 'sonner';
+import { transformServiceData } from '@/utils/serviceDataTransformer';
 
 export const useFavorites = () => {
   const { user } = useAuth();
@@ -20,11 +22,11 @@ export const useFavorites = () => {
 
     setLoading(true);
     try {
-      // Get favorite service IDs from the customer profile
+      // Get favorite service IDs from the profiles table
       const { data: profileData, error: profileError } = await supabase
-        .from('customer_profiles')
+        .from('profiles')
         .select('favorites')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
 
       if (profileError) {
@@ -51,30 +53,35 @@ export const useFavorites = () => {
         throw servicesError;
       }
 
+      if (!servicesData) {
+        setFavorites([]);
+        return;
+      }
+
       // Transform data to match Service type
-      const transformedFavorites = servicesData.map(service => {
-        // Use nullish coalescing to provide default values
+      const transformedFavorites: Service[] = servicesData.map(service => {
+        const providerName = service.provider?.business_name || 'Unknown Provider';
+        
         return {
-          id: service?.id ?? '',
-          title: service?.title ?? '',
-          description: service?.description ?? '',
-          price: service?.price ?? 0,
-          image: service?.image ?? '',
-          provider_id: service?.provider_id ?? '',
-          provider_name: service?.provider?.business_name ?? '',
-          // Keep these aligned with the Service type
-          providerId: service?.provider_id ?? '',
-          providerName: service?.provider?.business_name ?? '',
-          category: service?.category ?? '',
-          pricing_model: service?.pricing_model ?? '',
-          rating: service?.rating ?? 0,
-          review_count: service?.review_count ?? 0,
-          location: service?.location ?? '',
-          // Handle arrays safely
+          id: service?.id || '',
+          title: service?.title || '',
+          description: service?.description || '',
+          price: Number(service?.price) || 0,
+          image: service?.image || '',
+          provider_id: service?.provider_id || '',
+          provider_name: providerName,
+          providerId: service?.provider_id || '',
+          providerName: providerName,
+          category: service?.category || '',
+          pricingModel: service?.pricing_model || '',
+          pricing_model: service?.pricing_model || '',
+          rating: Number(service?.rating) || 0,
+          reviewCount: Number(service?.review_count) || 0,
+          location: service?.location || '',
           features: Array.isArray(service?.features) ? service.features : [],
-          is_active: service?.is_active ?? true,
-          created_at: service?.created_at ?? '',
-          updated_at: service?.updated_at ?? '',
+          isActive: service?.is_active ?? true,
+          createdAt: service?.created_at || '',
+          updatedAt: service?.updated_at || '',
           tags: Array.isArray(service?.tags) ? service.tags : []
         };
       });
@@ -97,9 +104,9 @@ export const useFavorites = () => {
     try {
       // Get current favorites
       const { data, error } = await supabase
-        .from('customer_profiles')
+        .from('profiles')
         .select('favorites')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
 
       if (error) throw error;
@@ -112,9 +119,9 @@ export const useFavorites = () => {
         
         // Update favorites in the database
         const { error: updateError } = await supabase
-          .from('customer_profiles')
+          .from('profiles')
           .update({ favorites: updatedFavorites })
-          .eq('user_id', user.id);
+          .eq('id', user.id);
 
         if (updateError) throw updateError;
         
@@ -129,32 +136,38 @@ export const useFavorites = () => {
           .single();
 
         if (serviceError) throw serviceError;
+        
+        if (!serviceData) {
+          toast.error('Service not found');
+          return;
+        }
 
-        const newFavorite = {
-          id: serviceData?.id ?? '',
-          title: serviceData?.title ?? '',
-          description: serviceData?.description ?? '',
-          price: serviceData?.price ?? 0,
-          image: serviceData?.image ?? '',
-          provider_id: serviceData?.provider_id ?? '',
-          provider_name: serviceData?.provider?.business_name ?? '',
-          // Keep these aligned with the Service type
-          providerId: serviceData?.provider_id ?? '',
-          providerName: serviceData?.provider?.business_name ?? '',
-          category: serviceData?.category ?? '',
-          pricing_model: serviceData?.pricing_model ?? '',
-          rating: serviceData?.rating ?? 0,
-          review_count: serviceData?.review_count ?? 0,
-          location: serviceData?.location ?? '',
-          // Handle arrays safely
+        const providerName = serviceData.provider?.business_name || 'Unknown Provider';
+
+        const newFavorite: Service = {
+          id: serviceData?.id || '',
+          title: serviceData?.title || '',
+          description: serviceData?.description || '',
+          price: Number(serviceData?.price) || 0,
+          image: serviceData?.image || '',
+          provider_id: serviceData?.provider_id || '',
+          provider_name: providerName,
+          providerId: serviceData?.provider_id || '',
+          providerName: providerName,
+          category: serviceData?.category || '',
+          pricingModel: serviceData?.pricing_model || '',
+          pricing_model: serviceData?.pricing_model || '',
+          rating: Number(serviceData?.rating) || 0,
+          reviewCount: Number(serviceData?.review_count) || 0,
+          location: serviceData?.location || '',
           features: Array.isArray(serviceData?.features) ? serviceData.features : [],
-          is_active: serviceData?.is_active ?? true,
-          created_at: serviceData?.created_at ?? '',
-          updated_at: serviceData?.updated_at ?? '',
+          isActive: serviceData?.is_active ?? true,
+          createdAt: serviceData?.created_at || '',
+          updatedAt: serviceData?.updated_at || '',
           tags: Array.isArray(serviceData?.tags) ? serviceData.tags : []
         };
 
-        setFavorites(prev => [...prev, newFavorite]);
+        setFavorites((prev) => [...prev, newFavorite]);
         toast.success('Added to favorites');
       } else {
         toast('Already in your favorites');
@@ -171,9 +184,9 @@ export const useFavorites = () => {
     try {
       // Get current favorites
       const { data, error } = await supabase
-        .from('customer_profiles')
+        .from('profiles')
         .select('favorites')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
 
       if (error) throw error;
@@ -185,9 +198,9 @@ export const useFavorites = () => {
       
       // Update favorites in the database
       const { error: updateError } = await supabase
-        .from('customer_profiles')
+        .from('profiles')
         .update({ favorites: updatedFavorites })
-        .eq('user_id', user.id);
+        .eq('id', user.id);
 
       if (updateError) throw updateError;
       
