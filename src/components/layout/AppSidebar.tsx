@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -29,6 +28,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { AdminRoutes, ProviderRoutes, CustomerRoutes } from '@/types/routes';
 import { 
   Sidebar, 
   SidebarContent,
@@ -60,52 +60,52 @@ const AppSidebar = () => {
     }
   };
 
+  const adminLinks = [
+    { icon: Home, label: 'Dashboard', path: AdminRoutes.DASHBOARD },
+    { icon: Users, label: 'Users', path: AdminRoutes.USERS },
+    { icon: Package, label: 'Services', path: AdminRoutes.SERVICES },
+    { icon: MessageSquare, label: 'Messages', path: AdminRoutes.MESSAGES },
+    { icon: Clock, label: 'Wallet Verifications', path: AdminRoutes.WALLET_VERIFICATION },
+    { icon: AlertTriangle, label: 'Disputes', path: AdminRoutes.DISPUTES },
+    { icon: BarChart3, label: 'Analytics', path: AdminRoutes.ANALYTICS },
+    { icon: Receipt, label: 'Subscriptions', path: AdminRoutes.SUBSCRIPTION_MANAGEMENT },
+    { icon: FileText, label: 'Content Editor', path: AdminRoutes.CONTENT_EDITOR },
+    { icon: Layout, label: 'Booking Settings', path: AdminRoutes.BOOKING_SETTINGS },
+    { icon: Tag, label: 'Category Management', path: AdminRoutes.CATEGORY_MANAGEMENT },
+    { icon: Database, label: 'Payment Settings', path: AdminRoutes.PAYMENT_SETTINGS },
+    { icon: Sliders, label: 'Platform Controls', path: AdminRoutes.PLATFORM_CONTROLS },
+    { icon: Globe, label: 'Site Settings', path: AdminRoutes.SITE_SETTINGS },
+    { icon: UserCircle, label: 'Profile', path: AdminRoutes.PROFILE },
+    { icon: Settings, label: 'Settings', path: AdminRoutes.SETTINGS },
+  ];
+
+  const providerLinks = [
+    { icon: Home, label: 'Dashboard', path: ProviderRoutes.DASHBOARD },
+    { icon: Package, label: 'Services', path: ProviderRoutes.SERVICES },
+    { icon: PlusCircle, label: 'Create Service', path: ProviderRoutes.CREATE_SERVICE },
+    { icon: Calendar, label: 'Bookings', path: ProviderRoutes.BOOKINGS },
+    { icon: MessageSquare, label: 'Messages', path: ProviderRoutes.MESSAGES },
+    { icon: DollarSign, label: 'Transactions', path: ProviderRoutes.TRANSACTIONS },
+    { icon: LineChart, label: 'Revenue Reports', path: ProviderRoutes.REVENUE },
+    { icon: Receipt, label: 'Subscription', path: ProviderRoutes.SUBSCRIPTION },
+    { icon: Wallet, label: 'Wallet Verification', path: ProviderRoutes.WALLET_VERIFICATION },
+    { icon: CreditCard, label: 'Payment Details', path: ProviderRoutes.PAYMENT_DETAILS },
+    { icon: UserCircle, label: 'Profile', path: ProviderRoutes.PROFILE },
+  ];
+
+  const customerLinks = [
+    { icon: Home, label: 'Dashboard', path: CustomerRoutes.DASHBOARD },
+    { icon: Package, label: 'Services', path: CustomerRoutes.SERVICES },
+    { icon: Calendar, label: 'Bookings', path: CustomerRoutes.BOOKINGS },
+    { icon: MessageSquare, label: 'Messages', path: CustomerRoutes.MESSAGES },
+    { icon: Heart, label: 'Favorites', path: CustomerRoutes.FAVORITES },
+    { icon: CreditCard, label: 'Payment History', path: CustomerRoutes.PAYMENT_HISTORY },
+    { icon: AlertTriangle, label: 'Disputes', path: CustomerRoutes.DISPUTES },
+    { icon: UserCircle, label: 'Profile', path: CustomerRoutes.PROFILE },
+  ];
+
   const getLinks = () => {
     if (!user) return [];
-
-    const adminLinks = [
-      { icon: Home, label: 'Dashboard', path: '/admin/dashboard' },
-      { icon: Users, label: 'Users', path: '/admin/users' },
-      { icon: Package, label: 'Services', path: '/admin/services' },
-      { icon: MessageSquare, label: 'Messages', path: '/admin/messages' },
-      { icon: Clock, label: 'Wallet Verifications', path: '/admin/wallet-verification' },
-      { icon: AlertTriangle, label: 'Disputes', path: '/admin/disputes' },
-      { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
-      { icon: Receipt, label: 'Subscriptions', path: '/admin/subscription-management' },
-      { icon: FileText, label: 'Content Editor', path: '/admin/content-editor' },
-      { icon: Layout, label: 'Booking Settings', path: '/admin/booking-settings' },
-      { icon: Tag, label: 'Category Management', path: '/admin/category-management' },
-      { icon: Database, label: 'Payment Settings', path: '/admin/payment-settings' },
-      { icon: Sliders, label: 'Platform Controls', path: '/admin/platform-controls' },
-      { icon: Globe, label: 'Site Settings', path: '/admin/site-settings' },
-      { icon: UserCircle, label: 'Profile', path: '/admin/profile' },
-      { icon: Settings, label: 'Settings', path: '/admin/settings' },
-    ];
-
-    const providerLinks = [
-      { icon: Home, label: 'Dashboard', path: '/provider/dashboard' },
-      { icon: Package, label: 'Services', path: '/provider/services' },
-      { icon: PlusCircle, label: 'Create Service', path: '/provider/services/create' },
-      { icon: Calendar, label: 'Bookings', path: '/provider/bookings' },
-      { icon: MessageSquare, label: 'Messages', path: '/provider/messages' },
-      { icon: DollarSign, label: 'Transactions', path: '/provider/transactions' },
-      { icon: LineChart, label: 'Revenue Reports', path: '/provider/revenue' },
-      { icon: Receipt, label: 'Subscription', path: '/provider/subscription' },
-      { icon: Wallet, label: 'Wallet Verification', path: '/provider/wallet-verification' },
-      { icon: CreditCard, label: 'Payment Details', path: '/provider/payment-details' },
-      { icon: UserCircle, label: 'Profile', path: '/provider/profile' },
-    ];
-
-    const customerLinks = [
-      { icon: Home, label: 'Dashboard', path: '/customer/dashboard' },
-      { icon: Package, label: 'Services', path: '/customer/services' },
-      { icon: Calendar, label: 'Bookings', path: '/customer/bookings' },
-      { icon: MessageSquare, label: 'Messages', path: '/customer/messages' },
-      { icon: Heart, label: 'Favorites', path: '/customer/favorites' },
-      { icon: CreditCard, label: 'Payment History', path: '/customer/payment-history' },
-      { icon: AlertTriangle, label: 'Disputes', path: '/customer/disputes' },
-      { icon: UserCircle, label: 'Profile', path: '/customer/profile' },
-    ];
 
     if (user.role === 'admin') return adminLinks;
     if (user.role === 'provider') return providerLinks;
