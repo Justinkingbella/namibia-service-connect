@@ -1,4 +1,3 @@
-
 import { User as SupabaseUser, Session as SupabaseSession } from '@supabase/supabase-js';
 import { Json } from './schema';
 
