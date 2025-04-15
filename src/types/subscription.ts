@@ -62,3 +62,26 @@ export interface SubscriptionTransaction {
   userId?: string;
   userName?: string;
 }
+
+export interface ProviderEarnings {
+  totalEarnings: number;
+  monthToDateEarnings: number;
+  weekToDateEarnings: number;
+  pendingPayouts: number;
+  completedBookings: number;
+  subscriptionCost: number;
+  subscriptionStatus: 'active' | 'expired' | 'cancelled' | 'pending' | 'none';
+  planName: string;
+  nextPaymentDate?: string;
+  transactions: {
+    id: string;
+    date: string;
+    amount: number;
+    description: string;
+    status: 'completed' | 'pending' | 'failed';
+  }[];
+  monthlyBreakdown: {
+    month: string;
+    earnings: number;
+  }[];
+}

@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Card } from '@/components/ui/card';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import SubscriptionManagement from '@/components/admin/SubscriptionManagement';
+import { Helmet } from 'react-helmet-async';
 
 const SubscriptionPage: React.FC = () => {
   return (

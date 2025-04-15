@@ -1,17 +1,17 @@
 
 import { BookingData, BookingWithDetails } from '@/types';
 
-// Update the interface to include the formattedDate property
-declare module '@/types' {
-  interface BookingWithDetails {
-    formattedDate: string;
-  }
+/**
+ * Extended BookingWithDetails interface to include formattedDate property
+ */
+export interface ExtendedBookingWithDetails extends BookingWithDetails {
+  formattedDate: string;
 }
 
 /**
  * Transforms raw booking data with related objects into a properly typed BookingWithDetails
  */
-export function transformBookingDetails(bookingData: any): BookingWithDetails {
+export function transformBookingDetails(bookingData: any): ExtendedBookingWithDetails {
   // The service data - handle potential null/undefined
   const serviceData = bookingData.service || {};
   const providerData = bookingData.provider || {};

@@ -1,176 +1,124 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PostgrestError } from '@supabase/supabase-js';
-import { Json } from '@/types';
+import { PostgrestResponse, PostgrestSingleResponse } from '@supabase/supabase-js';
 
-// Define valid table names to avoid type instantiation issues
-type ValidTableName = string;
+type QueryOptions = {
+  table: string;
+  columns?: string;
+  filters?: Record<string, any>;
+  orderBy?: { column: string; ascending?: boolean };
+  limit?: number;
+  idColumn?: string;
+  id?: string | null;
+  relationTable?: string;
+  relationFilter?: Record<string, any>;
+};
 
 /**
- * Generic hook for querying Supabase data
+ * A custom hook for handling Supabase queries with TypeScript support
  */
-export function useSupabaseQuery<T>(
-  tableName: ValidTableName,
-  options: {
-    select?: string;
-    match?: Record<string, any>;
-    order?: { column: string; ascending: boolean };
-    limit?: number;
-    page?: number;
-    filters?: Array<{
-      column: string;
-      operator: 'eq' | 'neq' | 'gt' | 'lt' | 'gte' | 'lte' | 'in' | 'is';
-      value: any;
-    }>;
-  } = {}
-) {
-  const [data, setData] = useState<T[]>([]);
-  const [error, setError] = useState<PostgrestError | null>(null);
+export function useSupabaseQuery<T>(options: QueryOptions) {
+  const [data, setData] = useState<T | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [count, setCount] = useState<number | null>(null);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Build the main query
-      // Using any to bypass type issues with dynamic table names
-      let query = supabase.from(tableName).select(options.select || '*') as any;
-
-      // Apply filters
-      if (options.filters && options.filters.length > 0) {
-        for (const filter of options.filters) {
-          switch (filter.operator) {
-            case 'eq':
-              query = query.eq(filter.column, filter.value);
-              break;
-            case 'neq':
-              query = query.neq(filter.column, filter.value);
-              break;
-            case 'gt':
-              query = query.gt(filter.column, filter.value);
-              break;
-            case 'lt':
-              query = query.lt(filter.column, filter.value);
-              break;
-            case 'gte':
-              query = query.gte(filter.column, filter.value);
-              break;
-            case 'lte':
-              query = query.lte(filter.column, filter.value);
-              break;
-            case 'in':
-              query = query.in(filter.column, filter.value);
-              break;
-            case 'is':
-              query = query.is(filter.column, filter.value);
-              break;
-          }
-        }
-      }
-
-      // Apply exact matches
-      if (options.match) {
-        Object.entries(options.match).forEach(([column, value]) => {
-          query = query.eq(column, value);
-        });
-      }
-
-      // Apply ordering
-      if (options.order) {
-        query = query.order(options.order.column, {
-          ascending: options.order.ascending,
-        });
-      }
-
-      // Apply pagination
-      if (options.limit) {
-        query = query.limit(options.limit);
-        
-        if (options.page && options.page > 1) {
-          const offset = (options.page - 1) * options.limit;
-          query = query.range(offset, offset + options.limit - 1);
-        }
-      }
-
-      // Execute the query
-      const { data: result, error: queryError } = await query;
-      
-      // Create a separate count query
-      const countQuery = supabase
-        .from(tableName)
-        .select('*', { count: 'exact', head: true }) as any;
-        
-      // Apply the same filters to the count query  
-      if (options.filters && options.filters.length > 0) {
-        for (const filter of options.filters) {
-          switch (filter.operator) {
-            case 'eq':
-              countQuery.eq(filter.column, filter.value);
-              break;
-            case 'neq':
-              countQuery.neq(filter.column, filter.value);
-              break;
-            case 'gt':
-              countQuery.gt(filter.column, filter.value);
-              break;
-            case 'lt':
-              countQuery.lt(filter.column, filter.value);
-              break;
-            case 'gte':
-              countQuery.gte(filter.column, filter.value);
-              break;
-            case 'lte':
-              countQuery.lte(filter.column, filter.value);
-              break;
-            case 'in':
-              countQuery.in(filter.column, filter.value);
-              break;
-            case 'is':
-              countQuery.is(filter.column, filter.value);
-              break;
-          }
-        }
-      }
-      
-      if (options.match) {
-        Object.entries(options.match).forEach(([column, value]) => {
-          countQuery.eq(column, value);
-        });
-      }
-      
-      const { count: totalCount, error: countError } = await countQuery;
-
-      if (queryError) {
-        throw queryError;
-      }
-
-      if (countError) {
-        console.warn('Error fetching count:', countError);
-      }
-
-      setData(result as T[]);
-      setCount(totalCount);
-    } catch (e) {
-      const postgrestError = e as PostgrestError;
-      setError(postgrestError);
-      console.error('Error fetching data:', e);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchData();
-  }, [tableName, JSON.stringify(options)]);
+    async function fetchData() {
+      try {
+        setLoading(true);
+        let query = supabase.from(options.table);
 
-  return {
-    data,
-    error,
-    loading,
-    count,
-    refetch: fetchData,
-  };
+        // Select columns if provided, otherwise select all
+        if (options.columns) {
+          query = query.select(options.columns);
+        } else {
+          query = query.select('*');
+        }
+
+        // Handle relation if provided
+        if (options.relationTable) {
+          // Cast relation table to any to avoid type checking
+          // This is necessary because supabase's typing doesn't allow for dynamic relation names
+          query = query.select(`*, ${options.relationTable}(*)`) as any;
+        }
+
+        // Apply filters if provided
+        if (options.filters) {
+          for (const [key, value] of Object.entries(options.filters)) {
+            if (Array.isArray(value)) {
+              query = query.in(key, value);
+            } else if (value === null) {
+              query = query.is(key, null);
+            } else {
+              query = query.eq(key, value);
+            }
+          }
+        }
+
+        // Apply relation filters if provided
+        if (options.relationTable && options.relationFilter) {
+          for (const [key, value] of Object.entries(options.relationFilter)) {
+            const filterKey = `${options.relationTable}.${key}`;
+            if (Array.isArray(value)) {
+              query = query.in(filterKey, value);
+            } else if (value === null) {
+              query = query.is(filterKey, null);
+            } else {
+              query = query.eq(filterKey, value);
+            }
+          }
+        }
+
+        // Apply ordering if provided
+        if (options.orderBy) {
+          query = query.order(
+            options.orderBy.column, 
+            { ascending: options.orderBy.ascending ?? true }
+          );
+        }
+
+        // Apply limit if provided
+        if (options.limit) {
+          query = query.limit(options.limit);
+        }
+
+        // Execute query - either for a single item or multiple items
+        let response: PostgrestResponse<T> | PostgrestSingleResponse<T>;
+        
+        if (options.id && options.idColumn) {
+          response = await query.eq(options.idColumn, options.id).single();
+        } else {
+          response = await query;
+        }
+
+        if (response.error) {
+          throw new Error(response.error.message);
+        }
+
+        setData(response.data as T);
+      } catch (err: any) {
+        setError(err instanceof Error ? err : new Error(String(err)));
+        console.error('Error fetching data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [
+    options.table,
+    options.columns,
+    options.id,
+    options.idColumn,
+    JSON.stringify(options.filters),
+    JSON.stringify(options.orderBy),
+    options.limit,
+    options.relationTable,
+    JSON.stringify(options.relationFilter),
+  ]);
+
+  return { data, error, loading };
 }
+
+export default useSupabaseQuery;

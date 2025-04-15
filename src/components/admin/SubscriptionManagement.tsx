@@ -10,7 +10,7 @@ import { Pencil, Plus, Trash, CheckCircle, XCircle, Users, Clock, Tag, BarChart4
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { fetchSubscriptionPlans } from '@/services/subscriptionService';
-import { SubscriptionPlan } from "@/types/subscription";
+import { SubscriptionPlan, UserSubscription } from "@/types/subscription";
 
 // Mock subscription plans
 const mockSubscriptionPlans = [
@@ -19,7 +19,7 @@ const mockSubscriptionPlans = [
     name: "Free",
     description: "Basic free tier",
     price: 0,
-    billingCycle: "monthly",
+    billingCycle: "monthly" as const,
     features: [
       { name: "Max Services", limit: 1, included: true },
       { name: "Featured Services", included: false },
@@ -95,7 +95,7 @@ const mockSubscriptions = [
   }
 ];
 
-// Mock transaciton history
+// Mock transaction history
 const mockTransactions = [
   {
     id: "1",
@@ -142,13 +142,11 @@ const SubscriptionManagement = () => {
         const fetchedPlans = await fetchSubscriptionPlans();
         setPlans(fetchedPlans);
         
-        // Fetch active subscriptions
         const { data: subs } = await supabase
           .from('user_subscriptions')
           .select('*, user:user_id(*)');
         setSubscriptions(subs || []);
 
-        // Fetch transactions
         const { data: trans } = await supabase
           .from('subscription_transactions')
           .select('*')
@@ -365,7 +363,7 @@ const SubscriptionManagement = () => {
                           onChange={(e) =>
                             setEditingPlan({
                               ...editingPlan,
-                              billingCycle: e.target.value,
+                              billingCycle: e.target.value as "monthly" | "quarterly" | "yearly",
                             })
                           }
                         >

@@ -1,186 +1,277 @@
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatCurrency } from '@/lib/utils';
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
-import { DollarSign, FileText, Download, Calendar } from 'lucide-react';
+import { CircleDollarSign, TrendingUp, Calendar, Clock } from 'lucide-react';
 import { ProviderEarnings } from '@/types/subscription';
 
+// Mock data for the earnings report
+const MOCK_EARNINGS: ProviderEarnings = {
+  totalEarnings: 15750,
+  monthToDateEarnings: 3250,
+  weekToDateEarnings: 750,
+  pendingPayouts: 1200,
+  completedBookings: 42,
+  subscriptionCost: 299,
+  subscriptionStatus: 'active',
+  planName: 'Standard',
+  nextPaymentDate: '2023-05-15',
+  transactions: [
+    {
+      id: '1',
+      date: '2023-04-12',
+      amount: 450,
+      description: 'Home Cleaning Service',
+      status: 'completed',
+    },
+    {
+      id: '2',
+      date: '2023-04-10',
+      amount: 300,
+      description: 'Garden Maintenance',
+      status: 'completed',
+    },
+    {
+      id: '3',
+      date: '2023-04-08',
+      amount: 550,
+      description: 'Plumbing Repair',
+      status: 'pending',
+    },
+  ],
+  monthlyBreakdown: [
+    { month: 'Jan', earnings: 2100 },
+    { month: 'Feb', earnings: 2400 },
+    { month: 'Mar', earnings: 3200 },
+    { month: 'Apr', earnings: 3250 },
+    { month: 'May', earnings: 0 },
+    { month: 'Jun', earnings: 0 },
+    { month: 'Jul', earnings: 0 },
+    { month: 'Aug', earnings: 0 },
+    { month: 'Sep', earnings: 0 },
+    { month: 'Oct', earnings: 0 },
+    { month: 'Nov', earnings: 0 },
+    { month: 'Dec', earnings: 0 },
+  ],
+};
+
 interface EarningsReportProps {
-  earnings?: ProviderEarnings[];
-  isLoading?: boolean;
-  dateRange?: string;
-  onDateRangeChange?: (range: string) => void;
+  providerId?: string;
 }
 
-export const EarningsReport: React.FC<EarningsReportProps> = ({
-  earnings = [],
-  isLoading = false,
-  dateRange = 'month',
-  onDateRangeChange = () => {}
-}) => {
-  const totalEarnings = earnings.reduce((sum, earning) => sum + earning.netEarnings, 0);
-  const totalCommission = earnings.reduce((sum, earning) => sum + earning.commissionPaid, 0);
-  const totalBookings = earnings.reduce((sum, earning) => sum + earning.totalBookings, 0);
-  
-  // Formatted earnings data for display
-  const formattedEarnings = earnings.map(earning => ({
-    ...earning,
-    periodLabel: `${new Date(earning.periodStart).toLocaleDateString()} - ${new Date(earning.periodEnd).toLocaleDateString()}`,
-    totalEarningsFormatted: formatCurrency(earning.totalEarnings),
-    netEarningsFormatted: formatCurrency(earning.netEarnings),
-    commissionPaidFormatted: formatCurrency(earning.commissionPaid),
-    payoutDateFormatted: earning.payoutDate ? new Date(earning.payoutDate).toLocaleDateString() : 'Pending'
-  }));
+const EarningsReport: React.FC<EarningsReportProps> = ({ providerId }) => {
+  const [earnings, setEarnings] = useState<ProviderEarnings | null>(null);
+  const [timeframe, setTimeframe] = useState<'week' | 'month' | 'year'>('month');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchEarnings = async () => {
+      try {
+        setIsLoading(true);
+        // In a real app, we would fetch from an API
+        // For now, simulate a delay and use mock data
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        setEarnings(MOCK_EARNINGS);
+      } catch (error) {
+        console.error('Failed to load earnings data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEarnings();
+  }, [providerId, timeframe]);
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-NA', { style: 'currency', currency: 'NAD' }).format(amount);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center p-6">
+        <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (!earnings) {
+    return <div>No earnings data available.</div>;
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle>Earnings Report</CardTitle>
-            <CardDescription>View your earnings and payouts history</CardDescription>
-          </div>
-          <div className="flex space-x-2 mt-4 md:mt-0">
-            <Select value={dateRange} onValueChange={onDateRangeChange}>
-              <SelectTrigger className="w-[180px]">
-                <Calendar className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Select time period" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">This Week</SelectItem>
-                <SelectItem value="month">This Month</SelectItem>
-                <SelectItem value="quarter">This Quarter</SelectItem>
-                <SelectItem value="year">This Year</SelectItem>
-                <SelectItem value="all">All Time</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="icon">
-              <Download className="h-4 w-4" />
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
+            <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(earnings.totalEarnings)}</div>
+            <p className="text-xs text-muted-foreground">Lifetime earnings</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Month to Date</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(earnings.monthToDateEarnings)}</div>
+            <p className="text-xs text-muted-foreground">This month's earnings</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Payouts</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(earnings.pendingPayouts)}</div>
+            <p className="text-xs text-muted-foreground">To be paid out</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Bookings Completed</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{earnings.completedBookings}</div>
+            <p className="text-xs text-muted-foreground">Total completed bookings</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Earnings Overview</CardTitle>
+          <CardDescription>Your earnings breakdown over time</CardDescription>
+          <div className="flex space-x-2 mt-2">
+            <Button
+              variant={timeframe === 'week' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTimeframe('week')}
+            >
+              Week
+            </Button>
+            <Button
+              variant={timeframe === 'month' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTimeframe('month')}
+            >
+              Month
+            </Button>
+            <Button
+              variant={timeframe === 'year' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTimeframe('year')}
+            >
+              Year
             </Button>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="animate-pulse space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-24 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-            <div className="h-64 bg-gray-200 rounded mt-6"></div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={earnings.monthlyBreakdown}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis 
+                  tickFormatter={(value) => `N$${value}`}
+                />
+                <Tooltip 
+                  formatter={(value) => [`N$${value}`, 'Earnings']}
+                  labelFormatter={(label) => `${label} 2023`}
+                />
+                <Legend />
+                <Bar dataKey="earnings" name="Earnings" fill="#6366F1" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Earnings</p>
-                      <p className="text-2xl font-bold mt-1">{formatCurrency(totalEarnings)}</p>
-                    </div>
-                    <div className="p-3 bg-primary/10 rounded-full">
-                      <DollarSign className="h-5 w-5 text-primary" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Bookings</p>
-                      <p className="text-2xl font-bold mt-1">{totalBookings}</p>
-                    </div>
-                    <div className="p-3 bg-primary/10 rounded-full">
-                      <Calendar className="h-5 w-5 text-primary" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Platform Fees</p>
-                      <p className="text-2xl font-bold mt-1">{formatCurrency(totalCommission)}</p>
-                    </div>
-                    <div className="p-3 bg-primary/10 rounded-full">
-                      <FileText className="h-5 w-5 text-primary" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+        </CardContent>
+      </Card>
 
-            <Tabs defaultValue="table">
-              <TabsList className="mb-4">
-                <TabsTrigger value="table">Table View</TabsTrigger>
-                <TabsTrigger value="chart">Chart View</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="table">
-                <div className="border rounded-md">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Period</TableHead>
-                        <TableHead>Bookings</TableHead>
-                        <TableHead>Gross Earnings</TableHead>
-                        <TableHead>Platform Fee</TableHead>
-                        <TableHead>Net Earnings</TableHead>
-                        <TableHead>Payout Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {formattedEarnings.length > 0 ? (
-                        formattedEarnings.map((earning) => (
-                          <TableRow key={earning.id || earning.periodStart.toString()}>
-                            <TableCell>{earning.periodLabel}</TableCell>
-                            <TableCell>{earning.totalBookings}</TableCell>
-                            <TableCell>{earning.totalEarningsFormatted}</TableCell>
-                            <TableCell>{earning.commissionPaidFormatted}</TableCell>
-                            <TableCell className="font-medium">{earning.netEarningsFormatted}</TableCell>
-                            <TableCell>
-                              <div className={`px-2 py-1 rounded-full text-xs inline-block font-medium
-                                ${earning.payoutStatus === 'completed' ? 'bg-green-100 text-green-800' : 
-                                  earning.payoutStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                                  'bg-gray-100 text-gray-800'}
-                              `}>
-                                {earning.payoutStatus || 'Pending'}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
-                            No earnings data available for the selected period
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Transactions</CardTitle>
+          <CardDescription>Your most recent earnings transactions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {earnings.transactions.map((transaction) => (
+              <div
+                key={transaction.id}
+                className="flex items-center justify-between p-4 border rounded-lg"
+              >
+                <div>
+                  <div className="font-medium">{transaction.description}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {new Date(transaction.date).toLocaleDateString('en-NA')}
+                  </div>
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="chart">
-                <div className="h-80 flex items-center justify-center border rounded-md">
-                  <p className="text-muted-foreground">Earnings chart will be shown here</p>
+                <div className="flex items-center space-x-3">
+                  <div className={`text-sm px-2 py-1 rounded-full ${
+                    transaction.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                    transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                  </div>
+                  <div className="font-bold">{formatCurrency(transaction.amount)}</div>
                 </div>
-              </TabsContent>
-            </Tabs>
-          </>
-        )}
-      </CardContent>
-    </Card>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button variant="outline" className="w-full">View All Transactions</Button>
+        </CardFooter>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Subscription Details</CardTitle>
+          <CardDescription>Your current subscription information</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-muted-foreground">Plan</div>
+                <div className="font-medium">{earnings.planName}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Status</div>
+                <div className={`font-medium ${
+                  earnings.subscriptionStatus === 'active' ? 'text-green-600' : 
+                  earnings.subscriptionStatus === 'pending' ? 'text-yellow-600' : 'text-red-600'
+                }`}>
+                  {earnings.subscriptionStatus.charAt(0).toUpperCase() + earnings.subscriptionStatus.slice(1)}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Monthly Cost</div>
+                <div className="font-medium">{formatCurrency(earnings.subscriptionCost)}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Next Payment</div>
+                <div className="font-medium">
+                  {earnings.nextPaymentDate ? new Date(earnings.nextPaymentDate).toLocaleDateString('en-NA') : 'N/A'}
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button variant="outline" className="w-full">Manage Subscription</Button>
+        </CardFooter>
+      </Card>
+    </div>
   );
 };
 
