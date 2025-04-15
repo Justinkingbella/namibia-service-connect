@@ -150,6 +150,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [navigate, toast]);
 
+  const handleRouteChange = useCallback((path: string, options?: { replace?: boolean }) => {
+    navigate(path, options);
+  }, [navigate]);
+
   const signIn = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -568,6 +572,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updatePassword,
     verifyEmail,
     sendVerificationEmail,
+    navigate: handleRouteChange,
     checkAuth: useCallback(async () => {
       const { data: { session: supabaseSession } } = await supabase.auth.getSession();
       if (supabaseSession) {
