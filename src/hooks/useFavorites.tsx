@@ -34,7 +34,7 @@ interface FavoriteWithService {
   created_at: string;
   user_id: string;
   service_id: string;
-  service: ServiceWithProvider;
+  service: ServiceWithProvider | null;
 }
 
 export interface FavoriteService {
@@ -101,11 +101,14 @@ export function useFavorites() {
       
       // Transform response data
       const favorites: FavoriteService[] = data
-        .filter(item => item.service && typeof item.service !== 'string' && !item.service.error)
+        .filter(item => item.service && typeof item.service !== 'string')
         .map((item: any) => {
-          if (!item.service || typeof item.service === 'string' || item.service.error) {
+          if (!item.service || typeof item.service === 'string') {
             return null;
           }
+          
+          // Check if provider exists and has valid properties
+          const provider = item.service.provider || {};
           
           return {
             id: item.id,
@@ -115,10 +118,10 @@ export function useFavorites() {
             price: item.service.price,
             image: item.service.image,
             providerId: item.service.provider_id,
-            providerName: item.service.provider?.business_name || 'Unknown Provider',
+            providerName: provider.business_name || 'Unknown Provider',
             category: item.service.category,
-            rating: item.service.provider?.rating || 0,
-            reviewCount: item.service.provider?.review_count || 0,
+            rating: provider.rating || 0,
+            reviewCount: provider.review_count || 0,
             addedAt: item.created_at
           };
         })
