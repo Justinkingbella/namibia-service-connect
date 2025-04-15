@@ -183,11 +183,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                         <button 
                           onClick={() => {
                             if (user?.role === 'admin') {
-                              navigate('/dashboard/admin/profile');
+                              navigate('/admin/profile');
                             } else if (user?.role === 'provider') {
-                              navigate('/dashboard/provider/profile');
+                              navigate('/provider/profile');
                             } else {
-                              navigate('/dashboard/profile');
+                              navigate('/customer/profile');
                             }
                             setIsUserMenuOpen(false);
                           }}
@@ -199,7 +199,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                         {user?.role === 'admin' && (
                           <button 
                             onClick={() => {
-                              navigate('/dashboard/settings');
+                              navigate('/admin/settings');
                               setIsUserMenuOpen(false);
                             }}
                             className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
