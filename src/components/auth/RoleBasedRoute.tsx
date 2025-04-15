@@ -1,10 +1,10 @@
 
 import { Navigate } from 'react-router-dom';
-import { UserRole } from '@/types/auth';
 import { useAuthStore } from '@/store/authStore';
+import { UserRole } from '@/types/auth';
 
 interface RoleBasedRouteProps {
-  allowedRoles: UserRole[];
+  allowedRoles: UserRole[] | string[];
   children: React.ReactNode;
 }
 

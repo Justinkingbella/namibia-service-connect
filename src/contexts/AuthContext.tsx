@@ -13,7 +13,7 @@ import {
   DbProviderProfile,
   AuthContextType,
   ProviderVerificationStatus
-} from '@/types';
+} from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
 import { CustomSession, createCustomSession, transformProviderData } from '@/types/auth-helpers';
 
@@ -22,7 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<Customer | Provider | Admin | null>(null);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -439,7 +439,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!data) return;
 
-      // Handle profile data safely
       const profileData = data.profiles as Record<string, any> || {};
 
       const customerProfile: Customer = {
@@ -480,10 +479,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!providerData) return null;
 
-      // Handle the profile data safely
       const profileData = providerData.profiles as Record<string, any> || {};
 
-      // Use our helper function to safely transform provider data
       const { categories, services, taxId, reviewCount } = transformProviderData(providerData);
       
       const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'unverified';

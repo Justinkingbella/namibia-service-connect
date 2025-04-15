@@ -44,7 +44,7 @@ export const useFavorites = () => {
       // Fetch the actual services
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
-        .select('*, provider:provider_id (business_name, avatar_url)')
+        .select('*, provider:provider_id (*)')
         .in('id', favoriteIds);
 
       if (servicesError) {
@@ -59,9 +59,11 @@ export const useFavorites = () => {
 
       // Transform data to match Service type
       const transformedFavorites: Service[] = servicesData.map(service => {
-        const providerName = service.provider && typeof service.provider === 'object' 
-          ? (service.provider as any).business_name || 'Unknown Provider'
-          : 'Unknown Provider';
+        const providerData = service.provider && typeof service.provider === 'object' 
+          ? service.provider
+          : { business_name: 'Unknown Provider' };
+          
+        const providerName = providerData.business_name || 'Unknown Provider';
         
         return {
           id: service.id || '',
@@ -128,7 +130,7 @@ export const useFavorites = () => {
         // Fetch the service details to add to state
         const { data: serviceData, error: serviceError } = await supabase
           .from('services')
-          .select('*, provider:provider_id (business_name, avatar_url)')
+          .select('*, provider:provider_id (*)')
           .eq('id', serviceId)
           .single();
 
@@ -139,9 +141,11 @@ export const useFavorites = () => {
           return;
         }
 
-        const providerName = serviceData.provider && typeof serviceData.provider === 'object'
-          ? (serviceData.provider as any).business_name || 'Unknown Provider'
-          : 'Unknown Provider';
+        const providerData = serviceData.provider && typeof serviceData.provider === 'object'
+          ? serviceData.provider
+          : { business_name: 'Unknown Provider' };
+          
+        const providerName = providerData.business_name || 'Unknown Provider';
 
         const newFavorite: Service = {
           id: serviceData.id || '',

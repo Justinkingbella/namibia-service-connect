@@ -32,7 +32,6 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
     setError(null);
 
     try {
-      // @ts-ignore - TypeScript doesn't understand the dynamic table selection
       let query = supabase.from(options.table);
 
       if (options.select) {
@@ -46,27 +45,28 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
       // Apply filters if provided
       if (options.filter && Array.isArray(options.filter)) {
         for (const filter of options.filter) {
-          switch (filter.operator) {
-            case 'in':
-              // @ts-ignore - TypeScript doesn't understand the dynamic method calls
-              query = query.in(filter.column, filter.value);
-              break;
-            case 'is':
-              // @ts-ignore - TypeScript doesn't understand the dynamic method calls
-              query = query.is(filter.column, filter.value);
-              break;
-            case 'eq':
-            default:
-              // @ts-ignore - TypeScript doesn't understand the dynamic method calls
-              query = query.eq(filter.column, filter.value);
-              break;
+          if (filter.operator === 'in') {
+            query = query.in(filter.column, filter.value);
+          } else if (filter.operator === 'is') {
+            query = query.is(filter.column, filter.value);
+          } else if (filter.operator === 'eq') {
+            query = query.eq(filter.column, filter.value);
+          } else if (filter.operator === 'neq') {
+            query = query.neq(filter.column, filter.value);
+          } else if (filter.operator === 'gt') {
+            query = query.gt(filter.column, filter.value);
+          } else if (filter.operator === 'gte') {
+            query = query.gte(filter.column, filter.value);
+          } else if (filter.operator === 'lt') {
+            query = query.lt(filter.column, filter.value);
+          } else if (filter.operator === 'lte') {
+            query = query.lte(filter.column, filter.value);
           }
         }
       }
 
       // Apply ordering if provided
       if (options.orderBy) {
-        // @ts-ignore - TypeScript doesn't understand the dynamic method calls
         query = query.order(options.orderBy.column, {
           ascending: options.orderBy.ascending,
         });
@@ -74,21 +74,17 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
 
       // Apply limit if provided
       if (options.limit) {
-        // @ts-ignore - TypeScript doesn't understand the dynamic method calls
         query = query.limit(options.limit);
       }
 
       // Fetch a single record if specified
       if (options.single) {
         if (options.id) {
-          // @ts-ignore - TypeScript doesn't understand the dynamic method calls
           query = query.eq('id', options.id);
         }
-        // @ts-ignore - TypeScript doesn't understand the dynamic method calls
         query = query.single();
       }
 
-      // @ts-ignore - TypeScript doesn't understand the dynamic method calls
       const { data: result, error } = await query;
 
       if (error) {

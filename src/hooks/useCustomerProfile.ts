@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { DbCustomerProfile, Customer } from '@/types/auth';
+import { Customer, DbCustomerProfile } from '@/types/auth';
 
 export interface CustomerData extends DbCustomerProfile {
   // Additional fields if needed
