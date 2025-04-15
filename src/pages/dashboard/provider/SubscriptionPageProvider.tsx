@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,6 @@ const SubscriptionPageProvider = () => {
   const [cancellationReason, setCancellationReason] = useState('');
   const [availablePlans, setAvailablePlans] = useState<SubscriptionPlan[]>([]);
 
-  // Fetch available plans
   useEffect(() => {
     const loadPlans = async () => {
       try {

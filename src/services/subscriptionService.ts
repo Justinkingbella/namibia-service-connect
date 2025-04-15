@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { SubscriptionPlan, UserSubscription, SubscriptionTransaction } from '@/types/subscription';
 import { toast } from 'sonner';
@@ -81,6 +80,116 @@ export async function fetchUserSubscriptions(userId?: string): Promise<UserSubsc
   } catch (error) {
     console.error('Error fetching user subscriptions:', error);
     return [];
+  }
+}
+
+/**
+ * Fetch a single user subscription
+ */
+export async function fetchUserSubscription(userId?: string): Promise<UserSubscription | null> {
+  if (!userId) return null;
+  
+  try {
+    const { data, error } = await supabase
+      .from('user_subscriptions')
+      .select(`
+        *,
+        subscription_plan:subscription_plan_id (
+          id, 
+          name, 
+          description, 
+          price, 
+          billing_cycle,
+          is_active,
+          is_popular,
+          trial_period_days,
+          allowed_services,
+          credits,
+          max_bookings,
+          features
+        )
+      `)
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .maybeSingle();
+      
+    if (error) {
+      throw error;
+    }
+    
+    if (!data) {
+      return null;
+    }
+
+    // Transform to match our UserSubscription type
+    return {
+      id: data.id,
+      user_id: data.user_id,
+      subscription_plan_id: data.subscription_plan_id,
+      status: data.status,
+      start_date: data.start_date,
+      end_date: data.end_date,
+      payment_method: data.payment_method,
+      payment_id: data.payment_id,
+      auto_renew: data.auto_renew,
+      credits_used: data.credits_used,
+      credits_remaining: data.credits_remaining,
+      bookings_used: data.bookings_used,
+      bookings_remaining: data.bookings_remaining,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      cancellation_date: data.cancellation_date,
+      cancellation_reason: data.cancellation_reason,
+      stripe_customer_id: data.stripe_customer_id,
+      stripe_subscription_id: data.stripe_subscription_id,
+      userId: data.user_id,
+      planId: data.subscription_plan_id,
+      planName: data.subscription_plan?.name || 'Unknown Plan',
+      subscriptionPlanId: data.subscription_plan_id,
+      plan: data.subscription_plan ? {
+        id: data.subscription_plan.id,
+        name: data.subscription_plan.name,
+        description: data.subscription_plan.description || '',
+        price: data.subscription_plan.price,
+        billingCycle: data.subscription_plan.billing_cycle,
+        isActive: data.subscription_plan.is_active,
+        isPopular: data.subscription_plan.is_popular,
+        trialPeriodDays: data.subscription_plan.trial_period_days,
+        allowedServices: data.subscription_plan.allowed_services,
+        credits: data.subscription_plan.credits,
+        maxBookings: data.subscription_plan.max_bookings,
+        features: Array.isArray(data.subscription_plan.features) ? data.subscription_plan.features : []
+      } : undefined
+    };
+  } catch (error) {
+    console.error('Error fetching user subscription:', error);
+    return null;
+  }
+}
+
+/**
+ * Toggle auto-renew for a subscription
+ */
+export async function toggleAutoRenew(
+  subscriptionId: string, 
+  enabled: boolean
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('user_subscriptions')
+      .update({ auto_renew: enabled })
+      .eq('id', subscriptionId);
+    
+    if (error) {
+      throw error;
+    }
+    
+    toast.success(`Auto-renew ${enabled ? 'enabled' : 'disabled'}`);
+    return true;
+  } catch (error: any) {
+    console.error('Error toggling auto-renew:', error);
+    toast.error('Failed to update auto-renew setting');
+    return false;
   }
 }
 

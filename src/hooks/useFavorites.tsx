@@ -37,52 +37,52 @@ export const useFavorites = () => {
       
       if (favoriteIds.length === 0) {
         setFavorites([]);
+        setLoading(false);
         return;
       }
 
       // Fetch the actual services
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
-        .select(`
-          *,
-          provider:provider_id (business_name, avatar_url)
-        `)
+        .select('*, provider:provider_id (business_name, avatar_url)')
         .in('id', favoriteIds);
 
       if (servicesError) {
         throw servicesError;
       }
 
-      if (!servicesData) {
+      if (!servicesData || !Array.isArray(servicesData)) {
         setFavorites([]);
+        setLoading(false);
         return;
       }
 
       // Transform data to match Service type
       const transformedFavorites: Service[] = servicesData.map(service => {
-        const providerName = service.provider?.business_name || 'Unknown Provider';
+        const providerName = service.provider && typeof service.provider === 'object' 
+          ? (service.provider as any).business_name || 'Unknown Provider'
+          : 'Unknown Provider';
         
         return {
-          id: service?.id || '',
-          title: service?.title || '',
-          description: service?.description || '',
-          price: Number(service?.price) || 0,
-          image: service?.image || '',
-          provider_id: service?.provider_id || '',
+          id: service.id || '',
+          title: service.title || '',
+          description: service.description || '',
+          price: Number(service.price) || 0,
+          image: service.image || '',
+          provider_id: service.provider_id || '',
           provider_name: providerName,
-          providerId: service?.provider_id || '',
+          providerId: service.provider_id || '',
           providerName: providerName,
-          category: service?.category || '',
-          pricingModel: service?.pricing_model || '',
-          pricing_model: service?.pricing_model || '',
-          rating: Number(service?.rating) || 0,
-          reviewCount: Number(service?.review_count) || 0,
-          location: service?.location || '',
-          features: Array.isArray(service?.features) ? service.features : [],
-          isActive: service?.is_active ?? true,
-          createdAt: service?.created_at || '',
-          updatedAt: service?.updated_at || '',
-          tags: Array.isArray(service?.tags) ? service.tags : []
+          category: service.category || '',
+          pricingModel: service.pricing_model || '',
+          rating: Number(service.rating || 0),
+          reviewCount: Number(service.review_count || 0),
+          location: service.location || '',
+          features: Array.isArray(service.features) ? service.features : [],
+          isActive: service.is_active ?? true,
+          createdAt: service.created_at || '',
+          updatedAt: service.updated_at || '',
+          tags: Array.isArray(service.tags) ? service.tags : []
         };
       });
 
@@ -128,10 +128,7 @@ export const useFavorites = () => {
         // Fetch the service details to add to state
         const { data: serviceData, error: serviceError } = await supabase
           .from('services')
-          .select(`
-            *,
-            provider:provider_id (business_name, avatar_url)
-          `)
+          .select('*, provider:provider_id (business_name, avatar_url)')
           .eq('id', serviceId)
           .single();
 
@@ -142,29 +139,30 @@ export const useFavorites = () => {
           return;
         }
 
-        const providerName = serviceData.provider?.business_name || 'Unknown Provider';
+        const providerName = serviceData.provider && typeof serviceData.provider === 'object'
+          ? (serviceData.provider as any).business_name || 'Unknown Provider'
+          : 'Unknown Provider';
 
         const newFavorite: Service = {
-          id: serviceData?.id || '',
-          title: serviceData?.title || '',
-          description: serviceData?.description || '',
-          price: Number(serviceData?.price) || 0,
-          image: serviceData?.image || '',
-          provider_id: serviceData?.provider_id || '',
+          id: serviceData.id || '',
+          title: serviceData.title || '',
+          description: serviceData.description || '',
+          price: Number(serviceData.price) || 0,
+          image: serviceData.image || '',
+          provider_id: serviceData.provider_id || '',
           provider_name: providerName,
-          providerId: serviceData?.provider_id || '',
+          providerId: serviceData.provider_id || '',
           providerName: providerName,
-          category: serviceData?.category || '',
-          pricingModel: serviceData?.pricing_model || '',
-          pricing_model: serviceData?.pricing_model || '',
-          rating: Number(serviceData?.rating) || 0,
-          reviewCount: Number(serviceData?.review_count) || 0,
-          location: serviceData?.location || '',
-          features: Array.isArray(serviceData?.features) ? serviceData.features : [],
-          isActive: serviceData?.is_active ?? true,
-          createdAt: serviceData?.created_at || '',
-          updatedAt: serviceData?.updated_at || '',
-          tags: Array.isArray(serviceData?.tags) ? serviceData.tags : []
+          category: serviceData.category || '',
+          pricingModel: serviceData.pricing_model || '',
+          rating: Number(serviceData.rating || 0),
+          reviewCount: Number(serviceData.review_count || 0),
+          location: serviceData.location || '',
+          features: Array.isArray(serviceData.features) ? serviceData.features : [],
+          isActive: serviceData.is_active ?? true,
+          createdAt: serviceData.created_at || '',
+          updatedAt: serviceData.updated_at || '',
+          tags: Array.isArray(serviceData.tags) ? serviceData.tags : []
         };
 
         setFavorites((prev) => [...prev, newFavorite]);

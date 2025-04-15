@@ -1,124 +1,123 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { PostgrestResponse, PostgrestSingleResponse } from '@supabase/supabase-js';
+import { toast } from 'sonner';
+import { PostgrestResponse } from '@supabase/supabase-js';
 
-type QueryOptions = {
+interface UseSupabaseQueryOptions<T> {
   table: string;
   columns?: string;
-  filters?: Record<string, any>;
-  orderBy?: { column: string; ascending?: boolean };
+  select?: string;
+  filter?: {
+    column: string;
+    operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'is';
+    value: any;
+  }[];
+  orderBy?: { column: string; ascending: boolean };
   limit?: number;
-  idColumn?: string;
-  id?: string | null;
-  relationTable?: string;
-  relationFilter?: Record<string, any>;
-};
+  single?: boolean;
+  enabled?: boolean;
+  id?: string;
+  relations?: string;
+}
 
-/**
- * A custom hook for handling Supabase queries with TypeScript support
- */
-export function useSupabaseQuery<T>(options: QueryOptions) {
-  const [data, setData] = useState<T | null>(null);
+export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
+  const [data, setData] = useState<T | T[] | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+
+  const fetchData = async () => {
+    if (options.enabled === false) return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      // @ts-ignore - TypeScript doesn't understand the dynamic table selection
+      let query = supabase.from(options.table);
+
+      if (options.select) {
+        query = query.select(options.select);
+      } else if (options.columns) {
+        query = query.select(options.columns);
+      } else {
+        query = query.select('*');
+      }
+
+      // Apply filters if provided
+      if (options.filter && Array.isArray(options.filter)) {
+        for (const filter of options.filter) {
+          switch (filter.operator) {
+            case 'in':
+              // @ts-ignore - TypeScript doesn't understand the dynamic method calls
+              query = query.in(filter.column, filter.value);
+              break;
+            case 'is':
+              // @ts-ignore - TypeScript doesn't understand the dynamic method calls
+              query = query.is(filter.column, filter.value);
+              break;
+            case 'eq':
+            default:
+              // @ts-ignore - TypeScript doesn't understand the dynamic method calls
+              query = query.eq(filter.column, filter.value);
+              break;
+          }
+        }
+      }
+
+      // Apply ordering if provided
+      if (options.orderBy) {
+        // @ts-ignore - TypeScript doesn't understand the dynamic method calls
+        query = query.order(options.orderBy.column, {
+          ascending: options.orderBy.ascending,
+        });
+      }
+
+      // Apply limit if provided
+      if (options.limit) {
+        // @ts-ignore - TypeScript doesn't understand the dynamic method calls
+        query = query.limit(options.limit);
+      }
+
+      // Fetch a single record if specified
+      if (options.single) {
+        if (options.id) {
+          // @ts-ignore - TypeScript doesn't understand the dynamic method calls
+          query = query.eq('id', options.id);
+        }
+        // @ts-ignore - TypeScript doesn't understand the dynamic method calls
+        query = query.single();
+      }
+
+      // @ts-ignore - TypeScript doesn't understand the dynamic method calls
+      const { data: result, error } = await query;
+
+      if (error) {
+        throw new Error(`Error fetching data: ${error.message}`);
+      }
+
+      setData(result);
+    } catch (err: any) {
+      console.error('Error in useSupabaseQuery:', err);
+      setError(err);
+      toast.error(`Failed to fetch data: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
-        let query = supabase.from(options.table);
-
-        // Select columns if provided, otherwise select all
-        if (options.columns) {
-          query = query.select(options.columns);
-        } else {
-          query = query.select('*');
-        }
-
-        // Handle relation if provided
-        if (options.relationTable) {
-          // Cast relation table to any to avoid type checking
-          // This is necessary because supabase's typing doesn't allow for dynamic relation names
-          query = query.select(`*, ${options.relationTable}(*)`) as any;
-        }
-
-        // Apply filters if provided
-        if (options.filters) {
-          for (const [key, value] of Object.entries(options.filters)) {
-            if (Array.isArray(value)) {
-              query = query.in(key, value);
-            } else if (value === null) {
-              query = query.is(key, null);
-            } else {
-              query = query.eq(key, value);
-            }
-          }
-        }
-
-        // Apply relation filters if provided
-        if (options.relationTable && options.relationFilter) {
-          for (const [key, value] of Object.entries(options.relationFilter)) {
-            const filterKey = `${options.relationTable}.${key}`;
-            if (Array.isArray(value)) {
-              query = query.in(filterKey, value);
-            } else if (value === null) {
-              query = query.is(filterKey, null);
-            } else {
-              query = query.eq(filterKey, value);
-            }
-          }
-        }
-
-        // Apply ordering if provided
-        if (options.orderBy) {
-          query = query.order(
-            options.orderBy.column, 
-            { ascending: options.orderBy.ascending ?? true }
-          );
-        }
-
-        // Apply limit if provided
-        if (options.limit) {
-          query = query.limit(options.limit);
-        }
-
-        // Execute query - either for a single item or multiple items
-        let response: PostgrestResponse<T> | PostgrestSingleResponse<T>;
-        
-        if (options.id && options.idColumn) {
-          response = await query.eq(options.idColumn, options.id).single();
-        } else {
-          response = await query;
-        }
-
-        if (response.error) {
-          throw new Error(response.error.message);
-        }
-
-        setData(response.data as T);
-      } catch (err: any) {
-        setError(err instanceof Error ? err : new Error(String(err)));
-        console.error('Error fetching data:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchData();
   }, [
     options.table,
     options.columns,
-    options.id,
-    options.idColumn,
-    JSON.stringify(options.filters),
+    options.select,
+    JSON.stringify(options.filter),
     JSON.stringify(options.orderBy),
     options.limit,
-    options.relationTable,
-    JSON.stringify(options.relationFilter),
+    options.single,
+    options.enabled,
+    options.id,
   ]);
 
-  return { data, error, loading };
+  return { data, loading, error, refresh: fetchData };
 }
-
-export default useSupabaseQuery;
