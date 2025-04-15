@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,6 @@ import { ServiceCard } from '@/components/dashboard/ServiceCard';
 import { ServiceCategoryEnum, Service } from '@/types';
 import { cn } from '@/lib/utils';
 
-// Mock data for testing
 const MOCK_SERVICES: Service[] = [
   {
     id: '1',
@@ -62,14 +60,13 @@ const ServicesPage = () => {
   const [services, setServices] = useState<Service[]>(MOCK_SERVICES);
   const [filteredServices, setFilteredServices] = useState<Service[]>(MOCK_SERVICES);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<keyof typeof ServiceCategoryEnum>(ServiceCategoryEnum.CLEANING); // Use valid enum value
+  const [selectedCategory, setSelectedCategory] = useState<string>(ServiceCategoryEnum.CLEANING);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'newest' | 'price-low' | 'price-high' | 'rating'>('newest');
   
-  const isAdmin = true; // Mocked for now, should use auth context
-  const isProvider = false; // Mocked for now
+  const isAdmin = true;
+  const isProvider = false;
 
-  // Category names for display
   const categories: Record<string, string> = {
     [ServiceCategoryEnum.CLEANING]: 'Cleaning',
     [ServiceCategoryEnum.PLUMBING]: 'Plumbing',
@@ -92,7 +89,7 @@ const ServicesPage = () => {
   const filterServices = () => {
     let filtered = [...services];
     
-    if (selectedCategory !== ServiceCategoryEnum.CLEANING) { // Use comparison with actual enum value
+    if (selectedCategory !== 'all') {
       filtered = filtered.filter(service => service.category === selectedCategory);
     }
     
@@ -194,7 +191,7 @@ const ServicesPage = () => {
               <div className="flex flex-wrap gap-2 items-center">
                 <Select
                   value={selectedCategory}
-                  onValueChange={(value) => setSelectedCategory(value as keyof typeof ServiceCategoryEnum)}
+                  onValueChange={(value) => setSelectedCategory(value)}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Category" />
@@ -277,11 +274,10 @@ const ServicesPage = () => {
                   category: service.category,
                   rating: service.rating,
                   reviewCount: service.reviewCount,
-                  providerId: service.providerId,
-                  providerName: service.providerName,
+                  provider_id: service.providerId || service.provider_id,
+                  provider_name: service.providerName || service.provider_name,
                   location: service.location,
-                  pricingModel: service.pricingModel,
-                  isActive: service.isActive
+                  pricingModel: service.pricingModel
                 }}
                 asLink={!isProvider || isAdmin}
                 linkTo={

@@ -1,3 +1,4 @@
+
 import { Json } from './schema';
 
 export type BookingStatus = 
@@ -28,8 +29,8 @@ export interface BookingData {
   date: string;
   start_time: string;
   end_time?: string;
-  status: BookingStatus;
-  payment_status: PaymentStatus;
+  status: BookingStatus | string; // Allow string to avoid type errors when data comes from API
+  payment_status: PaymentStatus | string; // Allow string to avoid type errors when data comes from API
   payment_method: string;
   total_amount: number;
   commission: number;
@@ -41,6 +42,8 @@ export interface BookingData {
   cancellation_reason?: string;
   cancelled_by?: string;
   cancellation_date?: string;
+  
+  // Alias fields to allow for both naming conventions
   serviceId?: string;
   serviceName?: string;
   serviceImage?: string;

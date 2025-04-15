@@ -1,4 +1,3 @@
-
 export enum ServiceCategoryEnum {
   CLEANING = 'cleaning',
   PLUMBING = 'plumbing',
@@ -9,8 +8,13 @@ export enum ServiceCategoryEnum {
   TUTORING = 'tutoring',
   FOOD_DELIVERY = 'food_delivery',
   TRANSPORTATION = 'transportation',
+  MOVING = 'moving',
+  REPAIRS = 'repairs',
+  CONSTRUCTION = 'construction',
+  EVENT_PLANNING = 'event_planning',
+  INTERIOR_DESIGN = 'interior_design',
   OTHER = 'other',
-  ALL = 'all' // Adding 'all' to match usage in ServiceBasicInfoForm
+  ALL = 'all'
 }
 
 export enum PricingModelEnum {
@@ -45,7 +49,10 @@ export interface ServiceListItem {
   image?: string;
   rating?: number;
   reviewCount?: number;
-  location?: string; // Adding location property to match usage in ServiceCard
+  location?: string;
+  providerId?: string;
+  providerName?: string;
+  isActive?: boolean;
 }
 
 export interface Service {
@@ -60,7 +67,7 @@ export interface Service {
   providerName: string;
   category: string;
   pricingModel: string;
-  pricing_model?: string; // For backend compatibility
+  pricing_model?: string;
   rating: number;
   reviewCount: number;
   location?: string;

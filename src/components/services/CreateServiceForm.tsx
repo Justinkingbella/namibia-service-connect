@@ -1,4 +1,3 @@
-
 import React, { useState, ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { ServiceCategoryEnum, PricingModelEnum } from '@/types';
-import { ImageUpload } from '@/components/ui/image-upload';
+import ImageUpload from '@/components/ui/image-upload';
 
 interface CreateServiceFormProps {
   onSave: (serviceData: any) => void;

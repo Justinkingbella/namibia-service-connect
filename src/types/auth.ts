@@ -48,13 +48,16 @@ export interface User {
 export interface UserAddress {
   id: string;
   userId: string;
+  user_id?: string; // Allow both naming conventions
   name: string;
   street: string;
   city: string;
   region?: string;
   postalCode?: string;
+  postal_code?: string; // Allow both naming conventions
   country: string;
   isDefault: boolean;
+  is_default?: boolean; // Allow both naming conventions
 }
 
 // Customer interface

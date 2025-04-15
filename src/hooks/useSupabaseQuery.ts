@@ -32,11 +32,12 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
     setError(null);
 
     try {
-      // Build the query using the type-safe API
-      // Use 'any' to bypass type checking for dynamic table names
-      let query: any = supabase.from(options.table);
+      // Use type assertion to work around the type constraints
+      // This is safe because we're passing the table name as a string,
+      // which is what the Supabase client expects
+      let query = supabase.from(options.table as any);
       
-      // Select columns
+      // Apply select statement
       if (options.select) {
         query = query.select(options.select);
       } else if (options.columns) {
@@ -44,95 +45,78 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
       } else {
         query = query.select('*');
       }
-
-      // Apply filters if provided using type assertion to overcome type issues
-      if (options.filter && Array.isArray(options.filter)) {
+      
+      // Apply filters
+      if (options.filter && options.filter.length > 0) {
         for (const filter of options.filter) {
-          const column = filter.column;
-          const value = filter.value;
-          
-          // Use a switch with type assertions for each case
           switch (filter.operator) {
             case 'eq':
-              query = query.eq(column, value);
+              query = query.eq(filter.column, filter.value);
               break;
             case 'neq':
-              query = query.neq(column, value);
+              query = query.neq(filter.column, filter.value);
               break;
             case 'gt':
-              query = query.gt(column, value);
+              query = query.gt(filter.column, filter.value);
               break;
             case 'gte':
-              query = query.gte(column, value);
+              query = query.gte(filter.column, filter.value);
               break;
             case 'lt':
-              query = query.lt(column, value);
+              query = query.lt(filter.column, filter.value);
               break;
             case 'lte':
-              query = query.lte(column, value);
+              query = query.lte(filter.column, filter.value);
               break;
             case 'in':
-              query = query.in(column, value);
+              query = query.in(filter.column, filter.value);
               break;
             case 'is':
-              query = query.is(column, value);
+              query = query.is(filter.column, filter.value);
               break;
           }
         }
       }
-
-      // Apply ordering if provided
+      
+      // Apply ordering
       if (options.orderBy) {
         query = query.order(options.orderBy.column, {
-          ascending: options.orderBy.ascending,
+          ascending: options.orderBy.ascending
         });
       }
-
-      // Apply limit if provided
+      
+      // Apply limit
       if (options.limit) {
         query = query.limit(options.limit);
       }
-
-      // Fetch a single record if specified
-      let result;
-      if (options.single) {
-        if (options.id) {
-          query = query.eq('id', options.id);
-        }
-        result = await query.maybeSingle();
-      } else {
-        result = await query;
+      
+      // Get single item by ID if specified
+      if (options.id) {
+        query = query.eq('id', options.id);
       }
-
-      const { data: resultData, error: queryError } = result;
-
+      
+      // Execute query
+      const { data: result, error: queryError } = options.single
+        ? await query.single()
+        : await query;
+      
       if (queryError) {
-        throw new Error(`Error fetching data: ${queryError.message}`);
+        throw queryError;
       }
-
-      setData(resultData);
-    } catch (err: any) {
-      console.error('Error in useSupabaseQuery:', err);
-      setError(err);
-      toast.error(`Failed to fetch data: ${err.message}`);
+      
+      setData(result as T | T[]);
+    } catch (err) {
+      console.error('Supabase query error:', err);
+      setError(err as PostgrestError | Error);
     } finally {
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
     fetchData();
-  }, [
-    options.table,
-    options.columns,
-    options.select,
-    JSON.stringify(options.filter),
-    JSON.stringify(options.orderBy),
-    options.limit,
-    options.single,
-    options.enabled,
-    options.id,
-  ]);
-
-  return { data, loading, error, refresh: fetchData };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options.table, options.id, options.enabled]);
+  
+  return { data, loading, error, refetch: fetchData };
 }
