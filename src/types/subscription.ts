@@ -11,6 +11,7 @@ export interface SubscriptionPlan {
     name: string;
     included: boolean;
     details?: string;
+    limit?: number;
   }>;
   credits: number;
   maxBookings: number;
@@ -36,4 +37,38 @@ export interface UserSubscription {
   plan?: SubscriptionPlan; // Add the plan property for the relationship
   cancellation_date?: string;
   cancellation_reason?: string;
+}
+
+export interface SubscriptionTransaction {
+  id: string;
+  user_id: string;
+  subscription_plan_id: string;
+  amount: number;
+  status: string;
+  payment_method: string;
+  payment_id?: string;
+  created_at: string;
+}
+
+export interface ProviderEarnings {
+  totalEarnings: number;
+  monthToDateEarnings: number;
+  weekToDateEarnings: number;
+  pendingPayouts: number;
+  completedBookings: number;
+  subscriptionCost: number;
+  subscriptionStatus: string;
+  planName: string;
+  nextPaymentDate: string;
+  transactions: Array<{
+    id: string;
+    date: string;
+    amount: number;
+    description: string;
+    status: string;
+  }>;
+  monthlyBreakdown: Array<{
+    month: string;
+    earnings: number;
+  }>;
 }

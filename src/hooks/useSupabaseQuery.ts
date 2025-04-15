@@ -32,10 +32,8 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
     setError(null);
 
     try {
-      // Use type assertion to work around the type constraints
-      // This is safe because we're passing the table name as a string,
-      // which is what the Supabase client expects
-      let query = supabase.from(options.table as any);
+      // Using any to work around the TypeScript issues with dynamic table selection
+      let query = supabase.from(options.table) as any;
       
       // Apply select statement
       if (options.select) {

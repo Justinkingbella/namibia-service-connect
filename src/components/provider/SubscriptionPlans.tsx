@@ -133,9 +133,9 @@ const SubscriptionPlans: React.FC = () => {
                 )}
               </div>
               
-              {plan.trial_period_days && plan.trial_period_days > 0 && (
+              {plan.trialPeriodDays && plan.trialPeriodDays > 0 && (
                 <div className="mb-4 text-sm">
-                  {plan.trial_period_days}-day free trial
+                  {plan.trialPeriodDays}-day free trial
                 </div>
               )}
               
@@ -154,17 +154,17 @@ const SubscriptionPlans: React.FC = () => {
                   </li>
                 ))}
                 
-                {plan.max_bookings && (
+                {plan.maxBookings && (
                   <li className="flex items-start">
                     <CheckIcon className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                    <span>Up to {plan.max_bookings} bookings/month</span>
+                    <span>Up to {plan.maxBookings} bookings/month</span>
                   </li>
                 )}
                 
-                {plan.allowed_services && (
+                {plan.allowedServices && (
                   <li className="flex items-start">
                     <CheckIcon className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                    <span>Up to {plan.allowed_services} active services</span>
+                    <span>Up to {plan.allowedServices} active services</span>
                   </li>
                 )}
               </ul>
@@ -191,7 +191,7 @@ const SubscriptionPlans: React.FC = () => {
             <DialogDescription>
               You're about to subscribe to the {selectedPlan?.name} plan.
               {selectedPlan?.price ? ` You will be charged N$${selectedPlan.price}/${selectedPlan.billingCycle}.` : ''}
-              {selectedPlan?.trial_period_days ? ` Includes a ${selectedPlan.trial_period_days}-day free trial.` : ''}
+              {selectedPlan?.trialPeriodDays ? ` Includes a ${selectedPlan.trialPeriodDays}-day free trial.` : ''}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">

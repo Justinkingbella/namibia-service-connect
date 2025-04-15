@@ -27,6 +27,9 @@ const mockSubscriptionPlans = [
     ],
     isActive: true,
     isPopular: false,
+    credits: 0,
+    maxBookings: 0,
+    allowedServices: 1,
   },
   {
     id: "2",
@@ -41,6 +44,9 @@ const mockSubscriptionPlans = [
     ],
     isActive: true,
     isPopular: true,
+    credits: 100,
+    maxBookings: 20,
+    allowedServices: 5,
   },
   {
     id: "3",
@@ -55,6 +61,9 @@ const mockSubscriptionPlans = [
     ],
     isActive: true,
     isPopular: false,
+    credits: 300,
+    maxBookings: 50,
+    allowedServices: 20,
   }
 ];
 
