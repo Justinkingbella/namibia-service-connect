@@ -457,6 +457,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           sms: false,
           push: true,
         },
+        createdAt: profileData.created_at || new Date().toISOString(),
       };
       setUserProfile(customerProfile);
     } catch (error) {
@@ -507,6 +508,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         reviewCount,
         isVerified: verificationStatus === 'verified',
         subscriptionTier: providerData.subscription_tier || 'free',
+        createdAt: profileData.created_at || new Date().toISOString(),
       };
       
       setUserProfile(providerProfile);
@@ -545,6 +547,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         adminLevel: 1,
         isVerified: true,
         accessLevel: 1,
+        createdAt: user?.createdAt || new Date().toISOString(),
       };
       setUserProfile(adminProfile);
     } catch (error) {

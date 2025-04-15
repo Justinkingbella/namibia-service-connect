@@ -31,9 +31,10 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
     setError(null);
 
     try {
-      // Use type assertion to avoid type error with dynamic table name
-      let query = supabase.from(options.table as any);
-
+      // Build the query using the type-safe API
+      let query = supabase.from(options.table);
+      
+      // Select columns
       if (options.select) {
         query = query.select(options.select);
       } else if (options.columns) {
@@ -42,33 +43,37 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
         query = query.select('*');
       }
 
-      // Apply filters if provided
+      // Apply filters if provided using type assertion to overcome type issues
       if (options.filter && Array.isArray(options.filter)) {
         for (const filter of options.filter) {
+          const column = filter.column;
+          const value = filter.value;
+          
+          // Use a switch with type assertions for each case
           switch (filter.operator) {
-            case 'in':
-              query = query.in(filter.column, filter.value);
-              break;
-            case 'is':
-              query = query.is(filter.column, filter.value);
-              break;
             case 'eq':
-              query = query.eq(filter.column, filter.value);
+              query = query.eq(column, value) as any;
               break;
             case 'neq':
-              query = query.neq(filter.column, filter.value);
+              query = query.neq(column, value) as any;
               break;
             case 'gt':
-              query = query.gt(filter.column, filter.value);
+              query = query.gt(column, value) as any;
               break;
             case 'gte':
-              query = query.gte(filter.column, filter.value);
+              query = query.gte(column, value) as any;
               break;
             case 'lt':
-              query = query.lt(filter.column, filter.value);
+              query = query.lt(column, value) as any;
               break;
             case 'lte':
-              query = query.lte(filter.column, filter.value);
+              query = query.lte(column, value) as any;
+              break;
+            case 'in':
+              query = query.in(column, value) as any;
+              break;
+            case 'is':
+              query = query.is(column, value) as any;
               break;
           }
         }
@@ -78,29 +83,29 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
       if (options.orderBy) {
         query = query.order(options.orderBy.column, {
           ascending: options.orderBy.ascending,
-        });
+        }) as any;
       }
 
       // Apply limit if provided
       if (options.limit) {
-        query = query.limit(options.limit);
+        query = query.limit(options.limit) as any;
       }
 
       // Fetch a single record if specified
       let result;
       if (options.single) {
         if (options.id) {
-          query = query.eq('id', options.id);
+          query = query.eq('id', options.id) as any;
         }
-        result = await query.maybeSingle();
+        result = await (query as any).maybeSingle();
       } else {
         result = await query;
       }
 
-      const { data: resultData, error } = result;
+      const { data: resultData, error: queryError } = result;
 
-      if (error) {
-        throw new Error(`Error fetching data: ${error.message}`);
+      if (queryError) {
+        throw new Error(`Error fetching data: ${queryError.message}`);
       }
 
       setData(resultData);

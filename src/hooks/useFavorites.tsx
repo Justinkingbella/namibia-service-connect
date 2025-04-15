@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -24,7 +24,7 @@ interface ServiceWithProvider {
   provider_id: string;
   provider: {
     business_name: string;
-    rating?: number; // Make these optional since they might not exist in the database yet
+    rating?: number;
     review_count?: number;
   } | null;
 }
@@ -97,23 +97,32 @@ export function useFavorites() {
       
       if (error) throw error;
       
+      if (!data) return [];
+      
       // Transform response data
-      const favorites: FavoriteService[] = data.map((item: FavoriteWithService) => {
-        return {
-          id: item.id,
-          serviceId: item.service.id,
-          title: item.service.title,
-          description: item.service.description,
-          price: item.service.price,
-          image: item.service.image,
-          providerId: item.service.provider_id,
-          providerName: item.service.provider?.business_name || 'Unknown Provider',
-          category: item.service.category,
-          rating: item.service.provider?.rating || 0, // Use default value if rating is undefined
-          reviewCount: item.service.provider?.review_count || 0, // Use default value if review_count is undefined
-          addedAt: item.created_at
-        };
-      });
+      const favorites: FavoriteService[] = data
+        .filter(item => item.service && typeof item.service !== 'string' && !item.service.error)
+        .map((item: any) => {
+          if (!item.service || typeof item.service === 'string' || item.service.error) {
+            return null;
+          }
+          
+          return {
+            id: item.id,
+            serviceId: item.service.id,
+            title: item.service.title,
+            description: item.service.description,
+            price: item.service.price,
+            image: item.service.image,
+            providerId: item.service.provider_id,
+            providerName: item.service.provider?.business_name || 'Unknown Provider',
+            category: item.service.category,
+            rating: item.service.provider?.rating || 0,
+            reviewCount: item.service.provider?.review_count || 0,
+            addedAt: item.created_at
+          };
+        })
+        .filter(Boolean) as FavoriteService[];
       
       return favorites;
     } catch (error) {

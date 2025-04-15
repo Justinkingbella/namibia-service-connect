@@ -169,3 +169,24 @@ export interface AuthContextType {
   // Navigation function
   navigate: (path: string, options?: { replace?: boolean }) => void;
 }
+
+// Export all types
+export type {
+  User,
+  Customer,
+  Provider,
+  Admin,
+  Session,
+  UserAddress,
+  DbUserProfile,
+  DbCustomerProfile, 
+  DbProviderProfile,
+  AuthContextType
+};
+
+// Export enums
+export {
+  UserRole,
+  ProviderVerificationStatus,
+  SubscriptionTier
+};

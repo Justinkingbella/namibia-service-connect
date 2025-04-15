@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { getServiceCategories, createServiceCategory, updateServiceCategory, deleteServiceCategory } from '@/services/contentService';
@@ -96,7 +95,7 @@ const CategoryManagementPage = () => {
       // Upload icon if selected
       if (iconFile) {
         const path = `categories/${Date.now()}-${iconFile.name}`;
-        const uploadedUrl = await uploadImage(iconFile, path);
+        const uploadedUrl = await handleImageUpload(iconFile, path);
         if (uploadedUrl) {
           iconUrl = uploadedUrl;
         }
@@ -159,6 +158,28 @@ const CategoryManagementPage = () => {
           variant: 'destructive',
         });
       }
+    }
+  };
+
+  const handleImageUpload = async (file: File, path: string): Promise<string> => {
+    try {
+      const response = await uploadImage(file, path);
+      
+      if (response && response.success && response.url) {
+        return response.url;
+      }
+      
+      throw new Error(response?.error || 'Failed to upload image');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+      return '';
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setIconFile(e.target.files[0]);
     }
   };
 
@@ -329,7 +350,7 @@ const CategoryManagementPage = () => {
               <div className="col-span-3 space-y-2">
                 <ImageUpload
                   currentImage={categoryForm.icon}
-                  onChange={setIconFile}
+                  onChange={handleFileChange}
                 />
                 <p className="text-xs text-muted-foreground">
                   Recommended size: 64x64px
