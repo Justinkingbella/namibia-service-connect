@@ -1,4 +1,5 @@
 
+// Enum for admin routes
 export interface SubscriptionPlan {
   id: string;
   name: string;
@@ -34,7 +35,7 @@ export interface UserSubscription {
   auto_renew: boolean;
   created_at: string;
   updated_at: string;
-  plan?: SubscriptionPlan; // Add the plan property for the relationship
+  plan?: SubscriptionPlan; // Added plan property for the relationship
   cancellation_date?: string;
   cancellation_reason?: string;
 }

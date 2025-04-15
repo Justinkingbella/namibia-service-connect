@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { 
   DbCustomerProfile, 
@@ -82,7 +83,7 @@ export const fetchProviderProfile = async (id: string): Promise<DbProviderProfil
       throw error;
     }
     
-    return data;
+    return data as DbProviderProfile;
   } catch (error) {
     console.error('Error in fetchProviderProfile:', error);
     return null;
@@ -94,10 +95,12 @@ export const fetchProviderProfile = async (id: string): Promise<DbProviderProfil
  */
 export const fetchAdminProfile = async (id: string): Promise<Admin | null> => {
   try {
+    // Use profiles table instead of admins
     const { data, error } = await supabase
-      .from('admins')
+      .from('profiles')
       .select('*')
       .eq('id', id)
+      .eq('role', 'admin')
       .maybeSingle();
       
     if (error && error.code !== 'PGRST116') {
@@ -105,7 +108,7 @@ export const fetchAdminProfile = async (id: string): Promise<Admin | null> => {
       throw error;
     }
     
-    return data;
+    return data as unknown as Admin;
   } catch (error) {
     console.error('Error in fetchAdminProfile:', error);
     return null;
@@ -117,17 +120,30 @@ export const fetchAdminProfile = async (id: string): Promise<Admin | null> => {
  */
 export const createCustomerProfile = async (profile: Partial<DbCustomerProfile>): Promise<DbCustomerProfile | null> => {
   try {
+    // Extract customer-specific fields
+    const { 
+      preferred_categories,
+      saved_services,
+      notification_preferences,
+      ...profileData
+    } = profile;
+
+    const customerData: any = {
+      id: profileData.id,
+      preferred_categories: preferred_categories || [],
+      saved_services: saved_services || [],
+      notification_preferences: notification_preferences || {},
+      created_at: new Date().toISOString()
+    };
+
     const { data, error } = await supabase
       .from('customers')
-      .insert({
-        ...profile,
-        created_at: new Date().toISOString()
-      })
+      .insert(customerData)
       .select()
       .single();
       
     if (error) throw error;
-    return data;
+    return data as DbCustomerProfile;
   } catch (error) {
     console.error('Error creating customer profile:', error);
     return null;
@@ -139,17 +155,26 @@ export const createCustomerProfile = async (profile: Partial<DbCustomerProfile>)
  */
 export const createProviderProfile = async (profile: Partial<DbProviderProfile>): Promise<DbProviderProfile | null> => {
   try {
+    const providerData: any = {
+      id: profile.id,
+      business_name: profile.business_name,
+      business_description: profile.business_description,
+      email: profile.email,
+      phone_number: profile.phone_number,
+      address: profile.address,
+      city: profile.city,
+      country: profile.country || 'Namibia',
+      created_at: new Date().toISOString()
+    };
+
     const { data, error } = await supabase
       .from('service_providers')
-      .insert({
-        ...profile,
-        created_at: new Date().toISOString()
-      })
+      .insert(providerData)
       .select()
       .single();
       
     if (error) throw error;
-    return data;
+    return data as DbProviderProfile;
   } catch (error) {
     console.error('Error creating provider profile:', error);
     return null;
@@ -161,15 +186,32 @@ export const createProviderProfile = async (profile: Partial<DbProviderProfile>)
  */
 export const updateCustomerProfile = async (id: string, profile: Partial<DbCustomerProfile>): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('customers')
-      .update({
-        ...profile,
+    // Extract customer-specific fields
+    const { 
+      preferred_categories,
+      saved_services,
+      notification_preferences,
+      ...profileData
+    } = profile;
+
+    // Update customer-specific data
+    if (preferred_categories || saved_services || notification_preferences) {
+      const customerData: any = {
         updated_at: new Date().toISOString()
-      })
-      .eq('id', id);
+      };
       
-    if (error) throw error;
+      if (preferred_categories) customerData.preferred_categories = preferred_categories;
+      if (saved_services) customerData.saved_services = saved_services;
+      if (notification_preferences) customerData.notification_preferences = notification_preferences;
+      
+      const { error: customerError } = await supabase
+        .from('customers')
+        .update(customerData)
+        .eq('id', id);
+        
+      if (customerError) throw customerError;
+    }
+    
     return true;
   } catch (error) {
     console.error('Error updating customer profile:', error);
@@ -182,12 +224,16 @@ export const updateCustomerProfile = async (id: string, profile: Partial<DbCusto
  */
 export const updateProviderProfile = async (id: string, profile: Partial<DbProviderProfile>): Promise<boolean> => {
   try {
+    const updateData: any = {
+      ...profile,
+      updated_at: new Date().toISOString()
+    };
+    
+    delete updateData.id; // Remove id from update object
+    
     const { error } = await supabase
       .from('service_providers')
-      .update({
-        ...profile,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id);
       
     if (error) throw error;

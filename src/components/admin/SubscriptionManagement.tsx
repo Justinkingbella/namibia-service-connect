@@ -217,6 +217,22 @@ const SubscriptionManagement = () => {
     return date.toLocaleDateString('en-NA', { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
+  const renderFeatures = (features) => {
+    return features.map((feature, index) => (
+      <div key={index} className="flex items-center">
+        {feature.included ? (
+          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+        ) : (
+          <XCircle className="h-4 w-4 text-gray-300 mr-2" />
+        )}
+        <span>
+          {feature.name}
+          {feature.limit !== undefined ? ` (${feature.limit})` : ""}
+        </span>
+      </div>
+    ));
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -287,19 +303,7 @@ const SubscriptionManagement = () => {
                       )}
                     </div>
                     <div className="space-y-2">
-                      {plan.features.map((feature, index) => (
-                        <div key={index} className="flex items-center">
-                          {feature.included ? (
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                          ) : (
-                            <XCircle className="h-4 w-4 text-gray-300 mr-2" />
-                          )}
-                          <span>
-                            {feature.name}
-                            {feature.limit ? ` (${feature.limit})` : ""}
-                          </span>
-                        </div>
-                      ))}
+                      {renderFeatures(plan.features)}
                     </div>
                   </CardContent>
                   <CardFooter className="flex justify-between border-t pt-4">

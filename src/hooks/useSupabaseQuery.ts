@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { PostgrestError } from '@supabase/supabase-js';
 
 interface UseSupabaseQueryOptions<T> {
@@ -32,8 +31,8 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
     setError(null);
 
     try {
-      // Using any to work around the TypeScript issues with dynamic table selection
-      let query = supabase.from(options.table) as any;
+      // Using type assertion to work around TypeScript issues
+      let query = supabase.from(options.table as any);
       
       // Apply select statement
       if (options.select) {
@@ -44,53 +43,53 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
         query = query.select('*');
       }
       
-      // Apply filters
+      // Apply filters with type assertions
       if (options.filter && options.filter.length > 0) {
         for (const filter of options.filter) {
           switch (filter.operator) {
             case 'eq':
-              query = query.eq(filter.column, filter.value);
+              query = query.eq(filter.column, filter.value) as any;
               break;
             case 'neq':
-              query = query.neq(filter.column, filter.value);
+              query = query.neq(filter.column, filter.value) as any;
               break;
             case 'gt':
-              query = query.gt(filter.column, filter.value);
+              query = query.gt(filter.column, filter.value) as any;
               break;
             case 'gte':
-              query = query.gte(filter.column, filter.value);
+              query = query.gte(filter.column, filter.value) as any;
               break;
             case 'lt':
-              query = query.lt(filter.column, filter.value);
+              query = query.lt(filter.column, filter.value) as any;
               break;
             case 'lte':
-              query = query.lte(filter.column, filter.value);
+              query = query.lte(filter.column, filter.value) as any;
               break;
             case 'in':
-              query = query.in(filter.column, filter.value);
+              query = query.in(filter.column, filter.value) as any;
               break;
             case 'is':
-              query = query.is(filter.column, filter.value);
+              query = query.is(filter.column, filter.value) as any;
               break;
           }
         }
       }
       
-      // Apply ordering
+      // Apply ordering with type assertion
       if (options.orderBy) {
         query = query.order(options.orderBy.column, {
           ascending: options.orderBy.ascending
-        });
+        }) as any;
       }
       
-      // Apply limit
+      // Apply limit with type assertion
       if (options.limit) {
-        query = query.limit(options.limit);
+        query = query.limit(options.limit) as any;
       }
       
       // Get single item by ID if specified
       if (options.id) {
-        query = query.eq('id', options.id);
+        query = query.eq('id', options.id) as any;
       }
       
       // Execute query

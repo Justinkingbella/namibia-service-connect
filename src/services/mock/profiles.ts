@@ -1,66 +1,95 @@
 
-import { User, UserRole, Customer, Provider } from '@/types';
+import { Customer, Provider } from '@/types';
 
-// Mock customer profile
-export const mockCustomerProfile: Customer = {
-  id: 'user123',
-  email: 'customer@example.com',
-  firstName: 'John',
-  lastName: 'Doe',
-  role: 'customer' as UserRole,
-  phoneNumber: '+264 81 123 4567',
-  avatarUrl: 'https://i.pravatar.cc/150?img=1',
-  emailVerified: true,
-  preferredCategories: ['CLEANING', 'PLUMBING', 'ELECTRICAL'],
-  savedServices: ['service1', 'service2'],
-  address: '123 Main St, Windhoek',
-  city: 'Windhoek',
-  country: 'Namibia',
-  isActive: true,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  birthDate: '1990-01-01',
-  bio: 'Regular customer looking for home maintenance services.',
-  loyaltyPoints: 150,
-  notificationPreferences: {
-    email: true,
-    sms: false,
-    push: true
+export const mockCustomers: Customer[] = [
+  {
+    id: 'c123',
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john.doe@example.com',
+    phoneNumber: '+264811234567',
+    avatarUrl: '/placeholder.svg',
+    createdAt: '2023-01-15T10:30:00Z',
+    role: 'customer',
+    preferredCategories: ['CLEANING', 'GARDENING'],
+    savedServices: ['svc1', 'svc2'],
+    address: '123 Main St',
+    city: 'Windhoek',
+    country: 'Namibia',
+    active: true, // Use active instead of isActive
+  },
+  {
+    id: 'c456',
+    firstName: 'Jane',
+    lastName: 'Smith',
+    email: 'jane.smith@example.com',
+    phoneNumber: '+264817654321',
+    avatarUrl: '/placeholder.svg',
+    createdAt: '2023-02-20T14:45:00Z',
+    role: 'customer',
+    preferredCategories: ['ELECTRICAL', 'PLUMBING'],
+    savedServices: [],
+    address: '456 Oak Avenue',
+    city: 'Swakopmund',
+    country: 'Namibia',
+    active: true, // Use active instead of isActive
   }
+];
+
+export const mockProviders: Provider[] = [
+  {
+    id: 'p123',
+    firstName: 'Michael',
+    lastName: 'Johnson',
+    email: 'michael@repairpro.com',
+    phoneNumber: '+264813334444',
+    role: 'provider',
+    businessName: 'RepairPro Services',
+    businessDescription: 'Professional repair services for your home and office',
+    rating: 4.8,
+    ratingCount: 56,
+    avatarUrl: '/placeholder.svg',
+    bannerUrl: '/placeholder.svg',
+    verificationStatus: 'verified',
+    address: '789 Business Park',
+    city: 'Windhoek',
+    country: 'Namibia',
+    createdAt: '2022-12-10T09:15:00Z',
+    completedBookings: 78,
+    serviceCount: 5,
+    commissionRate: 10,
+    active: true, // Use active instead of isActive
+    subscriptionTier: 'premium',
+    categories: ['ELECTRICAL', 'PLUMBING']
+  }
+];
+
+export const getCustomerById = (id: string): Customer | undefined => {
+  return mockCustomers.find(customer => customer.id === id);
 };
 
-// Mock provider profile
-export const mockProviderProfile: Provider = {
-  id: 'provider123',
-  email: 'provider@example.com',
-  firstName: 'Jane',
-  lastName: 'Smith',
-  role: 'provider' as UserRole,
-  phoneNumber: '+264 81 987 6543',
-  avatarUrl: 'https://i.pravatar.cc/150?img=2',
-  emailVerified: true,
-  businessName: 'Jane\'s Cleaning Services',
-  businessDescription: 'Professional cleaning services for homes and offices.',
-  categories: ['CLEANING', 'HOUSEKEEPING'],
-  services: ['service1', 'service2', 'service3'],
-  rating: 4.8,
-  commission: 10,
-  verificationStatus: 'verified',
-  bannerUrl: 'https://example.com/banner.jpg',
-  website: 'https://janescleaningservices.com',
-  taxId: 'TAX123456',
-  reviewCount: 32,
-  address: '456 Business Ave, Windhoek',
-  city: 'Windhoek',
-  country: 'Namibia',
-  isActive: true,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  subscriptionTier: 'premium',
-  isVerified: true,
-  bankDetails: {
-    bankName: 'First National Bank',
-    accountNumber: '12345678',
-    accountType: 'Business'
+export const getProviderById = (id: string): Provider | undefined => {
+  return mockProviders.find(provider => provider.id === id);
+};
+
+export const getMockAddressByUserId = (userId: string) => {
+  const customer = mockCustomers.find(c => c.id === userId);
+  if (customer) {
+    return {
+      street: customer.address,
+      city: customer.city,
+      country: customer.country
+    };
   }
+  
+  const provider = mockProviders.find(p => p.id === userId);
+  if (provider) {
+    return {
+      street: provider.address,
+      city: provider.city,
+      country: provider.country
+    };
+  }
+  
+  return null;
 };

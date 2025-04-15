@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Grid2X2, List, Search, Plus, CalendarIcon } from 'lucide-react';
+import { Grid2X2, List, Search, Plus, CalendarIcon, Star, User, MoreVertical, Pencil, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { ServiceCard } from '@/components/dashboard/ServiceCard';
 import { ServiceCategoryEnum, Service } from '@/types';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 const MOCK_SERVICES: Service[] = [
   {
@@ -63,7 +65,8 @@ const ServicesPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>(ServiceCategoryEnum.CLEANING);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'newest' | 'price-low' | 'price-high' | 'rating'>('newest');
-  
+  const [categoryFilter, setCategoryFilter] = useState<string>(ServiceCategoryEnum.CLEANING);
+
   const isAdmin = true;
   const isProvider = false;
 
@@ -129,6 +132,131 @@ const ServicesPage = () => {
 
   const handleCreateServiceClick = () => {
     navigate('/provider/services/create');
+  };
+
+  const handleCategoryFilter = (category: string) => {
+    setCategoryFilter(category);
+  };
+
+  const renderCategoryBadge = (category: string) => {
+    return (
+      <Badge className="bg-blue-500 text-white">
+        {categories[category]}
+      </Badge>
+    );
+  };
+
+  const renderServiceCard = (service: ServiceListItem) => {
+    return (
+      <Card key={service.id} className="overflow-hidden">
+        <div className="relative h-48">
+          <Image
+            src={service.image || '/placeholder.svg'}
+            alt={service.title}
+            fill
+            className="object-cover"
+          />
+          {service.featured && (
+            <Badge className="absolute top-2 right-2 bg-yellow-500">Featured</Badge>
+          )}
+        </div>
+        <CardContent className="p-4">
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <h3 className="text-lg font-semibold">{service.title}</h3>
+              <p className="text-sm text-gray-500 truncate">
+                {service.location || 'Location not specified'}
+              </p>
+            </div>
+            <Badge variant={service.is_active ? 'default' : 'secondary'}>
+              {service.is_active ? 'Active' : 'Inactive'}
+            </Badge>
+          </div>
+          
+          <div className="mb-2">{renderCategoryBadge(service.category)}</div>
+          
+          <p className="text-sm line-clamp-2 mb-3">{service.description}</p>
+          
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <Star className="h-4 w-4 text-yellow-400 mr-1" />
+              <span className="text-sm font-medium">{service.rating || 'No ratings'}</span>
+              {service.review_count > 0 && (
+                <span className="text-xs text-gray-500 ml-1">({service.review_count})</span>
+              )}
+            </div>
+            <p className="font-bold">N${service.price}</p>
+          </div>
+          
+          <div className="mt-3 text-sm text-gray-500 flex items-center">
+            <User className="h-3 w-3 mr-1" />
+            {service.provider_name || 'Unknown Provider'}
+          </div>
+        </CardContent>
+        <CardFooter className="p-4 pt-0 flex justify-between gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1"
+            onClick={() => handleView(service.id)}
+          >
+            View Details
+          </Button>
+          {isAdmin && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleEdit(service.id)}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleToggleStatus(service.id, !service.is_active)}>
+                  {service.is_active ? (
+                    <>
+                      <EyeOff className="h-4 w-4 mr-2" />
+                      Deactivate
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="h-4 w-4 mr-2" />
+                      Activate
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="text-red-600" 
+                  onClick={() => handleDelete(service.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </CardFooter>
+      </Card>
+    );
+  };
+
+  const handleView = (id: string) => {
+    navigate(`/customer/services/${id}`);
+  };
+
+  const handleEdit = (id: string) => {
+    navigate(`/provider/services/${id}/edit`);
+  };
+
+  const handleToggleStatus = (id: string, isActive: boolean) => {
+    // Implement status toggle logic here
+  };
+
+  const handleDelete = (id: string) => {
+    // Implement delete logic here
   };
 
   const pageTitle = isProvider 

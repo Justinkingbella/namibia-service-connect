@@ -1,16 +1,15 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckIcon, XIcon } from 'lucide-react';
+import { CheckIcon, XIcon, XMarkIcon, CheckCircle, XCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchSubscriptionPlans, subscribeUserToPlan } from '@/services/subscriptionService';
 import { SubscriptionPlan } from '@/types/subscription';
 
-const SubscriptionPlans: React.FC = () => {
+const SubscriptionPlans = ({ onSelectPlan }) => {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -133,26 +132,10 @@ const SubscriptionPlans: React.FC = () => {
                 )}
               </div>
               
-              {plan.trialPeriodDays && plan.trialPeriodDays > 0 && (
-                <div className="mb-4 text-sm">
-                  {plan.trialPeriodDays}-day free trial
-                </div>
-              )}
+              {renderTrialPeriod(plan)}
               
               <ul className="space-y-3">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    {feature.included ? (
-                      <CheckIcon className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                    ) : (
-                      <XIcon className="h-5 w-5 text-gray-300 mr-2 mt-0.5" />
-                    )}
-                    <span>
-                      {feature.name}
-                      {feature.limit ? ` (${feature.limit})` : ''}
-                    </span>
-                  </li>
-                ))}
+                {plan.features.map((feature) => renderFeature(feature))}
                 
                 {plan.maxBookings && (
                   <li className="flex items-start">
@@ -200,12 +183,12 @@ const SubscriptionPlans: React.FC = () => {
               {selectedPlan?.features.map((feature) => (
                 <li key={feature.name} className="flex items-center">
                   {feature.included ? (
-                    <CheckIcon className="h-4 w-4 text-green-500 mr-2" />
+                    <CheckIcon className="h-4 w-4 text-emerald-500 mr-2 mt-0.5" />
                   ) : (
-                    <XIcon className="h-4 w-4 text-gray-300 mr-2" />
+                    <XMarkIcon className="h-4 w-4 text-gray-400 mr-2 mt-0.5" />
                   )}
                   {feature.name}
-                  {feature.limit ? ` (${feature.limit})` : ''}
+                  {feature.limit !== undefined ? ` (${feature.limit})` : ""}
                 </li>
               ))}
             </ul>

@@ -1,28 +1,31 @@
+
 export enum ServiceCategoryEnum {
-  CLEANING = 'cleaning',
-  PLUMBING = 'plumbing',
-  ELECTRICAL = 'electrical',
-  CARPENTRY = 'carpentry',
-  GARDENING = 'gardening',
-  IT_SUPPORT = 'it_support',
-  TUTORING = 'tutoring',
-  FOOD_DELIVERY = 'food_delivery',
-  TRANSPORTATION = 'transportation',
-  MOVING = 'moving',
-  REPAIRS = 'repairs',
-  CONSTRUCTION = 'construction',
-  EVENT_PLANNING = 'event_planning',
-  INTERIOR_DESIGN = 'interior_design',
-  OTHER = 'other',
-  ALL = 'all'
+  CLEANING = "CLEANING",
+  PLUMBING = "PLUMBING",
+  ELECTRICAL = "ELECTRICAL",
+  CARPENTRY = "CARPENTRY",
+  GARDENING = "GARDENING",
+  IT_SUPPORT = "IT_SUPPORT",
+  TUTORING = "TUTORING",
+  FOOD_DELIVERY = "FOOD_DELIVERY",
+  TRANSPORTATION = "TRANSPORTATION",
+  OTHER = "OTHER",
+  ALL = "ALL",
+  // Additional categories
+  MOVING = "MOVING",
+  REPAIRS = "REPAIRS",
+  CONSTRUCTION = "CONSTRUCTION",
+  EVENT_PLANNING = "EVENT_PLANNING",
+  INTERIOR_DESIGN = "INTERIOR_DESIGN"
 }
 
 export enum PricingModelEnum {
-  FIXED = 'fixed',
-  HOURLY = 'hourly',
-  DAILY = 'daily',
-  SQUARE_METER = 'square_meter',
-  CUSTOM = 'custom'
+  HOURLY = "HOURLY",
+  FIXED = "FIXED",
+  QUOTE = "QUOTE",
+  DAILY = "DAILY",
+  WEEKLY = "WEEKLY",
+  MONTHLY = "MONTHLY"
 }
 
 export interface ServiceCategory {
@@ -31,75 +34,66 @@ export interface ServiceCategory {
   description?: string;
   icon?: string;
   slug?: string;
-  isActive: boolean;
-  orderIndex?: number;
+  isActive?: boolean;
   featured?: boolean;
   parentCategoryId?: string;
-}
-
-export interface ServiceListItem {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  provider_id: string;
-  provider_name: string;
-  category: string;
-  pricingModel: string;
-  image?: string;
-  rating?: number;
-  reviewCount?: number;
-  location?: string;
-  providerId?: string;
-  providerName?: string;
-  isActive?: boolean;
 }
 
 export interface Service {
   id: string;
   title: string;
   description: string;
+  category: ServiceCategoryEnum | string;
+  pricingModel: PricingModelEnum | string;
   price: number;
+  features?: string[];
   image?: string;
-  provider_id: string;
-  providerId: string; 
-  provider_name: string;
-  providerName: string;
-  category: string;
-  pricingModel: string;
-  pricing_model?: string;
-  rating: number;
-  reviewCount: number;
+  providerId: string;
+  providerName?: string;
   location?: string;
-  features: string[];
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  tags: string[];
 }
 
 export interface ServiceData {
   id: string;
   title: string;
-  description?: string;
-  price: number;
-  image?: string;
-  provider_id: string;
+  description: string;
   category: string;
   pricing_model: string;
+  price: number;
   features?: string[];
-  tags?: string[];
+  image?: string;
+  provider_id: string;
+  provider_name?: string;
   location?: string;
-  is_active?: boolean;
-  created_at?: string;
+  is_active: boolean;
+  created_at: string;
   updated_at?: string;
+  availability?: Record<string, any>;
+  faqs?: Array<{ question: string; answer: string }>;
+}
+
+export interface ServiceListItem {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  pricing_model: string;
+  price: number;
+  provider_id: string;
+  provider_name: string;
+  rating?: number;
+  review_count?: number;
+  image?: string;
+  location?: string;
+  is_active: boolean;
+  featured?: boolean;
 }
 
 export interface FavoriteService {
   id: string;
-  user_id: string;
-  service_id: string;
-  created_at: string;
+  userId: string;
+  serviceId: string;
+  createdAt: string;
+  service?: ServiceListItem;
 }
-
-export type PricingModel = keyof typeof PricingModelEnum;

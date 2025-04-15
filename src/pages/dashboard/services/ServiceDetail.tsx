@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
@@ -16,7 +15,6 @@ import { Service, ServiceData } from '@/types/service';
 import { useServiceStore } from '@/store/serviceStore';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { transformServiceData } from '@/services/serviceDataTransformer';
 
 const ServiceDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,30 +24,33 @@ const ServiceDetail: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
 
+  const transformServiceData = (data: any): ServiceData => {
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description || '',
+      price: data.price,
+      category: data.category,
+      pricing_model: data.pricing_model,
+      features: data.features || [],
+      image: data.image || '/placeholder.svg',
+      provider_id: data.provider_id,
+      location: data.location || '',
+      is_active: data.is_active,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      availability: data.availability || {},
+      faqs: data.faqs || [],
+    };
+  };
+
   useEffect(() => {
     const loadService = async () => {
       if (id) {
         setIsLoading(true);
         const fetchedService = await fetchServiceById(id);
         if (fetchedService) {
-          const transformedServiceData: ServiceData = {
-            id: fetchedService.id,
-            title: fetchedService.title,
-            description: fetchedService.description,
-            price: fetchedService.price,
-            pricing_model: fetchedService.pricingModel,
-            category: fetchedService.category,
-            provider_id: fetchedService.providerId,
-            provider_name: fetchedService.providerName,
-            image: fetchedService.image,
-            features: fetchedService.features,
-            is_active: fetchedService.isActive,
-            location: fetchedService.location,
-            rating: fetchedService.rating,
-            review_count: fetchedService.reviewCount,
-            created_at: fetchedService.createdAt,
-            updated_at: fetchedService.updatedAt,
-          };
+          const transformedServiceData: ServiceData = transformServiceData(fetchedService);
           setService(transformedServiceData);
         }
         setIsLoading(false);

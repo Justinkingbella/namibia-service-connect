@@ -1,94 +1,126 @@
 
-import { Json } from './schema';
+import { UserRole, PaymentStatus, WalletPaymentType } from './schema';
 
-export type BookingStatus = 
-  | 'pending'
-  | 'confirmed'
-  | 'in_progress'
-  | 'completed'
-  | 'cancelled'
-  | 'rejected'
-  | 'no_show'
-  | 'disputed'
-  | 'rescheduled';
+// Update with exact string union type to match actual values
+export enum BookingStatus {
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  NO_SHOW = 'no_show',
+}
 
-export type PaymentStatus = 
-  | 'pending'
-  | 'processing'
-  | 'completed'
-  | 'failed'
-  | 'refunded'
-  | 'canceled'
-  | 'partially_refunded';
+export enum DisputeStatus {
+  PENDING = 'pending',
+  IN_PROGRESS = 'in_progress',
+  RESOLVED = 'resolved',
+  REJECTED = 'rejected',
+}
+
+export enum DisputePriority {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+}
 
 export interface BookingData {
-  id?: string;
+  id: string;
   service_id: string;
+  service_name?: string;
+  service_image?: string;
   customer_id: string;
+  customer_name?: string;
   provider_id: string;
+  provider_name?: string;
   date: string;
   start_time: string;
   end_time?: string;
-  status: BookingStatus | string; // Allow string to avoid type errors when data comes from API
-  payment_status: PaymentStatus | string; // Allow string to avoid type errors when data comes from API
-  payment_method: string;
-  total_amount: number;
-  commission: number;
+  duration?: number;
+  status: BookingStatus;
   notes?: string;
-  created_at?: string;
-  updated_at?: string;
   customer_notes?: string;
   provider_notes?: string;
+  total_amount: number;
+  commission?: number;
+  payment_status: PaymentStatus;
+  payment_method?: string;
+  payment_receipt?: string;
+  is_urgent?: boolean;
+  created_at: string;
+  updated_at?: string;
+  cancellation_date?: string;
   cancellation_reason?: string;
   cancelled_by?: string;
-  cancellation_date?: string;
+  refund_amount?: number;
+  rating?: number;
+  feedback?: string;
   
-  // Alias fields to allow for both naming conventions
+  // Client-side utility properties
   serviceId?: string;
   serviceName?: string;
   serviceImage?: string;
-  providerId?: string;
-  providerName?: string;
   customerId?: string;
   customerName?: string;
+  providerId?: string;
+  providerName?: string;
   startTime?: string;
   endTime?: string;
   totalAmount?: number;
+  paymentStatus?: string;
   createdAt?: string;
-  duration?: number;
 }
 
 export interface Booking {
   id: string;
-  serviceId: string;
   customerId: string;
   providerId: string;
+  serviceId: string;
+  serviceName: string;
   date: string;
-  startTime: string;
-  endTime?: string;
+  time: string;
+  duration: number;
   status: BookingStatus;
+  amount: number;
   paymentStatus: PaymentStatus;
-  paymentMethod: string;
-  totalAmount: number;
-  commission: number;
   notes?: string;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface BookingWithDetails extends Booking {
-  service?: {
+  customerName: string;
+  serviceDetails: {
     title: string;
+    description: string;
     image?: string;
   };
-  provider?: {
+  providerDetails: {
     businessName: string;
     avatarUrl?: string;
+    contactNumber: string;
   };
-  customer?: {
-    name: string;
-    avatarUrl?: string;
-  };
+}
+
+export interface VerificationStatus {
+  customer: boolean;
+  provider: boolean;
+  admin: boolean;
+}
+
+export interface Transaction {
+  id: string;
+  amount: number;
+  date: string;
+  description: string;
+  status: string;
+}
+
+export interface Withdrawal {
+  id: string;
+  amount: number;
+  date: string;
+  status: string;
+  paymentMethod: WalletPaymentType;
+  reference?: string;
 }
 
 export interface Dispute {
@@ -98,60 +130,14 @@ export interface Dispute {
   providerId: string;
   subject: string;
   description: string;
-  status: string;
-  priority: string;
+  status: DisputeStatus;
+  priority: DisputePriority;
   createdAt: string;
   updatedAt?: string;
-  resolutionDate?: string;
   resolution?: string;
+  resolvedAt?: string;
   refundAmount?: number;
+  evidenceUrls?: string[];
   adminNotes?: string;
   adminAssignedTo?: string;
-  evidenceUrls?: string[];
-  reason?: string;
-  customerName?: string;
-  providerName?: string;
-  attachments?: string[];
-}
-
-export enum DisputeStatus {
-  PENDING = 'pending',
-  IN_REVIEW = 'in_review',
-  RESOLVED = 'resolved',
-  ESCALATED = 'escalated',
-  CLOSED = 'closed'
-}
-
-export enum DisputePriority {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  CRITICAL = 'critical'
-}
-
-export interface Transaction {
-  id: string;
-  amount: number;
-  currency: string;
-  status: string;
-  createdAt: string;
-  type: 'payment' | 'refund' | 'payout';
-  description: string;
-}
-
-export interface Withdrawal {
-  id: string;
-  amount: number;
-  status: string;
-  createdAt: string;
-  paymentMethod: string;
-  reference?: string;
-}
-
-export interface FeedbackData {
-  bookingId: string;
-  rating: number;
-  comment: string;
-  providerId: string;
-  customerId: string;
 }

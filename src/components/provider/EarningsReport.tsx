@@ -1,10 +1,25 @@
-
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Button } from '@/components/ui/button';
-import { CircleDollarSign, TrendingUp, Calendar, Clock } from 'lucide-react';
-import { ProviderEarnings } from '@/types/subscription';
+import React from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ProviderEarnings } from "@/types/subscription";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  Legend,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
 
 // Mock data for the earnings report
 const MOCK_EARNINGS: ProviderEarnings = {

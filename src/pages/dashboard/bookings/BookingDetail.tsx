@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -9,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { BookingData } from '@/types/booking';
+import { BookingData, BookingStatus } from '@/types/booking';
 import { toast } from 'sonner';
 import { formatBookingStatus, formatCurrency, getStatusColor } from '@/lib/utils';
 import BookingStatusUpdate from '@/components/bookings/BookingStatusUpdate';
@@ -19,66 +18,102 @@ const BookingDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { userRole } = useAuth();
   const [booking, setBooking] = useState<BookingData | null>(null);
-  const [serviceDetails, setServiceDetails] = useState<{ title: string; image: string } | null>(null);
-  const [customerDetails, setCustomerDetails] = useState<{ firstName: string; lastName: string } | null>(null);
-  const [providerDetails, setProviderDetails] = useState<{ businessName: string } | null>(null);
+  const [service, setService] = useState<any>(null);
+  const [customer, setCustomer] = useState<any>(null);
+  const [provider, setProvider] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchBookingDetails = async () => {
+    const loadBookingData = async () => {
       try {
-        if (!id) return;
-
-        const { data: bookingData, error: bookingError } = await supabase
+        const { data, error } = await supabase
           .from('bookings')
           .select('*')
           .eq('id', id)
           .single();
 
-        if (bookingError) throw bookingError;
-        setBooking(bookingData);
+        if (error) throw error;
 
-        // Fetch service details
-        const { data: serviceData, error: serviceError } = await supabase
-          .from('services')
-          .select('title, image')
-          .eq('id', bookingData.service_id)
-          .single();
-
-        if (serviceError) throw serviceError;
-        setServiceDetails(serviceData);
-
-        // Fetch customer details
-        const { data: customerData, error: customerError } = await supabase
-          .from('profiles')
-          .select('first_name, last_name')
-          .eq('id', bookingData.customer_id)
-          .single();
-
-        if (customerError) throw customerError;
-        setCustomerDetails({
-          firstName: customerData.first_name,
-          lastName: customerData.last_name
-        });
-
-        // Fetch provider details
-        const { data: providerData, error: providerError } = await supabase
-          .from('service_providers')
-          .select('business_name')
-          .eq('id', bookingData.provider_id)
-          .single();
-
-        if (providerError) throw providerError;
-        setProviderDetails(providerData);
+        if (data) {
+          const bookingData: BookingData = {
+            id: data.id,
+            service_id: data.service_id,
+            customer_id: data.customer_id,
+            provider_id: data.provider_id,
+            date: data.date,
+            start_time: data.start_time,
+            end_time: data.end_time,
+            status: data.status as BookingStatus,
+            notes: data.notes,
+            customer_notes: data.customer_notes,
+            provider_notes: data.provider_notes,
+            total_amount: data.total_amount,
+            commission: data.commission,
+            payment_status: data.payment_status,
+            payment_method: data.payment_method,
+            payment_receipt: data.payment_receipt,
+            is_urgent: data.is_urgent,
+            created_at: data.created_at,
+            updated_at: data.updated_at,
+            cancellation_date: data.cancellation_date,
+            cancellation_reason: data.cancellation_reason,
+            cancelled_by: data.cancelled_by,
+            refund_amount: data.refund_amount,
+            rating: data.rating,
+            feedback: data.feedback,
+          };
+          
+          setBooking(bookingData);
+          
+          // Fetch provider details
+          const { data: providerData } = await supabase
+            .from('service_providers')
+            .select('*')
+            .eq('id', data.provider_id)
+            .single();
+            
+          if (providerData) {
+            setProvider({ businessName: providerData.business_name });
+          }
+          
+          // Fetch service details
+          const { data: serviceData } = await supabase
+            .from('services')
+            .select('*')
+            .eq('id', data.service_id)
+            .single();
+            
+          if (serviceData) {
+            setService(serviceData);
+          }
+          
+          // Fetch customer details
+          const { data: customerData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.customer_id)
+            .single();
+            
+          if (customerData) {
+            const fullName = `${customerData.first_name || ''} ${customerData.last_name || ''}`.trim();
+            setCustomer({
+              name: fullName || 'Customer',
+              email: customerData.email || '',
+              phone: customerData.phone_number || ''
+            });
+          }
+          
+          setLoading(false);
+        }
       } catch (error) {
-        console.error('Error fetching booking details:', error);
-        toast.error('Failed to load booking details');
-      } finally {
+        console.error('Error loading booking:', error);
         setLoading(false);
       }
     };
 
-    fetchBookingDetails();
+    if (id) {
+      loadBookingData();
+    }
   }, [id]);
 
   const handleUpdateStatus = async (newStatus: string, notes?: string) => {
@@ -124,7 +159,7 @@ const BookingDetail = () => {
     );
   }
 
-  if (!booking || !serviceDetails) {
+  if (!booking || !service) {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
@@ -163,10 +198,10 @@ const BookingDetail = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-4">
-                {serviceDetails.image ? (
+                {service.image ? (
                   <img 
-                    src={serviceDetails.image} 
-                    alt={serviceDetails.title} 
+                    src={service.image} 
+                    alt={service.title} 
                     className="w-16 h-16 object-cover rounded-md"
                   />
                 ) : (
@@ -175,9 +210,9 @@ const BookingDetail = () => {
                   </div>
                 )}
                 <div>
-                  <h3 className="text-lg font-medium">{serviceDetails.title}</h3>
+                  <h3 className="text-lg font-medium">{service.title}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {providerDetails?.businessName || 'Service Provider'}
+                    {provider?.businessName || 'Service Provider'}
                   </p>
                 </div>
               </div>
@@ -213,7 +248,7 @@ const BookingDetail = () => {
                   <User className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
                     <h4 className="font-medium">Customer</h4>
-                    <p>{customerDetails?.firstName} {customerDetails?.lastName}</p>
+                    <p>{customer.name}</p>
                   </div>
                 </div>
               </div>
