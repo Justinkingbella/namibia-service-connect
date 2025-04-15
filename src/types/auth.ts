@@ -2,7 +2,7 @@
 import { User as SupabaseUser, Session as SupabaseSession } from '@supabase/supabase-js';
 import { Json } from './schema';
 
-// User roles enum
+// User roles enum - making these string values match the literal strings used in the codebase
 export enum UserRole {
   CUSTOMER = 'customer',
   PROVIDER = 'provider',
@@ -17,12 +17,14 @@ export enum ProviderVerificationStatus {
   REJECTED = 'rejected'
 }
 
-// Subscription tier enum
+// Subscription tier enum - adding string literals to match usage in components
 export enum SubscriptionTier {
   FREE = 'free',
   BASIC = 'basic',
   PREMIUM = 'premium',
-  PROFESSIONAL = 'professional'
+  PROFESSIONAL = 'professional',
+  PRO = 'pro',          // Adding 'pro' to match string literals in code
+  ENTERPRISE = 'enterprise' // Adding 'enterprise' to match string literals in code
 }
 
 // Base user interface
@@ -116,6 +118,8 @@ export interface DbUserProfile {
   bio?: string;
   birth_date?: string;
   favorites?: string[];
+  loyalty_points?: number; // Adding this field to match usage in useProfile.tsx
+  notification_preferences?: Json; // Adding this field to match usage in useProfile.tsx
 }
 
 // Database customer profile

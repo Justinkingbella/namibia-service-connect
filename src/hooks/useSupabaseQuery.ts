@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { PostgrestResponse } from '@supabase/supabase-js';
 
 interface UseSupabaseQueryOptions<T> {
   table: string;
@@ -32,7 +31,8 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
     setError(null);
 
     try {
-      let query = supabase.from(options.table);
+      // Use type assertion to avoid type error with dynamic table name
+      let query = supabase.from(options.table as any);
 
       if (options.select) {
         query = query.select(options.select);
@@ -45,22 +45,31 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
       // Apply filters if provided
       if (options.filter && Array.isArray(options.filter)) {
         for (const filter of options.filter) {
-          if (filter.operator === 'in') {
-            query = query.in(filter.column, filter.value);
-          } else if (filter.operator === 'is') {
-            query = query.is(filter.column, filter.value);
-          } else if (filter.operator === 'eq') {
-            query = query.eq(filter.column, filter.value);
-          } else if (filter.operator === 'neq') {
-            query = query.neq(filter.column, filter.value);
-          } else if (filter.operator === 'gt') {
-            query = query.gt(filter.column, filter.value);
-          } else if (filter.operator === 'gte') {
-            query = query.gte(filter.column, filter.value);
-          } else if (filter.operator === 'lt') {
-            query = query.lt(filter.column, filter.value);
-          } else if (filter.operator === 'lte') {
-            query = query.lte(filter.column, filter.value);
+          switch (filter.operator) {
+            case 'in':
+              query = query.in(filter.column, filter.value);
+              break;
+            case 'is':
+              query = query.is(filter.column, filter.value);
+              break;
+            case 'eq':
+              query = query.eq(filter.column, filter.value);
+              break;
+            case 'neq':
+              query = query.neq(filter.column, filter.value);
+              break;
+            case 'gt':
+              query = query.gt(filter.column, filter.value);
+              break;
+            case 'gte':
+              query = query.gte(filter.column, filter.value);
+              break;
+            case 'lt':
+              query = query.lt(filter.column, filter.value);
+              break;
+            case 'lte':
+              query = query.lte(filter.column, filter.value);
+              break;
           }
         }
       }
@@ -78,20 +87,23 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
       }
 
       // Fetch a single record if specified
+      let result;
       if (options.single) {
         if (options.id) {
           query = query.eq('id', options.id);
         }
-        query = query.single();
+        result = await query.maybeSingle();
+      } else {
+        result = await query;
       }
 
-      const { data: result, error } = await query;
+      const { data: resultData, error } = result;
 
       if (error) {
         throw new Error(`Error fetching data: ${error.message}`);
       }
 
-      setData(result);
+      setData(resultData);
     } catch (err: any) {
       console.error('Error in useSupabaseQuery:', err);
       setError(err);

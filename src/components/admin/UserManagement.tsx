@@ -55,7 +55,7 @@ const UserManagement: React.FC = () => {
               id: user.id,
               name: displayName,
               email: user.email || '',
-              role: (user.role as UserRole) || 'customer',
+              role: (user.role as UserRole) || UserRole.CUSTOMER,  // Cast to UserRole enum
               status: user.active ? 'active' : 'pending',
               joinDate: user.created_at ? new Date(user.created_at).toISOString().split('T')[0] : '-',
               isVerified: !!user.active
@@ -87,7 +87,7 @@ const UserManagement: React.FC = () => {
       id: '1',
       name: 'John Doe',
       email: 'john@example.com',
-      role: 'customer',
+      role: UserRole.CUSTOMER,
       status: 'active',
       joinDate: '2023-05-15',
       isVerified: true
@@ -96,7 +96,7 @@ const UserManagement: React.FC = () => {
       id: '2',
       name: 'Jane Smith',
       email: 'jane@example.com',
-      role: 'provider',
+      role: UserRole.PROVIDER,
       status: 'active',
       joinDate: '2023-06-21',
       isVerified: true
@@ -105,7 +105,7 @@ const UserManagement: React.FC = () => {
       id: '3',
       name: 'Robert Johnson',
       email: 'robert@example.com',
-      role: 'provider',
+      role: UserRole.PROVIDER,
       status: 'pending',
       joinDate: '2023-07-03',
       isVerified: false
@@ -114,7 +114,7 @@ const UserManagement: React.FC = () => {
       id: '4',
       name: 'Sarah Williams',
       email: 'sarah@example.com',
-      role: 'customer',
+      role: UserRole.CUSTOMER,
       status: 'inactive',
       joinDate: '2023-04-12',
       isVerified: false
@@ -123,7 +123,7 @@ const UserManagement: React.FC = () => {
       id: '5',
       name: 'Admin User',
       email: 'admin@namibiaservice.com',
-      role: 'admin',
+      role: UserRole.ADMIN,
       status: 'active',
       joinDate: '2023-01-01',
       isVerified: true
@@ -169,9 +169,9 @@ const UserManagement: React.FC = () => {
 
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
-      case 'admin': return 'bg-purple-100 text-purple-800';
-      case 'provider': return 'bg-blue-100 text-blue-800';
-      case 'customer': return 'bg-green-100 text-green-800';
+      case UserRole.ADMIN: return 'bg-purple-100 text-purple-800';
+      case UserRole.PROVIDER: return 'bg-blue-100 text-blue-800';
+      case UserRole.CUSTOMER: return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -212,22 +212,22 @@ const UserManagement: React.FC = () => {
           </Button>
           <Button 
             size="sm" 
-            variant={filter === 'admin' ? 'primary' : 'outline'} 
-            onClick={() => setFilter('admin')}
+            variant={filter === UserRole.ADMIN ? 'primary' : 'outline'} 
+            onClick={() => setFilter(UserRole.ADMIN)}
           >
             Admins
           </Button>
           <Button 
             size="sm" 
-            variant={filter === 'provider' ? 'primary' : 'outline'} 
-            onClick={() => setFilter('provider')}
+            variant={filter === UserRole.PROVIDER ? 'primary' : 'outline'} 
+            onClick={() => setFilter(UserRole.PROVIDER)}
           >
             Providers
           </Button>
           <Button 
             size="sm" 
-            variant={filter === 'customer' ? 'primary' : 'outline'} 
-            onClick={() => setFilter('customer')}
+            variant={filter === UserRole.CUSTOMER ? 'primary' : 'outline'} 
+            onClick={() => setFilter(UserRole.CUSTOMER)}
           >
             Customers
           </Button>

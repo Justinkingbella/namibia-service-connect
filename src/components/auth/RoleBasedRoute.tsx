@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import { UserRole } from '@/types/auth';
 
 interface RoleBasedRouteProps {
-  allowedRoles: UserRole[] | string[];
+  allowedRoles: (UserRole | string)[];
   children: React.ReactNode;
 }
 
@@ -23,9 +23,9 @@ function RoleBasedRoute({ allowedRoles, children }: RoleBasedRouteProps) {
     return <Navigate to="/auth/sign-in" replace />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
+  if (!allowedRoles.includes(user.role as UserRole)) {
     // Redirect to appropriate dashboard based on role
-    switch (user.role) {
+    switch (user.role as string) {
       case 'admin':
         return <Navigate to="/admin/dashboard" replace />;
       case 'provider':
