@@ -9,18 +9,18 @@ import { Badge } from '@/components/ui/badge';
 import { Star, MapPin, X, Loader2 } from 'lucide-react';
 
 const FavoritesPage = () => {
-  const { favorites, loading, refreshFavorites, removeFromFavorites } = useFavorites();
+  const { favorites, isLoading, refetch, removeFromFavorites } = useFavorites();
 
   useEffect(() => {
-    refreshFavorites();
-  }, [refreshFavorites]);
+    refetch();
+  }, [refetch]);
 
   const handleRemoveFavorite = async (serviceId: string) => {
     await removeFromFavorites(serviceId);
   };
 
   const renderFavorites = () => {
-    if (loading) {
+    if (isLoading) {
       return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
     }
     
@@ -68,7 +68,7 @@ const FavoritesPage = () => {
                   )}
                 </div>
               </div>
-              <Link to={`/services/${service.id}`}>
+              <Link to={`/services/${service.serviceId}`}>
                 <h3 className="font-semibold text-lg hover:text-primary transition-colors">{service.title}</h3>
               </Link>
               <div className="text-muted-foreground mt-1 text-sm flex items-center">
@@ -82,7 +82,7 @@ const FavoritesPage = () => {
                 <span className="font-bold">${service.price}</span>
                 <span className="text-muted-foreground ml-1 text-xs">/ {service.pricingModel || 'service'}</span>
               </div>
-              <Link to={`/services/${service.id}`}>
+              <Link to={`/services/${service.serviceId}`}>
                 <Button variant="default" size="sm">View Details</Button>
               </Link>
             </CardFooter>

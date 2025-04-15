@@ -1,25 +1,14 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import PaymentHistory from '@/components/provider/PaymentHistory';
 import EarningsReport from '@/components/provider/EarningsReport';
 import ProviderControls from '@/components/provider/ProviderControls';
 import SubscriptionPlans from '@/components/provider/SubscriptionPlans';
 import DisputeResolutionPanel from '@/components/dashboard/DisputeResolutionPanel';
-import { fetchUserSubscription } from '@/services/subscriptionService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
 
 const RevenueReportsPage = () => {
-  const { user } = useAuth();
-  
-  const { data: subscription, refetch: refetchSubscription } = useQuery({
-    queryKey: ['providerSubscription', user?.id],
-    queryFn: () => fetchUserSubscription(user?.id || ''),
-    enabled: !!user?.id
-  });
-
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -47,10 +36,7 @@ const RevenueReportsPage = () => {
           <TabsContent value="subscription">
             <div className="space-y-4">
               <h2 className="text-xl font-bold">Subscription Management</h2>
-              <SubscriptionPlans 
-                currentPlan={subscription?.subscriptionPlanId}
-                onSubscriptionChanged={refetchSubscription}
-              />
+              <SubscriptionPlans />
             </div>
           </TabsContent>
           

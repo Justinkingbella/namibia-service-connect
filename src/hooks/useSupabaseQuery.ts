@@ -34,15 +34,15 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
     try {
       // Build the query using the type-safe API
       // Use 'any' to bypass type checking for dynamic table names
-      let query = supabase.from(options.table as any);
+      let query: any = supabase.from(options.table);
       
       // Select columns
       if (options.select) {
-        query = query.select(options.select) as any;
+        query = query.select(options.select);
       } else if (options.columns) {
-        query = query.select(options.columns) as any;
+        query = query.select(options.columns);
       } else {
-        query = query.select('*') as any;
+        query = query.select('*');
       }
 
       // Apply filters if provided using type assertion to overcome type issues
@@ -54,28 +54,28 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
           // Use a switch with type assertions for each case
           switch (filter.operator) {
             case 'eq':
-              query = (query as any).eq(column, value);
+              query = query.eq(column, value);
               break;
             case 'neq':
-              query = (query as any).neq(column, value);
+              query = query.neq(column, value);
               break;
             case 'gt':
-              query = (query as any).gt(column, value);
+              query = query.gt(column, value);
               break;
             case 'gte':
-              query = (query as any).gte(column, value);
+              query = query.gte(column, value);
               break;
             case 'lt':
-              query = (query as any).lt(column, value);
+              query = query.lt(column, value);
               break;
             case 'lte':
-              query = (query as any).lte(column, value);
+              query = query.lte(column, value);
               break;
             case 'in':
-              query = (query as any).in(column, value);
+              query = query.in(column, value);
               break;
             case 'is':
-              query = (query as any).is(column, value);
+              query = query.is(column, value);
               break;
           }
         }
@@ -83,23 +83,23 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
 
       // Apply ordering if provided
       if (options.orderBy) {
-        query = (query as any).order(options.orderBy.column, {
+        query = query.order(options.orderBy.column, {
           ascending: options.orderBy.ascending,
         });
       }
 
       // Apply limit if provided
       if (options.limit) {
-        query = (query as any).limit(options.limit);
+        query = query.limit(options.limit);
       }
 
       // Fetch a single record if specified
       let result;
       if (options.single) {
         if (options.id) {
-          query = (query as any).eq('id', options.id);
+          query = query.eq('id', options.id);
         }
-        result = await (query as any).maybeSingle();
+        result = await query.maybeSingle();
       } else {
         result = await query;
       }

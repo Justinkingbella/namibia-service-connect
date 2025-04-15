@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { getServiceCategories, createServiceCategory, updateServiceCategory, deleteServiceCategory } from '@/services/contentService';
 import { uploadImage } from '@/utils/imageUtils';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,7 +30,6 @@ const CategoryManagementPage = () => {
     order_index: 0
   });
   const [iconFile, setIconFile] = useState<File | null>(null);
-  const { toast } = useToast();
 
   const fetchCategories = async () => {
     setIsLoading(true);
@@ -38,11 +38,7 @@ const CategoryManagementPage = () => {
       setCategories(data);
     } catch (error) {
       console.error('Error loading categories:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load service categories',
-        variant: 'destructive',
-      });
+      toast.error('Failed to load service categories');
     } finally {
       setIsLoading(false);
     }
@@ -80,11 +76,7 @@ const CategoryManagementPage = () => {
 
   const handleSaveCategory = async () => {
     if (!categoryForm.name.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Category name is required',
-        variant: 'destructive',
-      });
+      toast.error('Category name is required');
       return;
     }
 
@@ -110,17 +102,11 @@ const CategoryManagementPage = () => {
       if (editingCategory) {
         // Update existing category
         savedCategory = await updateServiceCategory(editingCategory.id, categoryData);
-        toast({
-          title: 'Success',
-          description: 'Category updated successfully',
-        });
+        toast.success('Category updated successfully');
       } else {
         // Create new category
         savedCategory = await createServiceCategory(categoryData);
-        toast({
-          title: 'Success',
-          description: 'Category created successfully',
-        });
+        toast.success('Category created successfully');
       }
 
       if (savedCategory) {
@@ -129,11 +115,7 @@ const CategoryManagementPage = () => {
       }
     } catch (error) {
       console.error('Error saving category:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save category',
-        variant: 'destructive',
-      });
+      toast.error('Failed to save category');
     } finally {
       setIsSaving(false);
     }
@@ -145,18 +127,11 @@ const CategoryManagementPage = () => {
         const success = await deleteServiceCategory(id);
         if (success) {
           await fetchCategories();
-          toast({
-            title: 'Success',
-            description: 'Category deleted successfully',
-          });
+          toast.success('Category deleted successfully');
         }
       } catch (error) {
         console.error('Error deleting category:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to delete category',
-          variant: 'destructive',
-        });
+        toast.error('Failed to delete category');
       }
     }
   };
@@ -349,7 +324,7 @@ const CategoryManagementPage = () => {
               </Label>
               <div className="col-span-3 space-y-2">
                 <ImageUpload
-                  currentImage={categoryForm.icon}
+                  currentImage={categoryForm.icon || undefined}
                   onChange={handleFileChange}
                 />
                 <p className="text-xs text-muted-foreground">

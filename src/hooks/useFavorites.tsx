@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ServiceListItem } from '@/types/service';
 import { Json } from '@/types/schema';
 
 interface ServiceWithProvider {
@@ -50,6 +49,8 @@ export interface FavoriteService {
   rating: number;
   reviewCount: number;
   addedAt: string;
+  location?: string;
+  pricingModel?: string;
 }
 
 export function useFavorites() {
@@ -101,9 +102,9 @@ export function useFavorites() {
       
       // Transform response data
       const favorites: FavoriteService[] = data
-        .filter(item => item.service && typeof item.service !== 'string')
+        .filter(item => item.service && typeof item.service === 'object')
         .map((item: any) => {
-          if (!item.service || typeof item.service === 'string') {
+          if (!item.service || typeof item.service !== 'object') {
             return null;
           }
           
@@ -122,7 +123,9 @@ export function useFavorites() {
             category: item.service.category,
             rating: provider.rating || 0,
             reviewCount: provider.review_count || 0,
-            addedAt: item.created_at
+            addedAt: item.created_at,
+            location: item.service.location,
+            pricingModel: item.service.pricing_model
           };
         })
         .filter(Boolean) as FavoriteService[];

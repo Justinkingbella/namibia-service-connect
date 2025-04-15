@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +12,7 @@ import AdminDashboardSkeleton from '@/components/skeletons/AdminDashboardSkeleto
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('7d');
+  const [isLoading, setIsLoading] = useState(false);
   
   // Sample data for stats
   const userStats = {
@@ -27,7 +29,7 @@ const AdminDashboard = () => {
     averageValue: 109.38
   };
 
-  // Sample data for charts
+  // Sample data for charts - ensure types match
   const serviceUsageData = [
     { name: 'Cleaning', value: 125 },
     { name: 'Repair', value: 86 },
@@ -46,6 +48,10 @@ const AdminDashboard = () => {
     { name: 'Jun', value: 6800 },
     { name: 'Jul', value: 7800 },
   ];
+
+  if (isLoading) {
+    return <AdminDashboardSkeleton />;
+  }
 
   return (
     <DashboardLayout>
@@ -125,10 +131,7 @@ const AdminDashboard = () => {
                   <CardDescription>Distribution of service categories</CardDescription>
                 </CardHeader>
                 <CardContent className="px-2">
-                  <PieChart 
-                    data={serviceUsageData} 
-                    height={300} 
-                  />
+                  <PieChart data={serviceUsageData} height={300} />
                 </CardContent>
               </Card>
             </div>
@@ -143,13 +146,11 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {Array.from({length: 5}).map((_, i) => (
+                    {['New service created', 'Booking completed', 'New user registered', 'Payment processed', 'Dispute resolved'].map((activity, i) => (
                       <div key={i} className="flex items-center">
                         <div className="w-2 h-2 rounded-full bg-green-500 mr-3"></div>
                         <div className="flex-1">
-                          <p className="text-sm">
-                            {['New service created', 'Booking completed', 'New user registered', 'Payment processed', 'Dispute resolved'][i]}
-                          </p>
+                          <p className="text-sm">{activity}</p>
                           <p className="text-xs text-muted-foreground">
                             {['2 minutes ago', '15 minutes ago', '1 hour ago', '3 hours ago', '5 hours ago'][i]}
                           </p>
@@ -206,15 +207,18 @@ const AdminDashboard = () => {
                 <CardDescription>Detailed breakdown of platform revenue</CardDescription>
               </CardHeader>
               <CardContent>
-                <BarChart data={[
-                  { name: 'Jan', value: 4200 },
-                  { name: 'Feb', value: 3800 },
-                  { name: 'Mar', value: 5100 },
-                  { name: 'Apr', value: 5800 },
-                  { name: 'May', value: 7200 },
-                  { name: 'Jun', value: 6800 },
-                  { name: 'Jul', value: 7800 },
-                ]} height={350} />
+                <BarChart 
+                  data={[
+                    { name: 'Jan', value: 4200 },
+                    { name: 'Feb', value: 3800 },
+                    { name: 'Mar', value: 5100 },
+                    { name: 'Apr', value: 5800 },
+                    { name: 'May', value: 7200 },
+                    { name: 'Jun', value: 6800 },
+                    { name: 'Jul', value: 7800 },
+                  ]} 
+                  height={350} 
+                />
               </CardContent>
             </Card>
           </TabsContent>
