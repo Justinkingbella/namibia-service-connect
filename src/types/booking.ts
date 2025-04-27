@@ -1,18 +1,22 @@
-
 import { UserRole, PaymentStatus, WalletPaymentType } from './schema';
 
-// Update with exact string union type to match actual values
+// Update with exact string union type to match actual values used in components
 export enum BookingStatus {
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
   COMPLETED = 'completed',
   CANCELLED = 'cancelled',
   NO_SHOW = 'no_show',
+  IN_PROGRESS = 'in_progress',
+  REJECTED = 'rejected',
+  RESCHEDULED = 'rescheduled',
+  DISPUTED = 'disputed'
 }
 
 export enum DisputeStatus {
   PENDING = 'pending',
   IN_PROGRESS = 'in_progress',
+  IN_REVIEW = 'in_review',
   RESOLVED = 'resolved',
   REJECTED = 'rejected',
 }
@@ -55,7 +59,7 @@ export interface BookingData {
   rating?: number;
   feedback?: string;
   
-  // Client-side utility properties
+  // Client-side utility properties - ensure these match what components expect
   serviceId?: string;
   serviceName?: string;
   serviceImage?: string;
@@ -84,6 +88,8 @@ export interface Booking {
   paymentStatus: PaymentStatus;
   notes?: string;
   createdAt: string;
+  startTime?: string;
+  totalAmount?: number;
 }
 
 export interface BookingWithDetails extends Booking {

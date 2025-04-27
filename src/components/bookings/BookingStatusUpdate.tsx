@@ -25,25 +25,35 @@ const BookingStatusUpdate: React.FC<BookingStatusUpdateProps> = ({
   // Define available status transitions based on role and current status
   const availableStatusesMap: Record<string, Record<string, BookingStatus[]>> = {
     provider: {
-      'pending': ['confirmed', 'rejected'],
-      'confirmed': ['in_progress', 'cancelled'],
-      'in_progress': ['completed'],
-      'completed': [],
-      'cancelled': [],
-      'rejected': []
+      [BookingStatus.PENDING]: [BookingStatus.CONFIRMED, BookingStatus.REJECTED],
+      [BookingStatus.CONFIRMED]: [BookingStatus.IN_PROGRESS, BookingStatus.CANCELLED],
+      [BookingStatus.IN_PROGRESS]: [BookingStatus.COMPLETED],
+      [BookingStatus.COMPLETED]: [],
+      [BookingStatus.CANCELLED]: [],
+      [BookingStatus.REJECTED]: []
     },
     customer: {
-      'pending': ['cancelled'],
-      'confirmed': ['cancelled'],
-      'in_progress': [],
-      'completed': [],
-      'cancelled': [],
-      'rejected': []
+      [BookingStatus.PENDING]: [BookingStatus.CANCELLED],
+      [BookingStatus.CONFIRMED]: [BookingStatus.CANCELLED],
+      [BookingStatus.IN_PROGRESS]: [],
+      [BookingStatus.COMPLETED]: [],
+      [BookingStatus.CANCELLED]: [],
+      [BookingStatus.REJECTED]: []
     }
   };
 
   // Admin can change to any status
-  const adminStatuses: BookingStatus[] = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'rejected', 'no_show', 'rescheduled', 'disputed'];
+  const adminStatuses: BookingStatus[] = [
+    BookingStatus.PENDING,
+    BookingStatus.CONFIRMED, 
+    BookingStatus.IN_PROGRESS, 
+    BookingStatus.COMPLETED, 
+    BookingStatus.CANCELLED, 
+    BookingStatus.REJECTED, 
+    BookingStatus.NO_SHOW, 
+    BookingStatus.RESCHEDULED, 
+    BookingStatus.DISPUTED
+  ];
 
   const statusOptions = userRole === 'admin' 
     ? adminStatuses

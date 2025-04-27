@@ -1,225 +1,158 @@
+import { WalletPaymentType } from './schema';
 
-import { WalletVerificationStatus as SchemaWalletVerificationStatus, WalletPaymentType as SchemaWalletPaymentType } from './schema';
-
-export type WalletVerificationStatus = SchemaWalletVerificationStatus;
-export type WalletPaymentType = SchemaWalletPaymentType;
-
-export interface Transaction {
-  id: string;
-  walletId: string;
+export interface WalletVerification {
+  id?: string;
+  bookingId?: string;
+  providerId?: string;
+  customerId?: string;
   amount: number;
-  type: 'deposit' | 'withdrawal' | 'transfer' | 'payment';
-  status: 'pending' | 'completed' | 'failed';
-  reference: string;
-  description?: string;
-  createdAt: string;
-  metadata?: Record<string, any>;
-}
-
-export interface Wallet {
-  id: string;
-  userId: string;
-  balance: number;
-  currency: string;
-  isVerified: boolean;
-  verificationStatus: WalletVerificationStatus;
-  createdAt: string;
-  updatedAt: string;
+  date: string;
+  dateSubmitted?: string;
+  dateVerified?: string;
+  verificationStatus: string;
+  method: WalletPaymentType;
+  reference?: string;
+  referenceNumber?: string;
+  paymentMethod?: WalletPaymentType;
+  customerPhone?: string;
+  providerPhone?: string;
+  mobileOperator?: string;
+  bankUsed?: string;
+  receiptImage?: string;
+  notes?: string;
+  rejectionReason?: string;
+  customerConfirmed?: boolean;
+  providerConfirmed?: boolean;
+  adminVerified?: boolean;
 }
 
 export interface WalletVerificationRequest {
   id: string;
-  booking_id: string;
-  customer_id: string;
-  provider_id: string;
+  bookingId: string;
+  customerId: string;
+  providerId: string;
   amount: number;
-  date_submitted: string;
-  date_verified?: string;
-  verified_by?: string;
-  verification_status: WalletVerificationStatus;
-  payment_method: WalletPaymentType;
-  reference_number: string;
-  customer_phone: string;
-  provider_phone?: string;
-  rejection_reason?: string;
-  customer_confirmed: boolean;
-  provider_confirmed: boolean;
-  admin_verified: boolean;
-  admin_comments: any;
-  created_at: string;
-  updated_at: string;
-  proof_type?: string;
-  mobile_operator?: string;
-  bank_used?: string;
-  receipt_image?: string;
-  notes?: string;
-  // Additional fields used in components
-  status?: WalletVerificationStatus;
-  walletNumber?: string;
-  userId?: string;
-  userName?: string;
-  userEmail?: string;
-  transactionReference?: string;
-  walletProvider?: string;
-  userType?: string;
-  reviewerId?: string;
-  reviewerName?: string;
-  reviewDate?: string;
-  paymentPurpose?: string;
-  walletName?: string;
-}
-
-export interface WalletVerification {
-  id: string;
-  user_id: string;
-  verificationStatus?: WalletVerificationStatus;
-  status?: WalletVerificationStatus;
-  date?: string;
-  reference?: string;
-  method?: WalletPaymentType;
-  amount: number;
-  provider_id?: string;
-  customer_id?: string;
-  booking_id?: string;
-  paymentMethod?: WalletPaymentType;
-  customerPhone?: string;
-  providerPhone?: string;
-  referenceNumber?: string;
-  dateSubmitted?: string;
-  dateVerified?: string | null;
-  rejectionReason?: string;
-  notes?: string;
-  receiptImage?: string;
+  paymentMethod: string;
+  referenceNumber: string;
+  customerPhone: string;
+  dateSubmitted: string;
+  verificationStatus: string;
   mobileOperator?: string;
   bankUsed?: string;
-  customerConfirmed?: boolean;
-  providerConfirmed?: boolean;
-  adminVerified?: boolean;
-  adminComments?: any;
-  walletNumber?: string;
-  paymentPurpose?: string;
-  walletName?: string;
-  userId?: string;
-  userName?: string;
-  userEmail?: string;
-  transactionReference?: string;
-  walletProvider?: string;
-  userType?: string;
-  reviewerId?: string;
-  reviewerName?: string;
-  reviewDate?: string;
+  notes?: string;
+  adminVerified: boolean;
+  customerConfirmed: boolean;
+  providerConfirmed: boolean;
 }
 
 export interface WalletVerificationFilters {
-  status?: WalletVerificationStatus;
-  paymentMethod?: WalletPaymentType;
-  dateFrom?: string;
-  dateTo?: string;
-  amountMin?: number;
-  amountMax?: number;
-  searchTerm?: string;
-  // Additional fields used in filters
-  walletProvider?: string;
-  userType?: string;
+  status?: string;
+  dateRange?: [Date | null, Date | null];
+  provider?: string;
+  customer?: string;
+  minAmount?: number;
+  maxAmount?: number;
 }
 
 export interface WalletVerificationStats {
-  total: number;
-  pending: number;
-  verified: number;
-  rejected: number;
-  totalAmount: number;
-  averageAmount: number;
-  // Additional fields
-  averageProcessingTime?: string;
-  totalPending?: number;
-  totalApproved?: number;
-  totalRejected?: number;
-  totalExpired?: number;
-  totalAmountPending?: number;
-  totalAmountProcessed?: number;
+  totalPending: number;
+  totalVerified: number;
+  totalRejected: number;
+  averageVerificationTime: number;
 }
 
 export interface WalletVerificationComment {
   id: string;
-  verification_id: string;
-  user_id: string;
-  user_role: string;
-  comment: string;
-  timestamp: string;
-  // Additional fields
-  verificationId?: string;
-  content?: string;
-  createdAt?: string;
-  userId?: string;
+  verificationId: string;
+  userId: string;
+  userRole: string;
+  content: string;
+  createdAt: string;
 }
 
 export interface WalletProviderSettings {
   id: string;
-  provider_id: string;
-  walletProvider: string;
-  isEnabled: boolean;
-  accountNumber?: string;
-  phoneNumber?: string;
-  processingFee: number;
-  processingFeeType?: string;
-  currency: string;
-  notes?: string;
-  updatedAt: string;
-  // Additional fields
-  providerName?: string;
-  apiKey?: string;
-  secretKey?: string;
-  endpoint?: string;
-  displayName?: string;
-  processingTime?: string;
-  logo?: string;
+  providerId: string;
+  allowsEWallet: boolean;
+  allowsBankTransfer: boolean;
+  preferredVerificationMethod: string;
+  bankDetails?: {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+  };
+  mobileWalletDetails?: {
+    provider: string;
+    number: string;
+    name: string;
+  };
 }
 
 export interface WalletVerificationDashboard {
   stats: WalletVerificationStats;
   recentVerifications: WalletVerificationRequest[];
-  providers: WalletProvider[];
+  pendingCount: number;
 }
 
 export interface WalletVerificationSummary {
   totalVerifications: number;
-  pendingVerifications: number;
-  approvedVerifications: number;
-  rejectedVerifications: number;
-  totalAmountProcessed: number;
-  avgProcessingTime: string;
+  pendingCount: number;
+  completedCount: number;
+  rejectedCount: number;
+  totalAmount: number;
+  pendingAmount: number;
+  verifiedAmount: number;
 }
 
-export interface VerificationAction {
-  id: string;
-  verification_id: string;
-  action_type: 'approve' | 'reject' | 'comment';
-  performed_by: string;
-  user_role: string;
-  timestamp: string;
-  details?: Record<string, any>;
+export enum VerificationAction {
+  APPROVE = 'approve',
+  REJECT = 'reject',
+  COMMENT = 'comment',
+  REQUEST_INFO = 'request_info',
+  RESUBMIT = 'resubmit',
+  CANCEL = 'cancel'
 }
 
 export interface WalletVerificationReport {
-  period: string;
-  verificationCount: number;
-  totalAmount: number;
+  timeframe: string;
+  totalVerifications: number;
+  totalApproved: number;
+  totalRejected: number;
   approvalRate: number;
-  avgProcessingTime: string;
+  averageVerificationTime: number;
+  byProvider: Array<{
+    providerId: string;
+    providerName: string;
+    count: number;
+    approvalRate: number;
+  }>;
+  byPaymentMethod: Array<{
+    method: string;
+    count: number;
+    approvalRate: number;
+  }>;
 }
 
-export type VerificationStatus = 'pending' | 'submitted' | 'verified' | 'rejected' | 'expired' | 'approved';
+export interface VerificationStatus {
+  customer: boolean;
+  provider: boolean;
+  admin: boolean;
+}
 
 export interface WalletProvider {
   id: string;
   name: string;
-  code: string;
-  type: 'mobile' | 'bank' | 'wallet';
-  processingFee: number;
-  processingTime: string;
-  isEnabled: boolean;
-  logoUrl?: string;
+  logo: string;
+  isActive: boolean;
+  supportedCountries: string[];
+  fees: {
+    percentage: number;
+    fixed: number;
+  };
 }
 
-export type UserType = 'customer' | 'provider' | 'admin';
+export enum UserType {
+  CUSTOMER = 'customer',
+  PROVIDER = 'provider',
+  ADMIN = 'admin',
+}

@@ -1,4 +1,3 @@
-
 import { SubscriptionTierType } from './schema';
 
 export enum UserRole {
@@ -165,4 +164,6 @@ export interface AuthContextType {
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
   setUser: (user: User | null) => void;
+  userProfile?: any; // Used in ProfileSummary
+  userRole?: string; // Used in ProfileSummary
 }

@@ -17,6 +17,15 @@ import { Customer, User } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useProfile } from '@/hooks/useProfile';
 
+interface ExtendedUser extends User {
+  phoneNumber?: string;
+  birthDate?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  bio?: string;
+}
+
 const CustomerProfile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -39,16 +48,17 @@ const CustomerProfile = () => {
   
   useEffect(() => {
     if (user) {
+      const extendedUser = user as ExtendedUser;
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
-        phoneNumber: user.phoneNumber || '',
+        phoneNumber: extendedUser.phoneNumber || '',
         email: user.email || '',
-        birthDate: user.birthDate ? new Date(user.birthDate) : undefined,
-        address: user.address || '',
-        city: user.city || '',
-        country: user.country || '',
-        bio: user.bio || '',
+        birthDate: extendedUser.birthDate ? new Date(extendedUser.birthDate) : undefined,
+        address: extendedUser.address || '',
+        city: extendedUser.city || '',
+        country: extendedUser.country || '',
+        bio: extendedUser.bio || '',
         avatarUrl: user.avatarUrl || '',
       });
     }
@@ -84,8 +94,8 @@ const CustomerProfile = () => {
 
       if (error) throw error;
 
-      // Update local user state
-      const updatedUser: Partial<User> = {
+      // Update local user state with type-safe approach
+      const updatedUser: Partial<ExtendedUser> = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phoneNumber: formData.phoneNumber,

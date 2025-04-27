@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { DisputeStatus } from '@/types/booking';
 
 export function DisputeSummary() {
   const { user } = useAuth();
@@ -32,8 +33,13 @@ export function DisputeSummary() {
     );
   }
   
-  const pendingCount = disputes.filter(d => d.status === 'pending' || d.status === 'in_progress' || d.status === 'in_review').length;
-  const resolvedCount = disputes.filter(d => d.status === 'resolved').length;
+  const pendingCount = disputes.filter(d => 
+    d.status === DisputeStatus.PENDING || 
+    d.status === DisputeStatus.IN_PROGRESS || 
+    d.status === DisputeStatus.IN_REVIEW
+  ).length;
+  
+  const resolvedCount = disputes.filter(d => d.status === DisputeStatus.RESOLVED).length;
   
   return (
     <Card>
@@ -82,13 +88,13 @@ export function DisputeSummary() {
                   </div>
                   <div>
                     <span className={`px-2 py-1 rounded-full text-xs ${
-                      dispute.status === 'resolved' 
+                      dispute.status === DisputeStatus.RESOLVED 
                         ? 'bg-green-100 text-green-700' 
-                        : dispute.status === 'in_progress' || dispute.status === 'in_review'
+                        : dispute.status === DisputeStatus.IN_PROGRESS || dispute.status === DisputeStatus.IN_REVIEW
                         ? 'bg-blue-100 text-blue-700'
                         : 'bg-amber-100 text-amber-700'
                     }`}>
-                      {dispute.status === 'in_review' ? 'In Review' : 
+                      {dispute.status === DisputeStatus.IN_REVIEW ? 'In Review' : 
                        dispute.status.charAt(0).toUpperCase() + dispute.status.slice(1)}
                     </span>
                   </div>

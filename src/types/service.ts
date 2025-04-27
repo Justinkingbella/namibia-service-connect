@@ -88,6 +88,9 @@ export interface ServiceListItem {
   location?: string;
   is_active: boolean;
   featured?: boolean;
+  // Add properties for component compatibility
+  pricingModel?: string;
+  reviewCount?: number;
 }
 
 export interface FavoriteService {

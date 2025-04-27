@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +13,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { User } from '@/types/auth';
+
+interface ExtendedUser extends User {
+  phoneNumber?: string;
+  birthDate?: string | Date;
+}
 
 const UserProfile = () => {
   const { user } = useAuth();
@@ -21,7 +28,7 @@ const UserProfile = () => {
     lastName: '',
     phoneNumber: '',
     avatarUrl: '',
-    birthDate: undefined
+    birthDate: undefined as Date | undefined
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -29,14 +36,15 @@ const UserProfile = () => {
 
   useEffect(() => {
     if (user) {
+      const extendedUser = user as ExtendedUser;
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
-        phoneNumber: user.phoneNumber || '',
+        phoneNumber: extendedUser.phoneNumber || '',
         avatarUrl: user.avatarUrl || '',
-        birthDate: user.birthDate ? new Date(user.birthDate) : undefined
+        birthDate: extendedUser.birthDate ? new Date(extendedUser.birthDate) : undefined
       });
-      setDate(user.birthDate ? new Date(user.birthDate) : undefined);
+      setDate(extendedUser.birthDate ? new Date(extendedUser.birthDate as string) : undefined);
     }
   }, [user]);
 

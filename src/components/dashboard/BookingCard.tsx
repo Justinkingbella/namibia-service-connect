@@ -21,15 +21,15 @@ export interface BookingCardProps {
 export const BookingCard: React.FC<BookingCardProps> = ({ booking, viewAs = 'customer' }) => {
   const getStatusBadgeColor = (status: BookingStatus) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed': return 'bg-blue-100 text-blue-800';
-      case 'in_progress': return 'bg-purple-100 text-purple-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'disputed': return 'bg-orange-100 text-orange-800';
-      case 'no_show': return 'bg-gray-100 text-gray-800';
-      case 'rescheduled': return 'bg-teal-100 text-teal-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
+      case BookingStatus.PENDING: return 'bg-yellow-100 text-yellow-800';
+      case BookingStatus.CONFIRMED: return 'bg-blue-100 text-blue-800';
+      case BookingStatus.IN_PROGRESS: return 'bg-purple-100 text-purple-800';
+      case BookingStatus.COMPLETED: return 'bg-green-100 text-green-800';
+      case BookingStatus.CANCELLED: return 'bg-red-100 text-red-800';
+      case BookingStatus.DISPUTED: return 'bg-orange-100 text-orange-800';
+      case BookingStatus.NO_SHOW: return 'bg-gray-100 text-gray-800';
+      case BookingStatus.RESCHEDULED: return 'bg-teal-100 text-teal-800';
+      case BookingStatus.REJECTED: return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -64,7 +64,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, viewAs = 'cus
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm">{formatDate(booking.date)}</span>
           <Clock className="h-4 w-4 text-muted-foreground ml-2" />
-          <span className="text-sm">{booking.startTime}</span>
+          <span className="text-sm">{booking.time || booking.startTime}</span>
         </div>
         
         {viewAs === 'provider' && booking.customerName && (
@@ -83,7 +83,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, viewAs = 'cus
         
         <div className="flex items-center gap-2">
           <DollarSign className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">{formatCurrency(booking.totalAmount)}</span>
+          <span className="text-sm">{formatCurrency(booking.totalAmount || booking.amount)}</span>
         </div>
       </CardContent>
       <CardFooter className="pt-2 border-t flex justify-between">

@@ -1,78 +1,90 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Star, MapPin, Clock } from 'lucide-react';
-import { ServiceListItem } from '@/types';
-import { cn } from '@/lib/utils';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ServiceListItem } from '@/types/service';
+import { DollarSign, MapPin, Star } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { formatCurrency } from '@/lib/formatters';
 
 interface ServiceCardProps {
   service: ServiceListItem;
-  className?: string;
-  asLink?: boolean;
-  linkTo?: string;
-  viewMode?: 'grid' | 'list'; // Add viewMode prop
+  actionLink?: string;
+  actionText?: string;
+  showProvider?: boolean;
 }
 
-export function ServiceCard({ service, className, viewMode = 'grid', asLink = false, linkTo = '' }: ServiceCardProps) {
-  const formatPrice = (price: number, model: string = 'fixed') => {
-    return `N$${price}${model === 'hourly' ? '/hr' : ''}`;
-  };
-
+export const ServiceCard: React.FC<ServiceCardProps> = ({
+  service,
+  actionLink = `/services/${service.id}`,
+  actionText = 'View Details',
+  showProvider = true,
+}) => {
   return (
-    <Link
-      to={`/dashboard/services/${service.id}`}
-      className={cn(
-        "block bg-white border rounded-2xl overflow-hidden shadow-soft-sm hover:shadow-soft-md transition-all duration-300 hover:-translate-y-1",
-        className
-      )}
-    >
-      <div className="relative aspect-[4/3]">
-        <img 
-          src={service.image || '/placeholder.svg'} 
+    <Card className="h-full flex flex-col">
+      <div className="relative h-48">
+        <img
+          src={service.image || '/placeholder.svg'}
           alt={service.title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover rounded-t-lg"
         />
-        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent text-white">
-          <Badge className="bg-white/90 text-primary hover:bg-white/100">
-            {formatPrice(service.price, service.pricingModel)}
-          </Badge>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
-          <h3 className="font-medium text-lg text-white">{service.title}</h3>
-        </div>
+        {service.featured && (
+          <Badge className="absolute top-2 right-2 bg-amber-500">Featured</Badge>
+        )}
       </div>
-      
-      <div className="p-4">
-        <div className="flex items-center mt-1 text-sm text-muted-foreground">
-          <MapPin className="h-4 w-4 mr-1" />
-          <span className="line-clamp-1">{service.location}</span>
-        </div>
-        
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center">
-            <div className="flex items-center text-amber-500">
-              <Star className="h-4 w-4 fill-current" />
-              <span className="ml-1 text-sm font-medium">
-                {service.rating?.toFixed(1) || '0.0'}
-              </span>
-            </div>
-            <span className="mx-1 text-muted-foreground">•</span>
-            <span className="text-sm text-muted-foreground">
-              {service.reviewCount || 0} reviews
-            </span>
-          </div>
-          
-          <div className="flex items-center text-sm">
-            <Badge variant="outline" className="flex items-center gap-1">
-              {service.pricingModel === 'hourly' && <Clock className="h-3 w-3" />}
-              <span>{service.pricingModel === 'hourly' ? 'Hourly' : 'Fixed'}</span>
+
+      <CardHeader className="pb-2">
+        <div className="space-y-1">
+          <h3 className="font-semibold text-lg leading-tight">{service.title}</h3>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">{service.category}</Badge>
+            <Badge variant="secondary">
+              {formatCurrency(service.price)} / {service.pricing_model || service.pricingModel}
             </Badge>
           </div>
         </div>
-      </div>
-    </Link>
+      </CardHeader>
+
+      <CardContent className="flex-grow">
+        <p className="text-sm text-muted-foreground line-clamp-3">
+          {service.description}
+        </p>
+
+        <div className="mt-3 flex items-center gap-2">
+          {service.rating && (
+            <div className="flex items-center gap-1 text-amber-500">
+              <Star className="h-4 w-4 fill-current" />
+              <span className="text-sm font-medium">
+                {service.rating.toFixed(1)} ({service.review_count || service.reviewCount || 0})
+              </span>
+            </div>
+          )}
+
+          {service.location && (
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              <span className="text-xs">{service.location}</span>
+            </div>
+          )}
+        </div>
+
+        {showProvider && service.provider_name && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            By {service.provider_name}
+          </p>
+        )}
+      </CardContent>
+
+      <CardFooter className="pt-2 border-t">
+        <Button variant="outline" className="w-full" size="sm" asChild>
+          <Link to={actionLink}>
+            {actionText}
+          </Link>
+        </Button>
+      </CardFooter>
+    </Card>
   );
-}
+};
 
 export default ServiceCard;
