@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,6 @@ import { Grid2X2, List, Search, Plus, CalendarIcon, Star, User, MoreVertical, Pe
 import { ServiceCard } from '@/components/dashboard/ServiceCard';
 import { ServiceCategoryEnum, Service } from '@/types';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 const MOCK_SERVICES: Service[] = [
@@ -146,15 +146,14 @@ const ServicesPage = () => {
     );
   };
 
-  const renderServiceCard = (service: ServiceListItem) => {
+  const renderServiceCard = (service: Service) => {
     return (
       <Card key={service.id} className="overflow-hidden">
         <div className="relative h-48">
-          <Image
+          <img
             src={service.image || '/placeholder.svg'}
             alt={service.title}
-            fill
-            className="object-cover"
+            className="w-full h-full object-cover"
           />
           {service.featured && (
             <Badge className="absolute top-2 right-2 bg-yellow-500">Featured</Badge>
@@ -168,8 +167,8 @@ const ServicesPage = () => {
                 {service.location || 'Location not specified'}
               </p>
             </div>
-            <Badge variant={service.is_active ? 'default' : 'secondary'}>
-              {service.is_active ? 'Active' : 'Inactive'}
+            <Badge variant={service.isActive ? 'default' : 'secondary'}>
+              {service.isActive ? 'Active' : 'Inactive'}
             </Badge>
           </div>
           
@@ -181,8 +180,8 @@ const ServicesPage = () => {
             <div className="flex items-center">
               <Star className="h-4 w-4 text-yellow-400 mr-1" />
               <span className="text-sm font-medium">{service.rating || 'No ratings'}</span>
-              {service.review_count > 0 && (
-                <span className="text-xs text-gray-500 ml-1">({service.review_count})</span>
+              {service.reviewCount > 0 && (
+                <span className="text-xs text-gray-500 ml-1">({service.reviewCount})</span>
               )}
             </div>
             <p className="font-bold">N${service.price}</p>
@@ -190,7 +189,7 @@ const ServicesPage = () => {
           
           <div className="mt-3 text-sm text-gray-500 flex items-center">
             <User className="h-3 w-3 mr-1" />
-            {service.provider_name || 'Unknown Provider'}
+            {service.providerName || 'Unknown Provider'}
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0 flex justify-between gap-2">
@@ -214,8 +213,8 @@ const ServicesPage = () => {
                   <Pencil className="h-4 w-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleToggleStatus(service.id, !service.is_active)}>
-                  {service.is_active ? (
+                <DropdownMenuItem onClick={() => handleToggleStatus(service.id, !service.isActive)}>
+                  {service.isActive ? (
                     <>
                       <EyeOff className="h-4 w-4 mr-2" />
                       Deactivate
@@ -401,14 +400,14 @@ const ServicesPage = () => {
                   image: service.image,
                   category: service.category,
                   rating: service.rating,
-                  reviewCount: service.reviewCount,
+                  review_count: service.reviewCount,
                   provider_id: service.providerId || service.provider_id,
                   provider_name: service.providerName || service.provider_name,
                   location: service.location,
-                  pricingModel: service.pricingModel
+                  pricing_model: service.pricingModel,
+                  is_active: service.isActive
                 }}
-                asLink={!isProvider || isAdmin}
-                linkTo={
+                actionLink={
                   isAdmin 
                     ? `/admin/services/${service.id}`
                     : isProvider 
