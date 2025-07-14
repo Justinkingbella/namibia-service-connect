@@ -52,8 +52,8 @@ export interface PaymentTransaction {
   gateway: PaymentGateway;
   method: string;
   status: PaymentStatus;
-  metadata: Record<string, any>;
-  gatewayResponse?: Record<string, any>;
+  metadata: Record<string, string | number | boolean>;
+  gatewayResponse?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -68,8 +68,8 @@ interface PaymentTransactionRow {
   gateway: string;
   method: string;
   status: string;
-  metadata: any;
-  gateway_response?: any;
+  metadata: Record<string, string | number | boolean> | null;
+  gateway_response?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
@@ -345,7 +345,7 @@ export async function initiatePayFastPayment(
 }
 
 export async function handlePayFastWebhook(
-  pfData: Record<string, any>
+  pfData: Record<string, string | number>
 ): Promise<boolean> {
   try {
     const { data, error } = await supabase
@@ -433,7 +433,7 @@ export async function initiateDPOPayment(
 }
 
 export async function handleDPOWebhook(
-  dpoData: Record<string, any>
+  dpoData: Record<string, string | number>
 ): Promise<boolean> {
   try {
     const { data, error } = await supabase

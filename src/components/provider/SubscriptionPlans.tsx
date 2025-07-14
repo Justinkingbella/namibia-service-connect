@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckIcon, XIcon, XMarkIcon, CheckCircle, XCircle } from 'lucide-react';
+import { CheckIcon, XIcon, X, CheckCircle, XCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -185,7 +185,7 @@ const SubscriptionPlans = ({ onSelectPlan }) => {
                   {feature.included ? (
                     <CheckIcon className="h-4 w-4 text-emerald-500 mr-2 mt-0.5" />
                   ) : (
-                    <XMarkIcon className="h-4 w-4 text-gray-400 mr-2 mt-0.5" />
+                    <X className="h-4 w-4 text-gray-400 mr-2 mt-0.5" />
                   )}
                   {feature.name}
                   {feature.limit !== undefined ? ` (${feature.limit})` : ""}

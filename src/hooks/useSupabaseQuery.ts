@@ -10,7 +10,7 @@ interface UseSupabaseQueryOptions<T> {
   filter?: {
     column: string;
     operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'is';
-    value: any;
+    value: unknown;
   }[];
   orderBy?: { column: string; ascending: boolean };
   limit?: number;
@@ -20,7 +20,7 @@ interface UseSupabaseQueryOptions<T> {
   relations?: string;
 }
 
-export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
+export function useSupabaseQuery<T = Record<string, unknown>>(options: UseSupabaseQueryOptions<T>) {
   const [data, setData] = useState<T | T[] | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<PostgrestError | Error | null>(null);
@@ -31,8 +31,8 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
     setError(null);
 
     try {
-      // Using type assertion to work around TypeScript issues
-      let query = supabase.from(options.table as any);
+      // Start with the base query
+      let query = supabase.from(options.table);
       
       // Apply select statement
       if (options.select) {
@@ -43,53 +43,53 @@ export function useSupabaseQuery<T = any>(options: UseSupabaseQueryOptions<T>) {
         query = query.select('*');
       }
       
-      // Apply filters with type assertions
+      // Apply filters
       if (options.filter && options.filter.length > 0) {
         for (const filter of options.filter) {
           switch (filter.operator) {
             case 'eq':
-              query = query.eq(filter.column, filter.value) as any;
+              query = query.eq(filter.column, filter.value);
               break;
             case 'neq':
-              query = query.neq(filter.column, filter.value) as any;
+              query = query.neq(filter.column, filter.value);
               break;
             case 'gt':
-              query = query.gt(filter.column, filter.value) as any;
+              query = query.gt(filter.column, filter.value);
               break;
             case 'gte':
-              query = query.gte(filter.column, filter.value) as any;
+              query = query.gte(filter.column, filter.value);
               break;
             case 'lt':
-              query = query.lt(filter.column, filter.value) as any;
+              query = query.lt(filter.column, filter.value);
               break;
             case 'lte':
-              query = query.lte(filter.column, filter.value) as any;
+              query = query.lte(filter.column, filter.value);
               break;
             case 'in':
-              query = query.in(filter.column, filter.value) as any;
+              query = query.in(filter.column, filter.value as string | string[]);
               break;
             case 'is':
-              query = query.is(filter.column, filter.value) as any;
+              query = query.is(filter.column, filter.value);
               break;
           }
         }
       }
       
-      // Apply ordering with type assertion
+      // Apply ordering
       if (options.orderBy) {
         query = query.order(options.orderBy.column, {
           ascending: options.orderBy.ascending
-        }) as any;
+        });
       }
       
-      // Apply limit with type assertion
+      // Apply limit
       if (options.limit) {
-        query = query.limit(options.limit) as any;
+        query = query.limit(options.limit);
       }
       
       // Get single item by ID if specified
       if (options.id) {
-        query = query.eq('id', options.id) as any;
+        query = query.eq('id', options.id);
       }
       
       // Execute query

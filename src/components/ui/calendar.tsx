@@ -61,4 +61,27 @@ function Calendar({
 }
 Calendar.displayName = "Calendar";
 
-export { Calendar };
+// CalendarDateRangePicker component (actually a single date picker based on usage)
+interface CalendarDateRangePickerProps {
+  date?: Date;
+  onSelect?: (date: Date | undefined) => void;
+  className?: string;
+}
+
+function CalendarDateRangePicker({
+  date,
+  onSelect,
+  className,
+}: CalendarDateRangePickerProps) {
+  return (
+    <Calendar
+      mode="single"
+      selected={date}
+      onSelect={onSelect}
+      className={className}
+    />
+  );
+}
+CalendarDateRangePicker.displayName = "CalendarDateRangePicker";
+
+export { Calendar, CalendarDateRangePicker };

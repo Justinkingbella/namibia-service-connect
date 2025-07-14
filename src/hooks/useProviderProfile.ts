@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -37,7 +37,7 @@ export function useProviderProfile() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const fetchProviderData = async () => {
+  const fetchProviderData = useCallback(async () => {
     if (!user?.id) {
       setLoading(false);
       return;
@@ -110,7 +110,7 @@ export function useProviderProfile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   const updateProviderData = async (
     updatedData: Partial<ProviderData>
@@ -168,7 +168,7 @@ export function useProviderProfile() {
   // Initial fetch
   useEffect(() => {
     fetchProviderData();
-  }, [user?.id]);
+  }, [fetchProviderData]);
 
   return {
     providerData,

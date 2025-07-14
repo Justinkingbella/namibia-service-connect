@@ -164,11 +164,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(customSession as unknown as Session);
       setIsAuthenticated(true);
       return { error: null };
-    } catch (error: any) {
-      console.error('Sign In Error:', error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Sign In Error:', errorMessage);
       toast({
         title: "Authentication Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
       return { error };
@@ -231,11 +232,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       return { error: null, data };
-    } catch (error: any) {
-      console.error('Sign Up Error:', error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Sign Up Error:', errorMessage);
       toast({
         title: "Sign Up Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
       return { error, data: null };
@@ -251,11 +253,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserRole(null);
       setIsAuthenticated(false);
       navigate('/auth/sign-in', { replace: true });
-    } catch (error: any) {
-      console.error('Sign Out Error:', error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Sign Out Error:', errorMessage);
       toast({
         title: "Sign Out Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
     }
@@ -283,11 +286,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Your profile has been updated successfully.",
       });
       return true;
-    } catch (error: any) {
-      console.error('Update Profile Error:', error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Update Profile Error:', errorMessage);
       toast({
         title: "Update Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
       return false;
@@ -316,11 +320,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       await updateProfile({ avatarUrl: publicUrl });
       return publicUrl;
-    } catch (error: any) {
-      console.error('Upload Avatar Error:', error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Upload Avatar Error:', errorMessage);
       toast({
         title: "Upload Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
       throw error;
@@ -337,11 +342,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: "Reset Email Sent",
         description: "Please check your email to reset your password.",
       });
-    } catch (error: any) {
-      console.error('Reset Password Error:', error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Reset Password Error:', errorMessage);
       toast({
         title: "Reset Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
     }
@@ -355,11 +361,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: "Password Updated",
         description: "Your password has been updated successfully.",
       });
-    } catch (error: any) {
-      console.error('Update Password Error:', error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Update Password Error:', errorMessage);
       toast({
         title: "Update Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
     }
@@ -383,11 +390,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: "Email Verified",
         description: "Your email has been verified successfully.",
       });
-    } catch (error: any) {
-      console.error('Verify Email Error:', error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Verify Email Error:', errorMessage);
       toast({
         title: "Verification Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
     }
@@ -412,11 +420,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: "Verification Email Sent",
         description: "Please check your email to verify your account.",
       });
-    } catch (error: any) {
-      console.error('Resend Verification Email Error:', error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Resend Verification Email Error:', errorMessage);
       toast({
         title: "Resend Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
     }

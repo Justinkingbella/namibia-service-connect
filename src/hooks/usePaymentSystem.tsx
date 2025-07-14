@@ -47,8 +47,8 @@ export interface PaymentTransaction {
   gateway: PaymentGateway;
   method: string;
   status: PaymentStatus;
-  metadata: Record<string, any>;
-  gatewayResponse?: Record<string, any>;
+  metadata: Record<string, string | number | boolean>;
+  gatewayResponse?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -80,8 +80,8 @@ interface PaymentTransactionRow {
   gateway: string;
   method: string;
   status: string;
-  metadata: Record<string, any>;
-  gateway_response?: Record<string, any>;
+  metadata: Record<string, string | number | boolean> | null;
+  gateway_response?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
