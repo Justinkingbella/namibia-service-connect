@@ -6,7 +6,8 @@ import { toast } from 'sonner';
 import { DbCustomerProfile, Customer } from '@/types/auth';
 
 export interface CustomerData extends DbCustomerProfile {
-  // Additional fields if needed
+  // Additional customer-specific fields can be added here
+  preferences?: Record<string, unknown>;
 }
 
 export function useCustomerProfile() {

@@ -45,7 +45,7 @@ export const useBookings = () => {
       const roleFilter = user.role === 'customer' ? 'customer_id' : 'provider_id';
 
       // Create the query
-      let query = supabase
+      const query = supabase
         .from('bookings')
         .select(`
           *,

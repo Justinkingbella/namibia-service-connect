@@ -20,7 +20,7 @@ import {
 interface PaymentMethodSelectorProps {
   amount: number;
   description: string;
-  onPaymentInitiated?: (result: any) => void;
+  onPaymentInitiated?: (result: { success: boolean; data?: unknown; error?: string }) => void;
   onCancel?: () => void;
 }
 

@@ -1,10 +1,10 @@
 
 export interface RealtimeTable {
   table: string;
-  filter?: Record<string, any>;
+  filter?: Record<string, unknown>;
   order?: { column: string; ascending: boolean };
   limit?: number;
-  onDataChange: (payload: any) => void;
+  onDataChange: (payload: { data: unknown; eventType: string }) => void;
 }
 
 export interface RealtimeQueryResult<T> {

@@ -132,7 +132,7 @@ const BookingsPage = () => {
 
   useEffect(() => {
     const filterBookings = () => {
-      let results = bookings.filter(booking => {
+      const results = bookings.filter(booking => {
         const searchTerm = searchQuery.toLowerCase();
         return (
           booking.service_name?.toLowerCase().includes(searchTerm) ||

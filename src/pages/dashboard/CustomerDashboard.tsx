@@ -2,7 +2,7 @@
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import ProfileSummary from '@/components/dashboard/ProfileSummary';
+import { ProfileSummary } from '@/components/dashboard/ProfileSummary';
 
 const CustomerDashboard = () => {
   return (

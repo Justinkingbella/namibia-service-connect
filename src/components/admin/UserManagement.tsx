@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +29,55 @@ const UserManagement: React.FC = () => {
   const [filter, setFilter] = useState<UserRole | 'all'>('all');
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  // Mock users as fallback - memoized to prevent recreation on every render
+  const mockUsers = useMemo<UserData[]>(() => [
+    {
+      id: '1',
+      name: 'John Doe',
+      email: 'john@example.com',
+      role: UserRole.CUSTOMER,
+      status: 'active',
+      joinDate: '2023-05-15',
+      isVerified: true
+    },
+    {
+      id: '2',
+      name: 'Jane Smith',
+      email: 'jane@example.com',
+      role: UserRole.PROVIDER,
+      status: 'active',
+      joinDate: '2023-06-21',
+      isVerified: true
+    },
+    {
+      id: '3',
+      name: 'Robert Johnson',
+      email: 'robert@example.com',
+      role: UserRole.PROVIDER,
+      status: 'pending',
+      joinDate: '2023-07-03',
+      isVerified: false
+    },
+    {
+      id: '4',
+      name: 'Sarah Williams',
+      email: 'sarah@example.com',
+      role: UserRole.CUSTOMER,
+      status: 'inactive',
+      joinDate: '2023-04-12',
+      isVerified: false
+    },
+    {
+      id: '5',
+      name: 'Admin User',
+      email: 'admin@namibiaservice.com',
+      role: UserRole.ADMIN,
+      status: 'active',
+      joinDate: '2023-01-01',
+      isVerified: true
+    },
+  ], []);
 
   // Fetch users from Supabase
   useEffect(() => {
@@ -79,56 +128,7 @@ const UserManagement: React.FC = () => {
     };
 
     fetchUsers();
-  }, [toast]);
-
-  // Mock users as fallback
-  const mockUsers: UserData[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      role: UserRole.CUSTOMER,
-      status: 'active',
-      joinDate: '2023-05-15',
-      isVerified: true
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      role: UserRole.PROVIDER,
-      status: 'active',
-      joinDate: '2023-06-21',
-      isVerified: true
-    },
-    {
-      id: '3',
-      name: 'Robert Johnson',
-      email: 'robert@example.com',
-      role: UserRole.PROVIDER,
-      status: 'pending',
-      joinDate: '2023-07-03',
-      isVerified: false
-    },
-    {
-      id: '4',
-      name: 'Sarah Williams',
-      email: 'sarah@example.com',
-      role: UserRole.CUSTOMER,
-      status: 'inactive',
-      joinDate: '2023-04-12',
-      isVerified: false
-    },
-    {
-      id: '5',
-      name: 'Admin User',
-      email: 'admin@namibiaservice.com',
-      role: UserRole.ADMIN,
-      status: 'active',
-      joinDate: '2023-01-01',
-      isVerified: true
-    },
-  ];
+  }, [toast, mockUsers]);
 
   const filteredUsers = filter === 'all' 
     ? users 

@@ -11,9 +11,20 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { ServiceCategoryEnum, PricingModelEnum } from '@/types';
 import ImageUpload from '@/components/ui/image-upload';
 
+interface ServiceFormData {
+  title: string;
+  description: string;
+  category: ServiceCategoryEnum;
+  pricing_model: PricingModelEnum;
+  pricing_amount: number;
+  location: string;
+  availability: string;
+  images?: string[];
+}
+
 interface CreateServiceFormProps {
-  onSave: (serviceData: any) => void;
-  initialData?: any;
+  onSave: (serviceData: ServiceFormData) => void;
+  initialData?: Partial<ServiceFormData>;
   loading?: boolean;
 }
 
