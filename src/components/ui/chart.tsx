@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 
 interface ChartProps {
-  data: any[];
+  data: Record<string, unknown>[];
   height?: number;
   width?: number;
   className?: string;

@@ -243,7 +243,7 @@ export async function subscribeUserToPlan(
     
     // Calculate subscription dates
     const startDate = new Date();
-    let endDate = new Date();
+    const endDate = new Date();
     
     switch (planData.billing_cycle) {
       case 'monthly':
