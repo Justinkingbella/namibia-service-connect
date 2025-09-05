@@ -35,7 +35,11 @@ const CreateService = () => {
 
       const { data, error } = await supabase
         .from('services')
-        .insert(dataToInsert)
+        .insert({
+          ...dataToInsert,
+          category: dataToInsert.category as any, // Cast to match Supabase enum
+          pricing_model: dataToInsert.pricing_model as any // Cast to match Supabase enum
+        })
         .select();
 
       if (error) {

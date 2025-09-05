@@ -57,10 +57,10 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
         const { error: bookingError } = await supabase
           .from('bookings')
           .update({
-            payment_status: 'completed',
+            payment_status: 'paid',
             updated_at: new Date().toISOString()
           })
-          .eq('id', selectedVer.booking_id);
+          .eq('id', selectedVer.bookingId);
         
         if (bookingError) throw bookingError;
       }
@@ -175,10 +175,10 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
                 <tr key={verification.id} className="border-b hover:bg-slate-50">
                   <td className="py-3 px-4">{formatDate(verification.dateSubmitted || verification.date)}</td>
                   <td className="py-3 px-4">{verification.referenceNumber || verification.reference}</td>
-                  <td className="py-3 px-4">{verification.booking_id?.substring(0, 8) || ''}</td>
+                  <td className="py-3 px-4">{verification.bookingId?.substring(0, 8) || ''}</td>
                   <td className="py-3 px-4">{verification.customerPhone}</td>
                   <td className="py-3 px-4">N${verification.amount.toLocaleString()}</td>
-                  <td className="py-3 px-4">{getStatusBadge(verification.verificationStatus || verification.status)}</td>
+                  <td className="py-3 px-4">{getStatusBadge(verification.verificationStatus)}</td>
                   <td className="py-3 px-4">
                     <div className="flex gap-2">
                       <Button 
@@ -192,7 +192,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
                         <Eye className="h-4 w-4" />
                       </Button>
                       
-                      {(verification.verificationStatus === 'submitted' || verification.status === 'submitted') && (
+                      {verification.verificationStatus === 'submitted' && (
                         <>
                           <Button 
                             variant="default" 
@@ -247,7 +247,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
                 <div>
                   <Label>Status</Label>
                   <div className="mt-1 py-2 px-3 bg-gray-50 rounded border">
-                    {getStatusBadge(selectedVerification.verificationStatus || selectedVerification.status)}
+                    {getStatusBadge(selectedVerification.verificationStatus)}
                   </div>
                 </div>
                 <div>
@@ -269,7 +269,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
                 <div>
                   <Label>Booking ID</Label>
                   <Input 
-                    value={selectedVerification.booking_id || ''} 
+                    value={selectedVerification.bookingId || ''} 
                     readOnly 
                     className="bg-gray-50 mt-1"
                   />
@@ -326,7 +326,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
                 </div>
               )}
               
-              {(selectedVerification.verificationStatus === 'rejected' || selectedVerification.status === 'rejected') && 
+              {selectedVerification.verificationStatus === 'rejected' && 
                 selectedVerification.rejectionReason && (
                 <div className="mt-4">
                   <Label>Rejection Reason</Label>
@@ -339,7 +339,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
               )}
               
               <DialogFooter>
-                {(selectedVerification.verificationStatus === 'submitted' || selectedVerification.status === 'submitted') && (
+                {selectedVerification.verificationStatus === 'submitted' && (
                   <div className="flex space-x-2">
                     <Button
                       variant="default"

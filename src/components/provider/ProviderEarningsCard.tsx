@@ -27,7 +27,7 @@ const ProviderEarningsCard: React.FC<ProviderEarningsCardProps> = ({
     switch (tier) {
       case 'free':
         return '10%';
-      case 'pro':
+      case 'basic':
         return '8%';
       case 'enterprise':
         return '5%';

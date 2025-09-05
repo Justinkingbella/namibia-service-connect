@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             firstName: '',
             lastName: '',
             role: 'customer' as UserRole,
-            phoneNumber: supabaseSession.user.phone || '',
+            phone: supabaseSession.user.phone || '',
             createdAt: supabaseSession.user.created_at || '',
             emailVerified: false,
           };
@@ -69,9 +69,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userDetails.firstName = profileData.first_name || '';
             userDetails.lastName = profileData.last_name || '';
             userDetails.role = profileData.role as UserRole || 'customer';
-            userDetails.phoneNumber = profileData.phone_number || '';
+            phone: profileData.phone_number || '',
             userDetails.avatarUrl = profileData.avatar_url || '';
-            userDetails.emailVerified = profileData.email_verified || false;
+            email_verified: profileData.email_verified || false;
           }
 
           setUser(userDetails);
@@ -201,19 +201,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert([
-          {
-            id: data.user?.id,
-            email: email,
-            first_name: userData.firstName,
-            last_name: userData.lastName,
-            role: userData.role || 'customer',
-            email_verified: false,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ]);
+        .insert({
+          id: data.user?.id,
+          email: email,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          role: userData.role as any || 'customer',
+          email_verified: false,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
 
       if (profileError) {
         console.error('Profile Creation Error:', profileError.message);
@@ -270,7 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .update({
           first_name: data.firstName,
           last_name: data.lastName,
-          phone_number: data.phoneNumber,
+          phone_number: data.phone,
           avatar_url: data.avatarUrl,
         })
         .eq('id', user.id);
@@ -425,7 +423,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadCustomerProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('customers')
+        .from('customer_profiles')
         .select(`
           *, profiles:id (*)
         `)
@@ -447,11 +445,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         firstName: typeof profileData.first_name === 'string' ? profileData.first_name : '',
         lastName: typeof profileData.last_name === 'string' ? profileData.last_name : '',
         role: 'customer',
-        phoneNumber: typeof profileData.phone_number === 'string' ? profileData.phone_number : '',
+        phone: typeof profileData.phone_number === 'string' ? profileData.phone_number : '',
         avatarUrl: typeof profileData.avatar_url === 'string' ? profileData.avatar_url : '',
-        emailVerified: typeof profileData.email_verified === 'boolean' ? profileData.email_verified : false,
-        preferredCategories: data.preferred_categories || [],
-        savedServices: data.saved_services || [],
+        email_verified: typeof profileData.email_verified === 'boolean' ? profileData.email_verified : false,
+        preferredCategories: data.notification_preferences?.preferred_categories || [],
+        savedServices: data.notification_preferences?.saved_services || [],
         notificationPreferences: {
           email: true,
           sms: false,

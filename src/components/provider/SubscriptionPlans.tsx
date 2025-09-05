@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckIcon, XIcon, XMarkIcon, CheckCircle, XCircle } from 'lucide-react';
+import { CheckIcon, XIcon, CheckCircle, XCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -132,10 +132,19 @@ const SubscriptionPlans = ({ onSelectPlan }) => {
                 )}
               </div>
               
-              {renderTrialPeriod(plan)}
+              {plan.trialPeriodDays > 0 && (
+                <div className="text-sm text-muted-foreground mb-4">
+                  {plan.trialPeriodDays} day free trial
+                </div>
+              )}
               
               <ul className="space-y-3">
-                {plan.features.map((feature) => renderFeature(feature))}
+                {plan.features.map((feature, index) => (
+                  <li key={index} className="flex items-center">
+                    <CheckIcon className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                    <span className="text-sm">{feature}</span>
+                  </li>
+                ))}
                 
                 {plan.maxBookings && (
                   <li className="flex items-start">
@@ -180,15 +189,10 @@ const SubscriptionPlans = ({ onSelectPlan }) => {
           <div className="py-4">
             <h3 className="font-medium mb-2">Plan Features:</h3>
             <ul className="space-y-2">
-              {selectedPlan?.features.map((feature) => (
-                <li key={feature.name} className="flex items-center">
-                  {feature.included ? (
-                    <CheckIcon className="h-4 w-4 text-emerald-500 mr-2 mt-0.5" />
-                  ) : (
-                    <XMarkIcon className="h-4 w-4 text-gray-400 mr-2 mt-0.5" />
-                  )}
-                  {feature.name}
-                  {feature.limit !== undefined ? ` (${feature.limit})` : ""}
+              {selectedPlan?.features.map((feature, index) => (
+                <li key={index} className="flex items-center">
+                  <CheckIcon className="h-4 w-4 text-emerald-500 mr-2 mt-0.5" />
+                  {feature}
                 </li>
               ))}
             </ul>

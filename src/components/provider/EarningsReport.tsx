@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -20,6 +20,9 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import { Button } from '@/components/ui/button';
+import { CircleDollarSign, Calendar, Clock, TrendingUp } from 'lucide-react';
+import { CardFooter } from '@/components/ui/card';
 
 // Mock data for the earnings report
 const MOCK_EARNINGS: ProviderEarnings = {

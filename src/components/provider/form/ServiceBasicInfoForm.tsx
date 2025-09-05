@@ -88,7 +88,7 @@ export const ServiceBasicInfoForm: React.FC<ServiceBasicInfoFormProps> = ({
           </SelectTrigger>
           <SelectContent>
             {Object.values(ServiceCategoryEnum)
-              .filter(cat => cat !== 'all') // Skip the ALL category
+              .filter(cat => cat !== ServiceCategoryEnum.ALL) // Skip the ALL category
               .map((cat) => (
                 <SelectItem key={cat} value={cat}>
                   {cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase().replace('_', ' ')}

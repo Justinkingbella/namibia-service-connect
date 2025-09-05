@@ -125,7 +125,7 @@ const WalletVerificationPanel: React.FC<WalletVerificationPanelProps> = ({
                             <div className="flex items-center mb-1">
                               <span className="font-medium">Booking ID:</span>
                               <span className="ml-2 text-sm text-muted-foreground">
-                                {verification.booking_id?.substring(0, 8) || 'N/A'}
+                                {verification.bookingId?.substring(0, 8) || 'N/A'}
                               </span>
                             </div>
                             <div className="flex items-center mb-1">
@@ -155,11 +155,11 @@ const WalletVerificationPanel: React.FC<WalletVerificationPanelProps> = ({
                             </div>
                           </div>
                           <div>
-                            {getStatusBadge(verification.verificationStatus || verification.status)}
+                            {getStatusBadge(verification.verificationStatus)}
                           </div>
                         </div>
                         
-                        {(verification.verificationStatus === 'submitted' || verification.status === 'submitted') && (
+                        {verification.verificationStatus === 'submitted' && (
                           <div className="mt-4 flex items-center justify-end space-x-2">
                             <Button 
                               variant="outline"
@@ -235,7 +235,7 @@ const WalletVerificationPanel: React.FC<WalletVerificationPanelProps> = ({
                         <div className="flex items-center mb-1">
                           <span className="font-medium">Booking ID:</span>
                           <span className="ml-2 text-sm text-muted-foreground">
-                            {verification.booking_id?.substring(0, 8) || 'N/A'}
+                            {verification.bookingId?.substring(0, 8) || 'N/A'}
                           </span>
                         </div>
                         <div className="flex items-center mb-1">
@@ -258,7 +258,7 @@ const WalletVerificationPanel: React.FC<WalletVerificationPanelProps> = ({
                         </div>
                       </div>
                       <div>
-                        {getStatusBadge(verification.verificationStatus || verification.status)}
+                        {getStatusBadge(verification.verificationStatus)}
                       </div>
                     </div>
                   </div>
