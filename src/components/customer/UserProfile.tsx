@@ -21,7 +21,7 @@ interface ExtendedUser extends User {
 }
 
 const UserProfile = () => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: '',
@@ -197,11 +197,11 @@ const UserProfile = () => {
                   setFormData({
                     firstName: user.firstName || '',
                     lastName: user.lastName || '',
-                    phoneNumber: user.phoneNumber || '',
+                    phoneNumber: userProfile?.phone_number || '',
                     avatarUrl: user.avatarUrl || '',
-                    birthDate: user.birthDate ? new Date(user.birthDate) : undefined
+                    birthDate: userProfile?.birth_date ? new Date(userProfile.birth_date) : undefined
                   });
-                  setDate(user.birthDate ? new Date(user.birthDate) : undefined);
+                  setDate(userProfile?.birth_date ? new Date(userProfile.birth_date) : undefined);
                 }}>
                   Cancel
                 </Button>

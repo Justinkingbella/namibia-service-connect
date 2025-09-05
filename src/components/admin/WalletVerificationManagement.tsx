@@ -39,7 +39,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
       if (!user?.id) throw new Error('User not authenticated');
       
       const { error } = await supabase
-        .from('wallet_verification_requests')
+        .from('wallet_verifications')
         .update({
           verification_status: 'verified',
           date_verified: new Date().toISOString(),
@@ -84,7 +84,7 @@ const WalletVerificationManagement: React.FC<WalletVerificationManagementProps> 
   const rejectMutation = useMutation({
     mutationFn: async ({ id, reason }: { id: string, reason: string }) => {
       const { error } = await supabase
-        .from('wallet_verification_requests')
+        .from('wallet_verifications')
         .update({
           verification_status: 'rejected',
           rejection_reason: reason,

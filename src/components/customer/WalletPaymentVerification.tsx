@@ -22,9 +22,9 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<WalletPaymentType>("e_wallet");
+  const [paymentMethod, setPaymentMethod] = useState<string>("e_wallet");
   const [referenceNumber, setReferenceNumber] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [mobileOperator, setMobileOperator] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
@@ -64,13 +64,13 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
       const verificationData: Partial<WalletVerification> = {
         amount,
         reference: referenceNumber,
-        method: paymentMethod,
+        method: paymentMethod as any,
         customerPhone: phoneNumber,
         verificationStatus: 'submitted',
         date: new Date().toISOString(),
         dateSubmitted: new Date().toISOString(),
         referenceNumber,
-        paymentMethod,
+        paymentMethod: paymentMethod as any,
         customerConfirmed: true,
         providerConfirmed: false,
         adminVerified: false,
@@ -110,7 +110,7 @@ const WalletPaymentVerification: React.FC<WalletPaymentVerificationProps> = ({
             <label className="text-sm font-medium">Payment Method</label>
             <Select 
               value={paymentMethod}
-              onValueChange={(value) => setPaymentMethod(value as WalletPaymentType)}
+              onValueChange={(value) => setPaymentMethod(value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select payment method" />

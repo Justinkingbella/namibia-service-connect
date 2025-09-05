@@ -29,9 +29,9 @@ const AdminProfile: React.FC = () => {
       try {
         setLoadingPermissions(true);
         const { data, error } = await supabase
-          .from('admin_permissions')
+          .from('admin_profiles')
           .select('permissions')
-          .eq('user_id', profile.id)
+          .eq('id', profile.id)
           .single();
           
         if (error) throw error;

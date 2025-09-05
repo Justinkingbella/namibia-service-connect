@@ -1,4 +1,3 @@
-
 // Let's update imports and fix the subscription tier comparison
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { SubscriptionTier } from '@/types';
 import { format } from 'date-fns';
 
 export function ProfileSummary() {
@@ -16,10 +14,6 @@ export function ProfileSummary() {
 
   // Get user initials for avatar fallback
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`;
-
-  // Safely check subscription tier
-  const isPremium = user.subscriptionTier === SubscriptionTier.PREMIUM || 
-                   user.subscriptionTier === SubscriptionTier.ENTERPRISE;
 
   // Format date for display
   const formatDate = (dateStr?: string) => {
@@ -48,8 +42,8 @@ export function ProfileSummary() {
               {user.firstName} {user.lastName}
             </h3>
             <div className="flex items-center text-sm text-muted-foreground mt-1">
-              <Badge variant={isPremium ? "default" : "outline"} className="mr-2">
-                {user.subscriptionTier || 'Free'}
+              <Badge variant="outline" className="mr-2">
+                Free Plan
               </Badge>
               {user.email}
             </div>
@@ -67,8 +61,8 @@ export function ProfileSummary() {
           <div className="flex items-center">
             <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
             <div>
-              <p className="text-muted-foreground">Joined</p>
-              <p>{user.createdAt ? formatDate(user.createdAt) : 'N/A'}</p>
+              <p className="text-muted-foreground">Member Since</p>
+              <p>{userProfile?.created_at ? formatDate(userProfile.created_at) : 'N/A'}</p>
             </div>
           </div>
         </div>

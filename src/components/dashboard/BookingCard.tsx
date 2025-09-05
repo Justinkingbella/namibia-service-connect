@@ -19,17 +19,17 @@ export interface BookingCardProps {
 }
 
 export const BookingCard: React.FC<BookingCardProps> = ({ booking, viewAs = 'customer' }) => {
-  const getStatusBadgeColor = (status: BookingStatus) => {
+  const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case BookingStatus.PENDING: return 'bg-yellow-100 text-yellow-800';
-      case BookingStatus.CONFIRMED: return 'bg-blue-100 text-blue-800';
-      case BookingStatus.IN_PROGRESS: return 'bg-purple-100 text-purple-800';
-      case BookingStatus.COMPLETED: return 'bg-green-100 text-green-800';
-      case BookingStatus.CANCELLED: return 'bg-red-100 text-red-800';
-      case BookingStatus.DISPUTED: return 'bg-orange-100 text-orange-800';
-      case BookingStatus.NO_SHOW: return 'bg-gray-100 text-gray-800';
-      case BookingStatus.RESCHEDULED: return 'bg-teal-100 text-teal-800';
-      case BookingStatus.REJECTED: return 'bg-red-100 text-red-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'confirmed': return 'bg-blue-100 text-blue-800';
+      case 'in_progress': return 'bg-purple-100 text-purple-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'disputed': return 'bg-orange-100 text-orange-800';
+      case 'no_show': return 'bg-gray-100 text-gray-800';
+      case 'rescheduled': return 'bg-teal-100 text-teal-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };

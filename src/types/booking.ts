@@ -1,17 +1,19 @@
 import { UserRole, PaymentStatus, WalletPaymentType } from './schema';
 
 // Update with exact string union type to match actual values used in components
-export enum BookingStatus {
-  PENDING = 'pending',
-  CONFIRMED = 'confirmed',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-  NO_SHOW = 'no_show',
-  IN_PROGRESS = 'in_progress',
-  REJECTED = 'rejected',
-  RESCHEDULED = 'rescheduled',
-  DISPUTED = 'disputed'
-}
+export const BookingStatus = {
+  PENDING: 'pending',
+  CONFIRMED: 'confirmed',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
+  NO_SHOW: 'no_show',
+  IN_PROGRESS: 'in_progress',
+  REJECTED: 'rejected',
+  RESCHEDULED: 'rescheduled',
+  DISPUTED: 'disputed'
+} as const;
+
+export type BookingStatus = typeof BookingStatus[keyof typeof BookingStatus];
 
 export enum DisputeStatus {
   PENDING = 'pending',

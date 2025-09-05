@@ -141,7 +141,7 @@ const UserManagement: React.FC = () => {
       // Update in Supabase - using 'active' field
       const { error } = await supabase
         .from('profiles')
-        .update({ active: isActive })
+        .update({ is_active: isActive })
         .eq('id', userId);
         
       if (error) throw error;
