@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar } from 'lucide-react';
+
 import { format } from 'date-fns';
 
 import { useToast } from "@/hooks/use-toast";

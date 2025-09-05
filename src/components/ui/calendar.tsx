@@ -16,7 +16,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
+      className={cn("p-3 pointer-events-auto", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
@@ -61,4 +61,22 @@ function Calendar({
 }
 Calendar.displayName = "Calendar";
 
-export { Calendar };
+export interface CalendarDateRangePickerProps {
+  date?: Date;
+  onSelect?: (date?: Date) => void;
+  className?: string;
+}
+
+function CalendarDateRangePicker({ date, onSelect, className }: CalendarDateRangePickerProps) {
+  return (
+    <Calendar
+      mode="single"
+      selected={date}
+      onSelect={onSelect}
+      initialFocus
+      className={cn("p-3 pointer-events-auto", className)}
+    />
+  );
+}
+
+export { Calendar, CalendarDateRangePicker };
