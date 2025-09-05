@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useMockAuthSync } from './useMockAuthSync';
 import { useAuthStore } from '@/store/authStore';
 import { User, UserRole, Provider, Customer, Admin, ProviderVerificationStatus } from '@/types';
 import { useNavigate } from 'react-router-dom';

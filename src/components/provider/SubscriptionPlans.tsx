@@ -139,12 +139,14 @@ const SubscriptionPlans = ({ onSelectPlan }) => {
               )}
               
               <ul className="space-y-3">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-center">
-                    <CheckIcon className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex items-center">
+                      <CheckIcon className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                      <span className="text-sm">
+                        {typeof feature === 'string' ? feature : feature.name}
+                      </span>
+                    </li>
+                  ))}
                 
                 {plan.maxBookings && (
                   <li className="flex items-start">
@@ -192,7 +194,7 @@ const SubscriptionPlans = ({ onSelectPlan }) => {
               {selectedPlan?.features.map((feature, index) => (
                 <li key={index} className="flex items-center">
                   <CheckIcon className="h-4 w-4 text-emerald-500 mr-2 mt-0.5" />
-                  {feature}
+                  <span>{typeof feature === 'string' ? feature : feature.name}</span>
                 </li>
               ))}
             </ul>

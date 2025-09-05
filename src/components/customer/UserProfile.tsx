@@ -197,11 +197,11 @@ const UserProfile = () => {
                   setFormData({
                     firstName: user.firstName || '',
                     lastName: user.lastName || '',
-                    phoneNumber: userProfile?.phone_number || '',
+                    phoneNumber: userProfile?.phoneNumber || '',
                     avatarUrl: user.avatarUrl || '',
-                    birthDate: userProfile?.birth_date ? new Date(userProfile.birth_date) : undefined
+                    birthDate: userProfile?.birthDate ? new Date(userProfile.birthDate) : undefined
                   });
-                  setDate(userProfile?.birth_date ? new Date(userProfile.birth_date) : undefined);
+                  setDate(userProfile?.birthDate ? new Date(userProfile.birthDate) : undefined);
                 }}>
                   Cancel
                 </Button>

@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             firstName: '',
             lastName: '',
             role: 'customer' as UserRole,
-            phone: supabaseSession.user.phone || '',
+            phoneNumber: supabaseSession.user.phone || '',
             createdAt: supabaseSession.user.created_at || '',
             emailVerified: false,
           };
@@ -69,9 +69,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userDetails.firstName = profileData.first_name || '';
             userDetails.lastName = profileData.last_name || '';
             userDetails.role = profileData.role as UserRole || 'customer';
-            phone: profileData.phone_number || '',
+            userDetails.phoneNumber = profileData.phone_number || '';
             userDetails.avatarUrl = profileData.avatar_url || '';
-            email_verified: profileData.email_verified || false;
+            userDetails.emailVerified = profileData.email_verified || false;
           }
 
           setUser(userDetails);
@@ -268,7 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .update({
           first_name: data.firstName,
           last_name: data.lastName,
-          phone_number: data.phone,
+          phone_number: data.phoneNumber,
           avatar_url: data.avatarUrl,
         })
         .eq('id', user.id);
@@ -445,11 +445,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         firstName: typeof profileData.first_name === 'string' ? profileData.first_name : '',
         lastName: typeof profileData.last_name === 'string' ? profileData.last_name : '',
         role: 'customer',
-        phone: typeof profileData.phone_number === 'string' ? profileData.phone_number : '',
+        phoneNumber: typeof profileData.phone_number === 'string' ? profileData.phone_number : '',
         avatarUrl: typeof profileData.avatar_url === 'string' ? profileData.avatar_url : '',
-        email_verified: typeof profileData.email_verified === 'boolean' ? profileData.email_verified : false,
-        preferredCategories: data.notification_preferences?.preferred_categories || [],
-        savedServices: data.notification_preferences?.saved_services || [],
+        emailVerified: typeof profileData.email_verified === 'boolean' ? profileData.email_verified : false,
+        preferredCategories: (data.notification_preferences as any)?.preferred_categories || [],
+        savedServices: (data.notification_preferences as any)?.saved_services || [],
         notificationPreferences: {
           email: true,
           sms: false,
@@ -466,7 +466,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadProviderProfile = async (userId: string) => {
     try {
       const { data: providerData, error } = await supabase
-        .from('service_providers')
+        .from('provider_profiles')
         .select(`*, profiles:id(*)`)
         .eq('id', userId)
         .single();
@@ -482,7 +482,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const { categories, services, taxId, reviewCount } = transformProviderData(providerData);
       
-      const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'unverified';
+      const verificationStatus = providerData.verification_status as ProviderVerificationStatus || 'pending';
 
       const providerProfile: Provider = {
         id: userId,
@@ -520,9 +520,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadAdminProfile = async (userId: string) => {
     try {
       const { data: adminData, error } = await supabase
-        .from('admin_permissions')
+        .from('admin_profiles')
         .select('*')
-        .eq('user_id', userId)
+        .eq('id', userId)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -537,14 +537,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: user?.email || '',
         firstName: user?.firstName || '',
         lastName: user?.lastName || '',
-        role: 'admin',
+        role: 'admin' as UserRole,
         phoneNumber: user?.phoneNumber || '',
         avatarUrl: user?.avatarUrl || '',
         emailVerified: user?.emailVerified || false,
-        permissions: adminData.permissions || [],
+        permissions: adminData?.permissions || [],
         adminLevel: 1,
         isVerified: true,
-        accessLevel: 1,
+        accessLevel: adminData?.access_level || 1,
         createdAt: user?.createdAt || new Date().toISOString(),
       };
       setUserProfile(adminProfile);

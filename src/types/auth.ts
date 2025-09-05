@@ -48,6 +48,9 @@ export interface User {
   firstName?: string;
   lastName?: string;
   avatarUrl?: string;
+  phoneNumber?: string;
+  emailVerified?: boolean;
+  createdAt?: string;
 }
 
 // Base user profile with common fields
@@ -103,8 +106,14 @@ export interface Customer {
   avatarUrl: string;
   createdAt: string;
   role: UserRole | string;
+  emailVerified?: boolean;
   preferredCategories: string[];
   savedServices: string[];
+  notificationPreferences?: {
+    email: boolean;
+    sms: boolean;
+    push: boolean;
+  };
   address?: string;
   city?: string;
   country?: string;
@@ -118,23 +127,28 @@ export interface Provider {
   email: string;
   phoneNumber: string;
   role: UserRole | string;
+  emailVerified?: boolean;
   businessName: string;
   businessDescription: string;
   rating: number;
-  ratingCount: number;
+  commission: number;
   avatarUrl: string;
   bannerUrl: string;
+  website?: string;
+  taxId?: string;
+  reviewCount: number;
   verificationStatus: ProviderVerificationStatus | string;
-  address: string;
-  city: string;
-  country: string;
+  address?: string;
+  city?: string;
+  country?: string;
   createdAt: string;
-  completedBookings: number;
-  serviceCount: number;
-  commissionRate: number;
+  completedBookings?: number;
+  serviceCount?: number;
+  isVerified?: boolean;
   active?: boolean;
   subscriptionTier: SubscriptionTierType | string;
   categories?: string[];
+  services?: string[];
 }
 
 export interface Admin {
@@ -143,27 +157,35 @@ export interface Admin {
   lastName: string;
   email: string;
   role: UserRole;
+  phoneNumber?: string;
   avatarUrl?: string;
+  emailVerified?: boolean;
   isVerified: boolean;
   createdAt: string;
   lastLogin?: string;
   permissions: string[];
-  adminLevel: 'super' | 'manager' | 'support';
+  adminLevel: number;
   department?: string;
   accessLevel: number;
 }
 
-// Auth context type
 export interface AuthContextType {
   user: User | null;
+  userProfile: Customer | Provider | Admin | null;
+  userRole: UserRole | string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: any) => Promise<void>;
+  session: Session | null;
+  signIn: (email: string, password: string) => Promise<{error: any | null}>;
+  signUp: (email: string, password: string, userData: Partial<User>) => Promise<{error: any | null, data?: any}>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
-  updateProfile: (data: any) => Promise<void>;
-  setUser: (user: User | null) => void;
-  userProfile?: any; // Used in ProfileSummary
-  userRole?: string; // Used in ProfileSummary
+  updatePassword: (newPassword: string) => Promise<void>;
+  verifyEmail: (token: string) => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<boolean>;
+  uploadAvatar: (file: File) => Promise<string>;
+  setUserProfile: (profile: Customer | Provider | Admin | null) => void;
+  navigate: (path: string, options?: { replace?: boolean }) => void;
+  checkAuth: () => Promise<User | null>;
 }

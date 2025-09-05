@@ -62,7 +62,7 @@ export function ProfileSummary() {
             <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
             <div>
               <p className="text-muted-foreground">Member Since</p>
-              <p>{userProfile?.created_at ? formatDate(userProfile.created_at) : 'N/A'}</p>
+              <p>{userProfile?.createdAt ? formatDate(userProfile.createdAt) : 'N/A'}</p>
             </div>
           </div>
         </div>
